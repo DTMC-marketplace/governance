@@ -1,10 +1,11 @@
 {% extends "governance/base.html" %}
-{% load i18n %}
+
 {% load static %}
 
 {% block title %}EU AI Act GAI Low risk Compliance Agents{% endblock %}
 
 {% block extra_head %}
+{{ block.super }}
 <style>
     .filter-pill.active {
         background: #111827;
@@ -24,7 +25,7 @@
         <button class="w-8 h-8 border-none bg-transparent cursor-pointer flex items-center justify-center rounded-md hover:bg-[#F3F4F6]" onclick="history.forward()">
             <img src="{% static 'governance/img/arrow-right-gray.svg' %}" alt="Forward" class="w-4 h-4">
         </button>
-        <span class="text-sm font-semibold text-[#F13D30]">{% trans "EU Act GPILR" %}</span>
+        <span class="text-sm font-semibold text-[#F13D30]">EU Act GPILR</span>
     </div>
 
     <!-- Page Header -->

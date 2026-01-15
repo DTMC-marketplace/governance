@@ -8,7 +8,6 @@ are in governance/presentation/views/
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
-from django.utils.translation import gettext as _
 import json
 
 # Try to import Clean Architecture views (will override legacy functions below)
@@ -17,7 +16,9 @@ try:
         governance_dashboard as ca_governance_dashboard,
         ensure_governance_platform as ca_ensure_governance_platform,
         MockCompany as CA_MockCompany,
-        ai_systems as ca_ai_systems
+        ai_systems as ca_ai_systems,
+        assessment as ca_assessment,
+        multi_agent_use_cases as ca_multi_agent_use_cases,
     )
     USE_CLEAN_ARCHITECTURE = True
 except ImportError:
@@ -38,6 +39,8 @@ if USE_CLEAN_ARCHITECTURE:
     MockCompany = CA_MockCompany
     governance_dashboard = ca_governance_dashboard
     ai_systems = ca_ai_systems
+    assessment = ca_assessment
+    multi_agent_use_cases = ca_multi_agent_use_cases
 else:
     def ensure_governance_platform(request):
         """Helper function to ensure request.platform is set to 'governance'"""
@@ -57,7 +60,7 @@ else:
         
         company = MockCompany()
         breadcrumbs = [
-            {"name": _("Dashboard"), "url": request.build_absolute_uri()},
+            {"name": "Dashboard", "url": request.build_absolute_uri()},
         ]
         
         # Get all use cases from mock data
@@ -253,7 +256,7 @@ if not USE_CLEAN_ARCHITECTURE:
         
         company = MockCompany()
         breadcrumbs = [
-            {"name": _("AI Systems"), "url": request.build_absolute_uri()},
+            {"name": "AI Systems", "url": request.build_absolute_uri()},
         ]
         
         # Get mock data
@@ -332,7 +335,7 @@ def ai_models(request):
     """AI Models page"""
     company = MockCompany()
     breadcrumbs = [
-        {"name": _("AI Models"), "url": request.build_absolute_uri()},
+        {"name": "AI Models", "url": request.build_absolute_uri()},
     ]
     
     return render(
@@ -367,8 +370,8 @@ def ai_assistant(request, id=None):
         chat_histories = []
         
         breadcrumbs = [
-            {"name": _("AI Assistant"), "url": "/ai-assistant/"},
-            {"name": _("Chat with %(agent_name)s") % {"agent_name": selected_agent.get('name', _("Unknown Agent"))}, "url": request.build_absolute_uri()},
+            {"name": "AI Assistant", "url": "/ai-assistant/"},
+            {"name": f"Chat with {selected_agent.get('name', 'Unknown Agent')}", "url": request.build_absolute_uri()},
         ]
         
         return render(
@@ -388,7 +391,7 @@ def ai_assistant(request, id=None):
     
     # Otherwise, show agent list page
     breadcrumbs = [
-        {"name": _("AI Assistant"), "url": request.build_absolute_uri()},
+        {"name": "AI Assistant", "url": request.build_absolute_uri()},
     ]
     
     categories = list({agent["category"] for agent in VIRTUAL_AGENT})
@@ -416,130 +419,133 @@ def ai_assistant(request, id=None):
     )
 
 
-def assessment(request):
-    """Assessment/Questionnaires page"""
-    ensure_governance_platform(request)
-    company = MockCompany()
-    agent_name = request.GET.get('agent', '')
-    use_case_id = request.GET.get('use_case_id', None)
-    breadcrumbs = [
-        {"name": _("Questionnaires"), "url": request.build_absolute_uri()},
-    ]
-    
-    # Get governance agents (first 3)
-    governance_agents = VIRTUAL_AGENT[:3]
-    
-    # Get agents and use cases
-    agents_data = get_mock_agents()
-    use_cases_data = get_mock_use_cases()
-    models_data = get_mock_models()
-    datasets_data = get_mock_datasets()
-    
-    # Filter by agent if provided
-    agent = None
-    if agent_name:
-        agent = next((a for a in agents_data if a.get('name') == agent_name), None)
-    
-    # Get use cases
-    if agent_name and agent:
-        use_cases_data = [uc for uc in use_cases_data if uc.get('agent_id') == agent.get('id')]
-    else:
-        use_cases_data = use_cases_data
-    
-    # Build use cases data
-    use_cases_list = []
-    for uc_data in use_cases_data:
-        use_case = create_mock_use_case(uc_data)
-        compliance = calculate_compliance_mock(use_case)
-        risks = calculate_risks_mock(use_case)
+# assessment is now using Clean Architecture from presentation.views.assessment_view
+# If Clean Architecture import failed, define legacy version below
+if not USE_CLEAN_ARCHITECTURE:
+    def assessment(request):
+        """Assessment/Questionnaires page - Legacy implementation"""
+        ensure_governance_platform(request)
+        company = MockCompany()
+        agent_name = request.GET.get('agent', '')
+        use_case_id = request.GET.get('use_case_id', None)
+        breadcrumbs = [
+            {"name": "Questionnaires", "url": request.build_absolute_uri()},
+        ]
         
-        models = [m for m in models_data if m.get('id') in uc_data.get('models', [])]
-        datasets = [d for d in datasets_data if d.get('id') in uc_data.get('datasets', [])]
+        # Get governance agents (first 3)
+        governance_agents = VIRTUAL_AGENT[:3]
         
-        use_cases_list.append({
-            'use_case': use_case,
-            'compliance': compliance,
-            'risks': risks,
-            'models': models,
-            'datasets': datasets,
-        })
-    
-    # Get selected use case
-    selected_use_case = None
-    if use_case_id:
-        selected_use_case = next((uc for uc in use_cases_list if uc['use_case'].id == int(use_case_id)), None)
+        # Get agents and use cases
+        agents_data = get_mock_agents()
+        use_cases_data = get_mock_use_cases()
+        models_data = get_mock_models()
+        datasets_data = get_mock_datasets()
+        
+        # Filter by agent if provided
+        agent = None
+        if agent_name:
+            agent = next((a for a in agents_data if a.get('name') == agent_name), None)
+        
+        # Get use cases
+        if agent_name and agent:
+            use_cases_data = [uc for uc in use_cases_data if uc.get('agent_id') == agent.get('id')]
+        else:
+            use_cases_data = use_cases_data
+        
+        # Build use cases data
+        use_cases_list = []
+        for uc_data in use_cases_data:
+            use_case = create_mock_use_case(uc_data)
+            compliance = calculate_compliance_mock(use_case)
+            risks = calculate_risks_mock(use_case)
+            
+            models = [m for m in models_data if m.get('id') in uc_data.get('models', [])]
+            datasets = [d for d in datasets_data if d.get('id') in uc_data.get('datasets', [])]
+            
+            use_cases_list.append({
+                'use_case': use_case,
+                'compliance': compliance,
+                'risks': risks,
+                'models': models,
+                'datasets': datasets,
+            })
+        
+        # Get selected use case
+        selected_use_case = None
+        if use_case_id:
+            selected_use_case = next((uc for uc in use_cases_list if uc['use_case'].id == int(use_case_id)), None)
+            if selected_use_case:
+                selected_use_case = selected_use_case['use_case']
+        
+        # Get evidences, reports, comments
+        evidences_data = get_mock_evidences()
+        evaluation_reports_data = get_mock_evaluation_reports()
+        review_comments_data = get_mock_review_comments()
+        
         if selected_use_case:
-            selected_use_case = selected_use_case['use_case']
-    
-    # Get evidences, reports, comments
-    evidences_data = get_mock_evidences()
-    evaluation_reports_data = get_mock_evaluation_reports()
-    review_comments_data = get_mock_review_comments()
-    
-    if selected_use_case:
-        evidences_data = [e for e in evidences_data if e.get('use_case_id') == selected_use_case.id]
-        evaluation_reports_data = [r for r in evaluation_reports_data if r.get('use_case_id') == selected_use_case.id]
-        review_comments_data = [c for c in review_comments_data if c.get('use_case_id') == selected_use_case.id]
-    
-    # Convert to objects with proper attributes
-    evidences = convert_evidences_to_objects(evidences_data, use_cases_list)
-    evaluation_reports = convert_reports_to_objects(evaluation_reports_data, use_cases_list)
-    review_comments = convert_comments_to_objects(review_comments_data)
-    
-    report_types = [
-        ('dataset_evaluation', _('Dataset evaluations')),
-        ('model_evaluation', _('Models evaluations')),
-        ('secondary', _('Secondary')),
-        ('red_teaming_1', _('Red Teaming report')),
-        ('red_teaming_4', _('Red Teaming report 4')),
-        ('red_teaming_5', _('Red Teaming report 5')),
-        ('red_teaming_6', _('Red Teaming report 6')),
-        ('red_teaming_7', _('Red Teaming report 7')),
-    ]
-    
-    reports_dict = {}
-    for report in evaluation_reports:
-        report_type = getattr(report, 'report_type', None)
-        if report_type:
-            reports_dict[report_type] = report
-    
-    # Create mock agent objects for template
-    all_agents = []
-    for agent_data in agents_data:
-        class MockAgent:
-            def __init__(self, data):
-                self.id = data.get('id')
-                self.name = data.get('name', '')
-                self.description = data.get('description', '')
-                self.is_virtual = False
-            
-            def get_ai_act_role_display(self):
-                return _("Deployer")
-            
-            def get_risk_classification_display(self):
-                return _("Limited Risks")
+            evidences_data = [e for e in evidences_data if e.get('use_case_id') == selected_use_case.id]
+            evaluation_reports_data = [r for r in evaluation_reports_data if r.get('use_case_id') == selected_use_case.id]
+            review_comments_data = [c for c in review_comments_data if c.get('use_case_id') == selected_use_case.id]
         
-        all_agents.append(MockAgent(agent_data))
-    
-    return render(
-        request,
-        "governance/pages/assessment.html",
-        {
-            "company": company,
-            "subpage": "risk_assessment",
-            "breadcrumbs": breadcrumbs,
-            "agent_name": agent_name,
-            "agent": agent,
-            "use_cases_data": use_cases_list,
-            "all_agents": all_agents,
-            "selected_use_case": selected_use_case,
-            "evidences": evidences,
-            "evaluation_reports": evaluation_reports,
-            "review_comments": review_comments,
-            "report_types": report_types,
-            "reports_dict": reports_dict,
-        },
-    )
+        # Convert to objects with proper attributes
+        evidences = convert_evidences_to_objects(evidences_data, use_cases_list)
+        evaluation_reports = convert_reports_to_objects(evaluation_reports_data, use_cases_list)
+        review_comments = convert_comments_to_objects(review_comments_data)
+        
+        report_types = [
+            ('dataset_evaluation', 'Dataset evaluations'),
+            ('model_evaluation', 'Models evaluations'),
+            ('secondary', 'Secondary'),
+            ('red_teaming_1', 'Red Teaming report'),
+            ('red_teaming_4', 'Red Teaming report 4'),
+            ('red_teaming_5', 'Red Teaming report 5'),
+            ('red_teaming_6', 'Red Teaming report 6'),
+            ('red_teaming_7', 'Red Teaming report 7'),
+        ]
+        
+        reports_dict = {}
+        for report in evaluation_reports:
+            report_type = getattr(report, 'report_type', None)
+            if report_type:
+                reports_dict[report_type] = report
+        
+        # Create mock agent objects for template
+        all_agents = []
+        for agent_data in agents_data:
+            class MockAgent:
+                def __init__(self, data):
+                    self.id = data.get('id')
+                    self.name = data.get('name', '')
+                    self.description = data.get('description', '')
+                    self.is_virtual = False
+                
+                def get_ai_act_role_display(self):
+                    return "Deployer"
+                
+                def get_risk_classification_display(self):
+                    return "Limited Risks"
+            
+            all_agents.append(MockAgent(agent_data))
+        
+        return render(
+            request,
+            "governance/pages/assessment.html",
+            {
+                "company": company,
+                "subpage": "risk_assessment",
+                "breadcrumbs": breadcrumbs,
+                "agent_name": agent_name,
+                "agent": agent,
+                "use_cases_data": use_cases_list,
+                "all_agents": all_agents,
+                "selected_use_case": selected_use_case,
+                "evidences": evidences,
+                "evaluation_reports": evaluation_reports,
+                "review_comments": review_comments,
+                "report_types": report_types,
+                "reports_dict": reports_dict,
+            },
+        )
 
 
 # Placeholder views for other pages
@@ -551,7 +557,7 @@ def ai_assistant_chat(request):
 def assessment_library(request):
     """Assessment Library page"""
     company = MockCompany()
-    breadcrumbs = [{"name": _("Assessment Library"), "url": request.build_absolute_uri()}]
+    breadcrumbs = [{"name": "Assessment Library", "url": request.build_absolute_uri()}]
     return render(request, "governance/pages/assessment_library.html", {
         "company": company,
         "subpage": "assessment_library",
@@ -562,7 +568,7 @@ def assessment_library(request):
 def assessment_detail(request, assessment_id):
     """Assessment Detail page"""
     company = MockCompany()
-    breadcrumbs = [{"name": _("Assessment Detail"), "url": request.build_absolute_uri()}]
+    breadcrumbs = [{"name": "Assessment Detail", "url": request.build_absolute_uri()}]
     return render(request, "governance/pages/assessment_detail.html", {
         "company": company,
         "subpage": "assessment_detail",
@@ -574,7 +580,7 @@ def assessment_detail(request, assessment_id):
 def questionnaire_library(request):
     """Questionnaire Library page"""
     company = MockCompany()
-    breadcrumbs = [{"name": _("Questionnaire Library"), "url": request.build_absolute_uri()}]
+    breadcrumbs = [{"name": "Questionnaire Library", "url": request.build_absolute_uri()}]
     return render(request, "governance/pages/questionnaire_library.html", {
         "company": company,
         "subpage": "data_collection",
@@ -585,7 +591,7 @@ def questionnaire_library(request):
 def questionnaire_detail(request, questionnaire_id):
     """Questionnaire Detail page"""
     company = MockCompany()
-    breadcrumbs = [{"name": _("Questionnaire Detail"), "url": request.build_absolute_uri()}]
+    breadcrumbs = [{"name": "Questionnaire Detail", "url": request.build_absolute_uri()}]
     return render(request, "governance/pages/questionnaire_detail.html", {
         "company": company,
         "subpage": "questionnaire_detail",
@@ -597,7 +603,7 @@ def questionnaire_detail(request, questionnaire_id):
 def datasets(request):
     """Datasets page"""
     company = MockCompany()
-    breadcrumbs = [{"name": _("Datasets"), "url": request.build_absolute_uri()}]
+    breadcrumbs = [{"name": "Datasets", "url": request.build_absolute_uri()}]
     return render(request, "governance/pages/datasets.html", {
         "company": company,
         "subpage": "datasets",
@@ -608,7 +614,7 @@ def datasets(request):
 def vendors(request):
     """Vendors page"""
     company = MockCompany()
-    breadcrumbs = [{"name": _("Vendors"), "url": request.build_absolute_uri()}]
+    breadcrumbs = [{"name": "Vendors", "url": request.build_absolute_uri()}]
     return render(request, "governance/pages/vendors.html", {
         "company": company,
         "subpage": "vendors",
@@ -619,7 +625,7 @@ def vendors(request):
 def investment(request):
     """Investment page"""
     company = MockCompany()
-    breadcrumbs = [{"name": _("Investment"), "url": request.build_absolute_uri()}]
+    breadcrumbs = [{"name": "Investment", "url": request.build_absolute_uri()}]
     return render(request, "governance/pages/investment.html", {
         "company": company,
         "subpage": "investment",
@@ -630,7 +636,7 @@ def investment(request):
 def framework(request):
     """Framework/Reporting page"""
     company = MockCompany()
-    breadcrumbs = [{"name": _("Framework"), "url": request.build_absolute_uri()}]
+    breadcrumbs = [{"name": "Framework", "url": request.build_absolute_uri()}]
     return render(request, "governance/pages/framework.html", {
         "company": company,
         "subpage": "regulations",
@@ -642,7 +648,7 @@ def digital_regulations(request):
     """Digital Regulations page"""
     company = MockCompany()
     agent_name = request.GET.get('agent', '')
-    breadcrumbs = [{"name": _("Digital Regulations"), "url": request.build_absolute_uri()}]
+    breadcrumbs = [{"name": "Digital Regulations", "url": request.build_absolute_uri()}]
     return render(request, "governance/pages/digital_regulations.html", {
         "company": company,
         "subpage": "digital_regulations",
@@ -651,124 +657,127 @@ def digital_regulations(request):
     })
 
 
-def multi_agent_use_cases(request):
-    """Multi Agent Use Cases page"""
-    ensure_governance_platform(request)
-    company = MockCompany()
-    agent_name = request.GET.get('agent', '')
-    search_term = request.GET.get('search', '').strip()
-    page_number = int(request.GET.get('page', 1))
-    limit = int(request.GET.get('limit', 10))
-    
-    breadcrumbs = [{"name": _("Multi Agent Use Cases"), "url": request.build_absolute_uri()}]
-    
-    # Similar to ai_systems but for use cases
-    use_cases_data = get_mock_use_cases()
-    models_data = get_mock_models()
-    datasets_data = get_mock_datasets()
-    agents_data = get_mock_agents()
-    
-    if search_term:
-        use_cases_data = [uc for uc in use_cases_data if search_term.lower() in uc.get('name', '').lower()]
-    
-    use_cases_list = []
-    for uc_data in use_cases_data:
-        use_case = create_mock_use_case(uc_data)
+# multi_agent_use_cases is now using Clean Architecture from presentation.views.multi_agent_use_cases_view
+# If Clean Architecture import failed, define legacy version below
+if not USE_CLEAN_ARCHITECTURE:
+    def multi_agent_use_cases(request):
+        """Multi Agent Use Cases page - Legacy implementation"""
+        ensure_governance_platform(request)
+        company = MockCompany()
+        agent_name = request.GET.get('agent', '')
+        search_term = request.GET.get('search', '').strip()
+        page_number = int(request.GET.get('page', 1))
+        limit = int(request.GET.get('limit', 10))
         
-        # Find and assign agent to use_case
-        agent_id = uc_data.get('agent_id')
-        if agent_id:
-            agent_data = next((a for a in agents_data if a.get('id') == agent_id), None)
-            if agent_data:
-                use_case.agent = create_mock_agent(agent_data)
+        breadcrumbs = [{"name": "Multi Agent Use Cases", "url": request.build_absolute_uri()}]
+        
+        # Similar to ai_systems but for use cases
+        use_cases_data = get_mock_use_cases()
+        models_data = get_mock_models()
+        datasets_data = get_mock_datasets()
+        agents_data = get_mock_agents()
+        
+        if search_term:
+            use_cases_data = [uc for uc in use_cases_data if search_term.lower() in uc.get('name', '').lower()]
+        
+        use_cases_list = []
+        for uc_data in use_cases_data:
+            use_case = create_mock_use_case(uc_data)
+            
+            # Find and assign agent to use_case
+            agent_id = uc_data.get('agent_id')
+            if agent_id:
+                agent_data = next((a for a in agents_data if a.get('id') == agent_id), None)
+                if agent_data:
+                    use_case.agent = create_mock_agent(agent_data)
+                else:
+                    # Create a default agent if not found
+                    use_case.agent = MockObject(id=agent_id, name="Unknown Agent")
             else:
-                # Create a default agent if not found
-                use_case.agent = MockObject(id=agent_id, name="Unknown Agent")
-        else:
-            use_case.agent = MockObject(id=None, name="No Agent")
+                use_case.agent = MockObject(id=None, name="No Agent")
+            
+            compliance = calculate_compliance_mock(use_case)
+            risks = calculate_risks_mock(use_case)
+            
+            models = [m for m in models_data if m.get('id') in uc_data.get('models', [])]
+            datasets = [d for d in datasets_data if d.get('id') in uc_data.get('datasets', [])]
+            
+            use_cases_list.append({
+                'use_case': use_case,
+                'compliance': compliance,
+                'risks': risks,
+                'models': models,
+                'datasets': datasets,
+            })
         
-        compliance = calculate_compliance_mock(use_case)
-        risks = calculate_risks_mock(use_case)
+        from django.core.paginator import Paginator
+        paginator = Paginator(use_cases_list, limit)
+        page_obj = paginator.get_page(page_number)
         
-        models = [m for m in models_data if m.get('id') in uc_data.get('models', [])]
-        datasets = [d for d in datasets_data if d.get('id') in uc_data.get('datasets', [])]
+        use_case_id = request.GET.get('use_case_id', None)
+        selected_use_case = None
+        if use_case_id:
+            selected_use_case = next((uc for uc in use_cases_list if uc['use_case'].id == int(use_case_id)), None)
+            if selected_use_case:
+                selected_use_case = selected_use_case['use_case']
         
-        use_cases_list.append({
-            'use_case': use_case,
-            'compliance': compliance,
-            'risks': risks,
-            'models': models,
-            'datasets': datasets,
-        })
-    
-    from django.core.paginator import Paginator
-    paginator = Paginator(use_cases_list, limit)
-    page_obj = paginator.get_page(page_number)
-    
-    use_case_id = request.GET.get('use_case_id', None)
-    selected_use_case = None
-    if use_case_id:
-        selected_use_case = next((uc for uc in use_cases_list if uc['use_case'].id == int(use_case_id)), None)
+        evidences_data = get_mock_evidences()
+        evaluation_reports_data = get_mock_evaluation_reports()
+        review_comments_data = get_mock_review_comments()
+        
         if selected_use_case:
-            selected_use_case = selected_use_case['use_case']
-    
-    evidences_data = get_mock_evidences()
-    evaluation_reports_data = get_mock_evaluation_reports()
-    review_comments_data = get_mock_review_comments()
-    
-    if selected_use_case:
-        evidences_data = [e for e in evidences_data if e.get('use_case_id') == selected_use_case.id]
-        evaluation_reports_data = [r for r in evaluation_reports_data if r.get('use_case_id') == selected_use_case.id]
-        review_comments_data = [c for c in review_comments_data if c.get('use_case_id') == selected_use_case.id]
-    
-    # Convert to objects with proper attributes
-    evidences = convert_evidences_to_objects(evidences_data, use_cases_list)
-    evaluation_reports = convert_reports_to_objects(evaluation_reports_data, use_cases_list)
-    review_comments = convert_comments_to_objects(review_comments_data)
-    
-    report_types = [
-        ('dataset_evaluation', _('Dataset evaluations')),
-        ('model_evaluation', _('Models evaluations')),
-        ('secondary', _('Secondary')),
-        ('red_teaming_1', _('Red Teaming report')),
-        ('red_teaming_4', _('Red Teaming report 4')),
-        ('red_teaming_5', _('Red Teaming report 5')),
-        ('red_teaming_6', _('Red Teaming report 6')),
-        ('red_teaming_7', _('Red Teaming report 7')),
-    ]
-    
-    reports_dict = {}
-    for report in evaluation_reports:
-        report_type = getattr(report, 'report_type', None)
-        if report_type:
-            reports_dict[report_type] = report
-    
-    return render(request, "governance/pages/multiagentusecases.html", {
-        "company": company,
-        "subpage": "multi_agent_use_cases",
-        "breadcrumbs": breadcrumbs,
-        "agent_name": agent_name,
-        "agent": None,
-        "use_cases_data": page_obj.object_list,
-        "page_obj": page_obj,
-        "search_term": search_term,
-        "limit": limit,
-        "all_models": models_data,
-        "all_datasets": datasets_data,
-        "all_agents": [create_mock_agent(a) for a in get_mock_agents()],
-        "selected_use_case": selected_use_case,
-        "evidences": evidences,
-        "evaluation_reports": evaluation_reports,
-        "review_comments": review_comments,
-        "report_types": report_types,
-        "reports_dict": reports_dict,
-    })
+            evidences_data = [e for e in evidences_data if e.get('use_case_id') == selected_use_case.id]
+            evaluation_reports_data = [r for r in evaluation_reports_data if r.get('use_case_id') == selected_use_case.id]
+            review_comments_data = [c for c in review_comments_data if c.get('use_case_id') == selected_use_case.id]
+        
+        # Convert to objects with proper attributes
+        evidences = convert_evidences_to_objects(evidences_data, use_cases_list)
+        evaluation_reports = convert_reports_to_objects(evaluation_reports_data, use_cases_list)
+        review_comments = convert_comments_to_objects(review_comments_data)
+        
+        report_types = [
+            ('dataset_evaluation', 'Dataset evaluations'),
+            ('model_evaluation', 'Models evaluations'),
+            ('secondary', 'Secondary'),
+            ('red_teaming_1', 'Red Teaming report'),
+            ('red_teaming_4', 'Red Teaming report 4'),
+            ('red_teaming_5', 'Red Teaming report 5'),
+            ('red_teaming_6', 'Red Teaming report 6'),
+            ('red_teaming_7', 'Red Teaming report 7'),
+        ]
+        
+        reports_dict = {}
+        for report in evaluation_reports:
+            report_type = getattr(report, 'report_type', None)
+            if report_type:
+                reports_dict[report_type] = report
+        
+        return render(request, "governance/pages/multiagentusecases.html", {
+            "company": company,
+            "subpage": "multi_agent_use_cases",
+            "breadcrumbs": breadcrumbs,
+            "agent_name": agent_name,
+            "agent": None,
+            "use_cases_data": page_obj.object_list,
+            "page_obj": page_obj,
+            "search_term": search_term,
+            "limit": limit,
+            "all_models": models_data,
+            "all_datasets": datasets_data,
+            "all_agents": [create_mock_agent(a) for a in get_mock_agents()],
+            "selected_use_case": selected_use_case,
+            "evidences": evidences,
+            "evaluation_reports": evaluation_reports,
+            "review_comments": review_comments,
+            "report_types": report_types,
+            "reports_dict": reports_dict,
+        })
 
 
 def agent_creation(request):
     """Agent Creation page"""
     company = MockCompany()
-    breadcrumbs = [{"name": _("Agent Creation"), "url": request.build_absolute_uri()}]
+    breadcrumbs = [{"name": "Agent Creation", "url": request.build_absolute_uri()}]
     return render(request, "governance/pages/agent_creation.html", {
         "company": company,
         "subpage": "agent_creation",
@@ -779,7 +788,7 @@ def agent_creation(request):
 def questionnaire_response(request):
     """Questionnaire Response list page"""
     company = MockCompany()
-    breadcrumbs = [{"name": _("Questionnaire Responses"), "url": request.build_absolute_uri()}]
+    breadcrumbs = [{"name": "Questionnaire Responses", "url": request.build_absolute_uri()}]
     return render(request, "governance/pages/questionnaire_response.html", {
         "company": company,
         "subpage": "questionnaire_response",
@@ -790,7 +799,7 @@ def questionnaire_response(request):
 def questionnaire_response_detail(request, response_id):
     """Questionnaire Response Detail page"""
     company = MockCompany()
-    breadcrumbs = [{"name": _("Questionnaire Response Detail"), "url": request.build_absolute_uri()}]
+    breadcrumbs = [{"name": "Questionnaire Response Detail", "url": request.build_absolute_uri()}]
     return render(request, "governance/pages/questionnaire_response_detail.html", {
         "company": company,
         "subpage": "questionnaire_response_detail",
@@ -802,7 +811,7 @@ def questionnaire_response_detail(request, response_id):
 def assessment_response(request):
     """Assessment Response list page"""
     company = MockCompany()
-    breadcrumbs = [{"name": _("Assessment Responses"), "url": request.build_absolute_uri()}]
+    breadcrumbs = [{"name": "Assessment Responses", "url": request.build_absolute_uri()}]
     return render(request, "governance/pages/assessment_response.html", {
         "company": company,
         "subpage": "assessment_response",
@@ -813,7 +822,7 @@ def assessment_response(request):
 def assessment_response_detail(request, response_id):
     """Assessment Response Detail page"""
     company = MockCompany()
-    breadcrumbs = [{"name": _("Assessment Response Detail"), "url": request.build_absolute_uri()}]
+    breadcrumbs = [{"name": "Assessment Response Detail", "url": request.build_absolute_uri()}]
     return render(request, "governance/pages/assessment_response_detail.html", {
         "company": company,
         "subpage": "assessment_response_detail",
@@ -826,7 +835,7 @@ def assessment_response_detail(request, response_id):
 def eu_act_gpihr(request):
     """EU Act GPIHR page"""
     company = MockCompany()
-    breadcrumbs = [{"name": _("EU Act GPIHR"), "url": request.build_absolute_uri()}]
+    breadcrumbs = [{"name": "EU Act GPIHR", "url": request.build_absolute_uri()}]
     return render(request, "governance/pages/euactGPIHR.html", {
         "company": company,
         "subpage": "eu_act_gpihr",
@@ -837,7 +846,7 @@ def eu_act_gpihr(request):
 def eu_act_gpilr(request):
     """EU Act GPILR page"""
     company = MockCompany()
-    breadcrumbs = [{"name": _("EU Act GPILR"), "url": request.build_absolute_uri()}]
+    breadcrumbs = [{"name": "EU Act GPILR", "url": request.build_absolute_uri()}]
     return render(request, "governance/pages/euactGPILR.html", {
         "company": company,
         "subpage": "eu_act_gpilr",
@@ -849,7 +858,7 @@ def eu_act_hr(request):
     """EU Act HR page"""
     company = MockCompany()
     agent_name = request.GET.get('agent', '')
-    breadcrumbs = [{"name": _("EU Act HR"), "url": request.build_absolute_uri()}]
+    breadcrumbs = [{"name": "EU Act HR", "url": request.build_absolute_uri()}]
     return render(request, "governance/pages/euactHR.html", {
         "company": company,
         "subpage": "eu_act_hr",
@@ -861,7 +870,7 @@ def eu_act_hr(request):
 def eu_act_lr(request):
     """EU Act LR page"""
     company = MockCompany()
-    breadcrumbs = [{"name": _("EU Act LR"), "url": request.build_absolute_uri()}]
+    breadcrumbs = [{"name": "EU Act LR", "url": request.build_absolute_uri()}]
     return render(request, "governance/pages/euactLR.html", {
         "company": company,
         "subpage": "eu_act_lr",
@@ -872,7 +881,7 @@ def eu_act_lr(request):
 def eu_ai_act_framework(request):
     """EU AI Act Framework page"""
     company = MockCompany()
-    breadcrumbs = [{"name": _("EU AI Act Framework"), "url": request.build_absolute_uri()}]
+    breadcrumbs = [{"name": "EU AI Act Framework", "url": request.build_absolute_uri()}]
     return render(request, "governance/pages/euaiactframework.html", {
         "company": company,
         "subpage": "eu_ai_act_framework",
@@ -883,7 +892,7 @@ def eu_ai_act_framework(request):
 def main_eu_act_gpihr(request):
     """Main EU Act GPIHR page"""
     company = MockCompany()
-    breadcrumbs = [{"name": _("Main EU Act GPIHR"), "url": request.build_absolute_uri()}]
+    breadcrumbs = [{"name": "Main EU Act GPIHR", "url": request.build_absolute_uri()}]
     return render(request, "governance/pages/main_euactgpihr.html", {
         "company": company,
         "subpage": "main_eu_act_gpihr",
@@ -894,7 +903,7 @@ def main_eu_act_gpihr(request):
 def main_eu_act_gpilr(request):
     """Main EU Act GPILR page"""
     company = MockCompany()
-    breadcrumbs = [{"name": _("Main EU Act GPILR"), "url": request.build_absolute_uri()}]
+    breadcrumbs = [{"name": "Main EU Act GPILR", "url": request.build_absolute_uri()}]
     return render(request, "governance/pages/main_euactgpilr.html", {
         "company": company,
         "subpage": "main_eu_act_gpilr",
@@ -905,7 +914,7 @@ def main_eu_act_gpilr(request):
 def main_eu_act_hr(request):
     """Main EU Act HR page"""
     company = MockCompany()
-    breadcrumbs = [{"name": _("Main EU Act HR"), "url": request.build_absolute_uri()}]
+    breadcrumbs = [{"name": "Main EU Act HR", "url": request.build_absolute_uri()}]
     return render(request, "governance/pages/main_euacthr.html", {
         "company": company,
         "subpage": "main_eu_act_hr",
@@ -916,7 +925,7 @@ def main_eu_act_hr(request):
 def main_eu_act_lr(request):
     """Main EU Act LR page"""
     company = MockCompany()
-    breadcrumbs = [{"name": _("Main EU Act LR"), "url": request.build_absolute_uri()}]
+    breadcrumbs = [{"name": "Main EU Act LR", "url": request.build_absolute_uri()}]
     return render(request, "governance/pages/main_euactlr.html", {
         "company": company,
         "subpage": "main_eu_act_lr",
@@ -931,7 +940,7 @@ def mra(request):
     agent_name = request.GET.get('agent', '')
     category = request.GET.get('category', 'model')
     
-    breadcrumbs = [{"name": _("Risk Assessment"), "url": request.build_absolute_uri()}]
+    breadcrumbs = [{"name": "Risk Assessment", "url": request.build_absolute_uri()}]
     
     return render(request, "governance/pages/mra.html", {
         "company": company,
@@ -950,24 +959,33 @@ def risk_overview(request):
     agent_name = request.GET.get('agent', '')
     category = request.GET.get('category', 'overview')
     
-    breadcrumbs = [{"name": _("Risk Overview"), "url": request.build_absolute_uri()}]
+    breadcrumbs = [{"name": "Risk Overview", "url": request.build_absolute_uri()}]
     
-    # Load risk_tools.json
-    import os
-    risk_tools_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static/governance/data/risk_tools.json')
+    # Load risk_tools.json using BASE_DIR from settings
+    from django.conf import settings
+    from pathlib import Path
+    risk_tools_path = settings.BASE_DIR / 'static' / 'governance' / 'data' / 'risk_tools.json'
     risk_tools_data = {}
-    if os.path.exists(risk_tools_path):
+    if risk_tools_path.exists():
         try:
-            with open(risk_tools_path, 'r') as f:
+            with open(risk_tools_path, 'r', encoding='utf-8') as f:
                 risk_tools_data = json.load(f)
-        except Exception:
-            pass
+        except Exception as e:
+            # Log error but don't break the page
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Failed to load risk_tools.json: {e}")
+    
+    # Pass risk_tools_data as JSON for JavaScript to use
+    import json as json_module
+    risk_tools_json = json_module.dumps(risk_tools_data) if risk_tools_data else '{}'
     
     return render(request, "governance/pages/risk_overview.html", {
         "company": company,
         "subpage": "risk_overview",
         "breadcrumbs": breadcrumbs,
         "risk_tools_data": risk_tools_data,
+        "risk_tools_json": risk_tools_json,  # JSON string for JavaScript
         "agent": None,
         "agent_name": agent_name,
         "category": category,

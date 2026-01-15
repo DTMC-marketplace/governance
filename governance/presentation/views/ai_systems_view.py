@@ -4,7 +4,7 @@ AI Systems View - Refactored using Clean Architecture
 from pathlib import Path
 from django.shortcuts import render
 from django.core.paginator import Paginator
-from django.utils.translation import gettext as _
+
 from ...presentation.dependency_injection import get_container
 from ...domain.services.compliance_service import ComplianceService
 
@@ -107,7 +107,7 @@ def ai_systems(request):
     
     company = MockCompany()
     breadcrumbs = [
-        {"name": _("AI Systems"), "url": request.build_absolute_uri()},
+        {"name": "AI Systems", "url": request.build_absolute_uri()},
     ]
     
     return render(

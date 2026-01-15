@@ -3,7 +3,7 @@ Dashboard View - Refactored using Clean Architecture
 """
 from pathlib import Path
 from django.shortcuts import render
-from django.utils.translation import gettext as _
+
 from ...presentation.dependency_injection import get_container
 
 
@@ -35,7 +35,7 @@ def governance_dashboard(request):
     # Prepare context
     company = MockCompany()
     breadcrumbs = [
-        {"name": _("Dashboard"), "url": request.build_absolute_uri()},
+        {"name": "Dashboard", "url": request.build_absolute_uri()},
     ]
     
     # Convert DTO to template context

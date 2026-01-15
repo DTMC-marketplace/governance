@@ -1,5 +1,5 @@
 {% extends "governance/base.html" %}
-{% load i18n %}
+
 {% load static %}
 {% load custom_filters %}
 
@@ -15,17 +15,17 @@
             onclick="history.forward()">
             <img src="{% static 'governance/img/arrow-right-gray.svg' %}" alt="Forward" class="w-3.5 h-3.5">
         </button>
-        <span class="text-sm font-semibold text-[#F13D30]">{% trans "Questionnaires" %}</span>
+        <span class="text-sm font-semibold text-[#F13D30]">Questionnaires</span>
     </div>
 
     <!-- Page Header -->
     <div class="flex justify-between items-start">
         <div class="flex flex-col">
             <h1 class="text-2xl font-bold text-[#22262A]" id="page-title">
-                {% if agent_name %}{{ agent_name }}{% else %}{% trans "Agent use cases mapping" %}{% endif %}
+                {% if agent_name %}{{ agent_name }}{% else %}Agent use cases mapping{% endif %}
             </h1>
             <p class="text-sm text-[#6B7280] mt-1" id="page-subtitle">
-                {% if agent_name %}{% blocktrans %}Review questionnaires and assessment for {{ agent_name }}{% endblocktrans %}{% else %}{% trans "Review data and information of agent use cases" %}{% endif %}
+                {% if agent_name %}Review questionnaires and assessment for {{ agent_name }}{% else %}Review data and information of agent use cases{% endif %}
             </p>
         </div>
     </div>
@@ -35,13 +35,13 @@
     <!-- Header Section -->
     <div class="flex items-center justify-between mb-6">
         <div>
-            <h1 class="text-xl font-bold text-[#1a1a2e] mb-1">{% trans "Questionnaires" %}</h1>
-            <p class="text-sm text-[#565F6C]">{% trans "Choose an AI assistant questionnaires to assess your compliance levels" %}</p>
+            <h1 class="text-xl font-bold text-[#1a1a2e] mb-1">Questionnaires</h1>
+            <p class="text-sm text-[#565F6C]">Choose an AI assistant questionnaires to assess your compliance levels</p>
         </div>
         <button
             class="flex items-center gap-2 px-4 py-2.5 bg-white border border-[#F13D30] rounded-full text-sm font-semibold text-[#F13D30] cursor-pointer hover:bg-[#FEF2F2] transition-colors">
-            <img src="/static/icons/icon-benchmarking.svg" alt="{% trans 'Add' %}" class="w-4 h-4">
-            {% trans "Add AI Agent" %}
+            <img src="/static/icons/icon-benchmarking.svg" alt="Add" class="w-4 h-4">
+            Add AI Agent
         </button>
     </div>
 
@@ -78,14 +78,14 @@
                             </svg>
                         </div>
                         <input type="search" id="default-search" name="search" value="{{ search_term|default:'' }}"
-                            class="block w-full p-4 !rounded-full text-sm" placeholder="{% trans 'Search' %}"
+                            class="block w-full p-4 !rounded-full text-sm" placeholder="Search"
                             style="padding-inline-start: 1rem; text-indent: 1rem;" />
                     </div>
                 </form>
             </div>
         </div>
         <div class="flex items-center space-x-4 text-gray-700">
-            <span class="text-sm whitespace-nowrap">{% trans "Rows per page:" %}</span>
+            <span class="text-sm whitespace-nowrap">Rows per page:</span>
             <select id="rowsPerPage"
                 class="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-blue-300 w-20">
                 <option value="10" {% if limit == 10 %}selected{% endif %}>10</option>
@@ -161,7 +161,7 @@
             </div>
                 {% endif %}
                 <span
-                    class="inline-flex items-center px-3 py-1 bg-[#D1FAE5] rounded-full text-xs font-medium text-[#065F46]">{% trans "Governance" %}</span>
+                    class="inline-flex items-center px-3 py-1 bg-[#D1FAE5] rounded-full text-xs font-medium text-[#065F46]">Governance</span>
             </div>
             <h3 class="text-lg font-bold text-[#1f2937]">{{ agent_item.name }}</h3>
             <p class="text-sm text-[#6b7280]">
@@ -175,12 +175,12 @@
             </p>
             <button
                 class="w-fit px-5 py-2 bg-[#F13D30] text-white border-none rounded-lg text-sm font-semibold cursor-pointer hover:bg-[#DC180A] transition-colors">
-                {% trans "View Questionnaires" %}
+                View Questionnaires
             </button>
         </div>
         {% empty %}
         <div class="col-span-3 text-center py-8 text-sm text-[#6B7280]">
-            {% trans "No agents found." %} <a href="{% url 'ai_systems' %}" class="text-[#2563EB] hover:underline">{% trans "Create an agent" %}</a> {% trans "first." %}
+            No agents found. <a href="{% url 'ai_systems' %}" class="text-[#2563EB] hover:underline">Create an agent</a> first.
             </div>
         {% endfor %}
     </div>
@@ -188,7 +188,7 @@
     {% if agent %}
     <!-- Use cases assessment progress -->
     <div class="bg-white rounded-lg border border-[#E5E7EB] p-6 mb-6">
-        <h3 class="text-lg font-bold text-[#1f2937] mb-6">{% trans "Use cases assessment progress" %}</h3>
+        <h3 class="text-lg font-bold text-[#1f2937] mb-6">Use cases assessment progress</h3>
         {% with assessing_count=use_cases_data|length|default:0 reviewing_count=0 cleared_count=0 %}
         {% for use_case_data in use_cases_data %}
             {% if use_case_data.use_case.compliance_status == 'assessing' %}
@@ -204,21 +204,21 @@
                 <div class="w-16 h-16 rounded-full {% if assessing_count > 0 %}bg-[#F13D30]{% else %}bg-[#FECACA]{% endif %} border-4 flex items-center justify-center">
                     {% if assessing_count > 0 %}<span class="text-white font-bold">{{ assessing_count }}</span>{% endif %}
                 </div>
-                <span class="text-sm font-medium text-[#111827] text-center">{% trans "Assessing" %}</span>
+                <span class="text-sm font-medium text-[#111827] text-center">Assessing</span>
             </div>
             <div class="flex-1 h-0.5 bg-[#6B7280] mx-4"></div>
             <div class="flex flex-col items-center gap-3 flex-1">
                 <div class="w-16 h-16 rounded-full {% if reviewing_count > 0 %}bg-[#F13D30]{% else %}bg-[#FECACA]{% endif %} flex items-center justify-center">
                     {% if reviewing_count > 0 %}<span class="text-white font-bold">{{ reviewing_count }}</span>{% endif %}
                 </div>
-                <span class="text-sm font-medium text-[#111827] text-center">{% trans "Reviewing assessment" %}</span>
+                <span class="text-sm font-medium text-[#111827] text-center">Reviewing assessment</span>
             </div>
             <div class="flex-1 h-0.5 bg-[#6B7280] mx-4"></div>
             <div class="flex flex-col items-center gap-3 flex-1">
                 <div class="w-16 h-16 rounded-full {% if cleared_count > 0 %}bg-[#10B981]{% else %}bg-[#FECACA]{% endif %} flex items-center justify-center">
                     {% if cleared_count > 0 %}<span class="text-white font-bold">{{ cleared_count }}</span>{% endif %}
                 </div>
-                <span class="text-sm font-medium text-[#111827] text-center">{% trans "Cleared" %}</span>
+                <span class="text-sm font-medium text-[#111827] text-center">Cleared</span>
             </div>
         </div>
         {% endwith %}
@@ -228,16 +228,16 @@
     {% if agent or selected_use_case %}
     <!-- AI Use Case compliance alignment -->
     <div class="bg-white rounded-lg border border-[#E5E7EB] p-6 mb-6">
-        <h3 class="text-xl font-bold text-[#22262A] mb-4">{% trans "AI Use Case compliance alignment" %}</h3>
+        <h3 class="text-xl font-bold text-[#22262A] mb-4">AI Use Case compliance alignment</h3>
         {% if selected_use_case %}
             {% with compliance=selected_use_case.calculate_compliance %}
         <table class="w-full border-collapse">
             <thead>
                 <tr>
-                        <th class="py-3 px-4 text-center text-sm font-medium text-[#6B7280] border-b border-[#B5BCC4]">{% trans "EU AI Act" %}</th>
-                        <th class="py-3 px-4 text-center text-sm font-medium text-[#6B7280] border-b border-[#B5BCC4]">{% trans "GDPR" %}</th>
-                        <th class="py-3 px-4 text-center text-sm font-medium text-[#6B7280] border-b border-[#B5BCC4]">{% trans "Data Act" %}</th>
-                        <th class="py-3 px-4 text-center text-sm font-medium text-[#6B7280] border-b border-[#B5BCC4]">{% trans "Edit" %}</th>
+                        <th class="py-3 px-4 text-center text-sm font-medium text-[#6B7280] border-b border-[#B5BCC4]">EU AI Act</th>
+                        <th class="py-3 px-4 text-center text-sm font-medium text-[#6B7280] border-b border-[#B5BCC4]">GDPR</th>
+                        <th class="py-3 px-4 text-center text-sm font-medium text-[#6B7280] border-b border-[#B5BCC4]">Data Act</th>
+                        <th class="py-3 px-4 text-center text-sm font-medium text-[#6B7280] border-b border-[#B5BCC4]">Edit</th>
                 </tr>
             </thead>
             <tbody>
@@ -332,7 +332,7 @@
         </table>
             {% endwith %}
         {% else %}
-            <p class="text-sm text-[#6B7280] text-center py-4">{% trans "Select a use case from the table above to view compliance alignment" %}</p>
+            <p class="text-sm text-[#6B7280] text-center py-4">Select a use case from the table above to view compliance alignment</p>
         {% endif %}
     </div>
     {% endif %}
@@ -351,7 +351,7 @@
                 </div>
             </div>
             <div class="flex flex-col items-center gap-2">
-                <span class="text-sm font-medium text-[#374151]">{% trans "AI Act Alignment" %}</span>
+                <span class="text-sm font-medium text-[#374151]">AI Act Alignment</span>
                 {% with compliance=selected_use_case.calculate_compliance %}
                 <div class="w-6 h-6 rounded-full {% if compliance.eu_ai_act %}bg-[#10B981]{% elif compliance.status == 'partial' %}bg-[#FCD34D]{% else %}bg-[#EF4444]{% endif %} flex items-center justify-center">
                     {% if compliance.eu_ai_act or compliance.status == 'partial' %}
@@ -383,7 +383,7 @@
                 </div>
             </div>
             <div class="flex flex-col items-center gap-2">
-                <span class="text-sm font-medium text-[#374151]">{% trans "AI Act Alignment" %}</span>
+                <span class="text-sm font-medium text-[#374151]">AI Act Alignment</span>
                 {% with compliance=use_cases_data.0.compliance %}
                 <div class="w-6 h-6 rounded-full {% if compliance.eu_ai_act %}bg-[#10B981]{% elif compliance.status == 'partial' %}bg-[#FCD34D]{% else %}bg-[#EF4444]{% endif %} flex items-center justify-center">
                     {% if compliance.eu_ai_act or compliance.status == 'partial' %}
@@ -405,7 +405,7 @@
 
     <!-- Evidences Section -->
     <div class="bg-white rounded-lg border border-[#E5E7EB] p-6 mb-6">
-        <h3 class="text-lg font-semibold text-[#111827] mb-4">{% trans "Evidences" %}</h3>
+        <h3 class="text-lg font-semibold text-[#111827] mb-4">Evidences</h3>
 
         {% if agent or selected_use_case %}
         <!-- Document List -->
@@ -441,9 +441,9 @@
             {% else %}
                 <p class="text-sm text-[#6B7280] text-center py-4">
                     {% if agent or selected_use_case %}
-                        {% trans "No evidences uploaded yet. Upload files below." %}
+                        No evidences uploaded yet. Upload files below.
                     {% else %}
-                        {% trans "No evidences uploaded yet. Select a use case or agent and upload files below." %}
+                        No evidences uploaded yet. Select a use case or agent and upload files below.
                     {% endif %}
                 </p>
             {% endif %}
@@ -461,21 +461,21 @@
                     <line x1="12" y1="3" x2="12" y2="15" />
                 </svg>
                 <div class="flex flex-col gap-1">
-                    <p class="text-sm font-medium text-[#374151]">{% trans "Click or drag and drop to add evidence documents" %}</p>
-                    <p class="text-xs text-[#6B7280]">{% trans "PDF, DOC, JPG, XLS (Max 5GB per file)" %}</p>
+                    <p class="text-sm font-medium text-[#374151]">Click or drag and drop to add evidence documents</p>
+                    <p class="text-xs text-[#6B7280]">PDF, DOC, JPG, XLS (Max 5GB per file)</p>
                 </div>
             </div>
         </div>
         {% else %}
         <div class="border-2 border-dashed border-[#D1D5DB] rounded-lg p-12 text-center bg-[#F9FAFB] mb-4">
-            <p class="text-sm text-[#6B7280]">{% trans "Please select an agent or use case from the table above to upload evidences" %}</p>
+            <p class="text-sm text-[#6B7280]">Please select an agent or use case from the table above to upload evidences</p>
         </div>
         {% endif %}
     </div>
     
     <!-- Evaluation report Section -->
     <div class="bg-white rounded-lg border border-[#E5E7EB] p-6 mb-6">
-        <h3 class="text-lg font-semibold text-[#111827] mb-4">{% trans "Evaluation report" %}</h3>
+        <h3 class="text-lg font-semibold text-[#111827] mb-4">Evaluation report</h3>
         
         {% if agent or selected_use_case %}
         <div class="flex flex-col gap-3" id="evaluationReportsList">
@@ -533,7 +533,7 @@
                     </div>
         {% else %}
         <div class="border-2 border-dashed border-[#D1D5DB] rounded-lg p-12 text-center bg-[#F9FAFB]">
-            <p class="text-sm text-[#6B7280]">{% trans "Please select an agent or use case from the table above to upload evaluation reports" %}</p>
+            <p class="text-sm text-[#6B7280]">Please select an agent or use case from the table above to upload evaluation reports</p>
                 </div>
         {% endif %}
     </div>
@@ -691,7 +691,7 @@
             </div>
         {% else %}
         <div class="border-2 border-dashed border-[#D1D5DB] rounded-lg p-12 text-center bg-[#F9FAFB]">
-            <p class="text-sm text-[#6B7280]">{% trans "Please select an agent or use case from the table above to view and add review comments." %}</p>
+            <p class="text-sm text-[#6B7280]">Please select an agent or use case from the table above to view and add review comments.</p>
                 </div>
         {% endif %}
     </div>

@@ -1,8 +1,8 @@
 {% extends "governance/base.html" %}
-{% load i18n %}
+
 {% load static %}
 
-{% block title %}{% trans "AI Systems" %}{% endblock %}
+{% block title %}AI Systems{% endblock %}
 
 {% block dashboard_content %}
 <div class="flex flex-col gap-5">
@@ -14,23 +14,23 @@
         <button class="w-6 h-6 bg-transparent border-none cursor-pointer p-0 flex items-center justify-center" onclick="history.forward()">
             <img src="{% static 'governance/img/arrow-right-gray.svg' %}" alt="Forward" class="w-3.5 h-3.5">
                 </button>
-        <span class="text-sm font-semibold text-[#F13D30]">{% trans "AI Systems" %}</span>
+        <span class="text-sm font-semibold text-[#F13D30]">AI Systems</span>
             </div>
 
             <!-- Page Header -->
     <div class="flex justify-between items-start">
         <div>
-            <h1 class="text-2xl font-bold text-[#22262A] mb-1">{% trans "AI Systems" %}</h1>
-            <p class="text-sm text-[#6B7280]">{% trans "List all your AI use cases" %}</p>
+            <h1 class="text-2xl font-bold text-[#22262A] mb-1">AI Systems</h1>
+            <p class="text-sm text-[#6B7280]">List all your AI use cases</p>
                 </div>
         <div class="flex items-center gap-3">
             <button class="flex items-center gap-1 px-4 py-2 border border-[#DC180A] bg-white rounded-full text-base font-semibold text-[#F13D30] cursor-pointer transition-all duration-200 hover:bg-[#FEF5F4]">
-                <img src="{% static 'governance/img/import.png' %}" alt="{% trans 'Import' %}" class="w-4 h-4">
-                <span class="text-sm font-semibold">{% trans "Import" %}</span>
+                <img src="{% static 'governance/img/import.png' %}" alt="Import" class="w-4 h-4">
+                <span class="text-sm font-semibold">Import</span>
                     </button>
             <button class="flex items-center gap-1 px-4 py-2 border border-[#DC180A] bg-white rounded-full text-base font-semibold text-[#F13D30] cursor-pointer transition-all duration-200 hover:bg-[#FEF5F4]">
-                <img src="{% static 'governance/img/export.png' %}" alt="{% trans 'Export' %}" class="w-4 h-4">
-                <span class="text-sm font-semibold">{% trans "Export" %}</span>
+                <img src="{% static 'governance/img/export.png' %}" alt="Export" class="w-4 h-4">
+                <span class="text-sm font-semibold">Export</span>
                     </button>
             <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#e8f4fd] to-[#f0e6fa] flex items-center justify-center border border-[#E5E7EB] cursor-pointer">
                 <img src="{% static 'governance/img/aiassistant.svg' %}" alt="AI Assistant" class="w-6 h-6">
@@ -51,7 +51,7 @@
             <span class="text-sm text-[#22262A]">AI systems monitoring. <strong class="font-semibold">{{ agents_data|length }} agent{{ agents_data|length|pluralize }} available.</strong></span>
                 </div>
         <div class="flex items-center gap-2">
-            <button class="px-3 py-1.5 text-sm font-medium text-[#F13D30] hover:bg-[#FEF5F4] rounded cursor-pointer">{% trans "View" %}</button>
+            <button class="px-3 py-1.5 text-sm font-medium text-[#F13D30] hover:bg-[#FEF5F4] rounded cursor-pointer">View</button>
             <button onclick="document.getElementById('alert-banner').style.display='none'" class="w-6 h-6 flex items-center justify-center text-[#6B7280] hover:bg-[#F3F4F6] rounded cursor-pointer">×</button>
                 </div>
             </div>
@@ -98,7 +98,7 @@
                     </div>
                         <input type="search" id="default-search" name="search" value="{{ search_term|default:'' }}"
                             class="block w-full p-4 !rounded-full text-sm "
-                            placeholder="{% trans 'Search' %}" style="padding-inline-start: 1rem; text-indent: 1rem;" />
+                            placeholder="Search" style="padding-inline-start: 1rem; text-indent: 1rem;" />
                 </div>
                 </form>
             </div>
@@ -221,7 +221,7 @@
                                 </svg>
                         </div>
                             </th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase tracking-wider">{% trans "Edit" %}</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase tracking-wider">Edit</th>
                         </tr>
                     </thead>
             <tbody class="bg-white divide-y divide-[#E5E7EB]">
@@ -240,11 +240,11 @@
                             </td>
                     <td class="px-4 py-3">
                         {% if agent_data.agent.compliance_status == 'reviewing' %}
-                        <span class="px-2 py-1 text-xs font-medium text-[#F13D30] bg-[#FEF5F4] rounded-full">{% trans "Reviewing" %}</span>
+                        <span class="px-2 py-1 text-xs font-medium text-[#F13D30] bg-[#FEF5F4] rounded-full">Reviewing</span>
                         {% elif agent_data.agent.compliance_status == 'assessing' %}
-                            <span class="px-2 py-1 text-xs font-medium text-[#2C78B1] bg-[#EFF6FF] rounded-full">{% trans "Assessing" %}</span>
+                            <span class="px-2 py-1 text-xs font-medium text-[#2C78B1] bg-[#EFF6FF] rounded-full">Assessing</span>
                         {% elif agent_data.agent.compliance_status == 'cleared' %}
-                            <span class="px-2 py-1 text-xs font-medium text-[#065F46] bg-[#D1FAE5] rounded-full">{% trans "Cleared" %}</span>
+                            <span class="px-2 py-1 text-xs font-medium text-[#065F46] bg-[#D1FAE5] rounded-full">Cleared</span>
                         {% endif %}
                     </td>
                     <td class="px-4 py-3 text-sm text-[#4B5563]">{{ agent_data.agent.get_ai_act_role_display }}</td>
@@ -349,7 +349,7 @@
                         </tr>
             {% empty %}
                 <tr>
-                    <td colspan="9" class="px-4 py-8 text-center text-sm text-[#6B7280]">{% trans "No AI agents found. Click \"Add New\" to create one." %}</td>
+                    <td colspan="9" class="px-4 py-8 text-center text-sm text-[#6B7280]">No AI agents found. Click "Add New" to create one.</td>
                         </tr>
             {% endfor %}
                     </tbody>
@@ -435,7 +435,7 @@
     <div id="addAgentModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto m-4">
             <div class="sticky top-0 bg-white border-b border-[#E5E7EB] px-6 py-4 flex justify-between items-center">
-                <h2 class="text-xl font-bold text-[#22262A]">{% trans "Add New AI Agent" %}</h2>
+                <h2 class="text-xl font-bold text-[#22262A]">Add New AI Agent</h2>
                 <button onclick="closeAddAgentModal()" class="text-[#6B7280] hover:text-[#22262A]">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -450,9 +450,9 @@
                 </div>
                 
                 <div>
-                    <label class="block text-sm font-medium text-[#374151] mb-2">{% trans "Business Unit" %}</label>
+                    <label class="block text-sm font-medium text-[#374151] mb-2">Business Unit</label>
                     <select name="business_unit" id="business_unit_select" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:ring-2 focus:ring-[#DC6B64]">
-                        <option value="">{% trans "Select Business Unit" %}</option>
+                        <option value="">Select Business Unit</option>
                         {% for business_unit in business_units %}
                         <option value="{{ business_unit.name }}">{{ business_unit.name }}</option>
                         {% endfor %}
@@ -461,10 +461,10 @@
                 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-[#374151] mb-2">{% trans "Compliance Status" %}</label>
+                        <label class="block text-sm font-medium text-[#374151] mb-2">Compliance Status</label>
                         <select name="compliance_status" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:ring-2 focus:ring-[#DC6B64]">
-                            <option value="assessing">{% trans "Assessing" %}</option>
-                            <option value="reviewing">{% trans "Reviewing" %}</option>
+                            <option value="assessing">Assessing</option>
+                            <option value="reviewing">Reviewing</option>
                             <option value="cleared">Cleared</option>
                         </select>
                     </div>

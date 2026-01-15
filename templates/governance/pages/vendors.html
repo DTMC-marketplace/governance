@@ -1,8 +1,8 @@
 {% extends "governance/base.html" %}
-{% load i18n %}
+
 {% load static %}
 
-{% block title %}{% trans "Vendors" %}{% endblock %}
+{% block title %}Vendors{% endblock %}
 
 {% block dashboard_content %}
 <div class="flex flex-col gap-5">
@@ -14,23 +14,23 @@
                 <button class="w-8 h-8 border-none bg-transparent cursor-pointer flex items-center justify-center rounded-md hover:bg-[#F3F4F6]">
                     <img src="{% static 'governance/img/arrow-right-gray.svg' %}" alt="Forward" class="w-4 h-4">
                 </button>
-                <span class="text-sm font-semibold text-[#F13D30]">{% trans "Vendors" %}</span>
+                <span class="text-sm font-semibold text-[#F13D30]">Vendors</span>
             </div>
 
             <!-- Page Header -->
             <div class="flex justify-between items-start">
                 <div class="header-left">
-                    <h1 class="text-2xl font-bold text-[#22262A]">{% trans "Vendors" %}</h1>
-                    <p class="text-sm text-[#6B7280] mt-1">{% trans "Vendors compliance checker" %}</p>
+                    <h1 class="text-2xl font-bold text-[#22262A]">Vendors</h1>
+                    <p class="text-sm text-[#6B7280] mt-1">Vendors compliance checker</p>
                 </div>
                 <div class="flex items-center gap-3">
                     <button class="flex items-center gap-1 px-4 py-2 border border-[#DC180A] bg-white rounded-full text-base font-semibold text-[#F13D30] cursor-pointer transition-all duration-200 hover:bg-[#FEF5F4]">
-                        <img src="{% static 'governance/img/import.png' %}" alt="{% trans 'Import' %}" class="w-4 h-4">
-                        <span class="text-sm font-semibold">{% trans "Import" %}</span>
+                        <img src="{% static 'governance/img/import.png' %}" alt="Import" class="w-4 h-4">
+                        <span class="text-sm font-semibold">Import</span>
                     </button>
                     <button class="flex items-center gap-1 px-4 py-2 border border-[#DC180A] bg-white rounded-full text-base font-semibold text-[#F13D30] cursor-pointer transition-all duration-200 hover:bg-[#FEF5F4]">
-                        <img src="{% static 'governance/img/export.png' %}" alt="{% trans 'Export' %}" class="w-4 h-4">
-                        <span class="text-sm font-semibold">{% trans "Export" %}</span>
+                        <img src="{% static 'governance/img/export.png' %}" alt="Export" class="w-4 h-4">
+                        <span class="text-sm font-semibold">Export</span>
                     </button>
                     <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#e8f4fd] to-[#f0e6fa] flex items-center justify-center border border-[#E5E7EB] cursor-pointer">
                         <img src="{% static 'governance/img/aiassistant.svg' %}" alt="AI Assistant" class="w-6 h-6">
@@ -45,10 +45,10 @@
                         <circle cx="12" cy="12" r="10" />
                         <path d="M12 16v-4M12 8h.01" />
                     </svg>
-                    <span class="text-sm text-[#374151]">{% trans "Vendor assessment completed" %} <strong>{% trans "25 Vendors require attention." %}</strong></span>
+                    <span class="text-sm text-[#374151]">Vendor assessment completed <strong>25 Vendors require attention.</strong></span>
                 </div>
                 <div class="flex items-center gap-3">
-                    <button class="px-4 py-1.5 bg-[#DC6B64] text-white border-none rounded-md text-xs font-medium cursor-pointer">{% trans "View" %}</button>
+                    <button class="px-4 py-1.5 bg-[#DC6B64] text-white border-none rounded-md text-xs font-medium cursor-pointer">View</button>
                     <button class="bg-transparent border-none text-xl text-[#9CA3AF] cursor-pointer">×</button>
                 </div>
             </div>
@@ -89,7 +89,7 @@
                                 </div>
                                 <input type="search" id="default-search" name="search" value="{{ search_term|default:'' }}"
                                     class="block w-full p-4 !rounded-full text-sm "
-                                    placeholder="{% trans 'Search' %}" style="padding-inline-start: 1rem; text-indent: 1rem;" />
+                                    placeholder="Search" style="padding-inline-start: 1rem; text-indent: 1rem;" />
                             </div>
                         </form>
                     </div>
@@ -177,7 +177,7 @@
                                     </span>
                                 </div>
                             </td>
-                            <td class="py-3.5 px-4 text-xs text-[#4B5563] border-b border-[#E5E7EB]"><span class="text-[#DC6B64] font-medium">{% trans "Reviewing" %}</span></td>
+                            <td class="py-3.5 px-4 text-xs text-[#4B5563] border-b border-[#E5E7EB]"><span class="text-[#DC6B64] font-medium">Reviewing</span></td>
                             <td class="py-3.5 px-4 text-xs text-[#4B5563] border-b border-[#E5E7EB]">
                                 <div class="flex items-center gap-3">
                                     <div class="w-25 h-2 bg-[#E5E7EB] rounded overflow-hidden">
@@ -212,7 +212,7 @@
                                     </span>
                                 </div>
                             </td>
-                            <td class="py-3.5 px-4 text-xs text-[#4B5563] border-b border-[#E5E7EB]"><span class="text-[#6B7280] font-medium">{% trans "Assessing" %}</span></td>
+                            <td class="py-3.5 px-4 text-xs text-[#4B5563] border-b border-[#E5E7EB]"><span class="text-[#6B7280] font-medium">Assessing</span></td>
                             <td class="py-3.5 px-4 text-xs text-[#4B5563] border-b border-[#E5E7EB]">
                                 <div class="flex items-center gap-3">
                                     <div class="w-25 h-2 bg-[#E5E7EB] rounded overflow-hidden">
@@ -247,7 +247,7 @@
                                     </span>
                                 </div>
                             </td>
-                            <td class="py-3.5 px-4 text-xs text-[#4B5563] border-b border-[#E5E7EB]"><span class="text-[#22C55E] font-medium">{% trans "Cleared" %}</span></td>
+                            <td class="py-3.5 px-4 text-xs text-[#4B5563] border-b border-[#E5E7EB]"><span class="text-[#22C55E] font-medium">Cleared</span></td>
                             <td class="py-3.5 px-4 text-xs text-[#4B5563] border-b border-[#E5E7EB]">
                                 <div class="flex items-center gap-3">
                                     <div class="w-25 h-2 bg-[#E5E7EB] rounded overflow-hidden">
@@ -282,7 +282,7 @@
                                     </span>
                                 </div>
                             </td>
-                            <td class="py-3.5 px-4 text-xs text-[#4B5563] border-b border-[#E5E7EB]"><span class="text-[#6B7280] font-medium">{% trans "Assessing" %}</span></td>
+                            <td class="py-3.5 px-4 text-xs text-[#4B5563] border-b border-[#E5E7EB]"><span class="text-[#6B7280] font-medium">Assessing</span></td>
                             <td class="py-3.5 px-4 text-xs text-[#4B5563] border-b border-[#E5E7EB]">
                                 <div class="flex items-center gap-3">
                                     <div class="w-25 h-2 bg-[#E5E7EB] rounded overflow-hidden">
@@ -317,7 +317,7 @@
                                     </span>
                                 </div>
                             </td>
-                            <td class="py-3.5 px-4 text-xs text-[#4B5563] border-b border-[#E5E7EB]"><span class="text-[#6B7280] font-medium">{% trans "Assessing" %}</span></td>
+                            <td class="py-3.5 px-4 text-xs text-[#4B5563] border-b border-[#E5E7EB]"><span class="text-[#6B7280] font-medium">Assessing</span></td>
                             <td class="py-3.5 px-4 text-xs text-[#4B5563] border-b border-[#E5E7EB]">
                                 <div class="flex items-center gap-3">
                                     <div class="w-25 h-2 bg-[#E5E7EB] rounded overflow-hidden">
@@ -352,7 +352,7 @@
                                     </span>
                                 </div>
                             </td>
-                            <td class="py-3.5 px-4 text-xs text-[#4B5563] border-b border-[#E5E7EB]"><span class="text-[#6B7280] font-medium">{% trans "Assessing" %}</span></td>
+                            <td class="py-3.5 px-4 text-xs text-[#4B5563] border-b border-[#E5E7EB]"><span class="text-[#6B7280] font-medium">Assessing</span></td>
                             <td class="py-3.5 px-4 text-xs text-[#4B5563] border-b border-[#E5E7EB]">
                                 <div class="flex items-center gap-3">
                                     <div class="w-25 h-2 bg-[#E5E7EB] rounded overflow-hidden">
@@ -387,7 +387,7 @@
                                     </span>
                                 </div>
                             </td>
-                            <td class="py-3.5 px-4 text-xs text-[#4B5563] border-b border-[#E5E7EB]"><span class="text-[#6B7280] font-medium">{% trans "Assessing" %}</span></td>
+                            <td class="py-3.5 px-4 text-xs text-[#4B5563] border-b border-[#E5E7EB]"><span class="text-[#6B7280] font-medium">Assessing</span></td>
                             <td class="py-3.5 px-4 text-xs text-[#4B5563] border-b border-[#E5E7EB]">
                                 <div class="flex items-center gap-3">
                                     <div class="w-25 h-2 bg-[#E5E7EB] rounded overflow-hidden">

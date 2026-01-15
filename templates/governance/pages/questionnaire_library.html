@@ -1,14 +1,14 @@
 {% extends "governance/base.html" %}
-{% load i18n %}
+
 {% load static %}
 
-{% block title %}{% trans "Questionnaire Library" %} - {% trans "EU AI Act" %}{% endblock %}
+{% block title %}Questionnaire Library - EU AI Act{% endblock %}
 
 {% block dashboard_content %}
 <div class="flex flex-col gap-6 p-6 bg-white">
     <div class="flex justify-between items-center">
-        <h1 class="font-['Montserrat',sans-serif] text-2xl font-bold text-[#1a1a2e] m-0">{% trans "Questionnaire Library" %}</h1>
-        <button class="px-6 py-2.5 bg-[#F13D30] border-none rounded-full font-['Montserrat',sans-serif] text-sm font-semibold text-white cursor-pointer hover:bg-[#DC180A]">+ {% trans "Create New" %}</button>
+        <h1 class="font-['Montserrat',sans-serif] text-2xl font-bold text-[#1a1a2e] m-0">Questionnaire Library</h1>
+        <button class="px-6 py-2.5 bg-[#F13D30] border-none rounded-full font-['Montserrat',sans-serif] text-sm font-semibold text-white cursor-pointer hover:bg-[#DC180A]">+ Create New</button>
                     </div>
 
     <div class="grid grid-cols-3 gap-5">
@@ -19,11 +19,11 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                                     </svg>
                                 </div>
-                <span class="px-3 py-1 rounded-full text-xs font-medium bg-[#D1FAE5] text-[#065F46]">{% trans "Active" %}</span>
+                <span class="px-3 py-1 rounded-full text-xs font-medium bg-[#D1FAE5] text-[#065F46]">Active</span>
                             </div>
-            <h3 class="font-['Montserrat',sans-serif] text-base font-bold text-[#1f2937] m-0">{% trans "EU AI Act Risk Assessment" %}</h3>
-            <p class="font-['Montserrat',sans-serif] text-sm text-[#6b7280] m-0">{% trans "Comprehensive questionnaire for AI system risk evaluation" %}</p>
-            <span class="font-['Montserrat',sans-serif] text-xs text-[#9ca3af]">{% trans "Created:" %} 15/12/2024 • {% trans "25 questions" %}</span>
+            <h3 class="font-['Montserrat',sans-serif] text-base font-bold text-[#1f2937] m-0">EU AI Act Risk Assessment</h3>
+            <p class="font-['Montserrat',sans-serif] text-sm text-[#6b7280] m-0">Comprehensive questionnaire for AI system risk evaluation</p>
+            <span class="font-['Montserrat',sans-serif] text-xs text-[#9ca3af]">Created: 15/12/2024 • 25 questions</span>
                         </a>
 
         <a href="{% url 'questionnaire_detail' 1 %}" class="bg-gradient-to-b from-[#FFF5F5] to-white border border-[#E5E7EB] rounded-2xl p-5 flex flex-col gap-3 cursor-pointer transition-all duration-200 ease-in-out hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] no-underline">
@@ -33,11 +33,11 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                                     </svg>
                                 </div>
-                <span class="px-3 py-1 rounded-full text-xs font-medium bg-[#D1FAE5] text-[#065F46]">{% trans "Active" %}</span>
+                <span class="px-3 py-1 rounded-full text-xs font-medium bg-[#D1FAE5] text-[#065F46]">Active</span>
                             </div>
-            <h3 class="font-['Montserrat',sans-serif] text-base font-bold text-[#1f2937] m-0">{% trans "GDPR Compliance Check" %}</h3>
-            <p class="font-['Montserrat',sans-serif] text-sm text-[#6b7280] m-0">{% trans "Data protection and privacy assessment" %}</p>
-            <span class="font-['Montserrat',sans-serif] text-xs text-[#9ca3af]">{% trans "Created:" %} 10/12/2024 • {% trans "18 questions" %}</span>
+            <h3 class="font-['Montserrat',sans-serif] text-base font-bold text-[#1f2937] m-0">GDPR Compliance Check</h3>
+            <p class="font-['Montserrat',sans-serif] text-sm text-[#6b7280] m-0">Data protection and privacy assessment</p>
+            <span class="font-['Montserrat',sans-serif] text-xs text-[#9ca3af]">Created: 10/12/2024 • 18 questions</span>
                         </a>
 
         <a href="{% url 'questionnaire_detail' 1 %}" class="bg-gradient-to-b from-[#FFF5F5] to-white border border-[#E5E7EB] rounded-2xl p-5 flex flex-col gap-3 cursor-pointer transition-all duration-200 ease-in-out hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] no-underline">
@@ -47,11 +47,11 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                                     </svg>
                                 </div>
-                <span class="px-3 py-1 rounded-full text-xs font-medium bg-[#FEF3C7] text-[#92400E]">{% trans "Draft" %}</span>
+                <span class="px-3 py-1 rounded-full text-xs font-medium bg-[#FEF3C7] text-[#92400E]">Draft</span>
                             </div>
-            <h3 class="font-['Montserrat',sans-serif] text-base font-bold text-[#1f2937] m-0">{% trans "Data Act Assessment" %}</h3>
-            <p class="font-['Montserrat',sans-serif] text-sm text-[#6b7280] m-0">{% trans "Data governance and compliance verification" %}</p>
-            <span class="font-['Montserrat',sans-serif] text-xs text-[#9ca3af]">{% trans "Created:" %} 05/12/2024 • {% trans "12 questions" %}</span>
+            <h3 class="font-['Montserrat',sans-serif] text-base font-bold text-[#1f2937] m-0">Data Act Assessment</h3>
+            <p class="font-['Montserrat',sans-serif] text-sm text-[#6b7280] m-0">Data governance and compliance verification</p>
+            <span class="font-['Montserrat',sans-serif] text-xs text-[#9ca3af]">Created: 05/12/2024 • 12 questions</span>
                         </a>
                     </div>
                 </div>

@@ -23,7 +23,6 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.locale.LocaleMiddleware',
 ]
 
 ROOT_URLCONF = 'urls'
@@ -35,9 +34,7 @@ DATABASES = {}
 AUTHENTICATION_BACKENDS = []
 
 # Internationalization
-LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
-USE_I18N = True
 USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)

@@ -1,7 +1,7 @@
 {% extends "governance/base.html" %}
 {% load static %}
-{% load i18n %}
-{% block title %}{% trans "Dashboard" %}{% endblock %}
+
+{% block title %}Dashboard{% endblock %}
 
 {% block dashboard_content %}
 <div class="flex flex-col gap-5">
@@ -12,14 +12,14 @@
             <button class="w-6 h-6 bg-transparent border-none cursor-pointer p-0 flex items-center justify-center">
                 <img src="{% static 'governance/img/arrow-right-gray.svg' %}" alt="Forward" class="w-3.5 h-3.5">
             </button>
-            <span class="text-sm font-semibold text-[#F13D30]">{% trans "Dashboard" %}</span>
+            <span class="text-sm font-semibold text-[#F13D30]">Dashboard</span>
         </div>
 
         <!-- Header -->
         <div class="flex justify-between items-start">
             <div class="header-left">
-                <h1 class="text-2xl font-bold text-[#22262A] mb-2">{% trans "Welcome to Your Digital Governance Dashboard" %}</h1>
-                <p class="text-sm text-[#6B7280]">{% trans "Stay Informed and Take Action to Protect Our Planet" %}</p>
+                <h1 class="text-2xl font-bold text-[#22262A] mb-2">Welcome to Your Digital Governance Dashboard</h1>
+                <p class="text-sm text-[#6B7280]">Stay Informed and Take Action to Protect Our Planet</p>
             </div>
             <div class="header-right">
                 <div class="w-12 h-12 rounded-full bg-gradient-to-br from-[#e8f4fd] to-[#f0e6fa] flex items-center justify-center border border-[#E5E7EB] cursor-pointer">
@@ -35,7 +35,7 @@
                     <div class="w-10 h-10 rounded-full bg-[#FEEDEC] flex items-center justify-center">
                         <img src="{% static 'governance/img/gov1.png' %}" alt="Use cases" class="w-10 h-10">
                     </div>
-                    <span class="flex-1 text-xs text-[#6B7280]">{% trans "Use cases Assessed" %}</span>
+                    <span class="flex-1 text-xs text-[#6B7280]">Use cases Assessed</span>
                 </div>
                 <p class="text-3xl font-bold text-[#22262A]">{{ use_cases_assessed }}<span class="text-xl font-medium text-[#9CA3AF]">/{{ total_use_cases|default:100 }}</span></p>
             </div>
@@ -43,9 +43,9 @@
             <div class="bg-white rounded-2xl border border-[#E5E7EB] p-5 shadow-sm">
                 <div class="flex items-center gap-3 mb-3">
                     <div class="w-10 h-10 rounded-full bg-[#FEEDEC] flex items-center justify-center">
-                        <img src="{% static 'governance/img/search.png' %}" alt="{% trans 'Under review' %}" class="w-10 h-10">
+                        <img src="{% static 'governance/img/search.png' %}" alt="Under review" class="w-10 h-10">
                     </div>
-                    <span class="flex-1 text-xs text-[#6B7280]">{% trans "Under reviewed" %}</span>
+                    <span class="flex-1 text-xs text-[#6B7280]">Under reviewed</span>
                 </div>
                 <p class="text-3xl font-bold text-[#22262A]">{{ under_reviewed|default:0 }}</p>
             </div>
@@ -55,7 +55,7 @@
                     <div class="w-10 h-10 rounded-full bg-[#FEEDEC] flex items-center justify-center">
                         <img src="{% static 'governance/img/data.png' %}" alt="Data" class="w-10 h-10">
                     </div>
-                    <span class="flex-1 text-xs text-[#6B7280]">{% trans "Data Collection Completed" %}</span>
+                    <span class="flex-1 text-xs text-[#6B7280]">Data Collection Completed</span>
                 </div>
                 <p class="text-3xl font-bold text-[#22262A]">{{ data_collection_completed|default:0 }}</p>
             </div>
@@ -66,7 +66,7 @@
             <!-- Data Collection Progress -->
             <div class="bg-white rounded-2xl border border-[#E5E7EB] p-5 shadow-sm">
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-base font-semibold text-[#22262A]">{% trans "Data Collection Progress" %}</h3>
+                    <h3 class="text-base font-semibold text-[#22262A]">Data Collection Progress</h3>
                     <button class="bg-transparent border-none text-lg text-[#9CA3AF] cursor-pointer">⋮</button>
                 </div>
                 <div class="h-[300px]">
@@ -77,15 +77,15 @@
             <!-- Risk Scoring -->
             <div class="bg-white rounded-2xl border border-[#E5E7EB] p-5 shadow-sm">
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-base font-semibold text-[#22262A]">{% trans "Risk Scoring" %}</h3>
+                    <h3 class="text-base font-semibold text-[#22262A]">Risk Scoring</h3>
                     <button class="bg-transparent border-none text-lg text-[#9CA3AF] cursor-pointer">⋮</button>
                 </div>
                 <div class="flex flex-wrap gap-4 mb-4">
-                    <span class="flex items-center gap-1.5 text-xs text-[#6B7280]"><span class="w-6 h-4 rounded bg-[#f7f7d4]"></span>{% trans "Very low (1-1.8)" %}</span>
-                    <span class="flex items-center gap-1.5 text-xs text-[#6B7280]"><span class="w-6 h-4 rounded bg-[#f6e58d]"></span>{% trans "Low (1.8-2.6)" %}</span>
-                    <span class="flex items-center gap-1.5 text-xs text-[#6B7280]"><span class="w-6 h-4 rounded bg-[#f9c74f]"></span>{% trans "Medium (2.6-3.4)" %}</span>
-                    <span class="flex items-center gap-1.5 text-xs text-[#6B7280]"><span class="w-6 h-4 rounded bg-[#d77f2d]"></span>{% trans "High (3.4-4.2)" %}</span>
-                    <span class="flex items-center gap-1.5 text-xs text-[#6B7280]"><span class="w-6 h-4 rounded bg-[#a52020]"></span>{% trans "Very high (4.2-5.0)" %}</span>
+                    <span class="flex items-center gap-1.5 text-xs text-[#6B7280]"><span class="w-6 h-4 rounded bg-[#f7f7d4]"></span>Very low (1-1.8)</span>
+                    <span class="flex items-center gap-1.5 text-xs text-[#6B7280]"><span class="w-6 h-4 rounded bg-[#f6e58d]"></span>Low (1.8-2.6)</span>
+                    <span class="flex items-center gap-1.5 text-xs text-[#6B7280]"><span class="w-6 h-4 rounded bg-[#f9c74f]"></span>Medium (2.6-3.4)</span>
+                    <span class="flex items-center gap-1.5 text-xs text-[#6B7280]"><span class="w-6 h-4 rounded bg-[#d77f2d]"></span>High (3.4-4.2)</span>
+                    <span class="flex items-center gap-1.5 text-xs text-[#6B7280]"><span class="w-6 h-4 rounded bg-[#a52020]"></span>Very high (4.2-5.0)</span>
                 </div>
                 <div class="grid grid-cols-3 gap-4">
                     <div class="h-[140px]">
@@ -104,16 +104,16 @@
         <!-- Reporting Progress -->
         <div class="bg-white rounded-2xl border border-[#E5E7EB] p-5 shadow-sm col-span-full">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-base font-semibold text-[#22262A]">{% trans "Reporting Progress" %}</h3>
+                <h3 class="text-base font-semibold text-[#22262A]">Reporting Progress</h3>
                 <button class="bg-transparent border-none text-lg text-[#9CA3AF] cursor-pointer">⋮</button>
             </div>
             <div class="grid grid-cols-[1fr_2fr] gap-6">
                 <div class="p-4">
-                    <h4 class="text-sm font-semibold text-[#374151] mb-3">{% trans "Overall Completion" %}</h4>
+                    <h4 class="text-sm font-semibold text-[#374151] mb-3">Overall Completion</h4>
                     <canvas id="overallCompletionChart"></canvas>
                 </div>
                 <div class="p-4">
-                    <h4 class="text-sm font-semibold text-[#374151] mb-3">{% trans "Progress By Framework" %}</h4>
+                    <h4 class="text-sm font-semibold text-[#374151] mb-3">Progress By Framework</h4>
                     <canvas id="frameworkChart"></canvas>
                 </div>
             </div>
@@ -127,15 +127,15 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 <script>
     const TRANSLATIONS = {
-        completed: "{% trans 'Completed'|escapejs %}",
-        in_progress: "{% trans 'In Progress'|escapejs %}",
-        not_started: "{% trans 'Not Started'|escapejs %}",
-        deprioritized: "{% trans 'Deprioritized'|escapejs %}",
-        no_data: "{% trans 'No Data'|escapejs %}",
-        ai_risks: "{% trans 'AI Risks'|escapejs %}",
-        data_risks: "{% trans 'Data Risks'|escapejs %}",
-        cyber_risks: "{% trans 'Cyber Risks'|escapejs %}",
-        quantity: "{% trans 'Quantity'|escapejs %}",
+        completed: "Completed",
+        in_progress: "In Progress",
+        not_started: "Not Started",
+        deprioritized: "Deprioritized",
+        no_data: "No Data",
+        ai_risks: "AI Risks",
+        data_risks: "Data Risks",
+        cyber_risks: "Cyber Risks",
+        quantity: "Quantity",
     };
     // Debug: Log data values to console
     console.log('Dashboard Data:', {

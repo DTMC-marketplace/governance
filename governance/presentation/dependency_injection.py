@@ -11,7 +11,10 @@ from ..infrastructure.repositories.mock_evidence_repository import (
     MockEvidenceRepository,
     MockEvaluationReportRepository
 )
+from ..infrastructure.repositories.mock_review_comment_repository import MockReviewCommentRepository
 from ..application.use_cases.get_dashboard_data import GetDashboardDataUseCase
+from ..application.use_cases.get_assessment_data import GetAssessmentDataUseCase
+from ..application.use_cases.get_multi_agent_use_cases import GetMultiAgentUseCasesUseCase
 
 
 class DependencyContainer:
@@ -28,6 +31,7 @@ class DependencyContainer:
         self._dataset_repository = MockDatasetRepository(self._data_dir)
         self._evidence_repository = MockEvidenceRepository(self._data_dir)
         self._evaluation_report_repository = MockEvaluationReportRepository(self._data_dir)
+        self._review_comment_repository = MockReviewCommentRepository(self._data_dir)
         
         # Initialize use cases
         self._get_dashboard_data_use_case = GetDashboardDataUseCase(
@@ -37,6 +41,26 @@ class DependencyContainer:
             dataset_repository=self._dataset_repository,
             evidence_repository=self._evidence_repository,
             evaluation_report_repository=self._evaluation_report_repository,
+        )
+        
+        self._get_assessment_data_use_case = GetAssessmentDataUseCase(
+            agent_repository=self._agent_repository,
+            use_case_repository=self._use_case_repository,
+            model_repository=self._model_repository,
+            dataset_repository=self._dataset_repository,
+            evidence_repository=self._evidence_repository,
+            evaluation_report_repository=self._evaluation_report_repository,
+            review_comment_repository=self._review_comment_repository,
+        )
+        
+        self._get_multi_agent_use_cases_use_case = GetMultiAgentUseCasesUseCase(
+            agent_repository=self._agent_repository,
+            use_case_repository=self._use_case_repository,
+            model_repository=self._model_repository,
+            dataset_repository=self._dataset_repository,
+            evidence_repository=self._evidence_repository,
+            evaluation_report_repository=self._evaluation_report_repository,
+            review_comment_repository=self._review_comment_repository,
         )
     
     @property
@@ -63,6 +87,16 @@ class DependencyContainer:
     def dataset_repository(self):
         """Get dataset repository"""
         return self._dataset_repository
+    
+    @property
+    def get_assessment_data_use_case(self) -> GetAssessmentDataUseCase:
+        """Get assessment data use case"""
+        return self._get_assessment_data_use_case
+    
+    @property
+    def get_multi_agent_use_cases_use_case(self) -> GetMultiAgentUseCasesUseCase:
+        """Get multi-agent use cases use case"""
+        return self._get_multi_agent_use_cases_use_case
 
 
 # Global container instance (will be initialized in views)

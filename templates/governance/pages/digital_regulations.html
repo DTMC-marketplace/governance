@@ -1,8 +1,8 @@
 {% extends "governance/base.html" %}
-{% load i18n %}
+
 {% load static %}
 
-{% block title %}{% trans "Digital Regulations Hub" %}{% endblock %}
+{% block title %}Digital Regulations Hub{% endblock %}
 
 {% block dashboard_content %}
 <div class="flex flex-col gap-6 w-full">
@@ -14,7 +14,7 @@
         <button class="w-8 h-8 border-none bg-transparent cursor-pointer flex items-center justify-center rounded-md hover:bg-[#F3F4F6]" onclick="history.forward()">
             <img src="{% static 'governance/img/arrow-right-gray.svg' %}" alt="Forward" class="w-4 h-4">
         </button>
-        <span class="text-sm font-semibold text-[#F13D30]">{% trans "Compliances" %}</span>
+        <span class="text-sm font-semibold text-[#F13D30]">Compliances</span>
     </div>
 
     <!-- Page Header -->
@@ -24,8 +24,8 @@
             <h1 class="text-2xl font-bold text-[#1a1a2e] mb-1">{{ agent_name }}</h1>
             <p class="text-sm text-[#565F6C]">Review data and information of {{ agent_name }}</p>
             {% else %}
-            <h1 class="text-xl font-bold text-[#1a1a2e] mb-1">{% trans "EU AI Act high risks providers" %}</h1>
-            <p class="text-sm text-[#565F6C]">{% trans "EU AI Act Framework and reporting" %}</p>
+            <h1 class="text-xl font-bold text-[#1a1a2e] mb-1">EU AI Act high risks providers</h1>
+            <p class="text-sm text-[#565F6C]">EU AI Act Framework and reporting</p>
             {% endif %}
         </div>
         {% if not agent_name %}
@@ -45,8 +45,8 @@
     {% if agent_name %}
     <div class="flex justify-between items-start py-4">
         <div class="flex flex-col">
-            <h2 class="text-xl font-bold text-[#1a1a2e] tracking-tight">{% trans "EU AI Act high risks providers" %}</h2>
-            <p class="text-sm text-[#565F6C] mt-1">{% trans "EU AI Act Framework and reporting" %}</p>
+            <h2 class="text-xl font-bold text-[#1a1a2e] tracking-tight">EU AI Act high risks providers</h2>
+            <p class="text-sm text-[#565F6C] mt-1">EU AI Act Framework and reporting</p>
         </div>
         <button class="flex items-center gap-2 px-4 py-2 border border-[#DC180A] rounded-full text-[#DC180A] font-semibold text-sm hover:bg-[#FEF5F4] transition-colors duration-200">
             Export Report
@@ -62,7 +62,7 @@
                 <img src="{% static 'governance/img/eu-ai-act.png' %}" alt="EU AI Act" class="w-18 h-18 object-contain">
             </div>
             <div class="flex-1">
-                <h3 class="text-lg font-semibold text-[#1a1a2e]">{% trans "EU AI Act" %}</h3>
+                <h3 class="text-lg font-semibold text-[#1a1a2e]">EU AI Act</h3>
             </div>
             <span class="absolute top-8 right-8 w-8 h-8 flex items-center justify-center text-[#9CA3AF] hover:text-[#374151] hover:bg-[#F3F4F6] rounded-md transition-colors">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
@@ -78,7 +78,7 @@
                 <img src="{% static 'governance/img/gdpr.png' %}" alt="GDPR" class="w-18 h-18 object-contain">
             </div>
             <div class="flex-1">
-                <h3 class="text-lg font-semibold text-[#1a1a2e]">{% trans "GDPR" %}</h3>
+                <h3 class="text-lg font-semibold text-[#1a1a2e]">GDPR</h3>
             </div>
             <button class="absolute top-8 right-8 w-8 h-8 flex items-center justify-center text-[#9CA3AF] hover:text-[#374151] hover:bg-[#F3F4F6] rounded-md transition-colors border-none bg-transparent cursor-pointer">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
@@ -94,7 +94,7 @@
                 <img src="{% static 'governance/img/dsa.png' %}" alt="DSA" class="w-18 h-18 object-contain">
             </div>
             <div class="flex-1">
-                <h3 class="text-lg font-semibold text-[#1a1a2e]">{% trans "DSA Digital Services Act" %}</h3>
+                <h3 class="text-lg font-semibold text-[#1a1a2e]">DSA Digital Services Act</h3>
             </div>
             <button class="absolute top-8 right-8 w-8 h-8 flex items-center justify-center text-[#9CA3AF] hover:text-[#374151] hover:bg-[#F3F4F6] rounded-md transition-colors border-none bg-transparent cursor-pointer">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
@@ -110,7 +110,7 @@
                 <img src="{% static 'governance/img/eu-ai-act.png' %}" alt="Data Act" class="w-18 h-18 object-contain">
             </div>
             <div class="flex-1">
-                <h3 class="text-lg font-semibold text-[#1a1a2e]">{% trans "Data Act" %}</h3>
+                <h3 class="text-lg font-semibold text-[#1a1a2e]">Data Act</h3>
             </div>
             <button class="absolute top-8 right-8 w-8 h-8 flex items-center justify-center text-[#9CA3AF] hover:text-[#374151] hover:bg-[#F3F4F6] rounded-md transition-colors border-none bg-transparent cursor-pointer">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
