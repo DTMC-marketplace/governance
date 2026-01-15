@@ -1,0 +1,304 @@
+{% extends "governance/base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans "AI Assistant" %}{% endblock %}
+
+{% block dashboard_content %}
+<script>
+// Simple client-side filtering - defined early for inline onclick handlers
+function filterAgentsByCategory(category) {
+    try {
+        const agentCards = document.querySelectorAll('.grid > .bg-white');
+        const filterLabel = document.getElementById('filter-label');
+        
+        // Filter cards
+        agentCards.forEach(card => {
+            const badgeElement = card.querySelector('span[class*="text-xs"]');
+            const agentCategory = badgeElement ? badgeElement.textContent.trim() : '';
+            
+            if (category === 'all' || agentCategory.toLowerCase() === category.toLowerCase()) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+        
+        // Update button label
+        if (filterLabel) {
+            const TRANSLATIONS = {
+                all_categories: "{% trans 'All Categories'|escapejs %}",
+            };
+            filterLabel.textContent = category === 'all' ? TRANSLATIONS.all_categories : category.charAt(0).toUpperCase() + category.slice(1);
+        }
+        
+        // Close dropdown
+        try {
+            if (typeof closeDropdown === 'function') {
+                closeDropdown();
+            } else {
+                // Fallback manual close
+                const filterMenu = document.getElementById('filter-menu');
+                const filterChevron = document.getElementById('filter-chevron');
+                if (filterMenu) {
+                    filterMenu.classList.add('hidden');
+                    filterMenu.style.display = 'none';
+                    if (filterChevron) filterChevron.style.transform = 'rotate(0deg)';
+                }
+            }
+        } catch (closeError) {
+            // Silent error handling
+        }
+        
+        // Update active state in dropdown
+        try {
+            document.querySelectorAll('.filter-option').forEach(option => {
+                option.classList.remove('bg-gray-100', 'font-medium');
+                if (option.getAttribute('data-category') === category) {
+                    option.classList.add('bg-gray-100', 'font-medium');
+                }
+            });
+        } catch (stateError) {
+            // Silent error handling
+        }
+        
+    } catch (error) {
+        // Silent error handling
+    }
+}
+
+// Helper function to close dropdown
+function closeDropdown() {
+    const filterMenu = document.getElementById('filter-menu');
+    const filterChevron = document.getElementById('filter-chevron');
+    
+    if (filterMenu && !filterMenu.classList.contains('hidden')) {
+        filterMenu.classList.add('hidden');
+        filterMenu.style.display = 'none';
+        if (filterChevron) filterChevron.style.transform = 'rotate(0deg)';
+        return true; // Was open and now closed
+    }
+    return false; // Was already closed
+}
+
+// Helper function to open dropdown
+function openDropdown() {
+    const filterMenu = document.getElementById('filter-menu');
+    const filterChevron = document.getElementById('filter-chevron');
+    
+    if (filterMenu && filterMenu.classList.contains('hidden')) {
+        filterMenu.classList.remove('hidden');
+        filterMenu.style.display = 'block';
+        filterMenu.style.visibility = 'visible';
+        if (filterChevron) filterChevron.style.transform = 'rotate(180deg)';
+        return true; // Was closed and now open
+    }
+    return false; // Was already open
+}
+
+// Define functions immediately for inline onclick handlers
+function toggleDropdownManual() {
+    const filterMenu = document.getElementById('filter-menu');
+    
+    if (filterMenu) {
+        const isHidden = filterMenu.classList.contains('hidden');
+        
+        if (isHidden) {
+            openDropdown();
+        } else {
+            closeDropdown();
+        }
+    }
+}
+
+// Simple outside click handler - added immediately
+document.addEventListener('click', function(e) {
+    // Small delay to ensure elements exist
+    setTimeout(() => {
+        const filterDropdown = document.getElementById('filter-dropdown');
+        const filterMenu = document.getElementById('filter-menu');
+        
+        if (filterDropdown && filterMenu) {
+            const isMenuVisible = !filterMenu.classList.contains('hidden');
+            const isClickInside = filterDropdown.contains(e.target);
+            
+            if (isMenuVisible && !isClickInside) {
+                filterMenu.classList.add('hidden');
+                filterMenu.style.display = 'none';
+                
+                const filterChevron = document.getElementById('filter-chevron');
+                if (filterChevron) {
+                    filterChevron.style.transform = 'rotate(0deg)';
+                }
+            }
+        }
+    }, 10);
+});
+</script>
+
+<div class="flex flex-col gap-5">
+            <!-- Breadcrumb Navigation -->
+    <div class="flex items-center gap-3">
+        <button class="w-6 h-6 bg-transparent border-none cursor-pointer p-0 flex items-center justify-center" onclick="history.back()">
+            <img src="{% static 'governance/img/arrow-left.svg' %}" alt="Back" class="w-3.5 h-3.5">
+                </button>
+        <button class="w-6 h-6 bg-transparent border-none cursor-pointer p-0 flex items-center justify-center" onclick="history.forward()">
+            <img src="{% static 'governance/img/arrow-right-gray.svg' %}" alt="Forward" class="w-3.5 h-3.5">
+                </button>
+        <span class="text-sm font-semibold text-[#F13D30]">{% trans "AI Assistant" %}</span>
+            </div>
+
+            <!-- Page Header -->
+    <div class="w-full">
+        <h1 class="text-2xl font-bold text-[#22262A] mb-2">{% trans "AI Assistant" %}</h1>
+        <p class="text-sm text-[#6B7280] mb-6">{% trans "Choose a virtual agent specialized in your sustainability area of interest" %}</p>
+        
+        <!-- Filter Dropdown -->
+        <div class="relative w-fit" id="filter-dropdown">
+            <button id="filter-button" onclick="toggleDropdownManual()" class="flex items-center gap-2 px-4 py-2 bg-white border border-[#D1D5DB] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] focus:outline-none focus:ring-2 focus:ring-[#DC6B64]">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+                        </svg>
+                <span id="filter-label">{% trans "All Categories" %}</span>
+                <svg class="w-4 h-4 ml-1 transition-transform" id="filter-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+            
+            <!-- Dropdown Menu -->
+            <div id="filter-menu" class="hidden absolute left-0 mt-2 w-56 bg-white border border-[#E5E7EB] rounded-lg shadow-lg z-50">
+                <div class="py-2">
+                    <!-- All Categories Option -->
+                    <a href="#" onclick="filterAgentsByCategory('all')" class="flex items-center px-4 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] filter-option bg-[#F9FAFB] font-medium" data-category="all">
+                        <span class="w-2 h-2 rounded-full bg-[#6B7280] mr-3"></span>
+                        {% trans "All Categories" %}
+                    </a>
+                    
+                    <!-- Dynamic Categories from Django Template -->
+                    {% for category in categories %}
+                    <a href="#" onclick="filterAgentsByCategory('{{ category|lower }}')" class="flex items-center px-4 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] filter-option" data-category="{{ category|lower }}">
+                        <span class="w-2 h-2 rounded-full 
+                            {% if category == 'Carbon' %}bg-red-500
+                            {% elif category == 'Biodiversity' %}bg-green-500
+                            {% elif category == 'Circular Economy' %}bg-green-600
+                            {% elif category == 'Climate' %}bg-orange-500
+                            {% elif category == 'Compliance' %}bg-teal-600
+                            {% elif category == 'Data Collection' %}bg-cyan-500
+                            {% elif category == 'Governance' %}bg-blue-500
+                            {% elif category == 'Social' %}bg-pink-500
+                            {% elif category == 'Pollution' %}bg-purple-500
+                            {% elif category == 'Water' %}bg-blue-600
+                            {% elif category == 'ESG' %}bg-gray-500
+                            {% else %}bg-[#6B7280]{% endif %} mr-3"></span>
+                        {{ category }}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+                    </div>
+                </div>
+
+    <!-- Agents Grid -->
+    <div class="w-full">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for agent in virtualAgent %}
+            <div class="bg-white rounded-lg shadow-sm border border-[#E5E7EB] p-6 {% if is_demo_user and not agent.is_implemented %}opacity-50 grayscale{% endif %}">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 {{ agent.bg_color }} rounded-full flex items-center justify-center {% if is_demo_user and not agent.is_implemented %}bg-gray-400{% endif %}">
+                        <img src="{{ agent.avatar_url }}" 
+                             alt="{{ agent.name }}" class="w-12 h-12 rounded-full object-cover">
+                    </div>
+                    <span class="px-3 py-1 {{ agent.badge_color }} text-xs font-medium rounded-lg {% if is_demo_user and not agent.is_implemented %}bg-gray-200 text-gray-500{% endif %}">{{ agent.category }}</span>
+                </div>
+                <h3 class="font-semibold text-[#22262A] mb-2 {% if is_demo_user and not agent.is_implemented %}text-gray-500{% endif %}">{{ agent.name }}</h3>
+                <p class="text-sm text-[#6B7280] mb-6 {% if is_demo_user and not agent.is_implemented %}text-gray-400{% endif %}">{{ agent.description }}</p>
+                
+                {% if is_demo_user and not agent.is_implemented %}
+                    <!-- Demo user - agent not implemented - disabled button -->
+                    <div class="inline-block bg-[#E5E7EB] text-[#6B7280] py-2 px-4 rounded-full text-sm font-medium cursor-not-allowed w-auto text-center">
+{% trans "Chat Now" %}
+                    </div>
+                {% else %}
+                    <!-- Regular user or implemented agent - clickable button -->
+                    <a href="{% url 'ai_assistant_chat' agent.id %}" 
+                       class="inline-block bg-[#DC6B64] text-white py-2 px-4 rounded-full text-sm font-medium hover:bg-[#C55A52] transition-colors w-auto text-center">
+                        {% trans "Chat Now" %}
+                    </a>
+                {% endif %}
+                    </div>
+            {% empty %}
+            <!-- No agents available -->
+            <div class="col-span-full text-center py-12">
+                <div class="text-[#9CA3AF] mb-4">
+                    <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-medium text-[#22262A] mb-2">{% trans "No Virtual Agents Available" %}</h3>
+                <p class="text-[#6B7280]">{% trans "Virtual agents will appear here when they are available." %}</p>
+                    </div>
+            {% endfor %}
+                </div>
+            </div>
+        </div>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+// Filter dropdown functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const filterButton = document.getElementById('filter-button');
+    const filterMenu = document.getElementById('filter-menu');
+    const filterChevron = document.getElementById('filter-chevron');
+
+    
+    // Toggle dropdown
+    if (filterButton) {
+        filterButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Small delay to avoid conflict with outside click handler
+            setTimeout(() => {
+                if (filterMenu) {
+                    const isHidden = filterMenu.classList.contains('hidden');
+                    
+                    if (isHidden) {
+                        openDropdown();
+                    } else {
+                        closeDropdown();
+                    }
+                }
+            }, 10);
+        });
+    }
+    
+    // Also close on ESC key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const filterMenu = document.getElementById('filter-menu');
+            const filterChevron = document.getElementById('filter-chevron');
+            
+            if (filterMenu && !filterMenu.classList.contains('hidden')) {
+                filterMenu.classList.add('hidden');
+                filterMenu.style.display = 'none';
+                if (filterChevron) filterChevron.style.transform = 'rotate(0deg)';
+            }
+        }
+    });
+    
+        // Highlight ai-assistant nav item
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.dataset.nav === 'ai-assistant') {
+                    link.classList.add('active');
+                }
+            });
+        });
+
+// Export functions for global access
+window.filterAgentsByCategory = filterAgentsByCategory;
+window.toggleDropdownManual = toggleDropdownManual;
+    </script>
+{% endblock %}

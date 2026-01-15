@@ -1,0 +1,571 @@
+{% extends "governance/base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans "AI Systems" %}{% endblock %}
+
+{% block dashboard_content %}
+<div class="flex flex-col gap-5">
+            <!-- Breadcrumb Navigation -->
+    <div class="flex items-center gap-3">
+        <button class="w-6 h-6 bg-transparent border-none cursor-pointer p-0 flex items-center justify-center" onclick="history.back()">
+            <img src="{% static 'governance/img/arrow-left.svg' %}" alt="Back" class="w-3.5 h-3.5">
+                </button>
+        <button class="w-6 h-6 bg-transparent border-none cursor-pointer p-0 flex items-center justify-center" onclick="history.forward()">
+            <img src="{% static 'governance/img/arrow-right-gray.svg' %}" alt="Forward" class="w-3.5 h-3.5">
+                </button>
+        <span class="text-sm font-semibold text-[#F13D30]">{% trans "AI Systems" %}</span>
+            </div>
+
+            <!-- Page Header -->
+    <div class="flex justify-between items-start">
+        <div>
+            <h1 class="text-2xl font-bold text-[#22262A] mb-1">{% trans "AI Systems" %}</h1>
+            <p class="text-sm text-[#6B7280]">{% trans "List all your AI use cases" %}</p>
+                </div>
+        <div class="flex items-center gap-3">
+            <button class="flex items-center gap-1 px-4 py-2 border border-[#DC180A] bg-white rounded-full text-base font-semibold text-[#F13D30] cursor-pointer transition-all duration-200 hover:bg-[#FEF5F4]">
+                <img src="{% static 'governance/img/import.png' %}" alt="{% trans 'Import' %}" class="w-4 h-4">
+                <span class="text-sm font-semibold">{% trans "Import" %}</span>
+                    </button>
+            <button class="flex items-center gap-1 px-4 py-2 border border-[#DC180A] bg-white rounded-full text-base font-semibold text-[#F13D30] cursor-pointer transition-all duration-200 hover:bg-[#FEF5F4]">
+                <img src="{% static 'governance/img/export.png' %}" alt="{% trans 'Export' %}" class="w-4 h-4">
+                <span class="text-sm font-semibold">{% trans "Export" %}</span>
+                    </button>
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#e8f4fd] to-[#f0e6fa] flex items-center justify-center border border-[#E5E7EB] cursor-pointer">
+                <img src="{% static 'governance/img/aiassistant.svg' %}" alt="AI Assistant" class="w-6 h-6">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alert Banner -->
+    {% if agents_data %}
+    {% with total_use_cases=agents_data|length %}
+    {% if total_use_cases > 0 %}
+    <div id="alert-banner" class="flex items-center justify-between p-4 bg-white border border-[#F13D30] rounded-lg">
+        <div class="flex items-center gap-3">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5 text-[#F13D30]">
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M12 16v-4M12 8h.01" />
+                    </svg>
+            <span class="text-sm text-[#22262A]">AI systems monitoring. <strong class="font-semibold">{{ agents_data|length }} agent{{ agents_data|length|pluralize }} available.</strong></span>
+                </div>
+        <div class="flex items-center gap-2">
+            <button class="px-3 py-1.5 text-sm font-medium text-[#F13D30] hover:bg-[#FEF5F4] rounded cursor-pointer">{% trans "View" %}</button>
+            <button onclick="document.getElementById('alert-banner').style.display='none'" class="w-6 h-6 flex items-center justify-center text-[#6B7280] hover:bg-[#F3F4F6] rounded cursor-pointer">×</button>
+                </div>
+            </div>
+    {% endif %}
+    {% endwith %}
+    {% endif %}
+
+            <!-- Toolbar -->
+    <div class="flex justify-between items-center py-3">
+        <div class="flex items-center gap-4">
+            <button onclick="openAddAgentModal()" class="flex items-center gap-1.5 px-3 py-2 border-none bg-transparent text-sm font-medium text-[#374151] cursor-pointer rounded-md transition-colors duration-200 hover:bg-[#F3F4F6]">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                        Add New
+                    </button>
+            <button class="flex items-center gap-1.5 px-3 py-2 border-none bg-transparent text-sm font-medium text-[#374151] cursor-pointer rounded-md transition-colors duration-200 hover:bg-[#F3F4F6]">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                            <line x1="4" y1="6" x2="20" y2="6" />
+                            <line x1="4" y1="12" x2="14" y2="12" />
+                            <line x1="4" y1="18" x2="8" y2="18" />
+                        </svg>
+                        Filter
+                    </button>
+            <button class="flex items-center gap-1.5 px-3 py-2 border-none bg-transparent text-sm font-medium text-[#374151] cursor-pointer rounded-md transition-colors duration-200 hover:bg-[#F3F4F6]">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                            <line x1="7" y1="3" x2="7" y2="21" />
+                            <line x1="17" y1="21" x2="17" y2="3" />
+                            <polyline points="3,7 7,3 11,7" />
+                            <polyline points="21,17 17,21 13,17" />
+                        </svg>
+                        Sort
+                    </button>
+            <div class="flex items-center">
+                <form class="w-full mx-auto" method="get" action="">
+                    {% if limit %}
+                    <input type="hidden" name="limit" value="{{ limit }}">
+                    {% endif %}
+                    <div class="relative">
+                        <div class="absolute inset-y-0 start-0 flex items-center pl-3 pointer-events-none">
+                            <img id="search-icon-container" src="/static/icons/search.svg"
+                                class="h-4 w-4 transition-transform duration-300" />
+                    </div>
+                        <input type="search" id="default-search" name="search" value="{{ search_term|default:'' }}"
+                            class="block w-full p-4 !rounded-full text-sm "
+                            placeholder="{% trans 'Search' %}" style="padding-inline-start: 1rem; text-indent: 1rem;" />
+                </div>
+                </form>
+            </div>
+        </div>
+        <div class="flex items-center space-x-4 text-gray-700">
+            <span class="text-sm whitespace-nowrap">Rows per page:</span>
+            <select id="rowsPerPage" class="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-blue-300 w-20">
+                <option value="10" {% if limit == 10 %}selected{% endif %}>10</option>
+                <option value="25" {% if limit == 25 %}selected{% endif %}>25</option>
+                <option value="50" {% if limit == 50 %}selected{% endif %}>50</option>
+                <option value="100" {% if limit == 100 %}selected{% endif %}>100</option>
+                    </select>
+            <span class="text-sm text-gray-500">{% if page_obj %}{{ page_obj.start_index }} - {{ page_obj.end_index }} of {{ page_obj.paginator.count }}{% else %}1-10 of 135{% endif %}</span>
+        
+            <div class="flex items-center space-x-1">
+                <!-- First Page Button -->
+                <a href="?page=1&limit={% if limit %}{{ limit }}{% else %}10{% endif %}{% if search_term %}&search={{ search_term|urlencode }}{% endif %}" class="{% if page_obj and not page_obj.has_previous %}opacity-50 pointer-events-none{% endif %}">
+                    <button class="rounded-md p-1 text-gray-500 hover:text-blue-500 focus:outline-none focus:ring-blue-300">
+                        <img src="/static/icons/Icon-2lt.svg" class="w-3 h-3" />
+                    </button>
+                </a>
+        
+                <!-- Previous Page Button -->
+                {% if page_obj and page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}&limit={% if limit %}{{ limit }}{% else %}10{% endif %}{% if search_term %}&search={{ search_term|urlencode }}{% endif %}">
+                    <button class="rounded-md p-1 text-gray-500 hover:text-blue-500 focus:outline-none focus:ring-blue-300">
+                        <img src="/static/icons/Icon-lt.svg" class="w-3 h-3" />
+                    </button>
+                </a>
+                {% else %}
+                <button class="rounded-md p-1 text-gray-300 cursor-not-allowed opacity-50" disabled>
+                    <img src="/static/icons/Icon-lt.svg" class="w-3 h-3" />
+                </button>
+                {% endif %}
+        
+                <!-- Next Page Button -->
+                {% if page_obj and page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}&limit={% if limit %}{{ limit }}{% else %}10{% endif %}{% if search_term %}&search={{ search_term|urlencode }}{% endif %}">
+                        <button class="rounded-md p-1 text-gray-500 hover:text-blue-500 focus:outline-none focus:ring-blue-300">
+                            <img src="/static/icons/Icon-gt.svg" class="w-3 h-3" />
+                        </button>
+                    </a>
+                {% else %}
+                    <button class="rounded-md p-1 text-gray-300 cursor-not-allowed opacity-50" disabled>
+                        <img src="/static/icons/Icon-gt.svg" class="w-3 h-3" />
+                    </button>
+                {% endif %}
+        
+                <!-- Last Page Button -->
+                <a href="?page={% if page_obj %}{{ page_obj.paginator.num_pages }}{% else %}1{% endif %}&limit={% if limit %}{{ limit }}{% else %}10{% endif %}{% if search_term %}&search={{ search_term|urlencode }}{% endif %}" class="{% if page_obj and not page_obj.has_next %}opacity-50 pointer-events-none{% endif %}">
+                    <button class="rounded-md p-1 text-gray-500 focus:outline-none hover:text-blue-500">
+                        <img src="/static/icons/Icon-2gt.svg" class="w-3 h-3" />
+                    </button>
+                </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Table -->
+    <div class="bg-white rounded-lg border border-[#E5E7EB] overflow-hidden">
+        <table class="w-full">
+            <thead class="bg-[#F9FAFB] border-b border-[#E5E7EB]">
+                        <tr>
+                    <th class="px-4 py-3 text-left">
+                        <input type="checkbox" id="select-all" class="w-4 h-4 text-[#DC6B64] border-[#E5E7EB] rounded focus:ring-[#DC6B64]">
+                    </th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase tracking-wider cursor-pointer hover:bg-[#F3F4F6]">
+                        <div class="flex items-center gap-1">
+                                AI Agents ({{ agents_data|length }})
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-3.5 h-3.5">
+                                    <path d="M7 10l5-5 5 5M7 14l5 5 5-5" />
+                                </svg>
+                        </div>
+                            </th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase tracking-wider cursor-pointer hover:bg-[#F3F4F6]">
+                        <div class="flex items-center gap-1">
+                                Compliance Status
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-3.5 h-3.5">
+                                    <path d="M7 10l5-5 5 5M7 14l5 5 5-5" />
+                                </svg>
+                        </div>
+                            </th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase tracking-wider cursor-pointer hover:bg-[#F3F4F6]">
+                        <div class="flex items-center gap-1">
+                                AI Act Role
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-3.5 h-3.5">
+                                    <path d="M7 10l5-5 5 5M7 14l5 5 5-5" />
+                                </svg>
+                        </div>
+                            </th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase tracking-wider cursor-pointer hover:bg-[#F3F4F6]">
+                        <div class="flex items-center gap-1">
+                                Data Collection Progress
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-3.5 h-3.5">
+                                    <path d="M7 10l5-5 5 5M7 14l5 5 5-5" />
+                                </svg>
+                        </div>
+                            </th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase tracking-wider cursor-pointer hover:bg-[#F3F4F6]">
+                        <div class="flex items-center gap-1">
+                                Vendors
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-3.5 h-3.5">
+                                    <path d="M7 10l5-5 5 5M7 14l5 5 5-5" />
+                                </svg>
+                        </div>
+                            </th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase tracking-wider cursor-pointer hover:bg-[#F3F4F6]">
+                        <div class="flex items-center gap-1">
+                                Risk classification
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-3.5 h-3.5">
+                                    <path d="M7 10l5-5 5 5M7 14l5 5 5-5" />
+                                </svg>
+                        </div>
+                            </th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase tracking-wider cursor-pointer hover:bg-[#F3F4F6]">
+                        <div class="flex items-center gap-1">
+                                Business Unit
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-3.5 h-3.5">
+                                    <path d="M7 10l5-5 5 5M7 14l5 5 5-5" />
+                                </svg>
+                        </div>
+                            </th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase tracking-wider">{% trans "Edit" %}</th>
+                        </tr>
+                    </thead>
+            <tbody class="bg-white divide-y divide-[#E5E7EB]">
+            {% for agent_data in agents_data %}
+                <tr class="parent-row hover:bg-[#F9FAFB] cursor-pointer" data-target="#child-row-{{ agent_data.agent.id }}">
+                    <td class="px-4 py-3" onclick="event.stopPropagation()">
+                        <input type="checkbox" class="row-checkbox w-4 h-4 text-[#DC6B64] border-[#E5E7EB] rounded focus:ring-[#DC6B64]">
+                    </td>
+                    <td class="px-4 py-3">
+                        <div class="flex items-center gap-2">
+                            <a href="{% url 'multi_agent_use_cases' %}?agent={{ agent_data.agent.name|urlencode }}" class="text-sm font-medium text-[#22262A] hover:text-[#DC6B64]">{{ agent_data.agent.name }}</a>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4 text-[#6B7280] chevron">
+                                            <polyline points="6,9 12,15 18,9" />
+                                        </svg>
+                                </div>
+                            </td>
+                    <td class="px-4 py-3">
+                        {% if agent_data.agent.compliance_status == 'reviewing' %}
+                        <span class="px-2 py-1 text-xs font-medium text-[#F13D30] bg-[#FEF5F4] rounded-full">{% trans "Reviewing" %}</span>
+                        {% elif agent_data.agent.compliance_status == 'assessing' %}
+                            <span class="px-2 py-1 text-xs font-medium text-[#2C78B1] bg-[#EFF6FF] rounded-full">{% trans "Assessing" %}</span>
+                        {% elif agent_data.agent.compliance_status == 'cleared' %}
+                            <span class="px-2 py-1 text-xs font-medium text-[#065F46] bg-[#D1FAE5] rounded-full">{% trans "Cleared" %}</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3 text-sm text-[#4B5563]">{{ agent_data.agent.get_ai_act_role_display }}</td>
+                    <td class="px-4 py-3">
+                        <div class="flex items-center gap-2">
+                            <div class="flex-1 h-2 bg-[#E5E7EB] rounded-full overflow-hidden">
+                                <div class="h-full bg-[#2C78B1] rounded-full" style="width: {{ agent_data.progress.percentage }}%;"></div>
+                                    </div>
+                            <span class="text-xs text-[#6B7280]">{{ agent_data.progress.completed }}/{{ agent_data.progress.total }}</span>
+                                </div>
+                            </td>
+                    <td class="px-4 py-3 text-sm text-[#4B5563]">{{ agent_data.agent.vendor|default:"-" }}</td>
+                    <td class="px-4 py-3">
+                        {% if agent_data.agent.risk_classification == 'high_risks' %}
+                        <span class="text-xs font-medium text-[#F13D30]">● High Risks</span>
+                        {% elif agent_data.agent.risk_classification == 'limited_risks' %}
+                            <span class="text-xs font-medium text-[#F8A917]">● Limited Risks</span>
+                        {% else %}
+                            <span class="text-xs font-medium text-[#065F46]">● Minimal Risks</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3">
+                        <span class="text-xs text-[#6B7280]">{{ agent_data.agent.business_unit|default:"-" }}</span>
+                    </td>
+                    <td class="px-4 py-3">
+                        <button class="w-8 h-8 flex items-center justify-center text-[#6B7280] hover:bg-[#F3F4F6] rounded cursor-pointer" onclick="event.stopPropagation()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                                        <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                                        <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                    </svg>
+                        </button>
+                    </td>
+                        </tr>
+                <tr id="child-row-{{ agent_data.agent.id }}" class="child-row hidden bg-[#FEF5F4]">
+                            <td></td>
+                    <td colspan="8" class="px-4 py-4">
+                        <div class="bg-white rounded-lg border border-[#E5E7EB] overflow-hidden">
+                            <table class="w-full text-sm">
+                                <thead class="bg-[#F9FAFB] border-b border-[#E5E7EB]">
+                                            <tr>
+                                        <th class="px-3 py-2 text-left text-xs font-semibold text-[#6B7280] uppercase">Overview</th>
+                                        <th class="px-3 py-2 text-left text-xs font-semibold text-[#6B7280] uppercase">Use cases</th>
+                                        <th class="px-3 py-2 text-left text-xs font-semibold text-[#6B7280] uppercase">Models</th>
+                                        <th class="px-3 py-2 text-left text-xs font-semibold text-[#6B7280] uppercase">Datasets</th>
+                                        <th class="px-3 py-2 text-left text-xs font-semibold text-[#6B7280] uppercase">Risks</th>
+                                        <th class="px-3 py-2 text-left text-xs font-semibold text-[#6B7280] uppercase">EU AI Act</th>
+                                        <th class="px-3 py-2 text-left text-xs font-semibold text-[#6B7280] uppercase">GDPR</th>
+                                            </tr>
+                                        </thead>
+                                <tbody class="divide-y divide-[#E5E7EB]">
+                                    {% for use_case_data in agent_data.use_cases %}
+                                    <tr>
+                                        <td class="px-3 py-2 text-sm text-[#4B5563]">{{ use_case_data.use_case.get_overview_display }}</td>
+                                        <td class="px-3 py-2 text-sm text-[#4B5563]">{{ use_case_data.use_case.name }}</td>
+                                        <td class="px-3 py-2 text-sm text-[#4B5563]">
+                                            {% for model in use_case_data.models %}
+                                                {{ model.name }}{% if not forloop.last %}, {% endif %}
+                                            {% empty %}
+                                                -
+                                            {% endfor %}
+                            </td>
+                                        <td class="px-3 py-2 text-sm text-[#4B5563]">
+                                            {% for dataset in use_case_data.datasets %}
+                                                {{ dataset.name }}{% if not forloop.last %}, {% endif %}
+                                            {% empty %}
+                                                -
+                                            {% endfor %}
+                    </td>
+                                        <td class="px-3 py-2 text-sm text-[#4B5563]">
+                                            {% for risk in use_case_data.risks %}
+                                                {{ risk|title }}{% if not forloop.last %}, {% endif %}
+                                            {% empty %}
+                                                -
+                                            {% endfor %}
+                            </td>
+                                        <td class="px-3 py-2">
+                                            {% if use_case_data.compliance.eu_ai_act %}
+                                                <span class="w-5 h-5 inline-flex items-center justify-center rounded-full bg-[#D1FAE5] text-[#065F46] text-xs">✓</span>
+                                            {% elif use_case_data.compliance.status == 'partial' %}
+                                                <span class="text-xs text-[#92400E]">⚠ xxx not aligned</span>
+                                            {% else %}
+                                                <span class="w-5 h-5 inline-flex items-center justify-center rounded-full bg-[#FEE2E2] text-[#991B1B] text-xs">✗</span>
+                                            {% endif %}
+                    </td>
+                                        <td class="px-3 py-2">
+                                            {% if use_case_data.compliance.gdpr %}
+                                                <span class="w-5 h-5 inline-flex items-center justify-center rounded-full bg-[#D1FAE5] text-[#065F46] text-xs">✓</span>
+                                            {% else %}
+                                                <span class="w-5 h-5 inline-flex items-center justify-center rounded-full bg-[#FEE2E2] text-[#991B1B] text-xs">✗</span>
+                                            {% endif %}
+                    </td>
+                        </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="7" class="px-3 py-2 text-sm text-[#6B7280] text-center">No use cases found. Click agent name to add use cases.</td>
+                                            </tr>
+                                    {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </td>
+                        </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="9" class="px-4 py-8 text-center text-sm text-[#6B7280]">{% trans "No AI agents found. Click \"Add New\" to create one." %}</td>
+                        </tr>
+            {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+    // Set active nav state
+    document.addEventListener('DOMContentLoaded', () => {
+        const navLinks = document.querySelectorAll('.nav-link');
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.dataset.nav === 'ai-systems') {
+                link.classList.add('active');
+            }
+        });
+
+        // Table row expansion functionality
+        const parentRows = document.querySelectorAll('.parent-row');
+        parentRows.forEach(row => {
+            row.addEventListener('click', function() {
+                const targetId = this.getAttribute('data-target');
+                const childRow = document.querySelector(targetId);
+                const chevron = this.querySelector('.chevron');
+
+                if (childRow) {
+                    const isHidden = childRow.classList.contains('hidden');
+                    
+                    // Hide all other expanded rows
+                    document.querySelectorAll('.child-row').forEach(cr => {
+                        if (cr !== childRow) {
+                            cr.classList.add('hidden');
+                        }
+                    });
+                    
+                    // Remove background from all parent rows
+                    parentRows.forEach(pr => {
+                        if (pr !== this) {
+                            pr.classList.remove('bg-[#FEF5F4]');
+                            const prChevron = pr.querySelector('.chevron');
+                            if (prChevron) {
+                                prChevron.classList.remove('rotate-180');
+                            }
+                        }
+                    });
+                    
+                    // Toggle current row
+                    if (isHidden) {
+                        childRow.classList.remove('hidden');
+                        this.classList.add('bg-[#FEF5F4]');
+                        if (chevron) {
+                            chevron.classList.add('rotate-180');
+                        }
+                } else {
+                        childRow.classList.add('hidden');
+                        this.classList.remove('bg-[#FEF5F4]');
+                        if (chevron) {
+                            chevron.classList.remove('rotate-180');
+                        }
+        }
+        }
+            });
+        });
+
+        // Select all checkbox
+        const selectAll = document.getElementById('select-all');
+        const rowCheckboxes = document.querySelectorAll('.row-checkbox');
+        
+        if (selectAll) {
+            selectAll.addEventListener('change', function() {
+                rowCheckboxes.forEach(cb => {
+                    cb.checked = this.checked;
+                });
+            });
+                }
+        });
+    </script>
+
+    <!-- Add New Agent Modal -->
+    <div id="addAgentModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto m-4">
+            <div class="sticky top-0 bg-white border-b border-[#E5E7EB] px-6 py-4 flex justify-between items-center">
+                <h2 class="text-xl font-bold text-[#22262A]">{% trans "Add New AI Agent" %}</h2>
+                <button onclick="closeAddAgentModal()" class="text-[#6B7280] hover:text-[#22262A]">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <form id="addAgentForm" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-[#374151] mb-2">Agent Name *</label>
+                    <input type="text" name="name" required class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:ring-2 focus:ring-[#DC6B64] focus:border-transparent">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-[#374151] mb-2">{% trans "Business Unit" %}</label>
+                    <select name="business_unit" id="business_unit_select" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:ring-2 focus:ring-[#DC6B64]">
+                        <option value="">{% trans "Select Business Unit" %}</option>
+                        {% for business_unit in business_units %}
+                        <option value="{{ business_unit.name }}">{{ business_unit.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-[#374151] mb-2">{% trans "Compliance Status" %}</label>
+                        <select name="compliance_status" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:ring-2 focus:ring-[#DC6B64]">
+                            <option value="assessing">{% trans "Assessing" %}</option>
+                            <option value="reviewing">{% trans "Reviewing" %}</option>
+                            <option value="cleared">Cleared</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-[#374151] mb-2">AI Act Role</label>
+                        <select name="ai_act_role" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:ring-2 focus:ring-[#DC6B64]">
+                            <option value="provider">Provider</option>
+                            <option value="deployer" selected>Deployer</option>
+                            <option value="distributor">Distributor</option>
+                            <option value="importer">Importer</option>
+                            <option value="authorized_representative">Authorized Representative</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-[#374151] mb-2">Vendor</label>
+                        <input type="text" name="vendor" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:ring-2 focus:ring-[#DC6B64]">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-[#374151] mb-2">Risk Classification</label>
+                        <select name="risk_classification" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:ring-2 focus:ring-[#DC6B64]">
+                            <option value="limited_risks">Limited Risks</option>
+                            <option value="high_risks">High Risks</option>
+                            <option value="minimal_risks">Minimal Risks</option>
+                            <option value="gpai_tier1">GPAI (Tier 1)</option>
+                            <option value="gpai_tier2_systemic">GPAI with Systemic Risk (Tier 2)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-[#374151] mb-2">Investment Type</label>
+                    <input type="text" name="investment_type" placeholder="Internal, External, etc." class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:ring-2 focus:ring-[#DC6B64]">
+                </div>
+                
+                <div class="flex justify-end gap-3 pt-4 border-t border-[#E5E7EB]">
+                    <button type="button" onclick="closeAddAgentModal()" class="px-4 py-2 border border-[#D1D5DB] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB]">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-[#DC6B64] text-white rounded-lg text-sm font-medium hover:bg-[#C55A52]">
+                        Create Agent
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Handle Rows per page change
+        document.addEventListener('DOMContentLoaded', function() {
+            const rowsPerPageSelect = document.getElementById('rowsPerPage');
+            if (rowsPerPageSelect) {
+                rowsPerPageSelect.addEventListener('change', function() {
+                    const limit = this.value;
+                    const urlParams = new URLSearchParams(window.location.search);
+                    urlParams.set('limit', limit);
+                    urlParams.set('page', '1'); // Reset to first page when changing limit
+                    window.location.href = '?' + urlParams.toString();
+                });
+            }
+        });
+        
+        function openAddAgentModal() {
+            document.getElementById('addAgentModal').classList.remove('hidden');
+        }
+        
+        function closeAddAgentModal() {
+            document.getElementById('addAgentModal').classList.add('hidden');
+            document.getElementById('addAgentForm').reset();
+        }
+        
+        document.getElementById('addAgentForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData);
+            
+            try {
+                const response = await fetch(`{% url 'api_create_ai_agent' %}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    alert('Agent created successfully!');
+                    closeAddAgentModal();
+                    location.reload();
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+                }
+        });
+    </script>
+{% endblock %}

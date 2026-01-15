@@ -1,0 +1,138 @@
+{% extends "governance/base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans "Frameworks" %}{% endblock %}
+
+{% block dashboard_content %}
+<div class="flex flex-col gap-6">
+            <!-- Breadcrumb Navigation -->
+            <div class="flex items-center gap-2">
+                <button class="w-8 h-8 border-none bg-transparent cursor-pointer flex items-center justify-center rounded-md hover:bg-[#F3F4F6]">
+                    <img src="{% static 'governance/img/arrow-left.svg' %}" alt="Back" class="w-4 h-4">
+                </button>
+                <button class="w-8 h-8 border-none bg-transparent cursor-pointer flex items-center justify-center rounded-md hover:bg-[#F3F4F6]">
+                    <img src="{% static 'governance/img/arrow-right-gray.svg' %}" alt="Forward" class="w-4 h-4">
+                </button>
+                <span class="text-sm font-semibold text-[#F13D30]">{% trans "Frameworks & Reporting" %}</span>
+            </div>
+
+            <!-- Page Header -->
+            <div class="flex justify-between items-start">
+                <div class="header-left">
+                    <h1 class="text-2xl font-bold text-[#22262A]">{% trans "Frameworks" %}</h1>
+                    <p class="text-sm text-[#6B7280] mt-1">{% trans "Choose a reporting framework as a base to manage governance data" %}</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button class="flex items-center gap-1.5 px-5 py-2.5 border-none bg-[#DC6B64] rounded-full text-sm font-semibold text-white cursor-pointer transition-all duration-200 hover:bg-[#C85A54]">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4 stroke-white">
+                            <rect x="3" y="3" width="18" height="18" rx="2" />
+                            <line x1="12" y1="8" x2="12" y2="16" />
+                            <line x1="8" y1="12" x2="16" y2="12" />
+                        </svg>
+                        {% trans "New Framework" %}
+                    </button>
+                    <button class="flex items-center gap-1.5 px-4 py-2 border border-[#DC180A] bg-white rounded-full text-sm font-semibold text-[#F13D30] cursor-pointer transition-all duration-200 hover:bg-[#FEF5F4]">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4 stroke-[#F13D30]">
+                            <rect x="3" y="3" width="18" height="18" rx="2" />
+                            <line x1="12" y1="8" x2="12" y2="16" />
+                            <line x1="8" y1="12" x2="16" y2="12" />
+                        </svg>
+                        {% trans "New Report" %}
+                    </button>
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#e8f4fd] to-[#f0e6fa] flex items-center justify-center border border-[#E5E7EB] cursor-pointer">
+                        <img src="{% static 'governance/img/aiassistant.svg' %}" alt="AI Assistant" class="w-6 h-6">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Frameworks Grid -->
+            <div class="grid grid-cols-2 gap-6">
+                <!-- EU AI Act Card -->
+                <a href="{% url 'eu_ai_act_framework' %}" class="bg-white rounded-2xl border border-[#E5E7EB] p-8 flex flex-col gap-6 relative transition-shadow duration-200 hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)] no-underline">
+                    <div class="w-20 h-20 flex items-center justify-center">
+                        <img src="{% static 'governance/img/eu-ai-act.png' %}" alt="EU AI Act" class="w-18 h-18 object-contain">
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-lg font-semibold text-[#22262A]">{% trans "EU AI Act" %}</h3>
+                    </div>
+                    <span class="absolute top-8 right-8 w-8 h-8 border-none bg-transparent cursor-pointer flex items-center justify-center rounded-md text-[#9CA3AF] transition-all duration-200 hover:bg-[#F3F4F6] hover:text-[#374151]">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5">
+                            <line x1="7" y1="17" x2="17" y2="7" />
+                            <polyline points="7,7 17,7 17,17" />
+                        </svg>
+                    </span>
+                </a>
+
+                <!-- GDPR Card -->
+                <div class="bg-white rounded-2xl border border-[#E5E7EB] p-8 flex flex-col gap-6 relative transition-shadow duration-200 hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)]">
+                    <div class="w-20 h-20 flex items-center justify-center">
+                        <img src="{% static 'governance/img/gdpr.png' %}" alt="GDPR" class="w-18 h-18 object-contain">
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-lg font-semibold text-[#22262A]">{% trans "GDPR" %}</h3>
+                    </div>
+                    <button class="absolute top-8 right-8 w-8 h-8 border-none bg-transparent cursor-pointer flex items-center justify-center rounded-md text-[#9CA3AF] transition-all duration-200 hover:bg-[#F3F4F6] hover:text-[#374151]">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5">
+                            <line x1="7" y1="17" x2="17" y2="7" />
+                            <polyline points="7,7 17,7 17,17" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- DSA Digital Services Act Card -->
+                <div class="bg-white rounded-2xl border border-[#E5E7EB] p-8 flex flex-col gap-6 relative transition-shadow duration-200 hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)]">
+                    <div class="w-20 h-20 flex items-center justify-center">
+                        <img src="{% static 'governance/img/dsa.png' %}" alt="DSA" class="w-18 h-18 object-contain">
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-lg font-semibold text-[#22262A]">{% trans "DSA Digital Services Act" %}</h3>
+                    </div>
+                    <button class="absolute top-8 right-8 w-8 h-8 border-none bg-transparent cursor-pointer flex items-center justify-center rounded-md text-[#9CA3AF] transition-all duration-200 hover:bg-[#F3F4F6] hover:text-[#374151]">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5">
+                            <line x1="7" y1="17" x2="17" y2="7" />
+                            <polyline points="7,7 17,7 17,17" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Data Act Card -->
+                <div class="bg-white rounded-2xl border border-[#E5E7EB] p-8 flex flex-col gap-6 relative transition-shadow duration-200 hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)]">
+                    <div class="w-20 h-20 flex items-center justify-center">
+                        <img src="{% static 'governance/img/dataact.png' %}" alt="Data Act" class="w-18 h-18 object-contain">
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-lg font-semibold text-[#22262A]">{% trans "Data Act" %}</h3>
+                    </div>
+                    <button class="absolute top-8 right-8 w-8 h-8 border-none bg-transparent cursor-pointer flex items-center justify-center rounded-md text-[#9CA3AF] transition-all duration-200 hover:bg-[#F3F4F6] hover:text-[#374151]">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5">
+                            <line x1="7" y1="17" x2="17" y2="7" />
+                            <polyline points="7,7 17,7 17,17" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Highlight Reporting nav item
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.dataset.nav === 'reporting') {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+    <style>
+        @media (max-width: 900px) {
+        .grid.grid-cols-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+{% endblock %}

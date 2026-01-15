@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% load i18n %}
+    {% load static %}
+    <title>{% block title %}{{ company.name }} - Governance{% endblock %}</title>
+    {% block extra_head %}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'governance/css/styles.css' %}">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="importmap">
+    {
+        "imports": {
+            "tagify": "https://cdn.jsdelivr.net/npm/@yaireo/tagify@4.17.9/dist/tagify.esm.js"
+        }
+    }
+    </script>
+    {% endblock %}
+</head>
+<body class="bg-white leading-5 font-sans tracking-normal h-screen overflow-x-hidden">
+    <!-- Alpine.js for sidebar toggle -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
+    <script type="module">
+        import Search from '/static/components/search.js'
+        import Modal from '/static/components/modal.js'
+
+        if (!customElements.get("modal-dialog")) {
+            customElements.define("modal-dialog", Modal);
+        }
+
+        if (!customElements.get("tag-search")) {
+            customElements.define("tag-search", Search);
+        }
+    </script>
+    <script>
+        var companyId = '{{ company.id|default:1 }}';
+        var platform = 'governance';
+        var csrfToken = '{{ csrf_token|default:"" }}';
+        var currentUserId = ''; // No authentication in hackathon demo
+        // Draft questionnaire URLs - not implemented in hackathon demo
+        var upsertDraftUrl = '';
+        var getDraftsUrl = '';
+        var isOpen = true;
+        
+        function getStorageKey(baseKey) {
+            if (!platform || !currentUserId) {
+                return baseKey;
+            }
+            return `${baseKey}-${platform}-${currentUserId}`;
+        }
+
+        function toggle() {
+            isOpen = !isOpen;
+            // Toggle collapsed class on sidebar
+            const sidebar = document.querySelector('.main-sidebar');
+            const mainContent = document.getElementById('main-content');
+            if (sidebar) {
+                if (isOpen) {
+                    sidebar.classList.remove('collapsed');
+                    if (mainContent) mainContent.style.marginLeft = '240px';
+                } else {
+                    sidebar.classList.add('collapsed');
+                    if (mainContent) mainContent.style.marginLeft = '72px';
+                }
+            }
+        }
+        
+        function updateModalStyle(name, modalClasses = [], modalContentClasses = []) {
+            const modal = document.querySelector(`[data-modal="${name}"]`);
+            const modalContent = modal.querySelector("#modal-content");
+
+            if (modal) {
+                modal.classList.remove(...modalClasses.remove);
+                modal.classList.add(...modalClasses.add);
+            }
+
+            if (modalContent) {
+                modalContent.classList.remove(...modalContentClasses.remove);
+                modalContent.classList.add(...modalContentClasses.add);
+            }
+        }
+
+        function showModal(name, args) {
+            const sele = `modal-dialog[data-modal="${name}"]`
+            const modal = document.querySelector(sele);
+            modal.show(args);
+        }
+
+        function saveDraftQuestionnaire() {
+            const storageKey = getStorageKey('draft-data');
+            const questionnaireMethod = JSON.parse(localStorage.getItem(storageKey) || '{}');
+            const length = Object.keys(questionnaireMethod).length;
+            if (length <= 1) {
+                return
+            }
+
+            var data = {
+              body: questionnaireMethod
+            }
+
+            fetch(upsertDraftUrl, {
+                method: "POST",
+                body: JSON.stringify(data),
+                headers: {
+                    "X-CSRFToken": csrfToken
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.ok) {
+                      console.log("Draft saved successfully");
+                    }
+                })
+                .catch(error => {
+                    console.error("Error saving draft:", error);
+                });
+        }
+
+        // Initialize sidebar state on load
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.querySelector('.main-sidebar');
+            const mainContent = document.getElementById('main-content');
+            if (sidebar && mainContent) {
+                // Check if sidebar is collapsed
+                setTimeout(function() {
+                    if (sidebar.classList.contains('collapsed')) {
+                        mainContent.style.marginLeft = '72px';
+                    } else {
+                        mainContent.style.marginLeft = '240px';
+                    }
+                }, 100);
+            }
+        });
+    </script>
+    <div class="bg-white min-h-screen w-full">
+        <div class="flex items-stretch min-h-screen w-full">
+            {% include "governance/partials/sidebar.html" %}
+            
+            <main class="flex-1 relative ml-60 min-h-screen bg-white font-['Montserrat',sans-serif]" id="main-content" style="transition: margin-left 0.3s ease;">
+                <!-- Dashboard Content -->
+                <div class="overflow-y-auto h-full p-6 w-full">
+                    {% block dashboard_content %}
+                    {% endblock %}
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <!-- Modals -->
+    <modal-dialog data-modal="dashboard-modal"
+        class="hidden z-50 fixed top-0 left-0 w-full h-full bg-slate-950 bg-opacity-50">
+        <div class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-8 rounded-lg shadow-2xl">
+            <button class="absolute top-3 right-3 size-6 close-icon" data-action="close"></button>
+            {% block accounts_modal %}
+            {% endblock %}
+        </div>
+    </modal-dialog>
+    
+    {% include "governance/partials/modals.html" %}
+    
+    {% block scripts %}
+    {% endblock %}
+</body>
+</html>
+

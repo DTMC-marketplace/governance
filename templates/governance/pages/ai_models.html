@@ -1,0 +1,977 @@
+{% extends "governance/base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans "AI Models" %}{% endblock %}
+
+{% block dashboard_content %}
+<div class="flex flex-col gap-5">
+    <!-- Breadcrumb Navigation -->
+    <div class="flex items-center gap-2">
+        <button class="w-8 h-8 border-none bg-transparent cursor-pointer flex items-center justify-center rounded-md hover:bg-[#F3F4F6]">
+            <img src="{% static 'governance/img/arrow-left.svg' %}" alt="Back" class="w-4 h-4">
+        </button>
+        <button class="w-8 h-8 border-none bg-transparent cursor-pointer flex items-center justify-center rounded-md hover:bg-[#F3F4F6]">
+            <img src="{% static 'governance/img/arrow-right-gray.svg' %}" alt="Forward" class="w-4 h-4">
+        </button>
+        <span class="text-sm font-semibold text-[#F13D30]">Models</span>
+    </div>
+
+    <!-- Page Header -->
+    <div class="flex justify-between items-start">
+        <div class="header-left">
+            <h1 class="text-2xl font-bold text-[#22262A]">{% trans "GAI Model Cards" %}</h1>
+            <p class="text-sm text-[#6B7280] mt-1">{% trans "EU AI Act Responsible AI Assessment for 160+ Generative AI Models" %}</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <button onclick="exportModelCards()" class="flex items-center gap-1 px-4 py-2 border border-[#DC180A] bg-white rounded-full text-base font-semibold text-[#F13D30] cursor-pointer transition-all duration-200 hover:bg-[#FEF5F4]">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                </svg>
+                <span class="text-sm font-semibold">{% trans "Export" %}</span>
+            </button>
+            <button onclick="addNewModel()" class="flex items-center gap-1 px-5 py-2.5 border-none bg-[#DC6B64] rounded-full text-sm font-semibold text-white cursor-pointer transition-all duration-200 hover:bg-[#C85A54]">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                Add Model
+            </button>
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#e8f4fd] to-[#f0e6fa] flex items-center justify-center border border-[#E5E7EB] cursor-pointer">
+                <img src="{% static 'governance/img/aiassistant.svg' %}" alt="AI Assistant" class="w-6 h-6">
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Bar -->
+    <div class="grid grid-cols-4 gap-4 mb-6">
+        <div class="bg-white border border-[#E5E7EB] rounded-xl p-4 flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" width="24" height="24">
+                    <rect x="3" y="3" width="18" height="18" rx="2" />
+                    <path d="M12 8v8M8 12h8" />
+                </svg>
+            </div>
+            <div class="flex flex-col">
+                <span class="text-2xl font-bold text-[#1F2937]" id="total-models">60</span>
+                <span class="text-xs text-[#6B7280]">{% trans "Total Models" %}</span>
+            </div>
+        </div>
+        <div class="bg-white border border-[#E5E7EB] rounded-xl p-4 flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background: linear-gradient(135deg, #10b981, #059669);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" width="24" height="24">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                    <line x1="12" y1="9" x2="12" y2="13" />
+                    <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg>
+            </div>
+            <div class="flex flex-col">
+                <span class="text-2xl font-bold text-[#1F2937]" id="high-risk-count">28</span>
+                <span class="text-xs text-[#6B7280]">{% trans "High RAI" %}</span>
+            </div>
+        </div>
+        <div class="bg-white border border-[#E5E7EB] rounded-xl p-4 flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" width="24" height="24">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+            </div>
+            <div class="flex flex-col">
+                <span class="text-2xl font-bold text-[#1F2937]" id="limited-risk-count">4</span>
+                <span class="text-xs text-[#6B7280]">{% trans "Medium RAI" %}</span>
+            </div>
+        </div>
+        <div class="bg-white border border-[#E5E7EB] rounded-xl p-4 flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" width="24" height="24">
+                    <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
+                    <polyline points="22 4 12 14.01 9 11.01" />
+                </svg>
+            </div>
+            <div class="flex flex-col">
+                <span class="text-2xl font-bold text-[#1F2937]" id="minimal-risk-count">28</span>
+                <span class="text-xs text-[#6B7280]">Low/No RAI</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+        <div class="search-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input type="text" id="model-search" placeholder="Search 160+ models..." onkeyup="filterModels()">
+        </div>
+        <div class="filter-group">
+            <select id="risk-filter" onchange="filterModels()">
+                <option value="">All RAI Levels</option>
+                <option value="high">High RAI</option>
+                <option value="medium">Medium RAI</option>
+                <option value="low">Low/No RAI</option>
+            </select>
+            <select id="vendor-filter" onchange="filterModels()">
+                <option value="">All Vendors</option>
+                <option value="OpenAI">OpenAI</option>
+                <option value="Anthropic">Anthropic</option>
+                <option value="Google DeepMind">Google DeepMind</option>
+                <option value="Meta">Meta</option>
+                <option value="Microsoft">Microsoft</option>
+                <option value="Mistral AI">Mistral AI</option>
+                <option value="Cohere">Cohere</option>
+                <option value="DeepSeek">DeepSeek</option>
+                <option value="Qwen">Qwen</option>
+                <option value="xAI">xAI</option>
+                <option value="NVIDIA">NVIDIA</option>
+                <option value="IBM">IBM</option>
+                <option value="Stability AI">Stability AI</option>
+                <option value="01.AI">01.AI</option>
+                <option value="TIIUAE">TIIUAE</option>
+                <option value="Reka AI">Reka AI</option>
+                <option value="JetBrains">JetBrains</option>
+                <option value="ByteDance">ByteDance</option>
+                <option value="Community">Community</option>
+            </select>
+            <select id="transparency-filter" onchange="filterModels()">
+                <option value="">All Transparency</option>
+                <option value="High">High</option>
+                <option value="Medium">Medium</option>
+                <option value="Low">Low</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- RAI (Responsible AI) Legend -->
+    <div class="bg-[#F9FAFB] rounded-xl p-5 mb-6">
+        <h4 class="text-sm font-semibold text-[#374151] mb-4">Responsible AI (RAI) Assessment Legend</h4>
+        <div class="grid grid-cols-3 gap-3">
+            <div class="flex items-center gap-2">
+                <span class="w-4 h-4 rounded bg-[#D1FAE5] border border-[#059669]"></span>
+                <span class="text-xs text-[#4B5563]"><strong>High RAI:</strong> Strong RAI documentation, safety evaluations, and built-in safeguards</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="w-4 h-4 rounded bg-[#FEF3C7] border border-[#D97706]"></span>
+                <span class="text-xs text-[#4B5563]"><strong>Medium RAI:</strong> Some RAI considerations with additional safeguards recommended</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="w-4 h-4 rounded bg-[#FEE2E2] border border-[#DC2626]"></span>
+                <span class="text-xs text-[#4B5563]"><strong>Low/No RAI:</strong> Limited or no RAI documentation available</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- EU AI Act Compliance Legend -->
+    <div class="bg-[#F9FAFB] rounded-xl p-5 mb-6">
+        <h4 class="text-sm font-semibold text-[#374151] mb-4">EU AI Act Risk Classification Legend</h4>
+        <div class="grid grid-cols-2 gap-3">
+            <div class="flex items-center gap-2">
+                <span class="w-4 h-4 rounded bg-[#D1FAE5] border border-[#059669]"></span>
+                <span class="text-xs text-[#4B5563]"><strong>High Risk (Art. 6 + Annex III):</strong> GPAI models with systemic risk</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="w-4 h-4 rounded bg-[#FEF3C7] border border-[#D97706]"></span>
+                <span class="text-xs text-[#4B5563]"><strong>Limited Risk (Art. 50):</strong> Transparency obligations apply</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="w-4 h-4 rounded bg-[#FEE2E2] border border-[#DC2626]"></span>
+                <span class="text-xs text-[#4B5563]"><strong>Minimal Risk:</strong> Voluntary codes of conduct</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="w-4 h-4 rounded bg-[#1F2937]"></span>
+                <span class="text-xs text-[#4B5563]"><strong>Prohibited (Art. 5):</strong> Banned AI practices</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Model Cards Grid -->
+    <div class="model-cards-grid" id="model-cards-container">
+        <!-- Cards will be dynamically populated -->
+    </div>
+</div>
+
+<style>
+    .model-cards-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+        gap: 20px;
+        align-items: stretch;
+    }
+
+    .model-card {
+        background: white;
+        border: 1px solid #E5E7EB;
+        border-radius: 16px;
+        padding: 18px;
+        transition: all 0.3s ease;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+    .model-card:hover {
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .card-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+    }
+
+    .card-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 12px;
+        min-height: 60px;
+        flex-shrink: 0;
+    }
+
+    .model-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 700;
+        font-size: 12px;
+        flex-shrink: 0;
+    }
+
+    .model-meta {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .model-name {
+        font-size: 15px;
+        font-weight: 600;
+        color: #1F2937;
+        margin-bottom: 4px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .vendor-badge {
+        font-size: 10px;
+        color: #6B7280;
+        background: #F3F4F6;
+        padding: 2px 8px;
+        border-radius: 4px;
+    }
+
+    .risk-badge {
+        font-size: 10px;
+        font-weight: 600;
+        padding: 4px 8px;
+        border-radius: 20px;
+        white-space: nowrap;
+    }
+
+    .risk-high {
+        background: #D1FAE5;
+        color: #059669;
+    }
+
+    .risk-medium {
+        background: #FEF3C7;
+        color: #D97706;
+    }
+
+    .risk-low {
+        background: #FEE2E2;
+        color: #DC2626;
+    }
+
+    .model-description {
+        font-size: 12px;
+        color: #6B7280;
+        line-height: 1.5;
+        margin-bottom: 12px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        min-height: 36px;
+        flex-shrink: 0;
+    }
+
+    .model-tasks {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin-bottom: 12px;
+        min-height: 24px;
+        flex-shrink: 0;
+    }
+
+    .task-tag {
+        font-size: 10px;
+        color: #4B5563;
+        background: #F3F4F6;
+        padding: 3px 6px;
+        border-radius: 4px;
+    }
+
+    .rai-section {
+        background: #F9FAFB;
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 12px;
+        height: 140px;
+        display: flex;
+        flex-direction: column;
+        flex-shrink: 0;
+    }
+
+    .rai-title {
+        font-size: 12px;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 8px;
+    }
+
+    .rai-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        gap: 2px;
+    }
+
+    .rai-list li {
+        font-size: 11px;
+        color: #4B5563;
+        padding: 4px 0;
+        padding-left: 14px;
+        position: relative;
+        line-height: 1.4;
+        word-wrap: break-word;
+        min-height: 20px;
+        flex-shrink: 0;
+    }
+    
+    .rai-list li:empty {
+        min-height: 20px;
+        display: block;
+    }
+
+    .rai-list li::before {
+        content: '•';
+        position: absolute;
+        left: 0;
+        color: #9CA3AF;
+    }
+
+    .rai-warning {
+        color: #D97706 !important;
+    }
+
+    .rai-warning::before {
+        color: #D97706 !important;
+    }
+
+    .rai-positive {
+        color: #059669 !important;
+    }
+
+    .rai-positive::before {
+        color: #059669 !important;
+    }
+
+    .rai-safeguard {
+        color: #2563EB !important;
+        font-style: italic;
+    }
+
+    .rai-safeguard::before {
+        color: #2563EB !important;
+    }
+
+    .eu-ai-act-section {
+        border: 1px solid #E5E7EB;
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 12px;
+        height: 110px;
+        display: flex;
+        flex-direction: column;
+        flex-shrink: 0;
+    }
+
+    .section-title {
+        font-size: 12px;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 10px;
+    }
+
+    .classification-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+    }
+
+    .classification-item {
+        display: flex;
+        justify-content: space-between;
+        font-size: 11px;
+    }
+
+    .classification-item .label {
+        color: #6B7280;
+    }
+
+    .classification-item .value {
+        font-weight: 500;
+    }
+
+    .transparency-high {
+        color: #059669;
+    }
+
+    .transparency-medium {
+        color: #D97706;
+    }
+
+    .transparency-low {
+        color: #DC2626;
+    }
+
+    .status-compliant {
+        color: #059669;
+    }
+
+    .status-pending {
+        color: #6B7280;
+    }
+
+    .status-warning {
+        color: #D97706;
+    }
+
+    .card-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: auto;
+    }
+
+    .btn-card {
+        flex: 1;
+        padding: 8px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: none;
+    }
+
+    .btn-view {
+        background: #F3F4F6;
+        color: #374151;
+    }
+
+    .btn-view:hover {
+        background: #E5E7EB;
+    }
+
+    .btn-assess {
+        background: #DC6B64;
+        color: white;
+    }
+
+    .btn-assess:hover {
+        background: #c55a53;
+    }
+
+    /* Filter Bar */
+    .filter-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+        padding: 16px;
+        background: #F9FAFB;
+        border-radius: 12px;
+    }
+
+    .search-box {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: white;
+        border: 1px solid #E5E7EB;
+        border-radius: 8px;
+        padding: 8px 12px;
+        min-width: 300px;
+    }
+
+    .search-box input {
+        border: none;
+        outline: none;
+        font-size: 14px;
+        width: 100%;
+        font-family: inherit;
+    }
+
+    .search-box svg {
+        color: #9CA3AF;
+        flex-shrink: 0;
+    }
+
+    .filter-group {
+        display: flex;
+        gap: 12px;
+    }
+
+    .filter-group select {
+        padding: 8px 12px;
+        border: 1px solid #E5E7EB;
+        border-radius: 8px;
+        font-size: 14px;
+        font-family: inherit;
+        background: white;
+        cursor: pointer;
+        color: #1F2937;
+    }
+
+    .filter-group select:focus {
+        outline: none;
+        border-color: #DC6B64;
+        box-shadow: 0 0 0 3px rgba(220, 107, 100, 0.1);
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const modelDatabase = [
+            { id: 1, name: "DeepSeek-V3.2", provider: "DeepSeek", description: "A model that harmonizes high computational efficiency with superior reasoning and agent performance.", tasks: ["coding", "chat-completion"], rai: { has_rai: true, alignment: "Less aligned - higher risks", considerations: ["Less refinement for safe behavior", "Higher risks of harmful content"], safeguards: ["Azure AI Content Safety"] }, transparency: "Medium" },
+            { id: 2, name: "DeepSeek-V3.2-Speciale", provider: "DeepSeek", description: "Enhanced version with superior reasoning and agent performance.", tasks: ["coding", "chat-completion"], rai: { has_rai: true, alignment: "Less aligned - higher risks", considerations: ["Less refinement for safe behavior", "Lower safety benchmark scores"], safeguards: ["Azure AI Content Safety"] }, transparency: "Medium" },
+            { id: 3, name: "gpt-5.2-chat", provider: "OpenAI", description: "Advanced, natural, multimodal, and context-aware conversations for enterprise.", tasks: ["multipurpose", "multilingual", "multimodal"], rai: { has_rai: true, alignment: "High - brand-aligned safety", considerations: ["Enhanced EQ capabilities", "Mental health support features"], safeguards: ["Built-in safety filters", "Azure AI Content Safety"] }, transparency: "High" },
+            { id: 4, name: "gpt-5.2", provider: "OpenAI", description: "Enterprise agent scenarios with structured, auditable outputs and governed integrations.", tasks: ["multipurpose", "multilingual", "multimodal"], rai: { has_rai: true, alignment: "High - governed integrations", considerations: ["New techniques to refuse unsafe requests", "Structured auditable outputs"], safeguards: ["Built-in safety filters"] }, transparency: "High" },
+            { id: 5, name: "Cohere Rerank v4.0 Pro", provider: "Cohere", description: "Improve search and retrieval-augmented generation (RAG) systems.", tasks: ["text-classification", "rerank"], rai: { has_rai: false, alignment: "Not specified", considerations: ["Provider refers to separate RAI section"], safeguards: [] }, transparency: "Low" },
+            { id: 6, name: "Cohere Rerank v4.0 Fast", provider: "Cohere", description: "High-efficiency version for search and RAG systems.", tasks: ["text-classification", "rerank"], rai: { has_rai: false, alignment: "Not specified", considerations: ["Provider refers to separate RAI section"], safeguards: [] }, transparency: "Low" },
+            { id: 7, name: "Claude Opus 4.5", provider: "Anthropic", description: "Anthropic's most intelligent model for coding, agents, and enterprise workflows.", tasks: ["reasoning", "coding", "agents"], rai: { has_rai: true, alignment: "High - detailed system card", considerations: ["Proactive threat detection", "Enterprise workflow safety"], safeguards: ["Official system card"] }, transparency: "High" },
+            { id: 8, name: "Kimi-K2-Thinking", provider: "Moonshot AI", description: "Open-source thinking model designed as a thinking agent.", tasks: ["reasoning", "multilingual"], rai: { has_rai: false, alignment: "Not specified", considerations: ["No out-of-scope info provided"], safeguards: [] }, transparency: "Low" },
+            { id: 9, name: "gpt-5.1-codex-max", provider: "OpenAI", description: "Agentic coding model for complex development workflows.", tasks: ["multipurpose", "responses"], rai: { has_rai: true, alignment: "High - content safety default", considerations: ["Azure AI Content Safety default", "Harmful content prevention"], safeguards: ["Azure AI Content Safety"] }, transparency: "High" },
+            { id: 10, name: "Claude Sonnet 4.5", provider: "Anthropic", description: "Most capable model for real-world agents and long-horizon tasks.", tasks: ["reasoning", "coding", "agents"], rai: { has_rai: true, alignment: "High - system card available", considerations: ["Autonomous vulnerability patching", "Risk management strategies"], safeguards: ["Official system card"] }, transparency: "High" },
+            { id: 11, name: "Phi-4", provider: "Microsoft", description: "State-of-the-art small language model with strong reasoning.", tasks: ["text-generation", "reasoning"], rai: { has_rai: true, alignment: "High - MS RAI Standard", considerations: ["AI Red Team testing", "Detailed RAI documentation"], safeguards: ["Azure AI Content Safety", "MS RAI toolkit"] }, transparency: "High" },
+            { id: 12, name: "Phi-4-multimodal-instruct", provider: "Microsoft", description: "Multimodal model supporting text and image inputs.", tasks: ["image-text-to-text", "multimodal"], rai: { has_rai: true, alignment: "High - MS RAI Standard", considerations: ["Vision input red teaming", "Image safety evaluations"], safeguards: ["Azure AI Content Safety"] }, transparency: "High" },
+            { id: 13, name: "Phi-4-mini-instruct", provider: "Microsoft", description: "Compact Phi-4 optimized for efficiency.", tasks: ["text-generation"], rai: { has_rai: true, alignment: "High - MS RAI Standard", considerations: ["Efficient with safety measures"], safeguards: ["Azure AI Content Safety"] }, transparency: "High" },
+            { id: 14, name: "Phi-3.5-MoE-instruct", provider: "Microsoft", description: "Mixture of Experts model for high-quality text generation.", tasks: ["text-generation"], rai: { has_rai: true, alignment: "High - MS RAI Standard", considerations: ["MoE architecture safety testing"], safeguards: ["Azure AI Content Safety"] }, transparency: "High" },
+            { id: 15, name: "MAI-DS-R1", provider: "Microsoft", description: "Distilled DeepSeek R1 with enhanced safety.", tasks: ["reasoning", "text-generation"], rai: { has_rai: true, alignment: "Enhanced - MS safety improvements", considerations: ["Additional safety alignment", "MS RAI evaluation"], safeguards: ["Azure AI Content Safety"] }, transparency: "High" },
+            { id: 16, name: "Llama-4-Scout-17B-16E", provider: "Meta", description: "Advanced Llama 4 Scout with 17B parameters.", tasks: ["text-generation", "chat-completion"], rai: { has_rai: true, alignment: "High - Meta AI safety", considerations: ["Responsible Use Guide", "Safety fine-tuning"], safeguards: ["Llama Guard", "Azure AI Content Safety"] }, transparency: "High" },
+            { id: 17, name: "Llama-3.3-70B-Instruct", provider: "Meta", description: "High-performance 70B instruction-tuned model.", tasks: ["text-generation", "chat-completion"], rai: { has_rai: true, alignment: "High - extensive evaluations", considerations: ["System prompt safety", "Purple Llama tools"], safeguards: ["Llama Guard"] }, transparency: "High" },
+            { id: 18, name: "Llama-3.2-11B-Vision", provider: "Meta", description: "Vision-capable Llama for image understanding.", tasks: ["image-text-to-text"], rai: { has_rai: true, alignment: "High - vision safety tested", considerations: ["Image understanding safety", "Multimodal guidelines"], safeguards: ["Vision content filtering"] }, transparency: "High" },
+            { id: 19, name: "Mistral-Large-2411", provider: "Mistral AI", description: "Latest large Mistral with strong general capabilities.", tasks: ["text-generation", "chat-completion"], rai: { has_rai: true, alignment: "High - EU AI safety", considerations: ["Guardrails system", "Safety fine-tuning"], safeguards: ["Mistral guardrails", "Azure AI Content Safety"] }, transparency: "High" },
+            { id: 20, name: "Mistral-Nemo-Instruct", provider: "Mistral AI", description: "Efficient model developed with NVIDIA.", tasks: ["text-generation"], rai: { has_rai: true, alignment: "High - NVIDIA joint development", considerations: ["Optimized for safe deployment"], safeguards: ["Azure AI Content Safety"] }, transparency: "High" },
+            { id: 21, name: "Mistral-Small-2503", provider: "Mistral AI", description: "Compact but capable for efficient deployment.", tasks: ["text-generation"], rai: { has_rai: true, alignment: "High - efficient safety", considerations: ["Balanced performance and safety"], safeguards: ["Azure AI Content Safety"] }, transparency: "High" },
+            { id: 22, name: "Codestral-2501", provider: "Mistral AI", description: "Specialized coding model for code generation.", tasks: ["text-generation", "code-generation"], rai: { has_rai: true, alignment: "High - code safety focus", considerations: ["Code security awareness", "License compliance"], safeguards: ["Code review integration"] }, transparency: "High" },
+            { id: 23, name: "Qwen2.5-72B-Instruct", provider: "Qwen", description: "Large model with strong multilingual capabilities.", tasks: ["text-generation", "multilingual"], rai: { has_rai: true, alignment: "High - Alibaba RAI", considerations: ["Multilingual safety alignment"], safeguards: ["Azure AI Content Safety"] }, transparency: "High" },
+            { id: 24, name: "Qwen2.5-Coder-32B", provider: "Qwen", description: "Specialized coding model.", tasks: ["text-generation", "code-generation"], rai: { has_rai: true, alignment: "High - code safety", considerations: ["Secure code generation"], safeguards: ["Code security scanning"] }, transparency: "High" },
+            { id: 25, name: "QwQ-32B-Preview", provider: "Qwen", description: "Reasoning model with chain-of-thought.", tasks: ["reasoning", "text-generation"], rai: { has_rai: true, alignment: "Medium - preview model", considerations: ["Reasoning transparency", "Preview safety"], safeguards: ["Additional evaluation recommended"] }, transparency: "Medium" },
+            { id: 26, name: "jais-30b-chat", provider: "G42", description: "Arabic-focused large language model.", tasks: ["text-generation", "chat-completion"], rai: { has_rai: true, alignment: "High - Arabic cultural sensitivity", considerations: ["Arabic language safety"], safeguards: ["Arabic content filtering"] }, transparency: "High" },
+            { id: 27, name: "AI21-Jamba-1.5-Large", provider: "AI21 Labs", description: "Large hybrid SSM and transformer model.", tasks: ["text-generation", "chat-completion"], rai: { has_rai: true, alignment: "High - AI21 safety", considerations: ["Enterprise-grade safety"], safeguards: ["Azure AI Content Safety"] }, transparency: "High" },
+            { id: 28, name: "AI21-Jamba-1.5-Mini", provider: "AI21 Labs", description: "Compact hybrid model.", tasks: ["text-generation"], rai: { has_rai: true, alignment: "High - AI21 safety", considerations: ["Efficient with safety"], safeguards: ["Azure AI Content Safety"] }, transparency: "High" },
+            { id: 29, name: "Flux.1-Dev", provider: "Black Forest Labs", description: "State-of-the-art text-to-image generation.", tasks: ["text-to-image"], rai: { has_rai: false, alignment: "Medium - image safety", considerations: ["Image content safety required"], safeguards: ["Image content safety API"] }, transparency: "Medium" },
+            { id: 30, name: "Stable Diffusion 3.5", provider: "Stability AI", description: "Advanced text-to-image with high quality.", tasks: ["text-to-image"], rai: { has_rai: true, alignment: "High - Stability AI protocols", considerations: ["Image safety evaluations"], safeguards: ["Safety filter integration"] }, transparency: "High" },
+            { id: 31, name: "falcon3-10b-instruct", provider: "TIIUAE", description: "Falcon3 10B with 1.58-bit quantization.", tasks: ["text-generation"], rai: { has_rai: false, alignment: "Not specified", considerations: ["Standard community model"], safeguards: ["Azure AI Content Safety"] }, transparency: "Low" },
+            { id: 32, name: "falcon3-10b-base", provider: "TIIUAE", description: "Base Falcon3 10B model.", tasks: ["text-generation"], rai: { has_rai: false, alignment: "Not specified", considerations: ["Base model without safety fine-tuning"], safeguards: ["Additional alignment needed"] }, transparency: "Low" },
+            { id: 33, name: "qwentile2.5-32b-instruct", provider: "Community", description: "Community Qwentile 2.5 32B Instruct.", tasks: ["text-generation"], rai: { has_rai: false, alignment: "Not specified", considerations: ["Community fine-tune"], safeguards: ["Independent evaluation"] }, transparency: "Low" },
+            { id: 34, name: "silver-retriever-base", provider: "Community", description: "Text embeddings for retrieval.", tasks: ["embeddings"], rai: { has_rai: false, alignment: "N/A - embeddings", considerations: ["Embeddings bias considerations"], safeguards: [] }, transparency: "Low" },
+            { id: 35, name: "wizardcoder-python-7b", provider: "Community", description: "WizardCoder 7B for Python tasks.", tasks: ["text-generation", "code-generation"], rai: { has_rai: false, alignment: "Not specified", considerations: ["Code safety not evaluated"], safeguards: ["Code review"] }, transparency: "Low" },
+            { id: 36, name: "qwen2.5-2wiki-kg-sft", provider: "Community", description: "Fine-tuned for knowledge graph tasks.", tasks: ["text-generation"], rai: { has_rai: false, alignment: "Not specified", considerations: ["Specialized fine-tune"], safeguards: [] }, transparency: "Low" },
+            { id: 37, name: "me-7b-v1.1", provider: "Community", description: "Educational text generation.", tasks: ["text-generation"], rai: { has_rai: false, alignment: "Not specified", considerations: ["Educational content focus"], safeguards: ["Content review"] }, transparency: "Low" },
+            { id: 38, name: "openchat-3.5-laser", provider: "Community", description: "OpenChat 3.5 with LASER optimization.", tasks: ["text-generation", "chat-completion"], rai: { has_rai: false, alignment: "Not specified", considerations: ["Community optimization"], safeguards: ["Azure AI Content Safety"] }, transparency: "Low" },
+            { id: 39, name: "llama-3-8b-instruct-v0.10", provider: "Community", description: "Fine-tuned Llama 3 8B.", tasks: ["text-generation"], rai: { has_rai: false, alignment: "Inherited from Llama 3", considerations: ["Community fine-tune may alter safety"], safeguards: ["Llama Guard"] }, transparency: "Low" },
+            { id: 40, name: "t3q-ko-solar-sft", provider: "Community", description: "Solar model for Korean.", tasks: ["text-generation"], rai: { has_rai: false, alignment: "Not specified", considerations: ["Korean language specialization"], safeguards: [] }, transparency: "Low" },
+            { id: 41, name: "carbonvillain-10.7b", provider: "Community", description: "CarbonVillain 10.7B text generation.", tasks: ["text-generation"], rai: { has_rai: false, alignment: "Not specified", considerations: ["Community model"], safeguards: ["Azure AI Content Safety"] }, transparency: "Low" },
+            { id: 42, name: "aisquare-instruct-llama2-koen", provider: "Community", description: "Korean/English Llama 2 fine-tune.", tasks: ["text-generation"], rai: { has_rai: false, alignment: "Not specified", considerations: ["Bilingual model"], safeguards: [] }, transparency: "Low" },
+            { id: 43, name: "indian-legal-assistant", provider: "Community", description: "Indian legal assistance model.", tasks: ["text-generation"], rai: { has_rai: false, alignment: "HIGH RISK - legal domain", considerations: ["Legal domain - high risk if used without review", "Accuracy not verified"], safeguards: ["Professional legal review required"] }, transparency: "Low" },
+            { id: 44, name: "omni-judge", provider: "Community", description: "OmniJudge for evaluation tasks.", tasks: ["text-generation"], rai: { has_rai: false, alignment: "Not specified", considerations: ["Evaluation bias considerations"], safeguards: [] }, transparency: "Low" },
+            { id: 45, name: "speech-accent-pt-br-classifier", provider: "Community", description: "Brazilian Portuguese accent classifier.", tasks: ["audio-classification"], rai: { has_rai: false, alignment: "Not specified", considerations: ["Accent classification bias"], safeguards: ["Bias evaluation"] }, transparency: "Low" },
+            { id: 46, name: "qwen2-72b-instruct-awq", provider: "Qwen", description: "Qwen2 72B with AWQ quantization.", tasks: ["text-generation"], rai: { has_rai: true, alignment: "High - Alibaba RAI", considerations: ["Safety filtering included"], safeguards: ["Azure AI Content Safety"] }, transparency: "High" },
+            { id: 47, name: "llama-3-daredevil-mahou", provider: "Community", description: "Community Llama 3 fine-tune.", tasks: ["text-generation"], rai: { has_rai: false, alignment: "Not specified", considerations: ["Community fine-tune"], safeguards: ["Llama Guard"] }, transparency: "Low" },
+            { id: 48, name: "codellama-7b-kexer", provider: "JetBrains", description: "JetBrains CodeLlama for coding.", tasks: ["text-generation", "code-generation"], rai: { has_rai: true, alignment: "High - JetBrains ethics", considerations: ["Coding safety focus"], safeguards: ["Code security integration"] }, transparency: "High" },
+            { id: 49, name: "bert-for-patents", provider: "Community", description: "BERT for patent text processing.", tasks: ["feature-extraction"], rai: { has_rai: false, alignment: "N/A - feature extraction", considerations: ["Domain-specific model"], safeguards: [] }, transparency: "Low" },
+            { id: 50, name: "eagle-llama3-instruct-70b", provider: "Community", description: "EAGLE LLaMA 3 70B fine-tune.", tasks: ["text-generation"], rai: { has_rai: false, alignment: "Inherited from Llama 3", considerations: ["Community fine-tune"], safeguards: ["Llama Guard"] }, transparency: "Low" },
+            { id: 51, name: "tinychat-1776k", provider: "Community", description: "TinyChat for efficient conversations.", tasks: ["text-generation", "chat-completion"], rai: { has_rai: false, alignment: "Not specified", considerations: ["Efficiency-focused"], safeguards: ["Azure AI Content Safety"] }, transparency: "Low" },
+            { id: 52, name: "slovlo-v1", provider: "Community", description: "SlovLo feature extraction.", tasks: ["feature-extraction"], rai: { has_rai: false, alignment: "N/A", considerations: [], safeguards: [] }, transparency: "Low" },
+            { id: 53, name: "rt-detr-satellite-roofs", provider: "Community", description: "Satellite image roof detection.", tasks: ["object-detection"], rai: { has_rai: false, alignment: "N/A - object detection", considerations: ["Surveillance use potential"], safeguards: ["Privacy impact assessment"] }, transparency: "Low" },
+            { id: 54, name: "therapyllama-8b", provider: "Community", description: "Therapy-related text generation.", tasks: ["text-generation"], rai: { has_rai: false, alignment: "HIGH RISK - mental health", considerations: ["Mental health - extremely high risk", "Not a substitute for therapy", "Potential for harm if misused"], safeguards: ["Professional oversight required", "Crisis intervention protocols"] }, transparency: "Low" },
+            { id: 55, name: "clinical-diagnosis-prediction", provider: "Community", description: "Predicting clinical diagnoses.", tasks: ["text-classification"], rai: { has_rai: false, alignment: "HIGH RISK - healthcare", considerations: ["Medical AI - extremely high risk", "Clinical validation required", "Not for autonomous diagnosis"], safeguards: ["Clinical validation mandatory", "Healthcare professional oversight"] }, transparency: "Low" },
+            { id: 56, name: "vision-perceiver-learned", provider: "Google DeepMind", description: "Vision Perceiver by Google DeepMind.", tasks: ["image-classification"], rai: { has_rai: true, alignment: "High - Google AI Principles", considerations: ["Follows Google AI Principles", "Safety evaluations"], safeguards: ["Image content moderation"] }, transparency: "High" },
+            { id: 57, name: "octopus-v2-gguf-awq", provider: "Community", description: "Octopus v2 text generation.", tasks: ["text-generation"], rai: { has_rai: false, alignment: "Not specified", considerations: ["Community model"], safeguards: ["Azure AI Content Safety"] }, transparency: "Low" },
+            { id: 58, name: "mellum-4b-sft-python", provider: "JetBrains", description: "JetBrains Mellum 4B for Python.", tasks: ["text-generation", "code-generation"], rai: { has_rai: true, alignment: "High - coding safety", considerations: ["Python code safety focus"], safeguards: ["Code security scanning"] }, transparency: "High" },
+            { id: 59, name: "seed-sail-7b", provider: "ByteDance", description: "ByteDance SEED-SAIL for multimodal.", tasks: ["image-text-to-text"], rai: { has_rai: true, alignment: "High - ByteDance safety", considerations: ["Multimodal safety testing"], safeguards: ["Image and text filtering"] }, transparency: "High" },
+            { id: 60, name: "microllama", provider: "Community", description: "MicroLlama compact text generation.", tasks: ["text-generation"], rai: { has_rai: false, alignment: "Not specified", considerations: ["Compact model"], safeguards: ["Azure AI Content Safety"] }, transparency: "Low" },
+            // New models 61-160 with system card URLs
+            { id: 61, name: "GPT-4o", provider: "OpenAI", description: "GPT-4o is OpenAI's flagship multimodal model with vision, audio, and text capabilities.", tasks: ["multimodal", "vision", "chat-completion"], rai: { has_rai: true, alignment: "High - OpenAI safety", considerations: ["RLHF training", "Content policies enforced"], safeguards: ["Built-in content filters"] }, transparency: "High", system_card_url: "https://openai.com/index/gpt-4o-system-card/" },
+            { id: 62, name: "GPT-4o-mini", provider: "OpenAI", description: "Cost-efficient small model with GPT-4o intelligence.", tasks: ["chat-completion", "text-generation"], rai: { has_rai: true, alignment: "High - OpenAI safety", considerations: ["RLHF training", "Safety optimized"], safeguards: ["Content filters"] }, transparency: "High", system_card_url: "https://openai.com/index/gpt-4o-mini-advancing-cost-efficient-intelligence/" },
+            { id: 63, name: "GPT-4 Turbo", provider: "OpenAI", description: "Enhanced GPT-4 with 128K context and improved performance.", tasks: ["chat-completion", "code-generation"], rai: { has_rai: true, alignment: "High - OpenAI safety", considerations: ["Knowledge cutoff", "Safety measures"], safeguards: ["Content moderation"] }, transparency: "High", system_card_url: "https://openai.com/research/gpt-4-system-card" },
+            { id: 64, name: "GPT-4V", provider: "OpenAI", description: "GPT-4 with vision capabilities for image understanding.", tasks: ["vision", "multimodal"], rai: { has_rai: true, alignment: "High - vision safety tested", considerations: ["Image safety evaluation", "OCR safety"], safeguards: ["Image content filtering"] }, transparency: "High", system_card_url: "https://openai.com/research/gpt-4v-system-card" },
+            { id: 65, name: "o1-preview", provider: "OpenAI", description: "OpenAI reasoning model with deliberative alignment.", tasks: ["reasoning", "math", "coding"], rai: { has_rai: true, alignment: "High - deliberative safety", considerations: ["Chain-of-thought safety", "Jailbreak resistant"], safeguards: ["Reasoning monitoring"] }, transparency: "High", system_card_url: "https://openai.com/index/openai-o1-system-card/" },
+            { id: 66, name: "o1-mini", provider: "OpenAI", description: "Efficient reasoning model for STEM tasks.", tasks: ["reasoning", "coding", "math"], rai: { has_rai: true, alignment: "High - OpenAI safety", considerations: ["Reasoning transparency"], safeguards: ["Content safety"] }, transparency: "High", system_card_url: "https://openai.com/index/openai-o1-system-card/" },
+            { id: 67, name: "o3", provider: "OpenAI", description: "Latest OpenAI reasoning model with enhanced capabilities.", tasks: ["reasoning", "coding", "research"], rai: { has_rai: true, alignment: "High - frontier safety", considerations: ["Frontier safety tested", "Advanced reasoning"], safeguards: ["Enhanced monitoring"] }, transparency: "High", system_card_url: "https://openai.com/safety" },
+            { id: 68, name: "DALL-E 3", provider: "OpenAI", description: "State-of-the-art image generation model.", tasks: ["text-to-image"], rai: { has_rai: true, alignment: "High - image safety", considerations: ["Content policy", "Provenance C2PA"], safeguards: ["Image filtering", "Watermarking"] }, transparency: "High", system_card_url: "https://openai.com/index/dall-e-3-system-card/" },
+            { id: 69, name: "Whisper", provider: "OpenAI", description: "Automatic speech recognition model.", tasks: ["speech-to-text", "translation"], rai: { has_rai: true, alignment: "High - transcription safety", considerations: ["Accent bias evaluation"], safeguards: ["Content moderation"] }, transparency: "High", system_card_url: "https://github.com/openai/whisper/blob/main/model-card.md" },
+            { id: 70, name: "Claude 3.5 Sonnet", provider: "Anthropic", description: "Anthropic's balanced model for coding and analysis.", tasks: ["coding", "analysis", "chat-completion"], rai: { has_rai: true, alignment: "High - Constitutional AI", considerations: ["RLHF + CAI training", "Harmlessness focus"], safeguards: ["System card published"] }, transparency: "High", system_card_url: "https://www.anthropic.com/news/claude-3-5-sonnet" },
+            { id: 71, name: "Claude 3.5 Haiku", provider: "Anthropic", description: "Fast and efficient Claude model.", tasks: ["chat-completion", "coding"], rai: { has_rai: true, alignment: "High - Constitutional AI", considerations: ["Speed-optimized safety"], safeguards: ["Content filtering"] }, transparency: "High", system_card_url: "https://www.anthropic.com/claude" },
+            { id: 72, name: "Claude 3 Opus", provider: "Anthropic", description: "Anthropic's most capable Claude 3 model.", tasks: ["reasoning", "coding", "analysis"], rai: { has_rai: true, alignment: "High - Constitutional AI", considerations: ["Advanced reasoning safety", "Enterprise focus"], safeguards: ["Detailed system card"] }, transparency: "High", system_card_url: "https://www-cdn.anthropic.com/de8ba9b01c9ab7cbabf5c33b80b7bbc618857627/Model_Card_Claude_3.pdf" },
+            { id: 73, name: "Claude 3 Sonnet", provider: "Anthropic", description: "Balanced Claude 3 for enterprise use.", tasks: ["chat-completion", "analysis"], rai: { has_rai: true, alignment: "High - Constitutional AI", considerations: ["Enterprise safety"], safeguards: ["System card"] }, transparency: "High", system_card_url: "https://www-cdn.anthropic.com/de8ba9b01c9ab7cbabf5c33b80b7bbc618857627/Model_Card_Claude_3.pdf" },
+            { id: 74, name: "Claude 3 Haiku", provider: "Anthropic", description: "Fast Claude 3 for quick tasks.", tasks: ["chat-completion"], rai: { has_rai: true, alignment: "High - Constitutional AI", considerations: ["Low-latency safety"], safeguards: ["Content filtering"] }, transparency: "High", system_card_url: "https://www-cdn.anthropic.com/de8ba9b01c9ab7cbabf5c33b80b7bbc618857627/Model_Card_Claude_3.pdf" },
+            { id: 75, name: "Claude 2.1", provider: "Anthropic", description: "Previous generation Claude with 200K context.", tasks: ["chat-completion", "analysis"], rai: { has_rai: true, alignment: "High - Constitutional AI", considerations: ["Long-context safety"], safeguards: ["Content moderation"] }, transparency: "High", system_card_url: "https://www.anthropic.com/news/claude-2-1" },
+            { id: 76, name: "Llama 3.1 405B", provider: "Meta", description: "Meta's largest open-source model.", tasks: ["text-generation", "coding", "reasoning"], rai: { has_rai: true, alignment: "High - Meta AI safety", considerations: ["Purple Llama tested", "Responsible Use Guide"], safeguards: ["Llama Guard"] }, transparency: "High", system_card_url: "https://github.com/meta-llama/llama-models/blob/main/models/llama3_1/MODEL_CARD.md" },
+            { id: 77, name: "Llama 3.1 70B", provider: "Meta", description: "High-performance Llama 3.1 variant.", tasks: ["text-generation", "chat-completion"], rai: { has_rai: true, alignment: "High - Meta AI safety", considerations: ["Safety fine-tuning"], safeguards: ["Llama Guard", "CyberSecEval"] }, transparency: "High", system_card_url: "https://github.com/meta-llama/llama-models/blob/main/models/llama3_1/MODEL_CARD.md" },
+            { id: 78, name: "Llama 3.1 8B", provider: "Meta", description: "Efficient Llama 3.1 for edge deployment.", tasks: ["text-generation"], rai: { has_rai: true, alignment: "High - Meta AI safety", considerations: ["Compact with safety"], safeguards: ["Llama Guard"] }, transparency: "High", system_card_url: "https://github.com/meta-llama/llama-models/blob/main/models/llama3_1/MODEL_CARD.md" },
+            { id: 79, name: "Llama 3.2 90B Vision", provider: "Meta", description: "Multimodal Llama with vision capabilities.", tasks: ["vision", "multimodal"], rai: { has_rai: true, alignment: "High - vision safety", considerations: ["Image understanding safety"], safeguards: ["Vision content filtering"] }, transparency: "High", system_card_url: "https://github.com/meta-llama/llama-models/blob/main/models/llama3_2/MODEL_CARD.md" },
+            { id: 80, name: "Code Llama 70B", provider: "Meta", description: "Meta's code-specialized Llama model.", tasks: ["code-generation", "code-completion"], rai: { has_rai: true, alignment: "High - code safety", considerations: ["Code security awareness"], safeguards: ["Code analysis tools"] }, transparency: "High", system_card_url: "https://github.com/meta-llama/codellama/blob/main/MODEL_CARD.md" },
+            { id: 81, name: "Gemini 1.5 Pro", provider: "Google DeepMind", description: "Google's flagship multimodal model with 1M context.", tasks: ["multimodal", "reasoning", "coding"], rai: { has_rai: true, alignment: "High - Google AI Principles", considerations: ["Safety evaluations", "Content policies"], safeguards: ["Safety filters"] }, transparency: "High", system_card_url: "https://storage.googleapis.com/deepmind-media/gemini/gemini_1_5_report.pdf" },
+            { id: 82, name: "Gemini 1.5 Flash", provider: "Google DeepMind", description: "Fast and efficient Gemini variant.", tasks: ["chat-completion", "multimodal"], rai: { has_rai: true, alignment: "High - Google AI Principles", considerations: ["Speed-optimized safety"], safeguards: ["Content filtering"] }, transparency: "High", system_card_url: "https://storage.googleapis.com/deepmind-media/gemini/gemini_1_5_report.pdf" },
+            { id: 83, name: "Gemini 2.0 Flash", provider: "Google DeepMind", description: "Next-generation fast Gemini model.", tasks: ["multimodal", "agents", "coding"], rai: { has_rai: true, alignment: "High - Google AI Principles", considerations: ["Agent safety", "Multimodal safety"], safeguards: ["Enhanced monitoring"] }, transparency: "High", system_card_url: "https://ai.google.dev/gemini-api/docs/models/gemini-v2" },
+            { id: 84, name: "Gemini Ultra", provider: "Google DeepMind", description: "Google's most capable Gemini model.", tasks: ["reasoning", "multimodal", "coding"], rai: { has_rai: true, alignment: "High - Google AI Principles", considerations: ["Frontier model safety"], safeguards: ["Extensive evaluations"] }, transparency: "High", system_card_url: "https://storage.googleapis.com/deepmind-media/gemini/gemini_v1_5_report.pdf" },
+            { id: 85, name: "PaLM 2", provider: "Google DeepMind", description: "Google's previous-generation language model.", tasks: ["text-generation", "reasoning"], rai: { has_rai: true, alignment: "High - Google AI Principles", considerations: ["Safety testing", "Bias evaluation"], safeguards: ["Content moderation"] }, transparency: "High", system_card_url: "https://ai.google/static/documents/palm2techreport.pdf" },
+            { id: 86, name: "Mistral Large 2", provider: "Mistral AI", description: "Mistral's flagship 123B parameter model.", tasks: ["text-generation", "coding", "reasoning"], rai: { has_rai: true, alignment: "High - EU AI Act focus", considerations: ["Guardrails system", "Safety testing"], safeguards: ["Mistral guardrails"] }, transparency: "High", system_card_url: "https://mistral.ai/news/mistral-large-2407/" },
+            { id: 87, name: "Mistral Large 3", provider: "Mistral AI", description: "Latest Mistral flagship with enhanced capabilities.", tasks: ["text-generation", "coding", "agents"], rai: { has_rai: true, alignment: "High - EU AI safety", considerations: ["Advanced guardrails"], safeguards: ["Mistral moderation"] }, transparency: "High", system_card_url: "https://mistral.ai/news/mistral-large/" },
+            { id: 88, name: "Mistral Medium", provider: "Mistral AI", description: "Balanced Mistral model for enterprise.", tasks: ["text-generation", "chat-completion"], rai: { has_rai: true, alignment: "High - EU AI safety", considerations: ["Enterprise guardrails"], safeguards: ["Content filtering"] }, transparency: "High", system_card_url: "https://docs.mistral.ai/getting-started/models/" },
+            { id: 89, name: "Mistral 7B", provider: "Mistral AI", description: "Efficient open-source Mistral model.", tasks: ["text-generation"], rai: { has_rai: true, alignment: "Medium - open model", considerations: ["Community deployment"], safeguards: ["Azure AI Content Safety"] }, transparency: "High", system_card_url: "https://mistral.ai/news/announcing-mistral-7b/" },
+            { id: 90, name: "Mixtral 8x7B", provider: "Mistral AI", description: "Mixture of Experts sparse model.", tasks: ["text-generation", "coding"], rai: { has_rai: true, alignment: "High - MoE safety", considerations: ["Efficient architecture safety"], safeguards: ["Content moderation"] }, transparency: "High", system_card_url: "https://mistral.ai/news/mixtral-of-experts/" },
+            { id: 91, name: "Mixtral 8x22B", provider: "Mistral AI", description: "Large Mixture of Experts model.", tasks: ["text-generation", "reasoning"], rai: { has_rai: true, alignment: "High - EU AI safety", considerations: ["Large MoE evaluation"], safeguards: ["Guardrails system"] }, transparency: "High", system_card_url: "https://mistral.ai/news/mixtral-8x22b/" },
+            { id: 92, name: "Codestral Mamba", provider: "Mistral AI", description: "Mamba architecture for code generation.", tasks: ["code-generation"], rai: { has_rai: true, alignment: "High - code safety", considerations: ["Code security"], safeguards: ["Code review integration"] }, transparency: "High", system_card_url: "https://mistral.ai/news/codestral-mamba/" },
+            { id: 93, name: "Pixtral 12B", provider: "Mistral AI", description: "Mistral's vision-language model.", tasks: ["vision", "multimodal"], rai: { has_rai: true, alignment: "High - vision safety", considerations: ["Image analysis safety"], safeguards: ["Vision filtering"] }, transparency: "High", system_card_url: "https://mistral.ai/news/pixtral-12b/" },
+            { id: 94, name: "Pixtral Large", provider: "Mistral AI", description: "Large multimodal model.", tasks: ["vision", "multimodal", "reasoning"], rai: { has_rai: true, alignment: "High - multimodal safety", considerations: ["Advanced vision safety"], safeguards: ["Content moderation"] }, transparency: "High", system_card_url: "https://mistral.ai/news/pixtral-large/" },
+            { id: 95, name: "Grok-1", provider: "xAI", description: "xAI's first generation language model.", tasks: ["text-generation", "chat-completion"], rai: { has_rai: true, alignment: "Medium - open weights", considerations: ["Less restrictive alignment"], safeguards: ["Platform moderation"] }, transparency: "Medium", system_card_url: "https://x.ai/blog/grok" },
+            { id: 96, name: "Grok-2", provider: "xAI", description: "xAI's improved reasoning model.", tasks: ["text-generation", "reasoning"], rai: { has_rai: true, alignment: "Medium - xAI policies", considerations: ["Reasoning capabilities"], safeguards: ["Platform safety"] }, transparency: "Medium", system_card_url: "https://x.ai/blog/grok-2" },
+            { id: 97, name: "Grok-4", provider: "xAI", description: "Latest xAI model with enhanced capabilities.", tasks: ["reasoning", "coding", "chat-completion"], rai: { has_rai: true, alignment: "Medium - xAI safety", considerations: ["Frontier capabilities"], safeguards: ["Enhanced monitoring"] }, transparency: "Medium", system_card_url: "https://x.ai/blog/" },
+            { id: 98, name: "Command R+", provider: "Cohere", description: "Cohere's enterprise RAG-focused model.", tasks: ["text-generation", "RAG"], rai: { has_rai: true, alignment: "High - enterprise safety", considerations: ["RAG safety", "Citation accuracy"], safeguards: ["Enterprise controls"] }, transparency: "High", system_card_url: "https://cohere.com/command" },
+            { id: 99, name: "Command R", provider: "Cohere", description: "Efficient retrieval-augmented generation.", tasks: ["text-generation", "RAG"], rai: { has_rai: true, alignment: "High - enterprise safety", considerations: ["Retrieval accuracy"], safeguards: ["Content filtering"] }, transparency: "High", system_card_url: "https://cohere.com/command" },
+            { id: 100, name: "Embed v3", provider: "Cohere", description: "State-of-the-art embedding model.", tasks: ["embeddings"], rai: { has_rai: true, alignment: "N/A - embeddings", considerations: ["Bias in embeddings"], safeguards: [] }, transparency: "High", system_card_url: "https://cohere.com/embed" },
+            { id: 101, name: "Rerank 3", provider: "Cohere", description: "Advanced reranking model.", tasks: ["rerank"], rai: { has_rai: true, alignment: "N/A - reranking", considerations: ["Ranking fairness"], safeguards: [] }, transparency: "High", system_card_url: "https://cohere.com/rerank" },
+            { id: 102, name: "Aya 23", provider: "Cohere", description: "Multilingual model for 23 languages.", tasks: ["multilingual", "text-generation"], rai: { has_rai: true, alignment: "High - multilingual safety", considerations: ["Cultural sensitivity"], safeguards: ["Multilingual moderation"] }, transparency: "High", system_card_url: "https://cohere.com/research/aya" },
+            { id: 103, name: "Aya Expanse", provider: "Cohere", description: "Extended multilingual capabilities.", tasks: ["multilingual", "translation"], rai: { has_rai: true, alignment: "High - global safety", considerations: ["100+ languages"], safeguards: ["Cultural filtering"] }, transparency: "High", system_card_url: "https://cohere.com/research/aya" },
+            { id: 104, name: "DeepSeek-V3", provider: "DeepSeek", description: "Large efficient reasoning model.", tasks: ["reasoning", "coding"], rai: { has_rai: true, alignment: "Medium - less aligned", considerations: ["Efficient architecture", "Lower safety scores"], safeguards: ["Azure AI Content Safety"] }, transparency: "Medium", system_card_url: "https://github.com/deepseek-ai/DeepSeek-V3" },
+            { id: 105, name: "DeepSeek-R1", provider: "DeepSeek", description: "Reasoning model with chain-of-thought.", tasks: ["reasoning", "math"], rai: { has_rai: true, alignment: "Medium - reasoning focus", considerations: ["Reasoning transparency"], safeguards: ["Azure AI Content Safety"] }, transparency: "Medium", system_card_url: "https://github.com/deepseek-ai/DeepSeek-R1" },
+            { id: 106, name: "DeepSeek-Coder-V2", provider: "DeepSeek", description: "Code generation specialist.", tasks: ["code-generation"], rai: { has_rai: true, alignment: "Medium - code safety", considerations: ["Code security"], safeguards: ["Code review"] }, transparency: "Medium", system_card_url: "https://github.com/deepseek-ai/DeepSeek-Coder" },
+            { id: 107, name: "Qwen2.5-Max", provider: "Qwen", description: "Alibaba's largest Qwen model.", tasks: ["text-generation", "reasoning"], rai: { has_rai: true, alignment: "High - Alibaba RAI", considerations: ["Enterprise safety"], safeguards: ["Content filtering"] }, transparency: "High", system_card_url: "https://github.com/QwenLM/Qwen2.5" },
+            { id: 108, name: "Qwen2.5-VL-72B", provider: "Qwen", description: "Vision-language Qwen model.", tasks: ["vision", "multimodal"], rai: { has_rai: true, alignment: "High - multimodal safety", considerations: ["Vision analysis safety"], safeguards: ["Image filtering"] }, transparency: "High", system_card_url: "https://github.com/QwenLM/Qwen2-VL" },
+            { id: 109, name: "Qwen2-Audio", provider: "Qwen", description: "Audio understanding model.", tasks: ["audio", "speech"], rai: { has_rai: true, alignment: "High - audio safety", considerations: ["Audio content analysis"], safeguards: ["Audio moderation"] }, transparency: "High", system_card_url: "https://github.com/QwenLM/Qwen2-Audio" },
+            { id: 110, name: "Qwen-Agent", provider: "Qwen", description: "Agent-focused Qwen model.", tasks: ["agents", "tool-use"], rai: { has_rai: true, alignment: "High - agent safety", considerations: ["Tool use safety"], safeguards: ["Action monitoring"] }, transparency: "High", system_card_url: "https://github.com/QwenLM/Qwen-Agent" },
+            { id: 111, name: "Yi-34B", provider: "01.AI", description: "01.AI's powerful open model.", tasks: ["text-generation", "reasoning"], rai: { has_rai: true, alignment: "High - 01.AI safety", considerations: ["Open model safety"], safeguards: ["Azure AI Content Safety"] }, transparency: "High", system_card_url: "https://github.com/01-ai/Yi" },
+            { id: 112, name: "Yi-1.5-34B", provider: "01.AI", description: "Improved Yi with enhanced capabilities.", tasks: ["text-generation", "coding"], rai: { has_rai: true, alignment: "High - 01.AI safety", considerations: ["Enhanced alignment"], safeguards: ["Content filtering"] }, transparency: "High", system_card_url: "https://github.com/01-ai/Yi-1.5" },
+            { id: 113, name: "Yi-VL-34B", provider: "01.AI", description: "Vision-language Yi model.", tasks: ["vision", "multimodal"], rai: { has_rai: true, alignment: "High - vision safety", considerations: ["Image understanding"], safeguards: ["Vision filtering"] }, transparency: "High", system_card_url: "https://github.com/01-ai/Yi" },
+            { id: 114, name: "Nemotron-4-340B", provider: "NVIDIA", description: "NVIDIA's large language model.", tasks: ["text-generation", "reasoning"], rai: { has_rai: true, alignment: "High - NVIDIA ethics", considerations: ["Enterprise deployment"], safeguards: ["NeMo Guardrails"] }, transparency: "High", system_card_url: "https://nvidia.github.io/NeMo-Guardrails/" },
+            { id: 115, name: "Llama-3.1-Nemotron-70B", provider: "NVIDIA", description: "NVIDIA fine-tuned Llama.", tasks: ["text-generation", "chat-completion"], rai: { has_rai: true, alignment: "High - NVIDIA + Meta", considerations: ["Combined safety protocols"], safeguards: ["NeMo + Llama Guard"] }, transparency: "High", system_card_url: "https://huggingface.co/nvidia/Llama-3.1-Nemotron-70B-Instruct-HF" },
+            { id: 116, name: "DBRX", provider: "Databricks", description: "Databricks' MoE model.", tasks: ["text-generation", "coding"], rai: { has_rai: true, alignment: "High - enterprise focus", considerations: ["Data platform safety"], safeguards: ["Enterprise controls"] }, transparency: "High", system_card_url: "https://www.databricks.com/blog/introducing-dbrx-new-state-art-open-llm" },
+            { id: 117, name: "Granite 3.0 8B", provider: "IBM", description: "IBM's enterprise language model.", tasks: ["text-generation", "enterprise"], rai: { has_rai: true, alignment: "High - IBM AI Ethics", considerations: ["Enterprise governance"], safeguards: ["IBM AI safety"] }, transparency: "High", system_card_url: "https://www.ibm.com/granite" },
+            { id: 118, name: "Granite Code 34B", provider: "IBM", description: "IBM's code generation model.", tasks: ["code-generation"], rai: { has_rai: true, alignment: "High - IBM AI Ethics", considerations: ["Code IP safety"], safeguards: ["License compliance"] }, transparency: "High", system_card_url: "https://www.ibm.com/granite" },
+            { id: 119, name: "Granite Vision", provider: "IBM", description: "IBM's multimodal model.", tasks: ["vision", "document-understanding"], rai: { has_rai: true, alignment: "High - IBM AI Ethics", considerations: ["Document privacy"], safeguards: ["Data protection"] }, transparency: "High", system_card_url: "https://www.ibm.com/granite" },
+            { id: 120, name: "Arctic", provider: "Snowflake", description: "Snowflake's enterprise LLM.", tasks: ["text-generation", "SQL"], rai: { has_rai: true, alignment: "High - enterprise", considerations: ["Data warehouse safety"], safeguards: ["Enterprise controls"] }, transparency: "High", system_card_url: "https://www.snowflake.com/blog/arctic-open-enterprise-grade-llm/" },
+            { id: 121, name: "Cerebras-GPT-13B", provider: "Cerebras", description: "Cerebras' efficient model.", tasks: ["text-generation"], rai: { has_rai: false, alignment: "Not specified", considerations: ["Open model"], safeguards: ["Azure AI Content Safety"] }, transparency: "Low" },
+            { id: 122, name: "OLMo 7B", provider: "AI2", description: "Allen AI's open language model.", tasks: ["text-generation", "research"], rai: { has_rai: true, alignment: "High - research ethics", considerations: ["Open science ethics"], safeguards: ["Research community"] }, transparency: "High", system_card_url: "https://allenai.org/olmo" },
+            { id: 123, name: "OLMo 2 13B", provider: "AI2", description: "Updated Allen AI model.", tasks: ["text-generation", "reasoning"], rai: { has_rai: true, alignment: "High - research ethics", considerations: ["Improved safety"], safeguards: ["Community oversight"] }, transparency: "High", system_card_url: "https://allenai.org/olmo" },
+            { id: 124, name: "Falcon 180B", provider: "TIIUAE", description: "Large-scale UAE model.", tasks: ["text-generation"], rai: { has_rai: true, alignment: "High - TII guidelines", considerations: ["Large model safety"], safeguards: ["Azure AI Content Safety"] }, transparency: "High", system_card_url: "https://huggingface.co/tiiuae/falcon-180B" },
+            { id: 125, name: "Falcon2-11B", provider: "TIIUAE", description: "Efficient Falcon 2 model.", tasks: ["text-generation"], rai: { has_rai: true, alignment: "High - TII guidelines", considerations: ["Efficient deployment"], safeguards: ["Content filtering"] }, transparency: "High", system_card_url: "https://huggingface.co/tiiuae/falcon2-11b" },
+            { id: 126, name: "StarCoder2-15B", provider: "BigCode", description: "Open code generation model.", tasks: ["code-generation"], rai: { has_rai: true, alignment: "High - BigCode ethics", considerations: ["Training data ethics", "License compliance"], safeguards: ["Code attribution"] }, transparency: "High", system_card_url: "https://huggingface.co/bigcode/starcoder2-15b" },
+            { id: 127, name: "StarCoder2-3B", provider: "BigCode", description: "Small efficient coder.", tasks: ["code-generation"], rai: { has_rai: true, alignment: "High - BigCode ethics", considerations: ["Efficient coding"], safeguards: ["License checking"] }, transparency: "High", system_card_url: "https://huggingface.co/bigcode/starcoder2-3b" },
+            { id: 128, name: "CodeGemma 7B", provider: "Google DeepMind", description: "Google's code-focused Gemma.", tasks: ["code-generation"], rai: { has_rai: true, alignment: "High - Google AI Principles", considerations: ["Code safety"], safeguards: ["Security scanning"] }, transparency: "High", system_card_url: "https://ai.google.dev/gemma/docs/model_card_2" },
+            { id: 129, name: "Gemma 2 27B", provider: "Google DeepMind", description: "Large open Gemma model.", tasks: ["text-generation", "reasoning"], rai: { has_rai: true, alignment: "High - Google AI Principles", considerations: ["Open model safety"], safeguards: ["Safety filters"] }, transparency: "High", system_card_url: "https://ai.google.dev/gemma/docs/model_card_2" },
+            { id: 130, name: "Gemma 2 9B", provider: "Google DeepMind", description: "Balanced open Gemma.", tasks: ["text-generation"], rai: { has_rai: true, alignment: "High - Google AI Principles", considerations: ["Efficient safety"], safeguards: ["Content filtering"] }, transparency: "High", system_card_url: "https://ai.google.dev/gemma/docs/model_card_2" },
+            { id: 131, name: "Gemma 2 2B", provider: "Google DeepMind", description: "Small efficient Gemma.", tasks: ["text-generation"], rai: { has_rai: true, alignment: "High - Google AI Principles", considerations: ["Edge deployment"], safeguards: ["Safety layers"] }, transparency: "High", system_card_url: "https://ai.google.dev/gemma/docs/model_card_2" },
+            { id: 132, name: "RecurrentGemma", provider: "Google DeepMind", description: "Recurrent architecture Gemma.", tasks: ["text-generation"], rai: { has_rai: true, alignment: "High - Google AI Principles", considerations: ["Novel architecture safety"], safeguards: ["Evaluation suite"] }, transparency: "High", system_card_url: "https://ai.google.dev/gemma/docs/recurrentgemma" },
+            { id: 133, name: "PaliGemma", provider: "Google DeepMind", description: "Vision-language Gemma.", tasks: ["vision", "multimodal"], rai: { has_rai: true, alignment: "High - Google AI Principles", considerations: ["Vision safety"], safeguards: ["Image filtering"] }, transparency: "High", system_card_url: "https://ai.google.dev/gemma/docs/paligemma" },
+            { id: 134, name: "Stable Diffusion XL", provider: "Stability AI", description: "Advanced image generation.", tasks: ["text-to-image"], rai: { has_rai: true, alignment: "High - Stability protocols", considerations: ["Image content safety"], safeguards: ["Safety checker"] }, transparency: "High", system_card_url: "https://stability.ai/news/stable-diffusion-xl-1-0" },
+            { id: 135, name: "Stable Video Diffusion", provider: "Stability AI", description: "Video generation model.", tasks: ["text-to-video"], rai: { has_rai: true, alignment: "High - video content", considerations: ["Video content safety"], safeguards: ["Content moderation"] }, transparency: "High", system_card_url: "https://stability.ai/news/stable-video-diffusion-open-ai-video-model" },
+            { id: 136, name: "Stable Audio", provider: "Stability AI", description: "Audio generation model.", tasks: ["text-to-audio"], rai: { has_rai: true, alignment: "High - audio content", considerations: ["Audio copyright"], safeguards: ["Content ID"] }, transparency: "High", system_card_url: "https://stability.ai/news/stable-audio-2-0" },
+            { id: 137, name: "FLUX.1 [schnell]", provider: "Black Forest Labs", description: "Fast image generation.", tasks: ["text-to-image"], rai: { has_rai: false, alignment: "Medium - image safety", considerations: ["Fast generation safety"], safeguards: ["Post-generation filtering"] }, transparency: "Medium", system_card_url: "https://blackforestlabs.ai/announcing-black-forest-labs/" },
+            { id: 138, name: "FLUX.1 [pro]", provider: "Black Forest Labs", description: "Professional image generation.", tasks: ["text-to-image"], rai: { has_rai: true, alignment: "High - pro controls", considerations: ["Professional use safety"], safeguards: ["API moderation"] }, transparency: "High", system_card_url: "https://blackforestlabs.ai/announcing-black-forest-labs/" },
+            { id: 139, name: "Midjourney v6", provider: "Midjourney", description: "Advanced artistic image generation.", tasks: ["text-to-image"], rai: { has_rai: true, alignment: "High - content policies", considerations: ["Artistic content", "IP concerns"], safeguards: ["Content moderation"] }, transparency: "Medium" },
+            { id: 140, name: "Imagen 3", provider: "Google DeepMind", description: "Google's latest image model.", tasks: ["text-to-image"], rai: { has_rai: true, alignment: "High - Google AI Principles", considerations: ["SynthID watermarking"], safeguards: ["Safety filters", "Watermarking"] }, transparency: "High", system_card_url: "https://deepmind.google/technologies/imagen-3/" },
+            { id: 141, name: "Sora", provider: "OpenAI", description: "OpenAI's video generation model.", tasks: ["text-to-video"], rai: { has_rai: true, alignment: "High - video safety", considerations: ["Video content policies", "Deepfake concerns"], safeguards: ["C2PA metadata", "Content moderation"] }, transparency: "High", system_card_url: "https://openai.com/sora" },
+            { id: 142, name: "Sora 2", provider: "OpenAI", description: "Enhanced video generation.", tasks: ["text-to-video"], rai: { has_rai: true, alignment: "High - video safety", considerations: ["Extended video safety"], safeguards: ["Enhanced monitoring"] }, transparency: "High", system_card_url: "https://openai.com/sora" },
+            { id: 143, name: "Kling", provider: "Kuaishou", description: "Chinese video generation model.", tasks: ["text-to-video"], rai: { has_rai: true, alignment: "Medium - platform policies", considerations: ["Video content"], safeguards: ["Platform moderation"] }, transparency: "Medium" },
+            { id: 144, name: "Pika 1.0", provider: "Pika Labs", description: "Creative video generation.", tasks: ["text-to-video"], rai: { has_rai: true, alignment: "High - creative safety", considerations: ["Creative content"], safeguards: ["Content policies"] }, transparency: "High", system_card_url: "https://pika.art/" },
+            { id: 145, name: "Runway Gen-3 Alpha", provider: "Runway", description: "Advanced video model.", tasks: ["text-to-video", "image-to-video"], rai: { has_rai: true, alignment: "High - Runway policies", considerations: ["Video generation ethics"], safeguards: ["Content moderation"] }, transparency: "High", system_card_url: "https://runwayml.com/research/introducing-gen-3-alpha" },
+            { id: 146, name: "ElevenLabs", provider: "ElevenLabs", description: "Voice synthesis and cloning.", tasks: ["text-to-speech", "voice-cloning"], rai: { has_rai: true, alignment: "High - voice ethics", considerations: ["Voice cloning consent", "Deepfake voice"], safeguards: ["Voice verification", "Usage policies"] }, transparency: "High", system_card_url: "https://elevenlabs.io/safety" },
+            { id: 147, name: "XTTS v2", provider: "Coqui", description: "Open voice synthesis.", tasks: ["text-to-speech"], rai: { has_rai: false, alignment: "Medium - open model", considerations: ["Voice cloning risks"], safeguards: ["Community guidelines"] }, transparency: "Low", system_card_url: "https://github.com/coqui-ai/TTS" },
+            { id: 148, name: "MusicGen", provider: "Meta", description: "Music generation model.", tasks: ["text-to-audio", "music"], rai: { has_rai: true, alignment: "High - Meta AI safety", considerations: ["Music copyright"], safeguards: ["Attribution requirements"] }, transparency: "High", system_card_url: "https://ai.meta.com/resources/models-and-libraries/audiocraft/" },
+            { id: 149, name: "AudioCraft", provider: "Meta", description: "Audio generation suite.", tasks: ["text-to-audio"], rai: { has_rai: true, alignment: "High - Meta AI safety", considerations: ["Audio content"], safeguards: ["Content filtering"] }, transparency: "High", system_card_url: "https://ai.meta.com/resources/models-and-libraries/audiocraft/" },
+            { id: 150, name: "Reka Core", provider: "Reka AI", description: "Multimodal model.", tasks: ["multimodal", "reasoning"], rai: { has_rai: true, alignment: "High - Reka safety", considerations: ["Multimodal evaluation"], safeguards: ["Content moderation"] }, transparency: "High", system_card_url: "https://publications.reka.ai/reka-core-tech-report.pdf" },
+            { id: 151, name: "Reka Flash", provider: "Reka AI", description: "Fast multimodal model.", tasks: ["multimodal", "chat-completion"], rai: { has_rai: true, alignment: "High - Reka safety", considerations: ["Speed-optimized safety"], safeguards: ["Content filtering"] }, transparency: "High", system_card_url: "https://reka.ai/" },
+            { id: 152, name: "WizardLM-2 8x22B", provider: "Community", description: "Large wizard fine-tune.", tasks: ["text-generation", "reasoning"], rai: { has_rai: false, alignment: "Not specified", considerations: ["Community fine-tune"], safeguards: ["Azure AI Content Safety"] }, transparency: "Low" },
+            { id: 153, name: "Hermes 3 405B", provider: "Nous Research", description: "Large instruction-tuned model.", tasks: ["text-generation", "agents"], rai: { has_rai: true, alignment: "High - Nous guidelines", considerations: ["Agent capabilities"], safeguards: ["Platform controls"] }, transparency: "High", system_card_url: "https://nousresearch.com/hermes-3/" },
+            { id: 154, name: "Dolphin 2.9.2 72B", provider: "Community", description: "Uncensored community model.", tasks: ["text-generation"], rai: { has_rai: false, alignment: "LOW - uncensored", considerations: ["No alignment", "User responsibility"], safeguards: ["Platform controls required"] }, transparency: "Low" },
+            { id: 155, name: "Solar-10.7B", provider: "Upstage", description: "Korean company's efficient model.", tasks: ["text-generation"], rai: { has_rai: true, alignment: "High - Upstage policies", considerations: ["Multilingual safety"], safeguards: ["Content filtering"] }, transparency: "High", system_card_url: "https://www.upstage.ai/products/solar-llm" },
+            { id: 156, name: "InternLM2-20B", provider: "Shanghai AI Lab", description: "Chinese research model.", tasks: ["text-generation", "reasoning"], rai: { has_rai: true, alignment: "High - research ethics", considerations: ["Research deployment"], safeguards: ["Academic oversight"] }, transparency: "High", system_card_url: "https://github.com/InternLM/InternLM" },
+            { id: 157, name: "InternVL2-40B", provider: "Shanghai AI Lab", description: "Vision-language model.", tasks: ["vision", "multimodal"], rai: { has_rai: true, alignment: "High - research ethics", considerations: ["Vision research safety"], safeguards: ["Academic review"] }, transparency: "High", system_card_url: "https://github.com/OpenGVLab/InternVL" },
+            { id: 158, name: "CogVideoX", provider: "THUDM", description: "Open video generation.", tasks: ["text-to-video"], rai: { has_rai: false, alignment: "Not specified", considerations: ["Open video model"], safeguards: ["User responsibility"] }, transparency: "Low", system_card_url: "https://github.com/THUDM/CogVideo" },
+            { id: 159, name: "GLM-4-9B", provider: "THUDM", description: "ChatGLM latest version.", tasks: ["text-generation", "multilingual"], rai: { has_rai: true, alignment: "High - THUDM guidelines", considerations: ["Chinese language focus"], safeguards: ["Content moderation"] }, transparency: "High", system_card_url: "https://github.com/THUDM/GLM-4" },
+            { id: 160, name: "Baichuan2-13B", provider: "Baichuan", description: "Chinese LLM for enterprise.", tasks: ["text-generation", "chat-completion"], rai: { has_rai: true, alignment: "High - enterprise focus", considerations: ["Chinese compliance"], safeguards: ["Enterprise controls"] }, transparency: "High", system_card_url: "https://github.com/baichuan-inc/Baichuan2" }
+        ];
+
+        // Vendor gradient colors
+        const vendorColors = {
+            "DeepSeek": "linear-gradient(135deg, #667eea, #764ba2)",
+            "OpenAI": "linear-gradient(135deg, #10a37f, #1d8a6a)",
+            "Anthropic": "linear-gradient(135deg, #d97706, #b45309)",
+            "Cohere": "linear-gradient(135deg, #6366f1, #8b5cf6)",
+            "Moonshot AI": "linear-gradient(135deg, #6366f1, #4f46e5)",
+            "Microsoft": "linear-gradient(135deg, #0078d4, #106ebe)",
+            "Meta": "linear-gradient(135deg, #0668e1, #0048b5)",
+            "Mistral AI": "linear-gradient(135deg, #ff7000, #ff5500)",
+            "Qwen": "linear-gradient(135deg, #7c3aed, #5b21b6)",
+            "Google DeepMind": "linear-gradient(135deg, #4285f4, #1967d2)",
+            "JetBrains": "linear-gradient(135deg, #087cfa, #fe2857)",
+            "ByteDance": "linear-gradient(135deg, #00f2ea, #ff0050)",
+            "G42": "linear-gradient(135deg, #1e3a5f, #0d2137)",
+            "AI21 Labs": "linear-gradient(135deg, #6366f1, #4f46e5)",
+            "Stability AI": "linear-gradient(135deg, #9333ea, #7c3aed)",
+            "Black Forest Labs": "linear-gradient(135deg, #1f2937, #374151)",
+            "TIIUAE": "linear-gradient(135deg, #dc2626, #b91c1c)",
+            "Community": "linear-gradient(135deg, #6b7280, #4b5563)",
+            "xAI": "linear-gradient(135deg, #1f2937, #111827)",
+            "NVIDIA": "linear-gradient(135deg, #76b900, #5a8f00)",
+            "Databricks": "linear-gradient(135deg, #ff3621, #e62e1b)",
+            "IBM": "linear-gradient(135deg, #0f62fe, #0043ce)",
+            "Snowflake": "linear-gradient(135deg, #29b5e8, #1da1d1)",
+            "Cerebras": "linear-gradient(135deg, #ff6b00, #e55c00)",
+            "AI2": "linear-gradient(135deg, #00a3e0, #0085b8)",
+            "BigCode": "linear-gradient(135deg, #f97316, #ea580c)",
+            "Midjourney": "linear-gradient(135deg, #000000, #333333)",
+            "Kuaishou": "linear-gradient(135deg, #ff4d4d, #ff3333)",
+            "Pika Labs": "linear-gradient(135deg, #8b5cf6, #7c3aed)",
+            "Runway": "linear-gradient(135deg, #000000, #18181b)",
+            "ElevenLabs": "linear-gradient(135deg, #000000, #27272a)",
+            "Coqui": "linear-gradient(135deg, #10b981, #059669)",
+            "Reka AI": "linear-gradient(135deg, #3b82f6, #2563eb)",
+            "Nous Research": "linear-gradient(135deg, #8b5cf6, #6d28d9)",
+            "Upstage": "linear-gradient(135deg, #0ea5e9, #0284c7)",
+            "Shanghai AI Lab": "linear-gradient(135deg, #dc2626, #b91c1c)",
+            "THUDM": "linear-gradient(135deg, #7c3aed, #5b21b6)",
+            "Baichuan": "linear-gradient(135deg, #f59e0b, #d97706)",
+            "01.AI": "linear-gradient(135deg, #3b82f6, #1d4ed8)"
+        };
+
+    // Get vendor initials
+    function getVendorInitials(vendor) {
+        const initialsMap = {
+            "DeepSeek": "DS", "OpenAI": "GPT", "Anthropic": "CL", "Cohere": "CO",
+            "Microsoft": "PHI", "Meta": "LL", "Mistral AI": "MI",
+            "Qwen": "QW", "Google DeepMind": "GD", "JetBrains": "JB", "ByteDance": "BD",
+            "G42": "G42", "AI21 Labs": "A21", "Stability AI": "SD", "Black Forest Labs": "FL",
+            "TIIUAE": "FA", "Community": "CM"
+        };
+        return initialsMap[vendor] || vendor.substring(0, 2).toUpperCase();
+    }
+
+    // Determine risk level based on RAI
+    function getRiskLevel(model) {
+        if (model.rai.has_rai && model.transparency === "High") return "high";
+        if (model.rai.has_rai || model.transparency === "Medium") return "medium";
+        return "low";
+    }
+
+    // Get risk badge class and text
+    function getRiskBadge(model) {
+        const riskLevel = getRiskLevel(model);
+        if (riskLevel === "high") return { class: "risk-high", text: "✓ High RAI" };
+        if (riskLevel === "medium") return { class: "risk-medium", text: "○ Medium RAI" };
+        return { class: "risk-low", text: "✗ Low/No RAI" };
+    }
+
+    // Create model card HTML
+    function createModelCard(model) {
+        const riskBadge = getRiskBadge(model);
+        const riskLevel = getRiskLevel(model);
+        const vendorColor = vendorColors[model.provider] || vendorColors["Community"];
+
+        // Determine RAI list items
+        let raiItems = '';
+        if (model.rai.alignment.includes("HIGH RISK")) {
+            raiItems += `<li class="rai-warning">${model.rai.alignment}</li>`;
+        } else if (model.rai.has_rai) {
+            raiItems += `<li class="rai-positive">${model.rai.alignment}</li>`;
+        } else {
+            raiItems += `<li class="rai-warning">${model.rai.alignment || 'No RAI documentation'}</li>`;
+        }
+        model.rai.considerations.slice(0, 2).forEach(c => {
+            raiItems += `<li class="rai-item">${c}</li>`;
+        });
+        if (model.rai.safeguards.length > 0) {
+            raiItems += `<li class="rai-safeguard">${model.rai.safeguards[0]}</li>`;
+        }
+
+        // EU AI Act status
+        const art50Status = model.rai.has_rai ?
+            (model.transparency === "High" ? '✓ Compliant' : '⏳ Pending') : '⚠ Gaps';
+        const statusClass = model.rai.has_rai ?
+            (model.transparency === "High" ? 'status-compliant' : 'status-pending') : 'status-warning';
+
+        return `
+            <div class="model-card" data-risk="${riskLevel}" data-vendor="${model.provider}" data-transparency="${model.transparency}">
+                <div class="card-content">
+                    <div class="card-header">
+                        <div class="model-icon" style="background: ${vendorColor};">
+                            <span>${getVendorInitials(model.provider)}</span>
+                        </div>
+                        <div class="model-meta">
+                            <h3 class="model-name">${model.name}</h3>
+                            <span class="vendor-badge">${model.provider}</span>
+                        </div>
+                        <span class="risk-badge ${riskBadge.class}">${riskBadge.text}</span>
+                    </div>
+                    <p class="model-description">${model.description}</p>
+                    <div class="model-tasks">
+                        ${model.tasks.map(t => `<span class="task-tag">${t}</span>`).join('')}
+                    </div>
+                    <div class="rai-section">
+                        <h4 class="rai-title">🛡️ Responsible AI</h4>
+                        <ul class="rai-list">${raiItems}</ul>
+                    </div>
+                    <div class="eu-ai-act-section">
+                        <h4 class="section-title">🇪🇺 EU AI Act</h4>
+                        <div class="classification-grid">
+                            <div class="classification-item">
+                                <span class="label">Risk:</span>
+                                <span class="value">${riskLevel === 'high' ? 'GPAI-SR' : riskLevel === 'medium' ? 'GPAI' : 'Minimal'}</span>
+                            </div>
+                            <div class="classification-item">
+                                <span class="label">Transparency:</span>
+                                <span class="value transparency-${model.transparency.toLowerCase()}">${model.transparency}</span>
+                            </div>
+                            <div class="classification-item">
+                                <span class="label">Art. 50:</span>
+                                <span class="value ${statusClass}">${art50Status}</span>
+                            </div>
+                            <div class="classification-item">
+                                <span class="label">RAI:</span>
+                                <span class="value">${model.rai.has_rai ? '✓ Yes' : '✗ No'}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <button class="btn-card btn-view" onclick="viewModelDetails('${model.id}')">Details</button>
+                    <button class="btn-card btn-assess" onclick="assessModel('${model.id}')">Assess</button>
+                </div>
+            </div>
+        `;
+    }
+
+    // Render all models
+    function renderModels() {
+        const container = document.getElementById('model-cards-container');
+        container.innerHTML = modelDatabase.map(createModelCard).join('');
+        updateStats();
+    }
+
+    // Filter models
+    function filterModels() {
+        const searchTerm = document.getElementById('model-search').value.toLowerCase();
+        const riskFilter = document.getElementById('risk-filter').value;
+        const vendorFilter = document.getElementById('vendor-filter').value;
+        const transparencyFilter = document.getElementById('transparency-filter').value;
+
+        const cards = document.querySelectorAll('.model-card');
+
+        cards.forEach(card => {
+            const modelName = card.querySelector('.model-name').textContent.toLowerCase();
+            const risk = card.dataset.risk;
+            const vendor = card.dataset.vendor;
+            const transparency = card.dataset.transparency;
+
+            const matchesSearch = modelName.includes(searchTerm);
+            const matchesRisk = !riskFilter || risk === riskFilter;
+            const matchesVendor = !vendorFilter || vendor === vendorFilter;
+            const matchesTransparency = !transparencyFilter || transparency === transparencyFilter;
+
+            if (matchesSearch && matchesRisk && matchesVendor && matchesTransparency) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        updateStats();
+    }
+
+    // Update statistics
+    function updateStats() {
+        const visibleCards = document.querySelectorAll('.model-card:not([style*="display: none"])');
+
+        let total = 0, high = 0, medium = 0, low = 0;
+
+        visibleCards.forEach(card => {
+            total++;
+            const risk = card.dataset.risk;
+            if (risk === 'high') high++;
+            else if (risk === 'medium') medium++;
+            else low++;
+        });
+
+        document.getElementById('total-models').textContent = total;
+        document.getElementById('high-risk-count').textContent = high;
+        document.getElementById('limited-risk-count').textContent = medium;
+        document.getElementById('minimal-risk-count').textContent = low;
+    }
+
+    // View model details
+    function viewModelDetails(modelId) {
+        const model = modelDatabase.find(m => m.id == modelId);
+        if (model) {
+            if (model.system_card_url) {
+                window.open(model.system_card_url, '_blank');
+            } else {
+                alert(`Model: ${model.name}\nProvider: ${model.provider}\n\nRAI Status: ${model.rai.has_rai ? 'Yes' : 'No'}\nTransparency: ${model.transparency}\n\nNo system card available for this model.`);
+            }
+        }
+    }
+
+    // Assess model
+    function assessModel(modelId) {
+        const model = modelDatabase.find(m => m.id == modelId);
+        if (model) {
+            alert(`Start EU AI Act Assessment\n\nModel: ${model.name}\nProvider: ${model.provider}\n\nThis would open the assessment workflow for Article 50 & 52 transparency requirements.`);
+        }
+    }
+
+    // Add new model
+    function addNewModel() {
+        alert('Add New Model\n\nThis would open a form to register a new GAI model for EU AI Act assessment.');
+    }
+
+    // Export model cards
+    function exportModelCards() {
+        const modelsWithCards = modelDatabase.filter(m => m.system_card_url).length;
+        alert(`Export Model Cards\n\n${modelDatabase.length} models would be exported to Excel with:\n- Model details\n- RAI status\n- EU AI Act classification\n- Transparency levels\n- System card URLs (${modelsWithCards} models have system cards)`);
+    }
+
+    // Initialize page
+    document.addEventListener('DOMContentLoaded', () => {
+        // Highlight models nav item
+        const navLinks = document.querySelectorAll('.nav-link');
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.dataset.nav === 'models') {
+                link.classList.add('active');
+            }
+        });
+
+        renderModels();
+    });
+</script>
+{% endblock %}

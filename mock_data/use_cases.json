@@ -1,0 +1,38 @@
+[
+  {
+    "id": 1,
+    "name": "chatbot-support",
+    "display_name": "Chatbot Support",
+    "agent_id": 1,
+    "compliance_assessed": true,
+    "review_status": "partial",
+    "risk_type": "limited_risks",
+    "overview": "AI-powered customer support chatbot",
+    "models": [1, 2],
+    "datasets": [1]
+  },
+  {
+    "id": 2,
+    "name": "content-filtering",
+    "display_name": "Content Filtering",
+    "agent_id": 2,
+    "compliance_assessed": true,
+    "review_status": "complete",
+    "risk_type": "high_risks",
+    "overview": "Automated content moderation system",
+    "models": [2],
+    "datasets": [2]
+  },
+  {
+    "id": 3,
+    "name": "product-recommendations",
+    "display_name": "Product Recommendations",
+    "agent_id": 3,
+    "compliance_assessed": false,
+    "review_status": "missing",
+    "risk_type": "minimal_risks",
+    "overview": "Personalized product recommendation engine",
+    "models": [3],
+    "datasets": [1, 3]
+  }
+]

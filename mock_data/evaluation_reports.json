@@ -1,0 +1,22 @@
+[
+  {
+    "id": 1,
+    "use_case_id": 1,
+    "report_type": "dataset_evaluation",
+    "file_name": "dataset_eval_report.pdf",
+    "file_url": "/static/governance/img/sample.pdf",
+    "description": "Dataset evaluation report",
+    "uploaded_by": "demo_user",
+    "created_at": "2024-01-16T09:00:00Z"
+  },
+  {
+    "id": 2,
+    "use_case_id": 1,
+    "report_type": "model_evaluation",
+    "file_name": "model_eval_report.pdf",
+    "file_url": "/static/governance/img/sample.pdf",
+    "description": "Model evaluation report",
+    "uploaded_by": "demo_user",
+    "created_at": "2024-01-17T11:00:00Z"
+  }
+]

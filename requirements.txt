@@ -1,0 +1,4 @@
+# Governance Hackathon Standalone Project - Minimal Requirements
+# No database, no authentication - for demo only
+
+Django>=4.2,<5.0

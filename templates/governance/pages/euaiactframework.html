@@ -1,0 +1,154 @@
+{% extends "governance/base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}EU AI Act Framework{% endblock %}
+
+{% block dashboard_content %}
+<div class="flex flex-col gap-6">
+    <!-- Breadcrumb Navigation -->
+    <div class="flex items-center gap-2">
+        <button class="w-8 h-8 border-none bg-transparent cursor-pointer flex items-center justify-center rounded-md hover:bg-[#F3F4F6]" onclick="history.back()">
+            <img src="{% static 'governance/img/arrow-left.svg' %}" alt="Back" class="w-4 h-4">
+        </button>
+        <button class="w-8 h-8 border-none bg-transparent cursor-pointer flex items-center justify-center rounded-md hover:bg-[#F3F4F6]" onclick="history.forward()">
+            <img src="{% static 'governance/img/arrow-right-gray.svg' %}" alt="Forward" class="w-4 h-4">
+        </button>
+        <span class="text-sm font-semibold text-[#F13D30]">Frameworks & Reporting</span>
+    </div>
+
+    <!-- Page Header -->
+    <div class="flex justify-between items-start">
+        <div class="header-left">
+            <h1 class="text-2xl font-bold text-[#22262A]">EU AI Act</h1>
+            <p class="text-sm text-[#6B7280] mt-1">EU AI Act Framework and reporting</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#e8f4fd] to-[#f0e6fa] flex items-center justify-center border border-[#E5E7EB] cursor-pointer">
+                <img src="{% static 'governance/img/aiassistant.svg' %}" alt="AI Assistant" class="w-6 h-6">
+            </div>
+        </div>
+    </div>
+
+    <!-- Reports Grid -->
+    <div class="grid grid-cols-2 gap-6">
+        <!-- EU AI Act consolidated -->
+        <a href="#" class="bg-white rounded-2xl border border-[#E5E7EB] p-8 flex flex-col gap-5 relative transition-shadow duration-200 hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)] no-underline">
+            <div class="w-18 h-18 flex items-left justify-left">
+                <img src="{% static 'governance/img/eu-ai-act.png' %}" alt="EU AI Act" class="w-16 h-16 object-contain rounded-lg">
+            </div>
+            <div class="flex-1">
+                <h3 class="text-base font-semibold text-[#22262A] leading-snug">EU AI Act consolidated</h3>
+            </div>
+            <div class="absolute top-8 right-8 w-8 h-8 flex items-center justify-center rounded-md text-[#9CA3AF] transition-all duration-200 hover:text-[#374151]">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5">
+                    <line x1="7" y1="17" x2="17" y2="7" />
+                    <polyline points="7,7 17,7 17,17" />
+                </svg>
+            </div>
+        </a>
+
+        <!-- EU AI Act GPAI high risks providers consolidated -->
+        <a href="{% url 'eu_act_gpihr' %}" class="bg-white rounded-2xl border border-[#E5E7EB] p-8 flex flex-col gap-5 relative transition-shadow duration-200 hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)] no-underline">
+            <div class="w-18 h-18 flex items-left justify-left">
+                <img src="{% static 'governance/img/eu-ai-act.png' %}" alt="EU AI Act" class="w-16 h-16 object-contain rounded-lg">
+            </div>
+            <div class="flex-1">
+                <h3 class="text-base font-semibold text-[#22262A] leading-snug">EU AI Act GPAI high risks providers consolidated</h3>
+            </div>
+            <div class="absolute top-8 right-8 w-8 h-8 flex items-center justify-center rounded-md text-[#9CA3AF] transition-all duration-200 hover:text-[#374151]">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5">
+                    <line x1="7" y1="17" x2="17" y2="7" />
+                    <polyline points="7,7 17,7 17,17" />
+                </svg>
+            </div>
+        </a>
+
+        <!-- EU AI Act GPAI limited risks providers consolidated -->
+        <a href="{% url 'eu_act_gpilr' %}" class="bg-white rounded-2xl border border-[#E5E7EB] p-8 flex flex-col gap-5 relative transition-shadow duration-200 hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)] no-underline">
+            <div class="w-18 h-18 flex items-left justify-left">
+                <img src="{% static 'governance/img/eu-ai-act.png' %}" alt="EU AI Act" class="w-16 h-16 object-contain rounded-lg">
+            </div>
+            <div class="flex-1">
+                <h3 class="text-base font-semibold text-[#22262A] leading-snug">EU AI Act GPAI limited risks providers consolidated</h3>
+            </div>
+            <div class="absolute top-8 right-8 w-8 h-8 flex items-center justify-center rounded-md text-[#9CA3AF] transition-all duration-200 hover:text-[#374151]">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5">
+                    <line x1="7" y1="17" x2="17" y2="7" />
+                    <polyline points="7,7 17,7 17,17" />
+                </svg>
+            </div>
+        </a>
+
+        <!-- EU AI Act high risks providers consolidated -->
+        <a href="{% url 'eu_act_hr' %}" class="bg-white rounded-2xl border border-[#E5E7EB] p-8 flex flex-col gap-5 relative transition-shadow duration-200 hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)] no-underline">
+            <div class="w-18 h-18 flex items-left justify-left">
+                <img src="{% static 'governance/img/eu-ai-act.png' %}" alt="EU AI Act" class="w-16 h-16 object-contain rounded-lg">
+            </div>
+            <div class="flex-1">
+                <h3 class="text-base font-semibold text-[#22262A] leading-snug">EU AI Act high risks providers consolidated</h3>
+            </div>
+            <div class="absolute top-8 right-8 w-8 h-8 flex items-center justify-center rounded-md text-[#9CA3AF] transition-all duration-200 hover:text-[#374151]">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5">
+                    <line x1="7" y1="17" x2="17" y2="7" />
+                    <polyline points="7,7 17,7 17,17" />
+                </svg>
+            </div>
+        </a>
+
+        <!-- EU AI Act limited risks providers consolidated -->
+        <a href="{% url 'eu_act_lr' %}" class="bg-white rounded-2xl border border-[#E5E7EB] p-8 flex flex-col gap-5 relative transition-shadow duration-200 hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)] no-underline">
+            <div class="w-18 h-18 flex items-left justify-left">
+                <img src="{% static 'governance/img/eu-ai-act.png' %}" alt="EU AI Act" class="w-16 h-16 object-contain rounded-lg">
+            </div>
+            <div class="flex-1">
+                <h3 class="text-base font-semibold text-[#22262A] leading-snug">EU AI Act limited risks providers consolidated</h3>
+            </div>
+            <div class="absolute top-8 right-8 w-8 h-8 flex items-center justify-center rounded-md text-[#9CA3AF] transition-all duration-200 hover:text-[#374151]">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5">
+                    <line x1="7" y1="17" x2="17" y2="7" />
+                    <polyline points="7,7 17,7 17,17" />
+                </svg>
+            </div>
+        </a>
+
+        <!-- EU AI Act high risks deployers consolidated -->
+        <a href="{% url 'eu_act_hr' %}" class="bg-white rounded-2xl border border-[#E5E7EB] p-8 flex flex-col gap-5 relative transition-shadow duration-200 hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)] no-underline">
+            <div class="w-18 h-18 flex items-left justify-left">
+                <img src="{% static 'governance/img/eu-ai-act.png' %}" alt="EU AI Act" class="w-16 h-16 object-contain rounded-lg">
+            </div>
+            <div class="flex-1">
+                <h3 class="text-base font-semibold text-[#22262A] leading-snug">EU AI Act high risks deployers consolidated</h3>
+            </div>
+            <div class="absolute top-8 right-8 w-8 h-8 flex items-center justify-center rounded-md text-[#9CA3AF] transition-all duration-200 hover:text-[#374151]">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5">
+                    <line x1="7" y1="17" x2="17" y2="7" />
+                    <polyline points="7,7 17,7 17,17" />
+                </svg>
+            </div>
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Highlight reporting nav item
+        const navLinks = document.querySelectorAll('.nav-link');
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.dataset.nav === 'reporting') {
+                link.classList.add('active');
+            }
+        });
+    });
+</script>
+<style>
+    @media (max-width: 900px) {
+        .grid.grid-cols-2 {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}

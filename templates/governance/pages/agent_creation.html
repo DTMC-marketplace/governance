@@ -1,0 +1,91 @@
+{% extends "governance/base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}Create New AI Agent{% endblock %}
+
+{% block dashboard_content %}
+<div class="flex flex-col gap-5">
+        <!-- Injected Content from User Snippet -->
+        <div class="mt-8 flex flex-col gap-8 relative w-[520px] h-[272px] overflow-auto">
+            <div class="flex justify-between">
+                <div class="flex flex-col gap-2">
+                    <div class="text-lg font-semibold">Create New AI Agent</div>
+                    <div class="text-xs font-medium">Start by adding agent information</div>
+                </div>
+            </div>
+
+            <div class="flex gap-4 h-full">
+                <!-- Import CSV Button -->
+                <button id="import-csv"
+                    class="flex flex-col items-center justify-center border-2 border-blue-500 rounded-xl p-4 bg-white w-1/2 cursor-pointer transition-colors">
+                    <div class="bg-gray-100 rounded-md p-2 mb-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                            stroke="currentColor" class="h-6 w-6 text-gray-800">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                        </svg>
+                    </div>
+                    <span class="text-gray-800 font-semibold">Import CSV</span>
+                </button>
+
+                <!-- Input Manually Button -->
+                <button id="input-manually"
+                    class="flex flex-col items-center justify-center border-2 border-gray-300 rounded-xl p-4 bg-white w-1/2 cursor-pointer transition-colors">
+                    <div class="bg-gray-100 rounded-md p-2 mb-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                            stroke="currentColor" class="h-6 w-6 text-gray-800">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                        </svg>
+                    </div>
+                    <span class="text-gray-800 font-semibold">Input Manually</span>
+                </button>
+            </div>
+        </div>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+    // Navigation is already loaded from base.html via sidebar.html
+    document.addEventListener('DOMContentLoaded', () => {
+        // Page-specific initialization can go here if needed
+        });
+
+        // Button interaction logic
+        (function () {
+            // Select buttons
+            const importCsvButton = document.getElementById("import-csv");
+            const inputManuallyButton = document.getElementById("input-manually");
+
+            // Function to reset button styles
+            function resetButtonStyles() {
+                // Remove active styles
+                importCsvButton.classList.remove("bg-gray-100", "border-[#2C78B1]", "border-blue-500");
+                inputManuallyButton.classList.remove("bg-gray-100", "border-[#2C78B1]", "border-blue-500");
+
+                // Add default styles
+                importCsvButton.classList.add("bg-white", "border-gray-300");
+                inputManuallyButton.classList.add("bg-white", "border-gray-300");
+            }
+
+            if (importCsvButton) {
+                importCsvButton.addEventListener("click", function () {
+                    resetButtonStyles();
+                    // Active style for CSV
+                    importCsvButton.classList.remove("bg-white", "border-gray-300");
+                    importCsvButton.classList.add("bg-gray-100", "border-blue-500");
+                });
+            }
+
+            if (inputManuallyButton) {
+                inputManuallyButton.addEventListener("click", function () {
+                    resetButtonStyles();
+                    // Active style for Manual
+                    inputManuallyButton.classList.remove("bg-white", "border-gray-300");
+                inputManuallyButton.classList.add("bg-gray-100", "border-blue-500");
+                });
+            }
+        })();
+    </script>
+{% endblock %}

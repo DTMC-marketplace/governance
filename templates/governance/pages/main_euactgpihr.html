@@ -1,0 +1,430 @@
+{% extends "governance/base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}EU AI Act - GPAI High Risk{% endblock %}
+
+{% block extra_head %}
+<style>
+    .filter-pill.active {
+        background: #111827;
+        color: #FFFFFF;
+        border-color: #111827;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+
+<!-- Render content HTML -->
+<div id="header-content-container"></div>
+
+<script>
+    function getAgentPageHTML() {
+        return `
+<!-- Page Header -->
+<div class="mb-8">
+    <div class="page-header-title">
+        <h1 class="text-2xl font-bold text-[#111827] mb-2">General Purpose AI - High Risk</h1>
+        <p class="text-sm text-[#6B7280]">Choose a virtual agent specialized in GPAI compliance with systemic risk</p>
+    </div>
+
+    <!-- Filter Pills -->
+    <div class="flex gap-3 mt-6 flex-wrap">
+        <button class="filter-pill px-4 py-2 rounded-full border border-[#E5E7EB] bg-white text-[#4B5563] text-sm font-medium cursor-pointer transition-all duration-200 hover:border-[#D1D5DB] hover:bg-[#F9FAFB] active" data-category="all">All</button>
+        <button class="filter-pill px-4 py-2 rounded-full border border-[#E5E7EB] bg-white text-[#4B5563] text-sm font-medium cursor-pointer transition-all duration-200 hover:border-[#D1D5DB] hover:bg-[#F9FAFB]" data-category="transparency">Transparency</button>
+        <button class="filter-pill px-4 py-2 rounded-full border border-[#E5E7EB] bg-white text-[#4B5563] text-sm font-medium cursor-pointer transition-all duration-200 hover:border-[#D1D5DB] hover:bg-[#F9FAFB]" data-category="governance">Governance</button>
+        <button class="filter-pill px-4 py-2 rounded-full border border-[#E5E7EB] bg-white text-[#4B5563] text-sm font-medium cursor-pointer transition-all duration-200 hover:border-[#D1D5DB] hover:bg-[#F9FAFB]" data-category="risk">Risk Assessment</button>
+        <button class="filter-pill px-4 py-2 rounded-full border border-[#E5E7EB] bg-white text-[#4B5563] text-sm font-medium cursor-pointer transition-all duration-200 hover:border-[#D1D5DB] hover:bg-[#F9FAFB]" data-category="documentation">Documentation</button>
+        <button class="filter-pill px-4 py-2 rounded-full border border-[#E5E7EB] bg-white text-[#4B5563] text-sm font-medium cursor-pointer transition-all duration-200 hover:border-[#D1D5DB] hover:bg-[#F9FAFB]" data-category="security">Security</button>
+    </div>
+</div>
+
+<!-- Agent Grid -->
+<div class="grid grid-cols-[repeat(auto-fill,minmax(360px,1fr))] gap-6">
+    <!-- Card 1: Article 53 - Transparency -->
+    <div class="agent-card" data-category="transparency">
+        <div class="agent-card-header">
+            <img src="{% static 'governance/img/eu-ai-act.png' %}" alt="Agent" class="agent-avatar">
+            <span class="agent-category category-transparency">Transparency</span>
+        </div>
+        <div class="agent-card-body">
+            <h3 class="agent-name">Article 53 - Transparency</h3>
+            <p class="agent-description">Implements transparency obligations for GPAI providers including technical
+                documentation and model information.</p>
+        </div>
+        <div class="agent-card-footer">
+            <a href="#" class="chat-btn">
+                Chat Now
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M5 12h14M13 5l7 7-7 7" />
+                </svg>
+            </a>
+            <span class="agent-status">
+                <span class="status-dot"></span>
+                Online
+            </span>
+        </div>
+    </div>
+
+    <!-- Card 2: Article 54 - Authorized Rep -->
+    <div class="agent-card" data-category="governance">
+        <div class="agent-card-header">
+            <img src="{% static 'governance/img/eu-ai-act.png' %}" alt="Agent" class="agent-avatar">
+            <span class="agent-category category-governance">Governance</span>
+        </div>
+        <div class="agent-card-body">
+            <h3 class="agent-name">Article 54 - Authorized Representative</h3>
+            <p class="agent-description">Guides non-EU GPAI providers on appointing authorized representatives within
+                the EU.</p>
+        </div>
+        <div class="agent-card-footer">
+            <a href="#" class="chat-btn">
+                Chat Now
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M5 12h14M13 5l7 7-7 7" />
+                </svg>
+            </a>
+            <span class="agent-status">
+                <span class="status-dot"></span>
+                Online
+            </span>
+        </div>
+    </div>
+
+    <!-- Card 3: Article 55 - Systemic Risk -->
+    <div class="agent-card" data-category="risk">
+        <div class="agent-card-header">
+            <img src="{% static 'governance/img/eu-ai-act.png' %}" alt="Agent" class="agent-avatar">
+            <span class="agent-category category-risk">Risk Assessment</span>
+        </div>
+        <div class="agent-card-body">
+            <h3 class="agent-name">Article 55 - Systemic Risk</h3>
+            <p class="agent-description">Identifies and classifies GPAI models with systemic risk based on capabilities
+                and compute thresholds.</p>
+        </div>
+        <div class="agent-card-footer">
+            <a href="#" class="chat-btn">
+                Chat Now
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M5 12h14M13 5l7 7-7 7" />
+                </svg>
+            </a>
+            <span class="agent-status">
+                <span class="status-dot"></span>
+                Online
+            </span>
+        </div>
+    </div>
+
+    <!-- Card 4: Article 56 - Risk Mitigation -->
+    <div class="agent-card" data-category="risk">
+        <div class="agent-card-header">
+            <img src="{% static 'governance/img/eu-ai-act.png' %}" alt="Agent" class="agent-avatar">
+            <span class="agent-category category-risk">Risk Assessment</span>
+        </div>
+        <div class="agent-card-body">
+            <h3 class="agent-name">Article 56 - Risk Mitigation</h3>
+            <p class="agent-description">Develops risk mitigation strategies for GPAI models with systemic risk
+                including adversarial testing.</p>
+        </div>
+        <div class="agent-card-footer">
+            <a href="#" class="chat-btn">
+                Chat Now
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M5 12h14M13 5l7 7-7 7" />
+                </svg>
+            </a>
+            <span class="agent-status">
+                <span class="status-dot"></span>
+                Online
+            </span>
+        </div>
+    </div>
+
+    <!-- Card 5: Article 57 - Serious Incidents -->
+    <div class="agent-card" data-category="governance">
+        <div class="agent-card-header">
+            <img src="{% static 'governance/img/eu-ai-act.png' %}" alt="Agent" class="agent-avatar">
+            <span class="agent-category category-governance">Governance</span>
+        </div>
+        <div class="agent-card-body">
+            <h3 class="agent-name">Article 57 - Serious Incidents</h3>
+            <p class="agent-description">Establishes incident reporting procedures for serious incidents involving GPAI
+                models.</p>
+        </div>
+        <div class="agent-card-footer">
+            <a href="#" class="chat-btn">
+                Chat Now
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M5 12h14M13 5l7 7-7 7" />
+                </svg>
+            </a>
+            <span class="agent-status">
+                <span class="status-dot"></span>
+                Online
+            </span>
+        </div>
+    </div>
+
+    <!-- Card 6: Article 58 - Codes of Practice -->
+    <div class="agent-card" data-category="governance">
+        <div class="agent-card-header">
+            <img src="{% static 'governance/img/eu-ai-act.png' %}" alt="Agent" class="agent-avatar">
+            <span class="agent-category category-governance">Governance</span>
+        </div>
+        <div class="agent-card-body">
+            <h3 class="agent-name">Article 58 - Codes of Practice</h3>
+            <p class="agent-description">Assists with participating in and complying with GPAI codes of practice and
+                industry standards.</p>
+        </div>
+        <div class="agent-card-footer">
+            <a href="#" class="chat-btn">
+                Chat Now
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M5 12h14M13 5l7 7-7 7" />
+                </svg>
+            </a>
+            <span class="agent-status">
+                <span class="status-dot"></span>
+                Online
+            </span>
+        </div>
+    </div>
+
+    <!-- Card 7: Annex XI - Technical Documentation -->
+    <div class="agent-card" data-category="documentation">
+        <div class="agent-card-header">
+            <img src="{% static 'governance/img/eu-ai-act.png' %}" alt="Agent" class="agent-avatar">
+            <span class="agent-category category-data">Documentation</span>
+        </div>
+        <div class="agent-card-body">
+            <h3 class="agent-name">Annex XI - Technical Documentation</h3>
+            <p class="agent-description">Creates comprehensive technical documentation for GPAI models as required by
+                Annex XI.</p>
+        </div>
+        <div class="agent-card-footer">
+            <a href="#" class="chat-btn">
+                Chat Now
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M5 12h14M13 5l7 7-7 7" />
+                </svg>
+            </a>
+            <span class="agent-status">
+                <span class="status-dot"></span>
+                Online
+            </span>
+        </div>
+    </div>
+
+    <!-- Card 8: Annex XII - Downstream Provider Info -->
+    <div class="agent-card" data-category="documentation">
+        <div class="agent-card-header">
+            <img src="{% static 'governance/img/eu-ai-act.png' %}" alt="Agent" class="agent-avatar">
+            <span class="agent-category category-data">Documentation</span>
+        </div>
+        <div class="agent-card-body">
+            <h3 class="agent-name">Annex XII - Downstream Provider Info</h3>
+            <p class="agent-description">Prepares information packages for downstream providers integrating GPAI models.
+            </p>
+        </div>
+        <div class="agent-card-footer">
+            <a href="#" class="chat-btn">
+                Chat Now
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M5 12h14M13 5l7 7-7 7" />
+                </svg>
+            </a>
+            <span class="agent-status">
+                <span class="status-dot"></span>
+                Online
+            </span>
+        </div>
+    </div>
+
+    <!-- Card 9: Model Evaluation -->
+    <div class="agent-card" data-category="risk">
+        <div class="agent-card-header">
+            <img src="{% static 'governance/img/eu-ai-act.png' %}" alt="Agent" class="agent-avatar">
+            <span class="agent-category category-risk">Risk Assessment</span>
+        </div>
+        <div class="agent-card-body">
+            <h3 class="agent-name">Model Evaluation</h3>
+            <p class="agent-description">Conducts standardized model evaluations to assess capabilities and identify
+                systemic risks.</p>
+        </div>
+        <div class="agent-card-footer">
+            <a href="#" class="chat-btn">
+                Chat Now
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M5 12h14M13 5l7 7-7 7" />
+                </svg>
+            </a>
+            <span class="agent-status">
+                <span class="status-dot"></span>
+                Online
+            </span>
+        </div>
+    </div>
+
+    <!-- Card 10: Adversarial Testing -->
+    <div class="agent-card" data-category="security">
+        <div class="agent-card-header">
+            <img src="{% static 'governance/img/eu-ai-act.png' %}" alt="Agent" class="agent-avatar">
+            <span class="agent-category category-compliance">Security</span>
+        </div>
+        <div class="agent-card-body">
+            <h3 class="agent-name">Adversarial Testing</h3>
+            <p class="agent-description">Designs and executes adversarial testing protocols to identify model
+                vulnerabilities.</p>
+        </div>
+        <div class="agent-card-footer">
+            <a href="#" class="chat-btn">
+                Chat Now
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M5 12h14M13 5l7 7-7 7" />
+                </svg>
+            </a>
+            <span class="agent-status">
+                <span class="status-dot"></span>
+                Online
+            </span>
+        </div>
+    </div>
+
+    <!-- Card 11: Cybersecurity Measures -->
+    <div class="agent-card" data-category="security">
+        <div class="agent-card-header">
+            <img src="{% static 'governance/img/eu-ai-act.png' %}" alt="Agent" class="agent-avatar">
+            <span class="agent-category category-compliance">Security</span>
+        </div>
+        <div class="agent-card-body">
+            <h3 class="agent-name">Cybersecurity Measures</h3>
+            <p class="agent-description">Implements cybersecurity protection measures for GPAI models and
+                infrastructure.</p>
+        </div>
+        <div class="agent-card-footer">
+            <a href="#" class="chat-btn">
+                Chat Now
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M5 12h14M13 5l7 7-7 7" />
+                </svg>
+            </a>
+            <span class="agent-status">
+                <span class="status-dot"></span>
+                Online
+            </span>
+        </div>
+    </div>
+
+    <!-- Card 12: Energy Consumption -->
+    <div class="agent-card" data-category="transparency">
+        <div class="agent-card-header">
+            <img src="{% static 'governance/img/eu-ai-act.png' %}" alt="Agent" class="agent-avatar">
+            <span class="agent-category category-transparency">Transparency</span>
+        </div>
+        <div class="agent-card-body">
+            <h3 class="agent-name">Energy Consumption</h3>
+            <p class="agent-description">Tracks and reports energy consumption metrics for GPAI model training and
+                inference.</p>
+        </div>
+        <div class="agent-card-footer">
+            <a href="#" class="chat-btn">
+                Chat Now
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M5 12h14M13 5l7 7-7 7" />
+                </svg>
+            </a>
+            <span class="agent-status">
+                <span class="status-dot"></span>
+                Online
+            </span>
+        </div>
+    </div>
+
+    <!-- Card 13: Copyright Compliance -->
+    <div class="agent-card" data-category="governance">
+        <div class="agent-card-header">
+            <img src="{% static 'governance/img/eu-ai-act.png' %}" alt="Agent" class="agent-avatar">
+            <span class="agent-category category-governance">Governance</span>
+        </div>
+        <div class="agent-card-body">
+            <h3 class="agent-name">Copyright Compliance</h3>
+            <p class="agent-description">Ensures GPAI training data complies with EU copyright law and respects opt-out
+                mechanisms.</p>
+        </div>
+        <div class="agent-card-footer">
+            <a href="#" class="chat-btn">
+                Chat Now
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M5 12h14M13 5l7 7-7 7" />
+                </svg>
+            </a>
+            <span class="agent-status">
+                <span class="status-dot"></span>
+                Online
+            </span>
+        </div>
+    </div>
+
+    <!-- Card 14: Training Data Summary -->
+    <div class="agent-card" data-category="documentation">
+        <div class="agent-card-header">
+            <img src="{% static 'governance/img/eu-ai-act.png' %}" alt="Agent" class="agent-avatar">
+            <span class="agent-category category-data">Documentation</span>
+        </div>
+        <div class="agent-card-body">
+            <h3 class="agent-name">Training Data Summary</h3>
+            <p class="agent-description">Creates detailed summaries of training data content as required for GPAI
+                transparency.</p>
+        </div>
+        <div class="agent-card-footer">
+            <a href="#" class="chat-btn">
+                Chat Now
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M5 12h14M13 5l7 7-7 7" />
+                </svg>
+            </a>
+            <span class="agent-status">
+                <span class="status-dot"></span>
+                Online
+            </span>
+        </div>
+    </div>
+</div>
+`;
+    }
+
+    function initFilters() {
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('filter-pill')) {
+                const category = e.target.dataset.category;
+
+                // Update active pill
+                document.querySelectorAll('.filter-pill').forEach(pill => {
+                    pill.classList.remove('active');
+                });
+                e.target.classList.add('active');
+
+                // Filter cards
+                document.querySelectorAll('[data-category]').forEach(card => {
+                    if (card.classList.contains('agent-card') || card.classList.contains('bg-white')) {
+                    if (category === 'all' || card.dataset.category === category) {
+                        card.style.display = 'flex';
+                    } else {
+                        card.style.display = 'none';
+                        }
+                    }
+                });
+            }
+        });
+    }
+
+    // Initialize when DOM is ready
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('header-content-container').innerHTML = getAgentPageHTML();
+        initFilters();
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "governance/base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}Response Detail - EU AI Act{% endblock %}
+
+{% block dashboard_content %}
+<div class="flex flex-col gap-6 p-6 bg-white">
+    <h1 class="font-['Montserrat',sans-serif] text-2xl font-bold text-[#1a1a2e] m-0">Response Detail</h1>
+    <p class="font-['Montserrat',sans-serif] text-sm text-[#6b7280]">Assessment response details will be displayed here.</p>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Set active nav item
+        const navLinks = document.querySelectorAll('.nav-link');
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.dataset.nav === 'risk-assessment') {
+                link.classList.add('active');
+            }
+        });
+    });
+    </script>
+{% endblock %}

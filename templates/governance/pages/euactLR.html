@@ -1,0 +1,293 @@
+{% extends "governance/base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}EU AI Act - Low Risk{% endblock %}
+
+{% block extra_head %}
+<style>
+    .filter-pill.active {
+        background: #111827;
+        color: #FFFFFF;
+        border-color: #111827;
+                        }
+</style>
+{% endblock %}
+
+{% block dashboard_content %}
+                <!-- Page Header -->
+<div class="mb-8">
+                    <div class="page-header-title">
+        <h1 class="text-2xl font-bold text-[#111827] mb-2">EU AI Act Compliance Agents</h1>
+        <p class="text-sm text-[#6B7280]">Choose a virtual agent specialized in your area of interest</p>
+                    </div>
+
+                    <!-- Filter Pills -->
+    <div class="flex gap-3 mt-6 flex-wrap">
+        <button class="filter-pill px-4 py-2 rounded-full border border-[#E5E7EB] bg-white text-[#4B5563] text-sm font-medium cursor-pointer transition-all duration-200 hover:border-[#D1D5DB] hover:bg-[#F9FAFB] active" data-category="all">All</button>
+        <button class="filter-pill px-4 py-2 rounded-full border border-[#E5E7EB] bg-white text-[#4B5563] text-sm font-medium cursor-pointer transition-all duration-200 hover:border-[#D1D5DB] hover:bg-[#F9FAFB]" data-category="governance">Governance</button>
+        <button class="filter-pill px-4 py-2 rounded-full border border-[#E5E7EB] bg-white text-[#4B5563] text-sm font-medium cursor-pointer transition-all duration-200 hover:border-[#D1D5DB] hover:bg-[#F9FAFB]" data-category="compliance">Compliance</button>
+        <button class="filter-pill px-4 py-2 rounded-full border border-[#E5E7EB] bg-white text-[#4B5563] text-sm font-medium cursor-pointer transition-all duration-200 hover:border-[#D1D5DB] hover:bg-[#F9FAFB]" data-category="risk">Risk Assessment</button>
+        <button class="filter-pill px-4 py-2 rounded-full border border-[#E5E7EB] bg-white text-[#4B5563] text-sm font-medium cursor-pointer transition-all duration-200 hover:border-[#D1D5DB] hover:bg-[#F9FAFB]" data-category="data">Data Governance</button>
+        <button class="filter-pill px-4 py-2 rounded-full border border-[#E5E7EB] bg-white text-[#4B5563] text-sm font-medium cursor-pointer transition-all duration-200 hover:border-[#D1D5DB] hover:bg-[#F9FAFB]" data-category="transparency">Transparency</button>
+                    </div>
+                </div>
+
+                <!-- Agent Grid -->
+<div class="grid grid-cols-[repeat(auto-fill,minmax(360px,1fr))] gap-6">
+                    <!-- Agent 1: Risk Classification -->
+    <div class="bg-white rounded-2xl border border-[#E5E7EB] p-6 flex flex-col gap-5 transition-shadow duration-200 hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)]" data-category="governance">
+        <div class="flex justify-between items-start">
+            <img src="{% static 'governance/img/eu-ai-act.png' %}" alt="Agent" class="w-12 h-12 rounded-lg object-contain">
+            <span class="px-3 py-1 rounded-xl text-xs font-medium bg-[#ECFDF5] text-[#047857]">Governance</span>
+                        </div>
+        <div class="flex-1">
+            <h3 class="text-lg font-semibold text-[#111827] mb-2">Risk Classification Agent</h3>
+            <p class="text-sm text-[#6B7280] leading-relaxed">Helps classify your AI systems according to EU AI Act risk levels: minimal, limited, high-risk, or unacceptable.</p>
+                        </div>
+        <div class="mt-auto flex justify-between items-center pt-5 border-t border-[#F3F4F6]">
+            <a href="#" class="flex items-center gap-2 text-[#4F46E5] text-sm font-semibold no-underline">
+                                Chat Now
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                                    <path d="M5 12h14M13 5l7 7-7 7" />
+                                </svg>
+                            </a>
+            <span class="flex items-center gap-1.5 text-xs text-[#059669] font-medium">
+                <span class="w-2 h-2 bg-[#10B981] rounded-full"></span>
+                                Online
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Agent 2: Article 9 -->
+    <div class="bg-white rounded-2xl border border-[#E5E7EB] p-6 flex flex-col gap-5 transition-shadow duration-200 hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)]" data-category="compliance">
+        <div class="flex justify-between items-start">
+            <img src="{% static 'governance/img/eu-ai-act.png' %}" alt="Agent" class="w-12 h-12 rounded-lg object-contain">
+            <span class="px-3 py-1 rounded-xl text-xs font-medium bg-[#F0F9FF] text-[#0369A1]">Compliance</span>
+                        </div>
+        <div class="flex-1">
+            <h3 class="text-lg font-semibold text-[#111827] mb-2">Article 9 - Risk Management</h3>
+            <p class="text-sm text-[#6B7280] leading-relaxed">Guides you through establishing a Risk Management System as required by Article 9 of the EU AI Act.</p>
+                        </div>
+        <div class="mt-auto flex justify-between items-center pt-5 border-t border-[#F3F4F6]">
+            <a href="#" class="flex items-center gap-2 text-[#4F46E5] text-sm font-semibold no-underline">
+                                Chat Now
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                                    <path d="M5 12h14M13 5l7 7-7 7" />
+                                </svg>
+                            </a>
+            <span class="flex items-center gap-1.5 text-xs text-[#059669] font-medium">
+                <span class="w-2 h-2 bg-[#10B981] rounded-full"></span>
+                                Online
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Agent 3: Article 13 -->
+    <div class="bg-white rounded-2xl border border-[#E5E7EB] p-6 flex flex-col gap-5 transition-shadow duration-200 hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)]" data-category="compliance">
+        <div class="flex justify-between items-start">
+            <img src="{% static 'governance/img/eu-ai-act.png' %}" alt="Agent" class="w-12 h-12 rounded-lg object-contain">
+            <span class="px-3 py-1 rounded-xl text-xs font-medium bg-[#F0F9FF] text-[#0369A1]">Compliance</span>
+                        </div>
+        <div class="flex-1">
+            <h3 class="text-lg font-semibold text-[#111827] mb-2">Article 13 - Instructions for Use</h3>
+            <p class="text-sm text-[#6B7280] leading-relaxed">Assists with creating complete Instructions for Use documentation as mandated by Article 13.</p>
+                        </div>
+        <div class="mt-auto flex justify-between items-center pt-5 border-t border-[#F3F4F6]">
+            <a href="#" class="flex items-center gap-2 text-[#4F46E5] text-sm font-semibold no-underline">
+                                Chat Now
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                                    <path d="M5 12h14M13 5l7 7-7 7" />
+                                </svg>
+                            </a>
+            <span class="flex items-center gap-1.5 text-xs text-[#059669] font-medium">
+                <span class="w-2 h-2 bg-[#10B981] rounded-full"></span>
+                                Online
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Agent 4: FRIA -->
+    <div class="bg-white rounded-2xl border border-[#E5E7EB] p-6 flex flex-col gap-5 transition-shadow duration-200 hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)]" data-category="risk">
+        <div class="flex justify-between items-start">
+            <img src="{% static 'governance/img/eu-ai-act.png' %}" alt="Agent" class="w-12 h-12 rounded-lg object-contain">
+            <span class="px-3 py-1 rounded-xl text-xs font-medium bg-[#FEF2F2] text-[#DC2626]">Risk Assessment</span>
+                        </div>
+        <div class="flex-1">
+            <h3 class="text-lg font-semibold text-[#111827] mb-2">FRIA Assessment Agent</h3>
+            <p class="text-sm text-[#6B7280] leading-relaxed">Conducts Fundamental Rights Impact Assessments for high-risk AI systems before deployment.</p>
+                        </div>
+        <div class="mt-auto flex justify-between items-center pt-5 border-t border-[#F3F4F6]">
+            <a href="#" class="flex items-center gap-2 text-[#4F46E5] text-sm font-semibold no-underline">
+                                Chat Now
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                                    <path d="M5 12h14M13 5l7 7-7 7" />
+                                </svg>
+                            </a>
+            <span class="flex items-center gap-1.5 text-xs text-[#059669] font-medium">
+                <span class="w-2 h-2 bg-[#10B981] rounded-full"></span>
+                                Online
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Agent 5: Data Quality -->
+    <div class="bg-white rounded-2xl border border-[#E5E7EB] p-6 flex flex-col gap-5 transition-shadow duration-200 hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)]" data-category="data">
+        <div class="flex justify-between items-start">
+            <img src="{% static 'governance/img/eu-ai-act.png' %}" alt="Agent" class="w-12 h-12 rounded-lg object-contain">
+            <span class="px-3 py-1 rounded-xl text-xs font-medium bg-[#FFF7ED] text-[#C2410C]">Data Governance</span>
+                        </div>
+        <div class="flex-1">
+            <h3 class="text-lg font-semibold text-[#111827] mb-2">Data Quality Agent</h3>
+            <p class="text-sm text-[#6B7280] leading-relaxed">Ensures training and testing data meets EU AI Act quality, relevance, and representativeness standards.</p>
+                        </div>
+        <div class="mt-auto flex justify-between items-center pt-5 border-t border-[#F3F4F6]">
+            <a href="#" class="flex items-center gap-2 text-[#4F46E5] text-sm font-semibold no-underline">
+                                Chat Now
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                                    <path d="M5 12h14M13 5l7 7-7 7" />
+                                </svg>
+                            </a>
+            <span class="flex items-center gap-1.5 text-xs text-[#059669] font-medium">
+                <span class="w-2 h-2 bg-[#10B981] rounded-full"></span>
+                                Online
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Agent 6: Conformity -->
+    <div class="bg-white rounded-2xl border border-[#E5E7EB] p-6 flex flex-col gap-5 transition-shadow duration-200 hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)]" data-category="governance">
+        <div class="flex justify-between items-start">
+            <img src="{% static 'governance/img/eu-ai-act.png' %}" alt="Agent" class="w-12 h-12 rounded-lg object-contain">
+            <span class="px-3 py-1 rounded-xl text-xs font-medium bg-[#ECFDF5] text-[#047857]">Governance</span>
+                        </div>
+        <div class="flex-1">
+            <h3 class="text-lg font-semibold text-[#111827] mb-2">Conformity Assessment</h3>
+            <p class="text-sm text-[#6B7280] leading-relaxed">Guides you through the conformity assessment process for high-risk AI systems prior to market placement.</p>
+                        </div>
+        <div class="mt-auto flex justify-between items-center pt-5 border-t border-[#F3F4F6]">
+            <a href="#" class="flex items-center gap-2 text-[#4F46E5] text-sm font-semibold no-underline">
+                                Chat Now
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                                    <path d="M5 12h14M13 5l7 7-7 7" />
+                                </svg>
+                            </a>
+            <span class="flex items-center gap-1.5 text-xs text-[#059669] font-medium">
+                <span class="w-2 h-2 bg-[#10B981] rounded-full"></span>
+                                Online
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Agent 7: Transparency -->
+    <div class="bg-white rounded-2xl border border-[#E5E7EB] p-6 flex flex-col gap-5 transition-shadow duration-200 hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)]" data-category="transparency">
+        <div class="flex justify-between items-start">
+            <img src="{% static 'governance/img/eu-ai-act.png' %}" alt="Agent" class="w-12 h-12 rounded-lg object-contain">
+            <span class="px-3 py-1 rounded-xl text-xs font-medium bg-[#EFF6FF] text-[#1D4ED8]">Transparency</span>
+                        </div>
+        <div class="flex-1">
+            <h3 class="text-lg font-semibold text-[#111827] mb-2">Transparency Agent</h3>
+            <p class="text-sm text-[#6B7280] leading-relaxed">Helps implement transparency obligations including user notifications and AI content labeling.</p>
+                        </div>
+        <div class="mt-auto flex justify-between items-center pt-5 border-t border-[#F3F4F6]">
+            <a href="#" class="flex items-center gap-2 text-[#4F46E5] text-sm font-semibold no-underline">
+                                Chat Now
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                                    <path d="M5 12h14M13 5l7 7-7 7" />
+                                </svg>
+                            </a>
+            <span class="flex items-center gap-1.5 text-xs text-[#059669] font-medium">
+                <span class="w-2 h-2 bg-[#10B981] rounded-full"></span>
+                                Online
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Agent 8: Article 15 -->
+    <div class="bg-white rounded-2xl border border-[#E5E7EB] p-6 flex flex-col gap-5 transition-shadow duration-200 hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)]" data-category="compliance">
+        <div class="flex justify-between items-start">
+            <img src="{% static 'governance/img/eu-ai-act.png' %}" alt="Agent" class="w-12 h-12 rounded-lg object-contain">
+            <span class="px-3 py-1 rounded-xl text-xs font-medium bg-[#F0F9FF] text-[#0369A1]">Compliance</span>
+                        </div>
+        <div class="flex-1">
+            <h3 class="text-lg font-semibold text-[#111827] mb-2">Article 15 - Accuracy & Robustness</h3>
+            <p class="text-sm text-[#6B7280] leading-relaxed">Assists with accuracy, robustness, and cybersecurity requirements under Article 15.</p>
+                        </div>
+        <div class="mt-auto flex justify-between items-center pt-5 border-t border-[#F3F4F6]">
+            <a href="#" class="flex items-center gap-2 text-[#4F46E5] text-sm font-semibold no-underline">
+                                Chat Now
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                                    <path d="M5 12h14M13 5l7 7-7 7" />
+                                </svg>
+                            </a>
+            <span class="flex items-center gap-1.5 text-xs text-[#059669] font-medium">
+                <span class="w-2 h-2 bg-[#10B981] rounded-full"></span>
+                                Online
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Agent 9: Annex XII -->
+    <div class="bg-white rounded-2xl border border-[#E5E7EB] p-6 flex flex-col gap-5 transition-shadow duration-200 hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)]" data-category="transparency">
+        <div class="flex justify-between items-start">
+            <img src="{% static 'governance/img/eu-ai-act.png' %}" alt="Agent" class="w-12 h-12 rounded-lg object-contain">
+            <span class="px-3 py-1 rounded-xl text-xs font-medium bg-[#EFF6FF] text-[#1D4ED8]">Transparency</span>
+                        </div>
+        <div class="flex-1">
+            <h3 class="text-lg font-semibold text-[#111827] mb-2">Annex XII - Provider Info</h3>
+            <p class="text-sm text-[#6B7280] leading-relaxed">Guides documentation of information to be provided to downstream providers per Annex XII.</p>
+                        </div>
+        <div class="mt-auto flex justify-between items-center pt-5 border-t border-[#F3F4F6]">
+            <a href="#" class="flex items-center gap-2 text-[#4F46E5] text-sm font-semibold no-underline">
+                                Chat Now
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                                    <path d="M5 12h14M13 5l7 7-7 7" />
+                                </svg>
+                            </a>
+            <span class="flex items-center gap-1.5 text-xs text-[#059669] font-medium">
+                <span class="w-2 h-2 bg-[#10B981] rounded-full"></span>
+                                Online
+                            </span>
+                        </div>
+                    </div>
+                </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Set active nav item
+        const navLinks = document.querySelectorAll('.nav-link');
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.dataset.nav === 'reporting') {
+                link.classList.add('active');
+        }
+        });
+    });
+
+    // Initialize filter functionality
+            document.addEventListener('click', (e) => {
+                if (e.target.classList.contains('filter-pill')) {
+                    const category = e.target.dataset.category;
+
+                    // Update active pill
+                    document.querySelectorAll('.filter-pill').forEach(pill => {
+                        pill.classList.remove('active');
+                    });
+                    e.target.classList.add('active');
+
+                    // Filter cards
+            document.querySelectorAll('[data-category]').forEach(card => {
+                if (card.classList.contains('bg-white') && card.querySelector('h3')) {
+                        if (category === 'all' || card.dataset.category === category) {
+                            card.style.display = 'flex';
+                        } else {
+                            card.style.display = 'none';
+                        }
+                }
+            });
+        }
+    });
+    </script>
+{% endblock %}

@@ -1,0 +1,89 @@
+{% extends "governance/base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}Questionnaire Detail - EU AI Act{% endblock %}
+
+{% block dashboard_content %}
+<div class="flex flex-col gap-6 p-6 bg-white">
+    <div class="flex flex-col gap-4">
+        <h1 class="font-['Montserrat',sans-serif] text-2xl font-bold text-[#1a1a2e] m-0">Questionnaire Detail</h1>
+        <div class="flex flex-col gap-2 p-4 bg-[#f9fafb] rounded-xl">
+            <div class="font-['Montserrat',sans-serif] text-sm text-[#565F6C]"><strong class="text-[#1f2937]">Questionnaire:</strong> EU AI Act Risk Assessment</div>
+            <div class="font-['Montserrat',sans-serif] text-sm text-[#565F6C]"><strong class="text-[#1f2937]">Creator:</strong> Admin User</div>
+            <div class="font-['Montserrat',sans-serif] text-sm text-[#565F6C]"><strong class="text-[#1f2937]">Creation Date:</strong> 15/12/2024</div>
+        </div>
+    </div>
+
+    <h2 class="font-['Montserrat',sans-serif] text-lg font-bold m-0">Data Points</h2>
+
+    <div class="border border-[#e5e7eb] rounded-xl overflow-hidden mb-4">
+        <div class="px-5 py-4 bg-[#3B82F6] text-white font-['Montserrat',sans-serif] text-base font-semibold cursor-pointer flex justify-between items-center hover:opacity-90" onclick="toggleSection('section1')">
+                            <span>General Information</span>
+                            <span id="arrow-section1">▼</span>
+                        </div>
+        <div class="bg-white p-5" id="content-section1">
+            <div class="py-3 border-b border-[#f0f0f0] font-['Montserrat',sans-serif] text-sm text-[#374151] last:border-b-0">What is the name of the AI system?</div>
+            <div class="py-3 border-b border-[#f0f0f0] font-['Montserrat',sans-serif] text-sm text-[#374151] last:border-b-0">What is the primary purpose of this AI system?</div>
+            <div class="py-3 border-b border-[#f0f0f0] font-['Montserrat',sans-serif] text-sm text-[#374151] last:border-b-0">Who is the intended user of the AI system?</div>
+                        </div>
+                    </div>
+
+    <div class="border border-[#e5e7eb] rounded-xl overflow-hidden mb-4">
+        <div class="px-5 py-4 bg-[#10B981] text-white font-['Montserrat',sans-serif] text-base font-semibold cursor-pointer flex justify-between items-center hover:opacity-90" onclick="toggleSection('section2')">
+                            <span>Risk Assessment</span>
+                            <span id="arrow-section2">▼</span>
+                        </div>
+        <div class="bg-white p-5" id="content-section2">
+            <div class="py-3 border-b border-[#f0f0f0] font-['Montserrat',sans-serif] text-sm text-[#374151] last:border-b-0">Has a risk assessment been conducted?</div>
+            <div class="py-3 border-b border-[#f0f0f0] font-['Montserrat',sans-serif] text-sm text-[#374151] last:border-b-0">What are the identified risks?</div>
+            <div class="py-3 border-b border-[#f0f0f0] font-['Montserrat',sans-serif] text-sm text-[#374151] last:border-b-0">What mitigation measures are in place?</div>
+                        </div>
+                    </div>
+
+    <div class="border border-[#e5e7eb] rounded-xl overflow-hidden mb-4">
+        <div class="px-5 py-4 bg-[#F59E0B] text-white font-['Montserrat',sans-serif] text-base font-semibold cursor-pointer flex justify-between items-center hover:opacity-90" onclick="toggleSection('section3')">
+                            <span>Data Governance</span>
+                            <span id="arrow-section3">▼</span>
+                        </div>
+        <div class="bg-white p-5" id="content-section3">
+            <div class="py-3 border-b border-[#f0f0f0] font-['Montserrat',sans-serif] text-sm text-[#374151] last:border-b-0">What data sources are used for training?</div>
+            <div class="py-3 border-b border-[#f0f0f0] font-['Montserrat',sans-serif] text-sm text-[#374151] last:border-b-0">How is data quality ensured?</div>
+            <div class="py-3 border-b border-[#f0f0f0] font-['Montserrat',sans-serif] text-sm text-[#374151] last:border-b-0">Are there data protection measures in place?</div>
+                        </div>
+                    </div>
+
+    <div class="flex justify-end gap-3 pt-6">
+        <a href="{% url 'questionnaire_library' %}" class="px-6 py-2.5 bg-white border border-[#F13D30] rounded-full font-['Montserrat',sans-serif] text-sm font-semibold text-[#F13D30] cursor-pointer no-underline hover:bg-[#FEF2F2]">Back</a>
+        <button class="px-6 py-2.5 bg-[#F13D30] border-none rounded-full font-['Montserrat',sans-serif] text-sm font-semibold text-white cursor-pointer hover:bg-[#DC180A]">Edit</button>
+                    </div>
+                </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Set active nav item
+        const navLinks = document.querySelectorAll('.nav-link');
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.dataset.nav === 'data-collection') {
+                link.classList.add('active');
+        }
+        });
+    });
+
+        function toggleSection(sectionId) {
+            const content = document.getElementById(`content-${sectionId}`);
+            const arrow = document.getElementById(`arrow-${sectionId}`);
+
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                arrow.textContent = '▼';
+            } else {
+                content.style.display = 'none';
+                arrow.textContent = '►';
+            }
+        }
+    </script>
+{% endblock %}

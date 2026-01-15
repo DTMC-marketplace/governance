@@ -1,0 +1,1588 @@
+{% extends "governance/base.html" %}
+{% load i18n %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}{% trans "Multi-Agent Use Cases" %}{% endblock %}
+
+{% block dashboard_content %}
+<div class="flex flex-col gap-5">
+    <!-- Breadcrumb Navigation -->
+    <div class="flex items-center gap-3 pb-2">
+        <button class="w-6 h-6 bg-transparent border-none cursor-pointer p-0 flex items-center justify-center"
+            onclick="history.back()">
+            <img src="{% static 'governance/img/arrow-left.svg' %}" alt="Back" class="w-3.5 h-3.5">
+        </button>
+        <button class="w-6 h-6 bg-transparent border-none cursor-pointer p-0 flex items-center justify-center"
+            onclick="history.forward()">
+            <img src="{% static 'governance/img/arrow-right-gray.svg' %}" alt="Forward" class="w-3.5 h-3.5">
+        </button>
+        <span class="text-sm font-semibold text-[#F13D30]">{% trans "Multi-Agent Use Cases" %}</span>
+    </div>
+
+    <!-- Page Header -->
+    <div class="flex justify-between items-start">
+        <div class="flex flex-col">
+            <h1 class="text-2xl font-bold text-[#22262A]" id="page-title">{% trans "Agent use cases mapping" %}</h1>
+            <p class="text-sm text-[#6B7280] mt-1" id="page-subtitle">{% trans "Review data and information of agent use cases" %}</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <div
+                class="w-10 h-10 rounded-full bg-gradient-to-br from-[#e8f4fd] to-[#f0e6fa] flex items-center justify-center border border-[#E5E7EB] cursor-pointer">
+                <img src="{% static 'governance/img/aiassistant.svg' %}" alt="AI Assistant" class="w-6 h-6">
+            </div>
+        </div>
+    </div>
+
+    <hr class="border-t border-[#E5E7EB]">
+
+
+    <!-- Tab Content: Overview -->
+    <div id="tab-content-overview" class="tab-content">
+    <div>
+        <h2 class="text-xl font-bold text-[#1a1a2e] mb-1">{% trans "Agent use cases mapping" %}</h2>
+</div>
+
+<!-- Toolbar -->
+    <div class="flex justify-between items-center py-3">
+        <div class="flex items-center gap-4">
+                <button onclick="openAddUseCaseModal()"
+                class="flex items-center gap-1.5 px-3 py-2 border-none bg-transparent text-sm font-medium text-[#374151] cursor-pointer rounded-md transition-colors duration-200 hover:bg-[#F3F4F6]">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            Add New
+        </button>
+            <button
+                class="flex items-center gap-1.5 px-3 py-2 border-none bg-transparent text-sm font-medium text-[#374151] cursor-pointer rounded-md transition-colors duration-200 hover:bg-[#F3F4F6]">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                <line x1="4" y1="6" x2="20" y2="6" />
+                <line x1="4" y1="12" x2="14" y2="12" />
+                <line x1="4" y1="18" x2="8" y2="18" />
+            </svg>
+            Filter
+        </button>
+            <button
+                class="flex items-center gap-1.5 px-3 py-2 border-none bg-transparent text-sm font-medium text-[#374151] cursor-pointer rounded-md transition-colors duration-200 hover:bg-[#F3F4F6]">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                <line x1="7" y1="3" x2="7" y2="21" />
+                <line x1="17" y1="21" x2="17" y2="3" />
+                <polyline points="3,7 7,3 11,7" />
+                <polyline points="21,17 17,21 13,17" />
+            </svg>
+            Sort
+        </button>
+            <div class="flex items-center">
+                <form class="w-full mx-auto" method="get" action="">
+                    {% if agent_name %}
+                    <input type="hidden" name="agent" value="{{ agent_name }}">
+                    {% endif %}
+                    <input type="hidden" name="limit" value="{{ limit|default:10 }}">
+                    <div class="relative">
+                        <div class="absolute inset-y-0 start-0 flex items-center pl-3 pointer-events-none">
+                            <img id="search-icon-container" src="/static/icons/search.svg"
+                                class="h-4 w-4 transition-transform duration-300" />
+                        </div>
+                        <input type="search" id="default-search" name="search" value="{{ search_term|default:'' }}"
+                            class="block w-full p-4 !rounded-full text-sm " placeholder="{% trans 'Search' %}"
+                            style="padding-inline-start: 1rem; text-indent: 1rem;" />
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="flex items-center space-x-4 text-gray-700">
+            <span class="text-sm whitespace-nowrap">Rows per page:</span>
+            <select id="rowsPerPage"
+                class="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-blue-300 w-20">
+                <option value="10" {% if limit == 10 %} selected {% endif %}>10</option>
+                <option value="25" {% if limit == 25 %} selected {% endif %}>25</option>
+                <option value="50" {% if limit == 50 %} selected {% endif %}>50</option>
+                <option value="100" {% if limit == 100 %} selected {% endif %}>100</option>
+        </select>
+            <span class="text-sm text-gray-500">{% if page_obj %}{{ page_obj.start_index }} - {{ page_obj.end_index }}
+                of {{ page_obj.paginator.count }}{% else %}1-10 of 135{% endif %}</span>
+
+            <div class="flex items-center space-x-1">
+                <!-- First Page Button -->
+                <a href="?page=1&limit={% if limit %}{{ limit }}{% else %}10{% endif %}{% if agent_name %}&agent={{ agent_name|urlencode }}{% endif %}{% if search_term %}&search={{ search_term|urlencode }}{% endif %}"
+                    class="{% if page_obj and not page_obj.has_previous %}opacity-50 pointer-events-none{% endif %}">
+                    <button
+                        class="rounded-md p-1 text-gray-500 hover:text-blue-500 focus:outline-none focus:ring-blue-300">
+                        <img src="/static/icons/Icon-2lt.svg" class="w-3 h-3" />
+                    </button>
+                </a>
+
+                <!-- Previous Page Button -->
+                {% if page_obj and page_obj.has_previous %}
+                <a
+                    href="?page={{ page_obj.previous_page_number }}&limit={% if limit %}{{ limit }}{% else %}10{% endif %}{% if agent_name %}&agent={{ agent_name|urlencode }}{% endif %}{% if search_term %}&search={{ search_term|urlencode }}{% endif %}">
+                    <button
+                        class="rounded-md p-1 text-gray-500 hover:text-blue-500 focus:outline-none focus:ring-blue-300">
+                        <img src="/static/icons/Icon-lt.svg" class="w-3 h-3" />
+                    </button>
+                </a>
+                {% else %}
+                <button class="rounded-md p-1 text-gray-300 cursor-not-allowed opacity-50" disabled>
+                    <img src="/static/icons/Icon-lt.svg" class="w-3 h-3" />
+                </button>
+                {% endif %}
+
+                <!-- Next Page Button -->
+                {% if page_obj and page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}&limit={% if limit %}{{ limit }}{% else %}10{% endif %}{% if agent_name %}&agent={{ agent_name|urlencode }}{% endif %}{% if search_term %}&search={{ search_term|urlencode }}{% endif %}">
+                    <button
+                        class="rounded-md p-1 text-gray-500 hover:text-blue-500 focus:outline-none focus:ring-blue-300">
+                        <img src="/static/icons/Icon-gt.svg" class="w-3 h-3" />
+                    </button>
+                </a>
+                {% else %}
+                <button class="rounded-md p-1 text-gray-300 cursor-not-allowed opacity-50" disabled>
+                    <img src="/static/icons/Icon-gt.svg" class="w-3 h-3" />
+                </button>
+                {% endif %}
+
+                <!-- Last Page Button -->
+                <a href="?page={% if page_obj %}{{ page_obj.paginator.num_pages }}{% else %}1{% endif %}&limit={% if limit %}{{ limit }}{% else %}10{% endif %}{% if agent_name %}&agent={{ agent_name|urlencode }}{% endif %}{% if search_term %}&search={{ search_term|urlencode }}{% endif %}"
+                    class="{% if page_obj and not page_obj.has_next %}opacity-50 pointer-events-none{% endif %}">
+                    <button class="rounded-md p-1 text-gray-500 focus:outline-none hover:text-blue-500">
+                        <img src="/static/icons/Icon-2gt.svg" class="w-3 h-3" />
+                    </button>
+                </a>
+        </div>
+    </div>
+</div>
+
+<!-- Table -->
+    <div class="bg-white rounded-2xl border border-[#E5E7EB] shadow-sm overflow-hidden">
+        <table class="min-w-full divide-y divide-[#E5E7EB]">
+            <thead class="bg-[#F9FAFB]">
+                <tr>
+                    <th scope="col" class="py-3.5 px-4 text-left text-xs font-semibold text-[#6B7280]">
+                        <input type="checkbox" id="select-all" class="rounded text-[#DC6B64] focus:ring-[#DC6B64]">
+                    </th>
+                    <th scope="col" class="py-3.5 px-4 text-left text-xs font-semibold text-[#6B7280]">{% trans "Name" %}</th>
+                    <th scope="col" class="py-3.5 px-4 text-left text-xs font-semibold text-[#6B7280]">{% trans "Use cases" %}</th>
+                    <th scope="col" class="py-3.5 px-4 text-left text-xs font-semibold text-[#6B7280]">{% trans "Models" %}</th>
+                    <th scope="col" class="py-3.5 px-4 text-left text-xs font-semibold text-[#6B7280]">{% trans "Datasets" %}</th>
+                    <th scope="col" class="py-3.5 px-4 text-left text-xs font-semibold text-[#6B7280]">{% trans "Reviews" %}</th>
+                    <th scope="col" class="py-3.5 px-4 text-left text-xs font-semibold text-[#6B7280]">{% trans "Risks" %}</th>
+                    <th scope="col" class="py-3.5 px-4 text-left text-xs font-semibold text-[#6B7280]">{% trans "EU AI Act" %}</th>
+                    <th scope="col" class="py-3.5 px-4 text-left text-xs font-semibold text-[#6B7280]">{% trans "GDPR" %}</th>
+                    <th scope="col" class="py-3.5 px-4 text-left text-xs font-semibold text-[#6B7280]">{% trans "Data Act" %}</th>
+                    <th scope="col" class="py-3.5 px-4 text-left text-xs font-semibold text-[#6B7280]">{% trans "Edit" %}</th>
+            </tr>
+        </thead>
+            <tbody class="divide-y divide-[#E5E7EB] bg-white">
+            {% for use_case_data in use_cases_data %}
+                <tr class="parent-row hover:bg-[#F9FAFB] cursor-pointer">
+                    <td class="py-3.5 px-4 whitespace-nowrap" onclick="event.stopPropagation()">
+                        <input type="checkbox" class="row-checkbox rounded text-[#DC6B64] focus:ring-[#DC6B64]">
+                    </td>
+                    <td class="py-3.5 px-4 whitespace-nowrap">
+                        <div class="flex items-center gap-2">
+                            <a href="#" class="text-sm font-medium text-[#22262A] hover:underline">{{ use_case_data.use_case.display_name|default:use_case_data.use_case.agent.name }}</a>
+                    </div>
+                </td>
+                    <td class="py-3.5 px-4 whitespace-nowrap text-sm text-[#4B5563]">{{ use_case_data.use_case.name }}</td>
+                    <td class="py-3.5 px-4 whitespace-nowrap text-sm text-[#4B5563]">
+                        {% for model in use_case_data.models %}
+                            {{ model.name }}{% if not forloop.last %}, {% endif %}
+                        {% empty %}
+                            -
+                        {% endfor %}
+                    </td>
+                    <td class="py-3.5 px-4 whitespace-nowrap text-sm text-[#4B5563]">
+                        {% for dataset in use_case_data.datasets %}
+                            {{ dataset.name }}{% if not forloop.last %}, {% endif %}
+                        {% empty %}
+                            -
+                        {% endfor %}
+                    </td>
+                    <td class="py-3.5 px-4 whitespace-nowrap">
+                        {% if use_case_data.use_case.review_status == 'complete' %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#D1FAE5] text-[#065F46]">{% trans "Complete" %}</span>
+                        {% elif use_case_data.use_case.review_status == 'partial' %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#FEF3C7] text-[#92400E]">{% trans "Partial" %}</span>
+                        {% else %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#FEE2E2] text-[#991B1B]">{% trans "Missing" %}</span>
+                        {% endif %}
+                </td>
+                    <td class="py-3.5 px-4 whitespace-nowrap text-sm text-[#4B5563]">
+                        {% for risk in use_case_data.risks %}
+                            {{ risk|title }}{% if not forloop.last %}, {% endif %}
+                        {% empty %}
+                            -
+                        {% endfor %}
+                    </td>
+                    <td class="py-3.5 px-4 whitespace-nowrap">
+                        {% if use_case_data.compliance.eu_ai_act %}
+                            <span class="w-5 h-5 inline-flex items-center justify-center rounded-full bg-[#D1FAE5] text-[#065F46] text-xs">✓</span>
+                        {% elif use_case_data.compliance.status == 'partial' %}
+                            <span class="text-xs text-[#92400E]">⚠ Limited risks</span>
+                        {% else %}
+                            <span class="w-5 h-5 inline-flex items-center justify-center rounded-full bg-[#FEE2E2] text-[#991B1B] text-xs">✗</span>
+                        {% endif %}
+                    </td>
+                    <td class="py-3.5 px-4 whitespace-nowrap">
+                        {% if use_case_data.compliance.gdpr %}
+                            <span class="w-5 h-5 inline-flex items-center justify-center rounded-full bg-[#D1FAE5] text-[#065F46] text-xs">✓</span>
+                        {% elif use_case_data.compliance.status == 'partial' %}
+                            <span class="text-xs text-[#92400E]">⚠ Limited risks</span>
+                        {% else %}
+                            <span class="w-5 h-5 inline-flex items-center justify-center rounded-full bg-[#FEE2E2] text-[#991B1B] text-xs">✗</span>
+                        {% endif %}
+                </td>
+                    <td class="py-3.5 px-4 whitespace-nowrap text-sm text-[#4B5563]">
+                        {% if use_case_data.compliance.data_act %}
+                            <span class="w-5 h-5 inline-flex items-center justify-center rounded-full bg-[#D1FAE5] text-[#065F46] text-xs">✓</span>
+                        {% else %}
+                            NA
+                        {% endif %}
+                    </td>
+                    <td class="py-3.5 px-4 whitespace-nowrap">
+                        <button
+                            class="w-8 h-8 flex items-center justify-center text-[#6B7280] hover:bg-[#F3F4F6] rounded cursor-pointer"
+                            onclick="loadUseCaseDetails({{ use_case_data.use_case.id }}); event.stopPropagation();">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                            <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                            <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+                        </svg>
+                    </button>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="11" class="py-8 text-center text-sm text-[#6B7280]">{% trans "No use cases found. Click \"Add New\" to create one." %}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+
+    <div class="pt-4">
+        <h2 class="text-xl font-bold text-[#1a1a2e] mb-1">Use Cases Split Editor</h2>
+    </div>
+    <!-- Use Cases Split Editor Section -->
+    <div class="bg-[#EFF6FF] rounded-lg border border-[#BFDBFE] p-4 flex items-center justify-between mb-4">
+        <div class="flex flex-col gap-1">
+            <span class="text-sm font-medium text-[#1E40AF]">Match carbon emission factors</span>
+            <span class="text-xs text-[#3B82F6]">Models: Gemini O3 - Datasets Ademe V8</span>
+        </div>
+        <button
+            class="w-8 h-8 flex items-center justify-center text-[#3B82F6] hover:bg-[#DBEAFE] rounded cursor-pointer">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5">
+                <circle cx="12" cy="12" r="1" />
+                <circle cx="12" cy="5" r="1" />
+                <circle cx="12" cy="19" r="1" />
+            </svg>
+        </button>
+    </div>
+
+    <!-- AI Use Case compliance alignment Section -->
+    <div class="bg-white rounded-lg border border-[#E5E7EB] p-6 mb-4">
+        <h3 class="text-lg font-semibold text-[#111827] mb-4">{% trans "AI Use Case compliance alignment" %}</h3>
+        <table class="w-full">
+            <thead class="bg-[#F9FAFB] border-b border-[#E5E7EB]">
+                <tr>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase">{% trans "EU AI Act" %}</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase">{% trans "GDPR" %}</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase">{% trans "Data Act" %}</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase">{% trans "Edit" %}</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-[#E5E7EB]">
+                <tr>
+                    <td class="px-4 py-3 text-sm text-[#4B5563]">{% trans "High Risk" %}</td>
+                    <td class="px-4 py-3 text-sm text-[#4B5563]">{% trans "Under GDPR" %}</td>
+                    <td class="px-4 py-3 text-sm text-[#4B5563]">Not applicable</td>
+                    <td class="px-4 py-3">
+                        <button
+                            class="w-8 h-8 flex items-center justify-center text-[#6B7280] hover:bg-[#F3F4F6] rounded cursor-pointer">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                            <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                            <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+                        </svg>
+                    </button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+    <!-- Evidences Section -->
+    <div class="bg-white rounded-lg border border-[#E5E7EB] p-6 mb-4">
+        <h3 class="text-lg font-semibold text-[#111827] mb-4">Evidences</h3>
+
+        <!-- Document List -->
+        <div id="evidencesList" class="mb-4 space-y-2">
+            {% if evidences %}
+                {% for evidence in evidences %}
+                <div class="flex items-center justify-between p-3 bg-[#F9FAFB] rounded-lg border border-[#E5E7EB] evidence-item" data-evidence-id="{{ evidence.id }}">
+                <div class="flex items-center gap-3">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        class="w-5 h-5 text-[#DC2626]">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <polyline points="14,2 14,8 20,8" />
+                        <line x1="16" y1="13" x2="8" y2="13" />
+                        <line x1="16" y1="17" x2="8" y2="17" />
+                        <polyline points="10,9 9,9 8,9" />
+                    </svg>
+                        <div class="flex flex-col">
+                            <span class="text-sm font-medium text-[#4B5563]">{{ evidence.file_name }}</span>
+                            {% if agent and not selected_use_case %}
+                            <span class="text-xs text-[#6B7280]">From: {{ evidence.use_case.name }}</span>
+                            {% endif %}
+                </div>
+                    </div>
+                    <button onclick="deleteEvidence({{ evidence.id }}, {{ evidence.use_case.id }})"
+                    class="w-8 h-8 flex items-center justify-center text-[#DC2626] hover:bg-[#FEE2E2] rounded cursor-pointer">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                        <polyline points="3,6 5,6 21,6" />
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                    </svg>
+                </button>
+            </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-sm text-[#6B7280] text-center py-4">
+                    {% if agent or selected_use_case %}
+                        No evidences uploaded yet. Upload files below.
+                    {% else %}
+                        No evidences uploaded yet. Select a use case or agent and upload files below.
+                    {% endif %}
+                </p>
+            {% endif %}
+        </div>
+
+        {% if agent or selected_use_case %}
+        <!-- Drag and Drop Area -->
+        <div id="evidenceUploadArea"
+            class="border-2 border-dashed border-[#D1D5DB] rounded-lg p-12 text-center bg-[#F9FAFB] hover:border-[#9CA3AF] transition-colors cursor-pointer mb-4">
+            <input type="file" id="evidenceFileInput" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.xls,.xlsx" class="hidden">
+            <div class="flex flex-col items-center gap-4">
+                <div class="flex items-center gap-2">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        class="w-8 h-8 text-[#6B7280]">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="17,8 12,3 7,8" />
+                        <line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
+                </div>
+                <div class="flex flex-col gap-1">
+                    <p class="text-sm font-medium text-[#374151]">Click or drag and drop to add evidence documents</p>
+                    <p class="text-xs text-[#6B7280]">PDF, DOC, JPG, XLS (Max 5GB per file)</p>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="border-2 border-dashed border-[#D1D5DB] rounded-lg p-12 text-center bg-[#F9FAFB] mb-4">
+            <p class="text-sm text-[#6B7280]">Please select an agent or use case from the table above to upload evidences</p>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Evaluation report Section -->
+    <div class="bg-white rounded-lg border border-[#E5E7EB] p-6 mb-4">
+        <h3 class="text-lg font-semibold text-[#111827] mb-4">Evaluation report</h3>
+        
+        {% if agent or selected_use_case %}
+        <div class="flex flex-col gap-3" id="evaluationReportsList">
+            <!-- 8 Report Types (all optional) -->
+            {% for report_type, report_label in report_types %}
+                {% if reports_dict|get_item:report_type %}
+                    {% with report=reports_dict|get_item:report_type %}
+                    <div class="evaluation-report-item flex items-center justify-between p-3 rounded-lg border bg-white border-green-500 cursor-pointer hover:bg-[#F9FAFB] report-upload-area" data-report-type="{{ report_type }}" data-use-case-id="{{ report.use_case.id }}">
+                        <div class="flex items-center gap-3 flex-1" onclick="triggerReportUpload('{{ report_type }}')">
+                            <img src="/static/icons/file-icon.svg" alt="Report" class="w-5 h-5">
+                            <div class="flex flex-col flex-1">
+                                <span class="text-sm font-medium text-[#111827]">{{ report_label }}</span>
+                                <span class="text-xs text-[#6B7280]">{{ report.file_name }}</span>
+                                {% if agent and not selected_use_case %}
+                                <span class="text-xs text-[#9CA3AF]">From: {{ report.use_case.name }}</span>
+                                {% endif %}
+                    </div>
+                    <div class="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center mr-4">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" class="w-3 h-3">
+                            <polyline points="20,6 9,17 4,12"/>
+                        </svg>
+                    </div>
+                </div>
+                        <div class="flex items-center gap-3" onclick="event.stopPropagation();">
+                            <input type="file" id="report_{{ report_type }}" class="hidden" accept=".xlsx,.json,.csv" data-report-type="{{ report_type }}">
+                            <button onclick="deleteEvaluationReport('{{ report_type }}', {{ report.id }}, {{ report.use_case.id }}); event.stopPropagation();" class="flex items-center gap-1.5 text-[#111827] hover:text-[#DC2626] cursor-pointer">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                            <polyline points="3,6 5,6 21,6"/>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg>
+                        <span class="text-sm font-medium">Delete</span>
+                    </button>
+                </div>
+            </div>
+                    {% endwith %}
+                {% else %}
+                <div class="evaluation-report-item flex items-center justify-between p-3 rounded-lg bg-[#F9FAFB] border-2 border-dashed border-[#D1D5DB] cursor-pointer hover:border-[#9CA3AF] report-upload-area" data-report-type="{{ report_type }}">
+                    <div class="flex items-center gap-3 flex-1" onclick="triggerReportUpload('{{ report_type }}')">
+                        <img src="/static/icons/file-icon.svg" alt="Report" class="w-5 h-5">
+                        <div class="flex flex-col flex-1">
+                            <span class="text-sm font-medium text-[#4B5563]">{{ report_label }}</span>
+                            <span class="text-xs text-[#6B7280]">.xlsx / .json / .csv</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                        <input type="file" id="report_{{ report_type }}" class="hidden" accept=".xlsx,.json,.csv" data-report-type="{{ report_type }}">
+                        <span class="text-xs text-[#6B7280] cursor-pointer hover:text-[#2563EB]">Click or drag to upload</span>
+                </div>
+            </div>
+                {% endif %}
+            {% endfor %}
+                    </div>
+        {% else %}
+        <div class="border-2 border-dashed border-[#D1D5DB] rounded-lg p-12 text-center bg-[#F9FAFB]">
+            <p class="text-sm text-[#6B7280]">Please select an agent or use case from the table above to view and manage evaluation reports.</p>
+                </div>
+        {% endif %}
+    </div>
+
+    <!-- Governance Plan Section -->
+    <div class="bg-white rounded-lg border border-[#E5E7EB] p-6 mb-4">
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-2">
+                <img src="/static/icons/icon-benchmarking.svg" alt="Dataset" class="w-5 h-5">
+                <div>
+                    <h3 class="text-lg font-semibold text-[#111827]">Governance Plan</h3>
+                    <p class="text-sm text-[#6B7280] mt-1">Risks types</p>
+                </div>
+            </div>
+            <button class="flex items-center gap-2 px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] transition-colors">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                    <polyline points="23,4 23,10 17,10"/>
+                    <polyline points="1,20 1,14 7,14"/>
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                </svg>
+                Refresh
+            </button>
+        </div>
+
+        <div class="flex flex-col">
+            <!-- Information integrity -->
+            <div class="py-4 border-b border-[#E5E7EB]">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-3">
+                        <span class="text-sm font-semibold text-[#111827]">Information integrity</span>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#F3F4F6] text-[#374151]">3 alerts</span>
+                    </div>
+                    <a href="#" class="text-sm font-medium text-[#374151] hover:underline">View & Mitigate</a>
+                </div>
+                <p class="text-sm text-[#6B7280]">Row 245: invalid LEI format</p>
+            </div>
+
+            <!-- Harmful content -->
+            <div class="py-4 border-b border-[#E5E7EB]">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-3">
+                        <span class="text-sm font-semibold text-[#111827]">Harmful content</span>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#F3F4F6] text-[#374151]">1 alert</span>
+                    </div>
+                    <a href="#" class="text-sm font-medium text-[#374151] hover:underline">View & Mitigate</a>
+                </div>
+                <p class="text-sm text-[#6B7280]">Row 89: missing ISIN mapping</p>
+            </div>
+
+            <!-- Evasion attacks -->
+            <div class="py-4">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-3">
+                        <span class="text-sm font-semibold text-[#111827]">Evasion attacks</span>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#F3F4F6] text-[#374151]">no alert</span>
+                    </div>
+                    <a href="#" class="text-sm font-medium text-[#374151] hover:underline">View & Mitigate</a>
+                </div>
+                <p class="text-sm text-[#6B7280]">1,247 rows processed</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Review comments Section -->
+    <div class="bg-white rounded-lg border border-[#E5E7EB] p-6 mb-4">
+        <h3 class="text-lg font-semibold text-[#111827] mb-4">Review comments</h3>
+
+        {% if agent or selected_use_case %}
+        <!-- Comment Input -->
+        <div class="mb-6">
+            <textarea 
+                id="newCommentTextarea"
+                class="w-full p-3 border border-[#D1D5DB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-transparent resize-none"
+                rows="3"
+                placeholder="Add a comment..."></textarea>
+            <div class="flex justify-end gap-3 mt-3">
+                <button onclick="cancelComment()" class="px-4 py-2 border border-[#D1D5DB] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] transition-colors">
+                    Cancel
+                </button>
+                <button onclick="submitComment()" class="px-4 py-2 bg-[#2563EB] border-none rounded-lg text-sm font-medium text-white hover:bg-[#1D4ED8] transition-colors">
+                    Send Comments
+                </button>
+            </div>
+        </div>
+
+        <!-- Comments List -->
+        <div id="commentsList" class="flex flex-col gap-4">
+            {% if review_comments %}
+                {% for comment in review_comments %}
+                <div class="comment-item" data-comment-id="{{ comment.id }}">
+            <div class="flex gap-3">
+                        {% with initials=comment.author.username|slice:":2"|upper %}
+                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#3B82F6] to-[#8B5CF6] flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+                            {{ initials }}
+                </div>
+                        {% endwith %}
+                <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-1">
+                                <span class="text-sm font-semibold text-[#111827]">{{ comment.author.username|default:"Anonymous" }}</span>
+                                <span class="text-xs text-[#6B7280]">{{ comment.created_at|timesince }} ago</span>
+                    </div>
+                            <p class="text-sm text-[#4B5563] mb-2">{{ comment.content }}</p>
+                    <div class="flex items-center gap-4">
+                                <button onclick="replyToComment({{ comment.id }})" class="text-xs text-[#6B7280] hover:text-[#374151]">Reply</button>
+                    </div>
+
+                            <!-- Reply Input (hidden by default) -->
+                            <div id="replyForm_{{ comment.id }}" class="ml-6 mt-4 hidden">
+                                <textarea 
+                                    id="replyTextarea_{{ comment.id }}"
+                                    class="w-full p-3 border border-[#D1D5DB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-transparent resize-none"
+                                    rows="2"
+                                    placeholder="Write a reply..."></textarea>
+                                <div class="flex justify-end gap-3 mt-2">
+                                    <button onclick="cancelReply({{ comment.id }})" class="px-3 py-1.5 text-xs border border-[#D1D5DB] rounded-lg text-[#374151] hover:bg-[#F9FAFB]">
+                                        Cancel
+                                </button>
+                                    <button onclick="submitReply({{ comment.id }})" class="px-3 py-1.5 text-xs bg-[#2563EB] text-white rounded-lg hover:bg-[#1D4ED8]">
+                                        Reply
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Replies List -->
+                            {% if comment.replies.all %}
+                            <div class="ml-6 mt-4 space-y-4">
+                                {% for reply in comment.replies.all %}
+                                <div class="flex gap-3">
+                                    {% with initials=reply.author.username|slice:":2"|upper %}
+                                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-[#EC4899] to-[#F472B6] flex items-center justify-center text-white font-semibold text-xs flex-shrink-0">
+                                        {{ initials }}
+                                </div>
+                                    {% endwith %}
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-2 mb-1">
+                                            <span class="text-sm font-semibold text-[#111827]">{{ reply.author.username|default:"Anonymous" }}</span>
+                                            <span class="text-xs text-[#6B7280]">{{ reply.created_at|timesince }} ago</span>
+                                    </div>
+                                        <p class="text-sm text-[#4B5563]">{{ reply.content }}</p>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-sm text-[#6B7280] text-center py-4">No comments yet. Be the first to comment!</p>
+            {% endif %}
+            </div>
+        {% else %}
+        <div class="border-2 border-dashed border-[#D1D5DB] rounded-lg p-12 text-center bg-[#F9FAFB]">
+            <p class="text-sm text-[#6B7280]">Please select an agent or use case from the table above to view and add review comments.</p>
+                </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Set active nav item - let main_navbar.html handle this
+        // Don't override the active state set by main_navbar.html
+
+        // Dynamic Title Update based on URL parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const agentName = urlParams.get('agent');
+        if (agentName) {
+            const titleElement = document.getElementById('page-title');
+            const subtitleElement = document.getElementById('page-subtitle');
+            if (titleElement) {
+                titleElement.textContent = agentName;
+            }
+            if (subtitleElement) {
+                subtitleElement.textContent = `Review data and information of ${agentName}`;
+            }
+            document.title = `${agentName} - AI Use Cases`;
+        }
+
+        // Initialize tabs
+        initTabs();
+        // Initialize table interactions
+        initTableInteractions();
+        
+        // Handle rows per page change
+        const rowsPerPageSelect = document.getElementById('rowsPerPage');
+        if (rowsPerPageSelect) {
+            rowsPerPageSelect.addEventListener('change', function() {
+                const limit = this.value;
+                const urlParams = new URLSearchParams(window.location.search);
+                urlParams.set('limit', limit);
+                urlParams.set('page', '1'); // Reset to first page when changing limit
+                // Preserve agent parameter if exists
+                const agentParam = urlParams.get('agent');
+                if (agentParam) {
+                    urlParams.set('agent', agentParam);
+                }
+                // Preserve search parameter if exists
+                const searchParam = urlParams.get('search');
+                if (searchParam) {
+                    urlParams.set('search', searchParam);
+                }
+                window.location.href = '?' + urlParams.toString();
+            });
+        }
+    });
+
+        function initTabs() {
+            const tabItems = document.querySelectorAll('.tab-item');
+            tabItems.forEach(tab => {
+                tab.addEventListener('click', () => {
+                tabItems.forEach(t => {
+                    t.classList.remove('active', 'border-[#DC6B64]', 'border-b-2', 'text-[#4B5563]');
+                    t.classList.add('text-[#6B7280]');
+                });
+                tab.classList.add('active', 'border-[#DC6B64]', 'border-b-2', 'text-[#4B5563]');
+                tab.classList.remove('text-[#6B7280]');
+            });
+            });
+        }
+
+        function initTableInteractions() {
+        const tableBody = document.querySelector('tbody');
+            const selectAll = document.getElementById('select-all');
+            const rowCheckboxes = document.querySelectorAll('.row-checkbox');
+
+            if (!tableBody) return;
+
+            // Toggle expandable rows
+            tableBody.addEventListener('click', (e) => {
+                const parentRow = e.target.closest('.parent-row');
+            if (!parentRow || e.target.closest('input[type="checkbox"]') || e.target.closest('button')) {
+                    return;
+                }
+
+                const targetId = parentRow.dataset.target;
+                const childRow = document.querySelector(targetId);
+                const chevron = parentRow.querySelector('.chevron svg');
+
+                if (childRow) {
+                    const isExpanded = !childRow.classList.contains('hidden');
+                    childRow.classList.toggle('hidden');
+                    parentRow.classList.toggle('expanded', !isExpanded);
+
+                    // Rotate chevron
+                    if (chevron) {
+                        chevron.style.transform = isExpanded ? 'rotate(0deg)' : 'rotate(180deg)';
+                    }
+                }
+            });
+
+            // Row checkbox change
+            rowCheckboxes.forEach(cb => {
+                cb.addEventListener('change', () => {
+                    const row = cb.closest('tr');
+                    row.classList.toggle('selected', cb.checked);
+
+                    // Update select all state
+                    const allChecked = document.querySelectorAll('.row-checkbox:checked').length;
+                    if (selectAll) {
+                        selectAll.checked = allChecked === rowCheckboxes.length;
+                        selectAll.indeterminate = allChecked > 0 && allChecked < rowCheckboxes.length;
+                    }
+                });
+            });
+
+            // Select all
+            if (selectAll) {
+                selectAll.addEventListener('change', () => {
+                    rowCheckboxes.forEach(cb => {
+                        cb.checked = selectAll.checked;
+                        cb.closest('tr').classList.toggle('selected', selectAll.checked);
+                    });
+                });
+            }
+        }
+        
+        // Hardcoded models and datasets
+        const availableModels = [
+            { id: "gpt-4-03", name: "GPT 4-03" },
+            { id: "gpt-5.2", name: "GPT 5.2" },
+            { id: "claude-haiku", name: "Claude Haiku.." },
+            { id: "gpt-4", name: "GPT 4" },
+            { id: "deepseek", name: "Deepseek" },
+            { id: "gpt-4o-mini", name: "gpt-4o-mini" },
+            { id: "gpt-5-nano", name: "gpt-5-nano" }
+        ];
+        
+        const availableDatasets = [
+            { id: "ademe-v8", name: "Ademe V8" },
+            { id: "user-data", name: "User data" }
+        ];
+        
+        function updateModelDatasetDropdowns() {
+            const modelSelect = document.getElementById('useCaseModels');
+            const datasetSelect = document.getElementById('useCaseDatasets');
+            
+            if (modelSelect) {
+                modelSelect.innerHTML = '<option value="">Select Models (can select multiple)</option>';
+                availableModels.forEach(model => {
+                    const option = document.createElement('option');
+                    option.value = model.id;
+                    option.textContent = model.name;
+                    modelSelect.appendChild(option);
+                });
+            }
+            
+            if (datasetSelect) {
+                datasetSelect.innerHTML = '<option value="">Select Datasets (can select multiple)</option>';
+                availableDatasets.forEach(dataset => {
+                    const option = document.createElement('option');
+                    option.value = dataset.id;
+                    option.textContent = dataset.name;
+                    datasetSelect.appendChild(option);
+                });
+            }
+        }
+        
+        // Keep loadModelsDatasets for compatibility but use hardcoded data
+        async function loadModelsDatasets() {
+            updateModelDatasetDropdowns();
+        }
+        
+        function openAddUseCaseModal() {
+            document.getElementById('addUseCaseModal').classList.remove('hidden');
+            loadModelsDatasets();
+        }
+        
+        function closeAddUseCaseModal() {
+            document.getElementById('addUseCaseModal').classList.add('hidden');
+            document.getElementById('addUseCaseForm').reset();
+            // Clear selected models/datasets
+            document.getElementById('selectedModels').innerHTML = '';
+            document.getElementById('selectedDatasets').innerHTML = '';
+            document.getElementById('complianceSection').innerHTML = '<p class="text-sm text-[#6B7280] text-center py-4">Select models and datasets above to set compliance alignment</p>';
+            // Reset arrays
+            selectedModels = [];
+            selectedDatasets = [];
+        }
+        
+        // Handle model selection - declare arrays in global scope (must be before DOMContentLoaded)
+        let selectedModels = [];
+        let selectedDatasets = [];
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const modelSelect = document.getElementById('useCaseModels');
+            const datasetSelect = document.getElementById('useCaseDatasets');
+            const selectedModelsDiv = document.getElementById('selectedModels');
+            const selectedDatasetsDiv = document.getElementById('selectedDatasets');
+            
+            if (modelSelect) {
+                modelSelect.addEventListener('change', function() {
+                    const modelId = this.value;
+                    if (modelId && !selectedModels.find(m => m.id == modelId)) {
+                        const model = availableModels.find(m => m.id == modelId);
+                        if (model) {
+                            selectedModels.push(model);
+                            renderSelectedModels();
+                        }
+                    }
+                    this.value = '';
+                });
+            }
+            
+            if (datasetSelect) {
+                datasetSelect.addEventListener('change', function() {
+                    const datasetId = this.value;
+                    if (datasetId && !selectedDatasets.find(d => d.id == datasetId)) {
+                        const dataset = availableDatasets.find(d => d.id == datasetId);
+                        if (dataset) {
+                            selectedDatasets.push(dataset);
+                            renderSelectedDatasets();
+                        }
+                    }
+                    this.value = '';
+                });
+            }
+            
+            function renderSelectedModels() {
+                selectedModelsDiv.innerHTML = selectedModels.map((model, index) => `
+                    <div class="flex items-center justify-between p-2 bg-[#F9FAFB] rounded border border-[#E5E7EB] mb-2">
+                        <span class="text-sm text-[#374151]">${model.name}</span>
+                        <button type="button" onclick="removeModel(${index})" class="text-[#DC2626] hover:text-[#991B1B]">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                `).join('');
+                updateComplianceSection();
+            }
+            
+            function renderSelectedDatasets() {
+                selectedDatasetsDiv.innerHTML = selectedDatasets.map((dataset, index) => `
+                    <div class="flex items-center justify-between p-2 bg-[#F9FAFB] rounded border border-[#E5E7EB] mb-2">
+                        <span class="text-sm text-[#374151]">${dataset.name}</span>
+                        <button type="button" onclick="removeDataset(${index})" class="text-[#DC2626] hover:text-[#991B1B]">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                `).join('');
+                updateComplianceSection();
+            }
+            
+            function updateComplianceSection() {
+                const complianceSection = document.getElementById('complianceSection');
+                if (!complianceSection) return;
+                
+                let html = '';
+                
+                // Render compliance checkboxes for models
+                if (selectedModels.length > 0) {
+                    html += '<div class="mb-4"><h4 class="text-sm font-semibold text-[#374151] mb-2">Models Compliance</h4>';
+                    selectedModels.forEach(model => {
+                        html += `
+                            <div class="mb-3 p-3 bg-[#F9FAFB] rounded border border-[#E5E7EB]">
+                                <div class="text-sm font-medium text-[#374151] mb-2">${model.name}</div>
+                                <div class="grid grid-cols-3 gap-3">
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" id="model_${model.id}_eu_ai_act" class="w-4 h-4 text-[#DC6B64] border-[#E5E7EB] rounded focus:ring-[#DC6B64]">
+                                        <span class="text-xs text-[#4B5563]">EU AI Act</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" id="model_${model.id}_gdpr" class="w-4 h-4 text-[#DC6B64] border-[#E5E7EB] rounded focus:ring-[#DC6B64]">
+                                        <span class="text-xs text-[#4B5563]">GDPR</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" id="model_${model.id}_data_act" class="w-4 h-4 text-[#DC6B64] border-[#E5E7EB] rounded focus:ring-[#DC6B64]">
+                                        <span class="text-xs text-[#4B5563]">Data Act</span>
+                                    </label>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                }
+                
+                // Render compliance checkboxes for datasets
+                if (selectedDatasets.length > 0) {
+                    html += '<div class="mb-4"><h4 class="text-sm font-semibold text-[#374151] mb-2">Datasets Compliance</h4>';
+                    selectedDatasets.forEach(dataset => {
+                        html += `
+                            <div class="mb-3 p-3 bg-[#F9FAFB] rounded border border-[#E5E7EB]">
+                                <div class="text-sm font-medium text-[#374151] mb-2">${dataset.name}</div>
+                                <div class="grid grid-cols-3 gap-3">
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" id="dataset_${dataset.id}_eu_ai_act" class="w-4 h-4 text-[#DC6B64] border-[#E5E7EB] rounded focus:ring-[#DC6B64]">
+                                        <span class="text-xs text-[#4B5563]">EU AI Act</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" id="dataset_${dataset.id}_gdpr" class="w-4 h-4 text-[#DC6B64] border-[#E5E7EB] rounded focus:ring-[#DC6B64]">
+                                        <span class="text-xs text-[#4B5563]">GDPR</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" id="dataset_${dataset.id}_data_act" class="w-4 h-4 text-[#DC6B64] border-[#E5E7EB] rounded focus:ring-[#DC6B64]">
+                                        <span class="text-xs text-[#4B5563]">Data Act</span>
+                                    </label>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                }
+                
+                if (html === '') {
+                    html = '<p class="text-sm text-[#6B7280] text-center py-4">Select models and datasets above to set compliance alignment</p>';
+                }
+                
+                complianceSection.innerHTML = html;
+            }
+            
+            window.removeModel = function(index) {
+                selectedModels.splice(index, 1);
+                renderSelectedModels();
+                updateComplianceSection();
+            };
+            
+            window.removeDataset = function(index) {
+                selectedDatasets.splice(index, 1);
+                renderSelectedDatasets();
+                updateComplianceSection();
+            };
+            
+            // Handle form submission
+            const form = document.getElementById('addUseCaseForm');
+            if (form) {
+                form.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    if (selectedModels.length === 0 || selectedDatasets.length === 0) {
+                        alert('Please select at least one model and one dataset');
+                        return;
+                    }
+                    
+                    const formData = new FormData(this);
+                    const data = {
+                        agent_id: formData.get('agent_id') || {% if agent %}{{ agent.id }}{% else %}null{% endif %},
+                        display_name: formData.get('display_name'),
+                        name: formData.get('name'),
+                        overview: formData.get('overview'),
+                        risk_type: formData.get('risk_type'),
+                        review_status: formData.get('review_status'),
+                        model_ids: selectedModels.map(m => m.id),
+                        dataset_ids: selectedDatasets.map(d => d.id),
+                        models_compliance: {},
+                        datasets_compliance: {}
+                    };
+                    
+                    // Validate fields
+                    if (!data.display_name || data.display_name.trim() === '') {
+                        alert('Please enter a Name');
+                        return;
+                    }
+                    if (!data.name || data.name.trim() === '') {
+                        alert('Please enter a Use Case Name');
+                        return;
+                    }
+                    
+                    // Get compliance status for each model/dataset (default to false)
+                    selectedModels.forEach(model => {
+                        data.models_compliance[model.id] = {
+                            eu_ai_act: document.getElementById(`model_${model.id}_eu_ai_act`)?.checked || false,
+                            gdpr: document.getElementById(`model_${model.id}_gdpr`)?.checked || false,
+                            data_act: document.getElementById(`model_${model.id}_data_act`)?.checked || false
+                        };
+                    });
+                    
+                    selectedDatasets.forEach(dataset => {
+                        data.datasets_compliance[dataset.id] = {
+                            eu_ai_act: document.getElementById(`dataset_${dataset.id}_eu_ai_act`)?.checked || false,
+                            gdpr: document.getElementById(`dataset_${dataset.id}_gdpr`)?.checked || false,
+                            data_act: document.getElementById(`dataset_${dataset.id}_data_act`)?.checked || false
+                        };
+                    });
+                    
+                    try {
+                        const response = await fetch(`{% url 'api_create_ai_use_case' %}`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': '{{ csrf_token }}'
+                            },
+                            body: JSON.stringify(data)
+                        });
+                        
+                        const result = await response.json();
+                        if (result.success) {
+                            alert('Use case created successfully! Risks and compliance calculated automatically.');
+                            closeAddUseCaseModal();
+                            location.reload();
+                        } else {
+                            alert('Error: ' + result.error);
+                        }
+                    } catch (error) {
+                        alert('Error: ' + error.message);
+                    }
+                });
+            }
+        });
+        
+        // Handle use case row click to load details
+        function loadUseCaseDetails(useCaseId) {
+            const urlParams = new URLSearchParams(window.location.search);
+            urlParams.set('use_case_id', useCaseId);
+            window.location.href = '?' + urlParams.toString();
+        }
+        
+        // Evidence upload handling
+        {% if agent or selected_use_case %}
+        const evidenceUploadArea = document.getElementById('evidenceUploadArea');
+        const evidenceFileInput = document.getElementById('evidenceFileInput');
+        {% if selected_use_case %}
+        const currentUseCaseId = {{ selected_use_case.id }};
+        {% elif agent and use_cases_data %}
+        // Use first use case of agent for uploads
+        const currentUseCaseId = {{ use_cases_data.0.use_case.id }};
+        {% else %}
+        const currentUseCaseId = null;
+        {% endif %}
+        
+        if (evidenceUploadArea && evidenceFileInput && currentUseCaseId) {
+            evidenceUploadArea.addEventListener('click', () => evidenceFileInput.click());
+            evidenceUploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                evidenceUploadArea.classList.add('border-[#2563EB]');
+            });
+            evidenceUploadArea.addEventListener('dragleave', () => {
+                evidenceUploadArea.classList.remove('border-[#2563EB]');
+            });
+            evidenceUploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                evidenceUploadArea.classList.remove('border-[#2563EB]');
+                const files = e.dataTransfer.files;
+                handleEvidenceUpload(files);
+            });
+            
+            evidenceFileInput.addEventListener('change', (e) => {
+                handleEvidenceUpload(e.target.files);
+            });
+        }
+        
+        async function handleEvidenceUpload(files) {
+            if (!currentUseCaseId) {
+                alert('Please select a use case first');
+                return;
+            }
+            
+            for (let file of files) {
+                try {
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('description', `Uploaded: ${file.name}`);
+                    
+                    // Get CSRF token from cookie
+                    function getCookie(name) {
+                        let cookieValue = null;
+                        if (document.cookie && document.cookie !== '') {
+                            const cookies = document.cookie.split(';');
+                            for (let i = 0; i < cookies.length; i++) {
+                                const cookie = cookies[i].trim();
+                                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                                    break;
+                                }
+                            }
+                        }
+                        return cookieValue;
+                    }
+                    const csrftoken = getCookie('csrftoken') || '{{ csrf_token }}';
+                    
+                    const response = await fetch(`/api/use-cases/${currentUseCaseId}/evidences/`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': csrftoken
+                        },
+                        body: formData
+                    });
+                    
+                    const result = await response.json();
+                    if (result.success) {
+                        // Reload to show new evidence
+                        location.reload();
+                    } else {
+                        alert('Error uploading evidence: ' + (result.error || 'Unknown error'));
+                    }
+                } catch (error) {
+                    console.error('Upload error:', error);
+                    alert('Error: ' + error.message);
+                }
+            }
+        }
+        
+        async function deleteEvidence(evidenceId, useCaseId) {
+            if (!confirm('Are you sure you want to delete this evidence?')) return;
+            
+            if (!useCaseId) {
+                useCaseId = currentUseCaseId;
+            }
+            
+            if (!useCaseId) {
+                alert('Please select a use case first');
+                return;
+            }
+            
+            try {
+                // Get CSRF token from cookie
+                function getCookie(name) {
+                    let cookieValue = null;
+                    if (document.cookie && document.cookie !== '') {
+                        const cookies = document.cookie.split(';');
+                        for (let i = 0; i < cookies.length; i++) {
+                            const cookie = cookies[i].trim();
+                            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                                break;
+                            }
+                        }
+                    }
+                    return cookieValue;
+                }
+                const csrftoken = getCookie('csrftoken') || '{{ csrf_token }}';
+                
+                const response = await fetch(`/api/use-cases/${currentUseCaseId}/evidences/${evidenceId}/`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRFToken': csrftoken
+                    }
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    location.reload();
+                } else {
+                    alert('Error deleting evidence: ' + (result.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Delete error:', error);
+                alert('Error: ' + error.message);
+            }
+        }
+        
+        // Evaluation report upload handling
+        {% if agent or selected_use_case %}
+        // Get use case ID for reports
+        {% if selected_use_case %}
+        const currentUseCaseIdForReports = {{ selected_use_case.id }};
+        {% elif agent and use_cases_data|length > 0 %}
+        // Use first use case of agent for uploads
+        const currentUseCaseIdForReports = {{ use_cases_data.0.use_case.id }};
+        {% else %}
+        const currentUseCaseIdForReports = null;
+        {% endif %}
+        
+        // Get CSRF token from cookie
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        // Function to handle report upload
+        async function handleReportUpload(file, reportType) {
+            console.log('handleReportUpload called:', file?.name, reportType);
+            if (!file) {
+                console.warn('No file provided');
+                return;
+            }
+            
+            if (!currentUseCaseIdForReports) {
+                alert('Please select a use case first');
+                return;
+            }
+            
+            const csrftoken = getCookie('csrftoken') || '{{ csrf_token }}';
+            const url = `/api/use-cases/${currentUseCaseIdForReports}/evaluation-reports/`;
+            console.log('Uploading to:', url);
+            
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('report_type', reportType);
+                formData.append('description', `Uploaded: ${file.name}`);
+                
+                console.log('Sending request...');
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: formData
+                });
+                
+                console.log('Response status:', response.status);
+                const result = await response.json();
+                console.log('Response result:', result);
+                
+                if (result.success) {
+                    location.reload();
+                } else {
+                    alert('Error uploading report: ' + (result.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+                alert('Error: ' + error.message);
+            }
+        }
+        
+        // Function to trigger file input click
+        function triggerReportUpload(reportType) {
+            const input = document.getElementById(`report_${reportType}`);
+            if (input) {
+                input.click();
+            }
+        }
+        
+        // Attach event listeners when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            const reportInputs = document.querySelectorAll('input[data-report-type]');
+            const reportUploadAreas = document.querySelectorAll('.report-upload-area');
+            
+            // Debug: Log to console
+            console.log('Evaluation report upload initialized. Use case ID:', currentUseCaseIdForReports);
+            console.log('Found report inputs:', reportInputs.length);
+            console.log('Found report upload areas:', reportUploadAreas.length);
+            
+            if (reportInputs.length === 0) {
+                console.warn('No report inputs found!');
+                return;
+            }
+            
+            if (!currentUseCaseIdForReports) {
+                console.warn('No use case ID available for reports!');
+                return;
+            }
+            
+            // Attach change event to file inputs
+            reportInputs.forEach(input => {
+                console.log('Attaching listener to input:', input.id, 'report type:', input.dataset.reportType);
+                input.addEventListener('change', async (e) => {
+                    console.log('File selected:', e.target.files[0]?.name);
+                    const file = e.target.files[0];
+                    const reportType = input.dataset.reportType;
+                    await handleReportUpload(file, reportType);
+                });
+            });
+            
+            // Attach drag and drop events to upload areas
+            reportUploadAreas.forEach(area => {
+                const reportType = area.dataset.reportType;
+                const input = document.getElementById(`report_${reportType}`);
+                
+                if (!input) return;
+                
+                // Prevent default drag behaviors
+                area.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    area.classList.add('border-[#2563EB]', 'bg-blue-50');
+                });
+                
+                area.addEventListener('dragleave', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    area.classList.remove('border-[#2563EB]', 'bg-blue-50');
+                });
+                
+                area.addEventListener('drop', async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    area.classList.remove('border-[#2563EB]', 'bg-blue-50');
+                    
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0) {
+                        const file = files[0];
+                        // Check file extension
+                        const allowedExtensions = ['.xlsx', '.json', '.csv'];
+                        const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+                        if (allowedExtensions.includes(fileExtension)) {
+                            await handleReportUpload(file, reportType);
+                        } else {
+                            alert('Please upload .xlsx, .json, or .csv files only');
+                        }
+                    }
+                });
+            });
+        });
+        {% endif %}
+        
+        // Review Comments Functions
+        {% if agent or selected_use_case %}
+        // Get use case ID for comments
+        let currentUseCaseIdForComments = null;
+        {% if selected_use_case %}
+        currentUseCaseIdForComments = {{ selected_use_case.id }};
+        {% elif agent and use_cases_data|length > 0 %}
+        currentUseCaseIdForComments = {{ use_cases_data.0.use_case.id }};
+        {% endif %}
+        
+        // Get CSRF token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        // Submit new comment
+        async function submitComment() {
+            const textarea = document.getElementById('newCommentTextarea');
+            const content = textarea.value.trim();
+            
+            if (!content) {
+                alert('Please enter a comment');
+                return;
+            }
+            
+            if (!currentUseCaseIdForComments) {
+                alert('Please select a use case first');
+                return;
+            }
+            
+            const csrftoken = getCookie('csrftoken') || '{{ csrf_token }}';
+            
+            try {
+                const response = await fetch(`/api/use-cases/${currentUseCaseIdForComments}/review-comments/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify({
+                        content: content
+                    })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    textarea.value = '';
+                    location.reload();
+                } else {
+                    alert('Error submitting comment: ' + (result.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Comment submit error:', error);
+                alert('Error: ' + error.message);
+            }
+        }
+        
+        // Cancel comment
+        function cancelComment() {
+            document.getElementById('newCommentTextarea').value = '';
+        }
+        
+        // Reply to comment
+        function replyToComment(commentId) {
+            const replyForm = document.getElementById(`replyForm_${commentId}`);
+            if (replyForm) {
+                replyForm.classList.remove('hidden');
+                document.getElementById(`replyTextarea_${commentId}`).focus();
+            }
+        }
+        
+        // Cancel reply
+        function cancelReply(commentId) {
+            const replyForm = document.getElementById(`replyForm_${commentId}`);
+            const textarea = document.getElementById(`replyTextarea_${commentId}`);
+            if (replyForm) {
+                replyForm.classList.add('hidden');
+                textarea.value = '';
+            }
+        }
+        
+        // Submit reply
+        async function submitReply(parentCommentId) {
+            const textarea = document.getElementById(`replyTextarea_${parentCommentId}`);
+            const content = textarea.value.trim();
+            
+            if (!content) {
+                alert('Please enter a reply');
+                return;
+            }
+            
+            if (!currentUseCaseIdForComments) {
+                alert('Please select a use case first');
+                return;
+            }
+            
+            const csrftoken = getCookie('csrftoken') || '{{ csrf_token }}';
+            
+            try {
+                const response = await fetch(`/api/use-cases/${currentUseCaseIdForComments}/review-comments/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify({
+                        content: content,
+                        parent_id: parentCommentId
+                    })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    location.reload();
+                } else {
+                    alert('Error submitting reply: ' + (result.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Reply submit error:', error);
+                alert('Error: ' + error.message);
+            }
+        }
+        {% endif %}
+        
+        {% if agent or selected_use_case %}
+        async function deleteEvaluationReport(reportType, reportId, useCaseId) {
+            if (!confirm('Are you sure you want to delete this evaluation report?')) return;
+            
+            if (!useCaseId) {
+                {% if selected_use_case %}
+                useCaseId = {{ selected_use_case.id }};
+                {% elif agent and use_cases_data %}
+                useCaseId = {{ use_cases_data.0.use_case.id }};
+                {% else %}
+                alert('Please select a use case first');
+                return;
+                {% endif %}
+            }
+            
+            if (!useCaseId) {
+                alert('Please select a use case first');
+                return;
+            }
+            
+            try {
+                // Get CSRF token from cookie
+                function getCookie(name) {
+                    let cookieValue = null;
+                    if (document.cookie && document.cookie !== '') {
+                        const cookies = document.cookie.split(';');
+                        for (let i = 0; i < cookies.length; i++) {
+                            const cookie = cookies[i].trim();
+                            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                                break;
+                            }
+                        }
+                    }
+                    return cookieValue;
+                }
+                const csrftoken = getCookie('csrftoken') || '{{ csrf_token }}';
+                
+                const response = await fetch(`/api/use-cases/${useCaseId}/evaluation-reports/${reportId}/`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRFToken': csrftoken
+                    }
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    location.reload();
+                } else {
+                    alert('Error deleting report: ' + (result.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Delete error:', error);
+                alert('Error: ' + error.message);
+            }
+        }
+        {% endif %}
+        {% endif %}
+    </script>
+    
+    <!-- Add New Use Case Modal -->
+    <div id="addUseCaseModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto m-4">
+            <div class="sticky top-0 bg-white border-b border-[#E5E7EB] px-6 py-4 flex justify-between items-center">
+                <h2 class="text-xl font-bold text-[#22262A]">Add New Use Case</h2>
+                <button onclick="closeAddUseCaseModal()" class="text-[#6B7280] hover:text-[#22262A]">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <form id="addUseCaseForm" class="p-6 space-y-6">
+                <!-- Agent is already in URL, no need to show in form -->
+                {% if agent %}
+                <input type="hidden" name="agent_id" value="{{ agent.id }}">
+                {% endif %}
+                
+                <div>
+                    <label class="block text-sm font-medium text-[#374151] mb-2">Name *</label>
+                    <input type="text" name="display_name" required placeholder="Enter name (this will appear in the Name column)" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:ring-2 focus:ring-[#DC6B64]">
+                    <p class="text-xs text-[#6B7280] mt-1">This name will appear in the "Name" column of the list</p>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-[#374151] mb-2">Use Case Name *</label>
+                    <input type="text" name="name" required placeholder="e.g., Match carbon emission factors" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:ring-2 focus:ring-[#DC6B64]">
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-[#374151] mb-2">Overview</label>
+                        <select name="overview" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:ring-2 focus:ring-[#DC6B64]">
+                            <option value="limited_risks">Limited risks</option>
+                            <option value="high_risks">High risks</option>
+                            <option value="minimal_risks">Minimal risks</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-[#374151] mb-2">Review Status</label>
+                        <select name="review_status" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:ring-2 focus:ring-[#DC6B64]">
+                            <option value="missing">Missing</option>
+                            <option value="partial">Partial</option>
+                            <option value="complete">Complete</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-[#374151] mb-2">Models *</label>
+                    <select id="useCaseModels" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:ring-2 focus:ring-[#DC6B64] mb-2">
+                        <option value="">Select Models (can select multiple)</option>
+                    </select>
+                    <div id="selectedModels" class="space-y-2"></div>
+                    <p class="text-xs text-[#6B7280] mt-1">Select models and set compliance status below</p>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-[#374151] mb-2">Datasets *</label>
+                    <select id="useCaseDatasets" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:ring-2 focus:ring-[#DC6B64] mb-2">
+                        <option value="">Select Datasets (can select multiple)</option>
+                    </select>
+                    <div id="selectedDatasets" class="space-y-2"></div>
+                    <p class="text-xs text-[#6B7280] mt-1">Select datasets and set compliance status below</p>
+                </div>
+                
+                <div class="border-t border-[#E5E7EB] pt-4">
+                    <h3 class="text-sm font-semibold text-[#374151] mb-3">Compliance Alignment (Risks will be calculated automatically)</h3>
+                    <p class="text-xs text-[#6B7280] mb-4">Set compliance status for each model and dataset. Use case will be compliant only if ALL models AND ALL datasets are compliant.</p>
+                    <div id="complianceSection" class="space-y-4">
+                        <!-- Compliance checkboxes will be dynamically added here -->
+                    </div>
+                </div>
+                
+                <div class="flex justify-end gap-3 pt-4 border-t border-[#E5E7EB]">
+                    <button type="button" onclick="closeAddUseCaseModal()" class="px-4 py-2 border border-[#D1D5DB] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB]">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-[#DC6B64] text-white rounded-lg text-sm font-medium hover:bg-[#C55A52]">
+                        Create Use Case
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}

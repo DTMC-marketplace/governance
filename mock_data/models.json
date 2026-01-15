@@ -1,0 +1,20 @@
+[
+  {
+    "id": 1,
+    "name": "GPT-4",
+    "vendor": "OpenAI",
+    "description": "Large language model for conversational AI"
+  },
+  {
+    "id": 2,
+    "name": "Claude Haiku",
+    "vendor": "Anthropic",
+    "description": "Fast and efficient language model"
+  },
+  {
+    "id": 3,
+    "name": "Gemini Pro",
+    "vendor": "Google",
+    "description": "Multimodal AI model"
+  }
+]

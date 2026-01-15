@@ -1,0 +1,61 @@
+{% extends "governance/base.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}
+{% trans "Account Center" %} (Demo)
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="flex flex-col gap-8 relative h-full">
+    <div class="flex justify-between items-center mb-4">
+        <h1 class="font-bold text-2xl text-[#1a1a2e]">{% trans "Account Center" %}</h1>
+        <!-- Logout not implemented in hackathon demo -->
+        <div class="mt-auto">
+            <button class="bg-white border border-[#DC6B64] text-[#DC6B64] font-semibold text-sm rounded-full px-6 py-2 hover:bg-[#FEF5F4] transition-colors duration-200" disabled>
+                {% trans "Sign out" %}
+            </button>
+        </div>
+    </div>
+    <main class="shadow-[0_-4px_0px_0px_inset] shadow-[#DC6B64]">
+        <nav class="flex h-12 justify-start text-sm gap-6">
+            <!-- Account navigation - not implemented in hackathon demo -->
+            <div class="inline-flex">
+                <div class="flex items-center justify-center font-medium px-6 text-[#DC6B64] bg-[#FEF5F4] rounded-t-md font-semibold">
+                    <span>{% trans "My Profile" %}</span>
+                </div>
+            </div>
+            <div class="inline-flex">
+                <div class="flex items-center justify-center font-medium px-6 text-[#4B5563] hover:text-[#DC6B64] transition-colors duration-200">
+                    <span>{% trans "My Team" %}</span>
+                </div>
+            </div>
+            <div class="inline-flex">
+                <div class="flex items-center justify-center font-medium px-6 text-[#4B5563] hover:text-[#DC6B64] transition-colors duration-200">
+                    <span>{% trans "Subscription" %}</span>
+                </div>
+            </div>
+            <div class="inline-flex">
+                <div class="flex items-center justify-center font-medium px-6 text-[#4B5563] hover:text-[#DC6B64] transition-colors duration-200">
+                    <span>{% trans "My Documents" %}</span>
+                </div>
+            </div>
+            <div class="inline-flex">
+                <div class="flex items-center justify-center font-medium px-6 text-[#4B5563] hover:text-[#DC6B64] transition-colors duration-200">
+                    <span>{% trans "Support" %}</span>
+                </div>
+            </div>
+            <div class="inline-flex">
+                <div class="flex items-center justify-center font-medium px-6 text-[#4B5563] hover:text-[#DC6B64] transition-colors duration-200">
+                    <span>{% trans "Language" %}</span>
+                </div>
+            </div>
+        </nav>
+    </main>
+    <div>
+        {% block accounts_section %}
+        {% endblock %}
+    </div>
+</div>
+{% endblock %}
+

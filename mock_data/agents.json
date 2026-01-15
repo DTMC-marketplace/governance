@@ -1,0 +1,32 @@
+[
+  {
+    "id": 1,
+    "name": "Customer Service AI",
+    "business_unit": "Customer Support",
+    "compliance_status": "assessing",
+    "ai_act_role": "deployer",
+    "vendor": "OpenAI",
+    "risk_classification": "limited_risks",
+    "investment_type": "internal"
+  },
+  {
+    "id": 2,
+    "name": "Content Moderation System",
+    "business_unit": "Content Management",
+    "compliance_status": "reviewing",
+    "ai_act_role": "provider",
+    "vendor": "Anthropic",
+    "risk_classification": "high_risks",
+    "investment_type": "internal"
+  },
+  {
+    "id": 3,
+    "name": "Recommendation Engine",
+    "business_unit": "Product",
+    "compliance_status": "assessing",
+    "ai_act_role": "deployer",
+    "vendor": "Internal",
+    "risk_classification": "minimal_risks",
+    "investment_type": "internal"
+  }
+]

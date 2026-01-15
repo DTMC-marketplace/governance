@@ -1,0 +1,472 @@
+{% extends "governance/base.html" %}
+{% load static %}
+{% load i18n %}
+{% block title %}{% trans "Dashboard" %}{% endblock %}
+
+{% block dashboard_content %}
+<div class="flex flex-col gap-5">
+        <div class="flex items-center gap-3 pb-2">
+            <button class="w-6 h-6 bg-transparent border-none cursor-pointer p-0 flex items-center justify-center">
+                <img src="{% static 'governance/img/arrow-left.svg' %}" alt="Back" class="w-3.5 h-3.5">
+            </button>
+            <button class="w-6 h-6 bg-transparent border-none cursor-pointer p-0 flex items-center justify-center">
+                <img src="{% static 'governance/img/arrow-right-gray.svg' %}" alt="Forward" class="w-3.5 h-3.5">
+            </button>
+            <span class="text-sm font-semibold text-[#F13D30]">{% trans "Dashboard" %}</span>
+        </div>
+
+        <!-- Header -->
+        <div class="flex justify-between items-start">
+            <div class="header-left">
+                <h1 class="text-2xl font-bold text-[#22262A] mb-2">{% trans "Welcome to Your Digital Governance Dashboard" %}</h1>
+                <p class="text-sm text-[#6B7280]">{% trans "Stay Informed and Take Action to Protect Our Planet" %}</p>
+            </div>
+            <div class="header-right">
+                <div class="w-12 h-12 rounded-full bg-gradient-to-br from-[#e8f4fd] to-[#f0e6fa] flex items-center justify-center border border-[#E5E7EB] cursor-pointer">
+                    <img src="{% static 'governance/img/aiassistant.svg' %}" alt="AI Assistant" class="w-7 h-7">
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-3 gap-6">
+            <div class="bg-white rounded-2xl border border-[#E5E7EB] p-5 shadow-sm">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-10 h-10 rounded-full bg-[#FEEDEC] flex items-center justify-center">
+                        <img src="{% static 'governance/img/gov1.png' %}" alt="Use cases" class="w-10 h-10">
+                    </div>
+                    <span class="flex-1 text-xs text-[#6B7280]">{% trans "Use cases Assessed" %}</span>
+                </div>
+                <p class="text-3xl font-bold text-[#22262A]">{{ use_cases_assessed }}<span class="text-xl font-medium text-[#9CA3AF]">/{{ total_use_cases|default:100 }}</span></p>
+            </div>
+
+            <div class="bg-white rounded-2xl border border-[#E5E7EB] p-5 shadow-sm">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-10 h-10 rounded-full bg-[#FEEDEC] flex items-center justify-center">
+                        <img src="{% static 'governance/img/search.png' %}" alt="{% trans 'Under review' %}" class="w-10 h-10">
+                    </div>
+                    <span class="flex-1 text-xs text-[#6B7280]">{% trans "Under reviewed" %}</span>
+                </div>
+                <p class="text-3xl font-bold text-[#22262A]">{{ under_reviewed|default:0 }}</p>
+            </div>
+
+            <div class="bg-white rounded-2xl border border-[#E5E7EB] p-5 shadow-sm">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-10 h-10 rounded-full bg-[#FEEDEC] flex items-center justify-center">
+                        <img src="{% static 'governance/img/data.png' %}" alt="Data" class="w-10 h-10">
+                    </div>
+                    <span class="flex-1 text-xs text-[#6B7280]">{% trans "Data Collection Completed" %}</span>
+                </div>
+                <p class="text-3xl font-bold text-[#22262A]">{{ data_collection_completed|default:0 }}</p>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="grid grid-cols-[1fr_2fr] gap-6">
+            <!-- Data Collection Progress -->
+            <div class="bg-white rounded-2xl border border-[#E5E7EB] p-5 shadow-sm">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-base font-semibold text-[#22262A]">{% trans "Data Collection Progress" %}</h3>
+                    <button class="bg-transparent border-none text-lg text-[#9CA3AF] cursor-pointer">⋮</button>
+                </div>
+                <div class="h-[300px]">
+                    <canvas id="dataCollectionChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Risk Scoring -->
+            <div class="bg-white rounded-2xl border border-[#E5E7EB] p-5 shadow-sm">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-base font-semibold text-[#22262A]">{% trans "Risk Scoring" %}</h3>
+                    <button class="bg-transparent border-none text-lg text-[#9CA3AF] cursor-pointer">⋮</button>
+                </div>
+                <div class="flex flex-wrap gap-4 mb-4">
+                    <span class="flex items-center gap-1.5 text-xs text-[#6B7280]"><span class="w-6 h-4 rounded bg-[#f7f7d4]"></span>{% trans "Very low (1-1.8)" %}</span>
+                    <span class="flex items-center gap-1.5 text-xs text-[#6B7280]"><span class="w-6 h-4 rounded bg-[#f6e58d]"></span>{% trans "Low (1.8-2.6)" %}</span>
+                    <span class="flex items-center gap-1.5 text-xs text-[#6B7280]"><span class="w-6 h-4 rounded bg-[#f9c74f]"></span>{% trans "Medium (2.6-3.4)" %}</span>
+                    <span class="flex items-center gap-1.5 text-xs text-[#6B7280]"><span class="w-6 h-4 rounded bg-[#d77f2d]"></span>{% trans "High (3.4-4.2)" %}</span>
+                    <span class="flex items-center gap-1.5 text-xs text-[#6B7280]"><span class="w-6 h-4 rounded bg-[#a52020]"></span>{% trans "Very high (4.2-5.0)" %}</span>
+                </div>
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="h-[140px]">
+                        <canvas id="aiRiskGauge"></canvas>
+                    </div>
+                    <div class="h-[140px]">
+                        <canvas id="dataRiskGauge"></canvas>
+                    </div>
+                    <div class="h-[140px]">
+                        <canvas id="cyberRiskGauge"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reporting Progress -->
+        <div class="bg-white rounded-2xl border border-[#E5E7EB] p-5 shadow-sm col-span-full">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-base font-semibold text-[#22262A]">{% trans "Reporting Progress" %}</h3>
+                <button class="bg-transparent border-none text-lg text-[#9CA3AF] cursor-pointer">⋮</button>
+            </div>
+            <div class="grid grid-cols-[1fr_2fr] gap-6">
+                <div class="p-4">
+                    <h4 class="text-sm font-semibold text-[#374151] mb-3">{% trans "Overall Completion" %}</h4>
+                    <canvas id="overallCompletionChart"></canvas>
+                </div>
+                <div class="p-4">
+                    <h4 class="text-sm font-semibold text-[#374151] mb-3">{% trans "Progress By Framework" %}</h4>
+                    <canvas id="frameworkChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+<script>
+    const TRANSLATIONS = {
+        completed: "{% trans 'Completed'|escapejs %}",
+        in_progress: "{% trans 'In Progress'|escapejs %}",
+        not_started: "{% trans 'Not Started'|escapejs %}",
+        deprioritized: "{% trans 'Deprioritized'|escapejs %}",
+        no_data: "{% trans 'No Data'|escapejs %}",
+        ai_risks: "{% trans 'AI Risks'|escapejs %}",
+        data_risks: "{% trans 'Data Risks'|escapejs %}",
+        cyber_risks: "{% trans 'Cyber Risks'|escapejs %}",
+        quantity: "{% trans 'Quantity'|escapejs %}",
+    };
+    // Debug: Log data values to console
+    console.log('Dashboard Data:', {
+        use_cases_assessed: {{ use_cases_assessed|default:0 }},
+        total_use_cases: {{ total_use_cases|default:0 }},
+        under_reviewed: {{ under_reviewed|default:0 }},
+        data_collection_completed: {{ data_collection_completed|default:0 }},
+        data_collection_progress: {
+            completed: {{ data_collection_progress.completed|default:0 }},
+            in_progress: {{ data_collection_progress.in_progress|default:0 }},
+            not_started: {{ data_collection_progress.not_started|default:0 }}
+        },
+        risk_scoring: {
+            ai_risk: {{ risk_scoring.ai_risk|default:2.5 }},
+            data_risk: {{ risk_scoring.data_risk|default:2.5 }},
+            cyber_risk: {{ risk_scoring.cyber_risk|default:2.5 }}
+        }
+    });
+</script>
+<script>
+    // Set active nav state and initialize charts
+    // Use both DOMContentLoaded and window.onload to ensure charts initialize
+    // even when navigating from other platforms
+    function initializeDashboard() {
+        const navLinks = document.querySelectorAll('.nav-link');
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.dataset.nav === 'dashboard') {
+                link.classList.add('active');
+            }
+        });
+
+        // Initialize charts after Chart.js is loaded
+        if (typeof Chart !== 'undefined') {
+            initCharts();
+        } else {
+            // If Chart.js not loaded yet, wait a bit and try again
+            setTimeout(() => {
+        if (typeof Chart !== 'undefined') {
+            initCharts();
+        } else {
+            console.error('Chart.js is not loaded');
+                }
+            }, 100);
+        }
+    }
+    
+    // Handle both initial load and navigation
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializeDashboard);
+    } else {
+        // DOM already loaded (e.g., when navigating from another page)
+        initializeDashboard();
+    }
+    
+    // Also listen for page visibility changes (when navigating back to tab)
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+            // Page is now visible, re-initialize charts if needed
+            const charts = document.querySelectorAll('canvas');
+            if (charts.length > 0 && typeof Chart !== 'undefined') {
+                // Check if charts are already initialized
+                const dataCollectionChart = document.getElementById('dataCollectionChart');
+                if (dataCollectionChart && !dataCollectionChart.chart) {
+                    initializeDashboard();
+                }
+            }
+        }
+    });
+
+        function initCharts() {
+            Chart.register(ChartDataLabels);
+
+            // Data Collection Progress Chart
+            const dataCollectionCtx = document.getElementById('dataCollectionChart').getContext('2d');
+            const dataCollectionData = [
+                {{ data_collection_progress.completed|default:0 }},
+                {{ data_collection_progress.in_progress|default:0 }},
+                {{ data_collection_progress.not_started|default:0 }}
+            ];
+            const dataCollectionTotal = dataCollectionData.reduce((a, b) => a + b, 0);
+            
+            new Chart(dataCollectionCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: dataCollectionTotal > 0 ? [
+                        TRANSLATIONS.completed + '  {{ data_collection_progress.completed_pct }}%',
+                        TRANSLATIONS.in_progress + '  {{ data_collection_progress.in_progress_pct }}%',
+                        TRANSLATIONS.not_started + '  {{ data_collection_progress.not_started_pct }}%'
+                    ] : [TRANSLATIONS.no_data],
+                    datasets: [{
+                        data: dataCollectionTotal > 0 ? dataCollectionData : [1],
+                        backgroundColor: dataCollectionTotal > 0 ? ['#2C78B1', '#F8A917', '#F46258'] : ['#E5E7EB'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    cutout: '60%',
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                usePointStyle: true,
+                                pointStyle: 'rectRounded',
+                                boxWidth: 16,
+                                padding: 20,
+                                font: { size: 12, family: 'Montserrat' }
+                            }
+                        },
+                        datalabels: {
+                            color: '#fff',
+                            font: { weight: 'bold', size: 12 },
+                            formatter: (value) => value > 0 ? value : ''
+                        }
+                    }
+                },
+                plugins: [ChartDataLabels]
+            });
+
+            // Gauge Charts for Risk Scoring
+            createGaugeChart('aiRiskGauge', {{ risk_scoring.ai_risk|default:2.5 }}, TRANSLATIONS.ai_risks);
+            createGaugeChart('dataRiskGauge', {{ risk_scoring.data_risk|default:2.5 }}, TRANSLATIONS.data_risks);
+            createGaugeChart('cyberRiskGauge', {{ risk_scoring.cyber_risk|default:2.5 }}, TRANSLATIONS.cyber_risks);
+
+            // Overall Completion Chart
+            const overallCtx = document.getElementById('overallCompletionChart').getContext('2d');
+            const overallData = [
+                {{ reporting_progress.completed|default:0 }},
+                {{ reporting_progress.in_progress|default:0 }},
+                {{ reporting_progress.not_started|default:0 }},
+                {{ reporting_progress.deprioritized|default:0 }}
+            ];
+            const overallTotal = overallData.reduce((a, b) => a + b, 0);
+            
+            new Chart(overallCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: overallTotal > 0 ? [
+                        TRANSLATIONS.completed + '  {{ reporting_progress.completed_pct }}%',
+                        TRANSLATIONS.in_progress + '  {{ reporting_progress.in_progress_pct }}%',
+                        TRANSLATIONS.not_started + '  {{ reporting_progress.not_started_pct }}%',
+                        TRANSLATIONS.deprioritized + '  {{ reporting_progress.deprioritized_pct }}%'
+                    ] : [TRANSLATIONS.no_data],
+                    datasets: [{
+                        data: overallTotal > 0 ? overallData : [1],
+                        backgroundColor: overallTotal > 0 ? ['#2C78B1', '#F8A917', '#F46258', '#B6BCC4'] : ['#E5E7EB'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    cutout: '60%',
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                usePointStyle: true,
+                                pointStyle: 'rectRounded',
+                                boxWidth: 14,
+                                padding: 10,
+                                font: { size: 11, family: 'Montserrat' }
+                            }
+                        },
+                        datalabels: {
+                            color: '#fff',
+                            font: { weight: 'bold', size: 11 },
+                            formatter: (value) => value > 0 ? value : ''
+                        }
+                    }
+                },
+                plugins: [ChartDataLabels]
+            });
+
+            // Framework Progress Chart
+            const frameworkCtx = document.getElementById('frameworkChart').getContext('2d');
+            const frameworkLabels = ['GDPR', 'EU AI Act', 'DSA', 'Data Act'];
+            const frameworkCompleted = [
+                {{ frameworks_data.GDPR.completed|default:0 }},
+                {{ frameworks_data.EU_AI_Act.completed|default:0 }},
+                {{ frameworks_data.DSA.completed|default:0 }},
+                {{ frameworks_data.Data_Act.completed|default:0 }}
+            ];
+            const frameworkInProgress = [
+                {{ frameworks_data.GDPR.in_progress|default:0 }},
+                {{ frameworks_data.EU_AI_Act.in_progress|default:0 }},
+                {{ frameworks_data.DSA.in_progress|default:0 }},
+                {{ frameworks_data.Data_Act.in_progress|default:0 }}
+            ];
+            const frameworkNotStarted = [
+                {{ frameworks_data.GDPR.not_started|default:0 }},
+                {{ frameworks_data.EU_AI_Act.not_started|default:0 }},
+                {{ frameworks_data.DSA.not_started|default:0 }},
+                {{ frameworks_data.Data_Act.not_started|default:0 }}
+            ];
+            const frameworkDeprioritized = [
+                {{ frameworks_data.GDPR.deprioritized|default:0 }},
+                {{ frameworks_data.EU_AI_Act.deprioritized|default:0 }},
+                {{ frameworks_data.DSA.deprioritized|default:0 }},
+                {{ frameworks_data.Data_Act.deprioritized|default:0 }}
+            ];
+            
+            new Chart(frameworkCtx, {
+                type: 'bar',
+                data: {
+                    labels: frameworkLabels,
+                    datasets: [
+                        {
+                            label: TRANSLATIONS.completed,
+                            data: frameworkCompleted,
+                            backgroundColor: '#2C78B1',
+                            borderRadius: 4
+                        },
+                        {
+                            label: TRANSLATIONS.in_progress,
+                            data: frameworkInProgress,
+                            backgroundColor: '#F8A917',
+                            borderRadius: 4
+                        },
+                        {
+                            label: TRANSLATIONS.not_started,
+                            data: frameworkNotStarted,
+                            backgroundColor: '#F46258',
+                            borderRadius: 4
+                        },
+                        {
+                            label: TRANSLATIONS.deprioritized,
+                            data: frameworkDeprioritized,
+                            backgroundColor: '#B6BCC4',
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    scales: {
+                        x: { stacked: true, grid: { display: false } },
+                        y: {
+                            stacked: true,
+                            beginAtZero: true,
+                            title: { display: true, text: TRANSLATIONS.quantity, font: { size: 12 } }
+                        }
+                    },
+                    plugins: {
+                        legend: { position: 'top' },
+                        datalabels: {
+                            color: '#fff',
+                            font: { weight: 'bold', size: 10 },
+                            formatter: (value) => value > 0 ? value : ''
+                        }
+                    }
+                },
+                plugins: [ChartDataLabels]
+            });
+        }
+
+        function createGaugeChart(canvasId, value, title) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            const min = 1, max = 4;
+            // Clamp value to valid range
+            const clampedValue = Math.max(min, Math.min(max, value));
+            const angle = ((clampedValue - min) / (max - min)) * Math.PI - Math.PI;
+
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['1', '2', '3', '4'],
+                    datasets: [{
+                        data: [1, 1, 1, 1],
+                        backgroundColor: ['#f7f7d4', '#f6e58d', '#f9c74f', '#d77f2d'],
+                        borderWidth: 2,
+                        cutout: '70%',
+                        circumference: 180,
+                        rotation: 270
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        title: {
+                            display: true,
+                            text: title,
+                            font: { weight: 'bold', size: 14, family: 'Montserrat' },
+                            color: '#333'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: () => clampedValue.toFixed(2)
+                            }
+                        },
+                        datalabels: {
+                            color: '#000',
+                            font: { weight: 'bold', size: 10 },
+                            formatter: (val, context) => context.chart.data.labels[context.dataIndex]
+                        }
+                    }
+                },
+                plugins: [ChartDataLabels, {
+                    id: 'gaugeNeedle',
+                    afterDatasetDraw(chart) {
+                        const { ctx, chartArea: { left, right, top, bottom, width, height } } = chart;
+                        const centerX = left + width / 2;
+                        const centerY = bottom;
+                        const needleLength = height * 0.6;
+
+                        ctx.save();
+                        ctx.translate(centerX, centerY);
+                        ctx.rotate(angle);
+
+                        ctx.beginPath();
+                        ctx.moveTo(4, 0);
+                        ctx.lineTo(needleLength, -3);
+                        ctx.lineTo(needleLength + 15, 0);
+                        ctx.lineTo(needleLength, 3);
+                        ctx.lineTo(-3, 0);
+                        ctx.fillStyle = '#374151';
+                        ctx.fill();
+                        ctx.restore();
+
+                        ctx.beginPath();
+                        ctx.arc(centerX, centerY, 6, 0, Math.PI * 2);
+                        ctx.fillStyle = '#374151';
+                        ctx.fill();
+                    }
+                }]
+            });
+        }
+</script>
+{% endblock %}

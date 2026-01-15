@@ -1,0 +1,412 @@
+{% extends "governance/base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}EU AI Act GAI High Risk Assessment{% endblock %}
+
+{% block extra_head %}
+<style>
+    .filter-pill.active {
+        background: #111827;
+        color: #FFFFFF;
+        border-color: #111827;
+    }
+</style>
+{% endblock %}
+
+{% block dashboard_content %}
+<!-- Page Header -->
+<div class="mb-8">
+    <div class="page-header-title">
+        <div>
+            <h1 class="text-2xl font-bold text-[#1a1a2e] mb-1">General Purpose AI - High Risk</h1>
+            <p class="text-sm text-[#565F6C]">Choose a virtual agent specialized in GPAI compliance with systemic risk</p>
+        </div>
+    </div>
+
+    <hr class="border-t border-[#E5E7EB] mt-2">
+
+    <!-- Filter Pills -->
+    <div class="flex gap-3 mt-6 flex-wrap">
+        <button class="filter-pill px-4 py-2 rounded-full border border-[#E5E7EB] bg-white text-[#4B5563] text-sm font-medium cursor-pointer transition-all duration-200 hover:border-[#D1D5DB] hover:bg-[#F9FAFB] active" data-category="all">All</button>
+        <button class="filter-pill px-4 py-2 rounded-full border border-[#E5E7EB] bg-white text-[#4B5563] text-sm font-medium cursor-pointer transition-all duration-200 hover:border-[#D1D5DB] hover:bg-[#F9FAFB]" data-category="transparency">Transparency</button>
+        <button class="filter-pill px-4 py-2 rounded-full border border-[#E5E7EB] bg-white text-[#4B5563] text-sm font-medium cursor-pointer transition-all duration-200 hover:border-[#D1D5DB] hover:bg-[#F9FAFB]" data-category="governance">Governance</button>
+        <button class="filter-pill px-4 py-2 rounded-full border border-[#E5E7EB] bg-white text-[#4B5563] text-sm font-medium cursor-pointer transition-all duration-200 hover:border-[#D1D5DB] hover:bg-[#F9FAFB]" data-category="risk">Risk Assessment</button>
+        <button class="filter-pill px-4 py-2 rounded-full border border-[#E5E7EB] bg-white text-[#4B5563] text-sm font-medium cursor-pointer transition-all duration-200 hover:border-[#D1D5DB] hover:bg-[#F9FAFB]" data-category="documentation">Documentation</button>
+        <button class="filter-pill px-4 py-2 rounded-full border border-[#E5E7EB] bg-white text-[#4B5563] text-sm font-medium cursor-pointer transition-all duration-200 hover:border-[#D1D5DB] hover:bg-[#F9FAFB]" data-category="security">Security</button>
+    </div>
+</div>
+
+<!-- Agent Grid -->
+<div class="grid grid-cols-[repeat(auto-fill,minmax(360px,1fr))] gap-6">
+    <!-- Card 1: Article 53 - Transparency -->
+    <div class="bg-white rounded-2xl border border-[#E5E7EB] p-6 flex flex-col gap-5 transition-shadow duration-200 hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)]" data-category="transparency">
+        <div class="flex justify-between items-start">
+            <img src="{% static 'governance/img/eu-ai-act.png' %}" alt="Agent" class="w-12 h-12 rounded-lg object-contain">
+            <span class="px-3 py-1 rounded-xl text-xs font-medium bg-[#EFF6FF] text-[#1D4ED8]">Transparency</span>
+        </div>
+        <div class="flex-1">
+            <h3 class="text-lg font-semibold text-[#111827] mb-2">Article 53 - Transparency</h3>
+            <p class="text-sm text-[#6B7280] leading-relaxed">Implements transparency obligations for GPAI providers including technical documentation and model information.</p>
+        </div>
+        <div class="mt-auto flex justify-between items-center pt-5 border-t border-[#F3F4F6]">
+            <a href="#" class="flex items-center gap-2 text-[#4F46E5] text-sm font-semibold no-underline">
+                Chat Now
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                    <path d="M5 12h14M13 5l7 7-7 7" />
+                </svg>
+            </a>
+            <span class="flex items-center gap-1.5 text-xs text-[#059669] font-medium">
+                <span class="w-2 h-2 bg-[#10B981] rounded-full"></span>
+                Online
+            </span>
+        </div>
+    </div>
+
+    <!-- Card 2: Article 54 - Authorized Rep -->
+    <div class="bg-white rounded-2xl border border-[#E5E7EB] p-6 flex flex-col gap-5 transition-shadow duration-200 hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)]" data-category="governance">
+        <div class="flex justify-between items-start">
+            <img src="{% static 'governance/img/eu-ai-act.png' %}" alt="Agent" class="w-12 h-12 rounded-lg object-contain">
+            <span class="px-3 py-1 rounded-xl text-xs font-medium bg-[#ECFDF5] text-[#047857]">Governance</span>
+        </div>
+        <div class="flex-1">
+            <h3 class="text-lg font-semibold text-[#111827] mb-2">Article 54 - Authorized Representative</h3>
+            <p class="text-sm text-[#6B7280] leading-relaxed">Guides non-EU GPAI providers on appointing authorized representatives within the EU.</p>
+        </div>
+        <div class="mt-auto flex justify-between items-center pt-5 border-t border-[#F3F4F6]">
+            <a href="#" class="flex items-center gap-2 text-[#4F46E5] text-sm font-semibold no-underline">
+                Chat Now
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                    <path d="M5 12h14M13 5l7 7-7 7" />
+                </svg>
+            </a>
+            <span class="flex items-center gap-1.5 text-xs text-[#059669] font-medium">
+                <span class="w-2 h-2 bg-[#10B981] rounded-full"></span>
+                Online
+            </span>
+        </div>
+    </div>
+
+    <!-- Card 3: Article 55 - Systemic Risk -->
+    <div class="bg-white rounded-2xl border border-[#E5E7EB] p-6 flex flex-col gap-5 transition-shadow duration-200 hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)]" data-category="risk">
+        <div class="flex justify-between items-start">
+            <img src="{% static 'governance/img/eu-ai-act.png' %}" alt="Agent" class="w-12 h-12 rounded-lg object-contain">
+            <span class="px-3 py-1 rounded-xl text-xs font-medium bg-[#FEF2F2] text-[#DC2626]">Risk Assessment</span>
+        </div>
+        <div class="flex-1">
+            <h3 class="text-lg font-semibold text-[#111827] mb-2">Article 55 - Systemic Risk</h3>
+            <p class="text-sm text-[#6B7280] leading-relaxed">Identifies and classifies GPAI models with systemic risk based on capabilities and compute thresholds.</p>
+        </div>
+        <div class="mt-auto flex justify-between items-center pt-5 border-t border-[#F3F4F6]">
+            <a href="#" class="flex items-center gap-2 text-[#4F46E5] text-sm font-semibold no-underline">
+                Chat Now
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                    <path d="M5 12h14M13 5l7 7-7 7" />
+                </svg>
+            </a>
+            <span class="flex items-center gap-1.5 text-xs text-[#059669] font-medium">
+                <span class="w-2 h-2 bg-[#10B981] rounded-full"></span>
+                Online
+            </span>
+        </div>
+    </div>
+
+    <!-- Card 4: Article 56 - Risk Mitigation -->
+    <div class="bg-white rounded-2xl border border-[#E5E7EB] p-6 flex flex-col gap-5 transition-shadow duration-200 hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)]" data-category="risk">
+        <div class="flex justify-between items-start">
+            <img src="{% static 'governance/img/eu-ai-act.png' %}" alt="Agent" class="w-12 h-12 rounded-lg object-contain">
+            <span class="px-3 py-1 rounded-xl text-xs font-medium bg-[#FEF2F2] text-[#DC2626]">Risk Assessment</span>
+        </div>
+        <div class="flex-1">
+            <h3 class="text-lg font-semibold text-[#111827] mb-2">Article 56 - Risk Mitigation</h3>
+            <p class="text-sm text-[#6B7280] leading-relaxed">Develops risk mitigation strategies for GPAI models with systemic risk including adversarial testing.</p>
+        </div>
+        <div class="mt-auto flex justify-between items-center pt-5 border-t border-[#F3F4F6]">
+            <a href="#" class="flex items-center gap-2 text-[#4F46E5] text-sm font-semibold no-underline">
+                Chat Now
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                    <path d="M5 12h14M13 5l7 7-7 7" />
+                </svg>
+            </a>
+            <span class="flex items-center gap-1.5 text-xs text-[#059669] font-medium">
+                <span class="w-2 h-2 bg-[#10B981] rounded-full"></span>
+                Online
+            </span>
+        </div>
+    </div>
+
+    <!-- Card 5: Article 57 - Serious Incidents -->
+    <div class="bg-white rounded-2xl border border-[#E5E7EB] p-6 flex flex-col gap-5 transition-shadow duration-200 hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)]" data-category="governance">
+        <div class="flex justify-between items-start">
+            <img src="{% static 'governance/img/eu-ai-act.png' %}" alt="Agent" class="w-12 h-12 rounded-lg object-contain">
+            <span class="px-3 py-1 rounded-xl text-xs font-medium bg-[#ECFDF5] text-[#047857]">Governance</span>
+        </div>
+        <div class="flex-1">
+            <h3 class="text-lg font-semibold text-[#111827] mb-2">Article 57 - Serious Incidents</h3>
+            <p class="text-sm text-[#6B7280] leading-relaxed">Establishes incident reporting procedures for serious incidents involving GPAI models.</p>
+        </div>
+        <div class="mt-auto flex justify-between items-center pt-5 border-t border-[#F3F4F6]">
+            <a href="#" class="flex items-center gap-2 text-[#4F46E5] text-sm font-semibold no-underline">
+                Chat Now
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                    <path d="M5 12h14M13 5l7 7-7 7" />
+                </svg>
+            </a>
+            <span class="flex items-center gap-1.5 text-xs text-[#059669] font-medium">
+                <span class="w-2 h-2 bg-[#10B981] rounded-full"></span>
+                Online
+            </span>
+        </div>
+    </div>
+
+    <!-- Card 6: Article 58 - Codes of Practice -->
+    <div class="bg-white rounded-2xl border border-[#E5E7EB] p-6 flex flex-col gap-5 transition-shadow duration-200 hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)]" data-category="governance">
+        <div class="flex justify-between items-start">
+            <img src="{% static 'governance/img/eu-ai-act.png' %}" alt="Agent" class="w-12 h-12 rounded-lg object-contain">
+            <span class="px-3 py-1 rounded-xl text-xs font-medium bg-[#ECFDF5] text-[#047857]">Governance</span>
+        </div>
+        <div class="flex-1">
+            <h3 class="text-lg font-semibold text-[#111827] mb-2">Article 58 - Codes of Practice</h3>
+            <p class="text-sm text-[#6B7280] leading-relaxed">Assists with participating in and complying with GPAI codes of practice and industry standards.</p>
+        </div>
+        <div class="mt-auto flex justify-between items-center pt-5 border-t border-[#F3F4F6]">
+            <a href="#" class="flex items-center gap-2 text-[#4F46E5] text-sm font-semibold no-underline">
+                Chat Now
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                    <path d="M5 12h14M13 5l7 7-7 7" />
+                </svg>
+            </a>
+            <span class="flex items-center gap-1.5 text-xs text-[#059669] font-medium">
+                <span class="w-2 h-2 bg-[#10B981] rounded-full"></span>
+                Online
+            </span>
+        </div>
+    </div>
+
+    <!-- Card 7: Annex XI - Technical Documentation -->
+    <div class="bg-white rounded-2xl border border-[#E5E7EB] p-6 flex flex-col gap-5 transition-shadow duration-200 hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)]" data-category="documentation">
+        <div class="flex justify-between items-start">
+            <img src="{% static 'governance/img/eu-ai-act.png' %}" alt="Agent" class="w-12 h-12 rounded-lg object-contain">
+            <span class="px-3 py-1 rounded-xl text-xs font-medium bg-[#FFF7ED] text-[#C2410C]">Documentation</span>
+        </div>
+        <div class="flex-1">
+            <h3 class="text-lg font-semibold text-[#111827] mb-2">Annex XI - Technical Documentation</h3>
+            <p class="text-sm text-[#6B7280] leading-relaxed">Creates comprehensive technical documentation for GPAI models as required by Annex XI.</p>
+        </div>
+        <div class="mt-auto flex justify-between items-center pt-5 border-t border-[#F3F4F6]">
+            <a href="#" class="flex items-center gap-2 text-[#4F46E5] text-sm font-semibold no-underline">
+                Chat Now
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                    <path d="M5 12h14M13 5l7 7-7 7" />
+                </svg>
+            </a>
+            <span class="flex items-center gap-1.5 text-xs text-[#059669] font-medium">
+                <span class="w-2 h-2 bg-[#10B981] rounded-full"></span>
+                Online
+            </span>
+        </div>
+    </div>
+
+    <!-- Card 8: Annex XII - Downstream Provider Info -->
+    <div class="bg-white rounded-2xl border border-[#E5E7EB] p-6 flex flex-col gap-5 transition-shadow duration-200 hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)]" data-category="documentation">
+        <div class="flex justify-between items-start">
+            <img src="{% static 'governance/img/eu-ai-act.png' %}" alt="Agent" class="w-12 h-12 rounded-lg object-contain">
+            <span class="px-3 py-1 rounded-xl text-xs font-medium bg-[#FFF7ED] text-[#C2410C]">Documentation</span>
+        </div>
+        <div class="flex-1">
+            <h3 class="text-lg font-semibold text-[#111827] mb-2">Annex XII - Downstream Provider Info</h3>
+            <p class="text-sm text-[#6B7280] leading-relaxed">Prepares information packages for downstream providers integrating GPAI models.</p>
+        </div>
+        <div class="mt-auto flex justify-between items-center pt-5 border-t border-[#F3F4F6]">
+            <a href="#" class="flex items-center gap-2 text-[#4F46E5] text-sm font-semibold no-underline">
+                Chat Now
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                    <path d="M5 12h14M13 5l7 7-7 7" />
+                </svg>
+            </a>
+            <span class="flex items-center gap-1.5 text-xs text-[#059669] font-medium">
+                <span class="w-2 h-2 bg-[#10B981] rounded-full"></span>
+                Online
+            </span>
+        </div>
+    </div>
+
+    <!-- Card 9: Model Evaluation -->
+    <div class="bg-white rounded-2xl border border-[#E5E7EB] p-6 flex flex-col gap-5 transition-shadow duration-200 hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)]" data-category="risk">
+        <div class="flex justify-between items-start">
+            <img src="{% static 'governance/img/eu-ai-act.png' %}" alt="Agent" class="w-12 h-12 rounded-lg object-contain">
+            <span class="px-3 py-1 rounded-xl text-xs font-medium bg-[#FEF2F2] text-[#DC2626]">Risk Assessment</span>
+        </div>
+        <div class="flex-1">
+            <h3 class="text-lg font-semibold text-[#111827] mb-2">Model Evaluation</h3>
+            <p class="text-sm text-[#6B7280] leading-relaxed">Conducts standardized model evaluations to assess capabilities and identify systemic risks.</p>
+        </div>
+        <div class="mt-auto flex justify-between items-center pt-5 border-t border-[#F3F4F6]">
+            <a href="#" class="flex items-center gap-2 text-[#4F46E5] text-sm font-semibold no-underline">
+                Chat Now
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                    <path d="M5 12h14M13 5l7 7-7 7" />
+                </svg>
+            </a>
+            <span class="flex items-center gap-1.5 text-xs text-[#059669] font-medium">
+                <span class="w-2 h-2 bg-[#10B981] rounded-full"></span>
+                Online
+            </span>
+        </div>
+    </div>
+
+    <!-- Card 10: Adversarial Testing -->
+    <div class="bg-white rounded-2xl border border-[#E5E7EB] p-6 flex flex-col gap-5 transition-shadow duration-200 hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)]" data-category="security">
+        <div class="flex justify-between items-start">
+            <img src="{% static 'governance/img/eu-ai-act.png' %}" alt="Agent" class="w-12 h-12 rounded-lg object-contain">
+            <span class="px-3 py-1 rounded-xl text-xs font-medium bg-[#FEF3C7] text-[#92400E]">Security</span>
+        </div>
+        <div class="flex-1">
+            <h3 class="text-lg font-semibold text-[#111827] mb-2">Adversarial Testing</h3>
+            <p class="text-sm text-[#6B7280] leading-relaxed">Designs and executes adversarial testing protocols to identify model vulnerabilities.</p>
+        </div>
+        <div class="mt-auto flex justify-between items-center pt-5 border-t border-[#F3F4F6]">
+            <a href="#" class="flex items-center gap-2 text-[#4F46E5] text-sm font-semibold no-underline">
+                Chat Now
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                    <path d="M5 12h14M13 5l7 7-7 7" />
+                </svg>
+            </a>
+            <span class="flex items-center gap-1.5 text-xs text-[#059669] font-medium">
+                <span class="w-2 h-2 bg-[#10B981] rounded-full"></span>
+                Online
+            </span>
+        </div>
+    </div>
+
+    <!-- Card 11: Cybersecurity Measures -->
+    <div class="bg-white rounded-2xl border border-[#E5E7EB] p-6 flex flex-col gap-5 transition-shadow duration-200 hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)]" data-category="security">
+        <div class="flex justify-between items-start">
+            <img src="{% static 'governance/img/eu-ai-act.png' %}" alt="Agent" class="w-12 h-12 rounded-lg object-contain">
+            <span class="px-3 py-1 rounded-xl text-xs font-medium bg-[#FEF3C7] text-[#92400E]">Security</span>
+        </div>
+        <div class="flex-1">
+            <h3 class="text-lg font-semibold text-[#111827] mb-2">Cybersecurity Measures</h3>
+            <p class="text-sm text-[#6B7280] leading-relaxed">Implements cybersecurity protection measures for GPAI models and infrastructure.</p>
+        </div>
+        <div class="mt-auto flex justify-between items-center pt-5 border-t border-[#F3F4F6]">
+            <a href="#" class="flex items-center gap-2 text-[#4F46E5] text-sm font-semibold no-underline">
+                Chat Now
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                    <path d="M5 12h14M13 5l7 7-7 7" />
+                </svg>
+            </a>
+            <span class="flex items-center gap-1.5 text-xs text-[#059669] font-medium">
+                <span class="w-2 h-2 bg-[#10B981] rounded-full"></span>
+                Online
+            </span>
+        </div>
+    </div>
+
+    <!-- Card 12: Energy Consumption -->
+    <div class="bg-white rounded-2xl border border-[#E5E7EB] p-6 flex flex-col gap-5 transition-shadow duration-200 hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)]" data-category="transparency">
+        <div class="flex justify-between items-start">
+            <img src="{% static 'governance/img/eu-ai-act.png' %}" alt="Agent" class="w-12 h-12 rounded-lg object-contain">
+            <span class="px-3 py-1 rounded-xl text-xs font-medium bg-[#EFF6FF] text-[#1D4ED8]">Transparency</span>
+        </div>
+        <div class="flex-1">
+            <h3 class="text-lg font-semibold text-[#111827] mb-2">Energy Consumption</h3>
+            <p class="text-sm text-[#6B7280] leading-relaxed">Tracks and reports energy consumption metrics for GPAI model training and inference.</p>
+        </div>
+        <div class="mt-auto flex justify-between items-center pt-5 border-t border-[#F3F4F6]">
+            <a href="#" class="flex items-center gap-2 text-[#4F46E5] text-sm font-semibold no-underline">
+                Chat Now
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                    <path d="M5 12h14M13 5l7 7-7 7" />
+                </svg>
+            </a>
+            <span class="flex items-center gap-1.5 text-xs text-[#059669] font-medium">
+                <span class="w-2 h-2 bg-[#10B981] rounded-full"></span>
+                Online
+            </span>
+        </div>
+    </div>
+
+    <!-- Card 13: Copyright Compliance -->
+    <div class="bg-white rounded-2xl border border-[#E5E7EB] p-6 flex flex-col gap-5 transition-shadow duration-200 hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)]" data-category="governance">
+        <div class="flex justify-between items-start">
+            <img src="{% static 'governance/img/eu-ai-act.png' %}" alt="Agent" class="w-12 h-12 rounded-lg object-contain">
+            <span class="px-3 py-1 rounded-xl text-xs font-medium bg-[#ECFDF5] text-[#047857]">Governance</span>
+        </div>
+        <div class="flex-1">
+            <h3 class="text-lg font-semibold text-[#111827] mb-2">Copyright Compliance</h3>
+            <p class="text-sm text-[#6B7280] leading-relaxed">Ensures GPAI training data complies with EU copyright law and respects opt-out mechanisms.</p>
+        </div>
+        <div class="mt-auto flex justify-between items-center pt-5 border-t border-[#F3F4F6]">
+            <a href="#" class="flex items-center gap-2 text-[#4F46E5] text-sm font-semibold no-underline">
+                Chat Now
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                    <path d="M5 12h14M13 5l7 7-7 7" />
+                </svg>
+            </a>
+            <span class="flex items-center gap-1.5 text-xs text-[#059669] font-medium">
+                <span class="w-2 h-2 bg-[#10B981] rounded-full"></span>
+                Online
+            </span>
+        </div>
+    </div>
+
+    <!-- Card 14: Training Data Summary -->
+    <div class="bg-white rounded-2xl border border-[#E5E7EB] p-6 flex flex-col gap-5 transition-shadow duration-200 hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)]" data-category="documentation">
+        <div class="flex justify-between items-start">
+            <img src="{% static 'governance/img/eu-ai-act.png' %}" alt="Agent" class="w-12 h-12 rounded-lg object-contain">
+            <span class="px-3 py-1 rounded-xl text-xs font-medium bg-[#FFF7ED] text-[#C2410C]">Documentation</span>
+        </div>
+        <div class="flex-1">
+            <h3 class="text-lg font-semibold text-[#111827] mb-2">Training Data Summary</h3>
+            <p class="text-sm text-[#6B7280] leading-relaxed">Creates detailed summaries of training data content as required for GPAI transparency.</p>
+        </div>
+        <div class="mt-auto flex justify-between items-center pt-5 border-t border-[#F3F4F6]">
+            <a href="#" class="flex items-center gap-2 text-[#4F46E5] text-sm font-semibold no-underline">
+                Chat Now
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                    <path d="M5 12h14M13 5l7 7-7 7" />
+                </svg>
+            </a>
+            <span class="flex items-center gap-1.5 text-xs text-[#059669] font-medium">
+                <span class="w-2 h-2 bg-[#10B981] rounded-full"></span>
+                Online
+            </span>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Initialize filter functionality
+        function initFilters() {
+            document.addEventListener('click', (e) => {
+                if (e.target.classList.contains('filter-pill')) {
+                    const category = e.target.dataset.category;
+
+                    // Update active pill
+                    document.querySelectorAll('.filter-pill').forEach(pill => {
+                        pill.classList.remove('active');
+                    });
+                    e.target.classList.add('active');
+
+                    // Filter cards
+                    document.querySelectorAll('[data-category]').forEach(card => {
+                        if (card.classList.contains('bg-white') && card.classList.contains('rounded-2xl')) {
+                            if (category === 'all' || card.dataset.category === category) {
+                                card.style.display = 'flex';
+                            } else {
+                                card.style.display = 'none';
+                            }
+                        }
+                    });
+                }
+            });
+        }
+
+        initFilters();
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,2184 @@
+{% extends "governance/base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}
+{{ company.name }} - AI Assistant Chat
+{% endblock %}
+
+{% block dashboard_content %}
+{% csrf_token %}
+<div class="flex flex-col gap-5">
+    <!-- Breadcrumb Navigation -->
+    <div class="flex items-center gap-3">
+        <a href="{% url 'ai_assistant' %}" class="w-6 h-6 bg-transparent border-none cursor-pointer p-0 flex items-center justify-center">
+            <img src="{% static 'governance/img/arrow-left.svg' %}" alt="Back" class="w-3.5 h-3.5">
+        </a>
+        <button class="w-6 h-6 bg-transparent border-none cursor-pointer p-0 flex items-center justify-center" onclick="history.forward()">
+            <img src="{% static 'governance/img/arrow-right-gray.svg' %}" alt="Forward" class="w-3.5 h-3.5">
+        </button>
+        <span class="text-sm font-semibold text-[#F13D30]">AI Assistant</span>
+    </div>
+
+    <!-- Chat Container -->
+    <div class="flex flex-col gap-4 h-screen bg-white rounded-lg  overflow-hidden">
+        <div class="flex gap-2 flex-1 overflow-hidden p-4">
+
+        <aside id="chat-history"
+            class="w-[220px] bg-white text-text-tertiary p-4 rounded-lg border border-[#E5E7EB] shadow-sm transition-all flex-shrink-0">
+            <div class="flex items-center justify-between gap-2">
+                <p id="chat-title" class="text-lg font-semibold transition-all">Chat History</p>
+                <div id="toggle-button-close" class="grid place-content-center">
+                    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M24.5 15.5549L22.3686 13.4808L20.236 15.5549M22.6879 13.9993C22.6879 19.154 18.3925 23.3327 13.0939 23.3327C7.79535 23.3327 3.5 19.154 3.5 13.9993C3.5 8.84469 7.79535 4.66602 13.0939 4.66602C16.6138 4.66602 19.6909 6.51001 21.3602 9.25915M13.0939 8.81416V13.9993L16.2919 16.0734"
+                            stroke="#2C78B1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                </div>
+            </div>
+            <div class="relative h-full">
+                <ul id="chat-list" class="space-y-4 mt-6 transition-all" onclick="handleChatHistoryClick(event)">
+                    {% for ch in chat_histories %}
+                    <li class="truncate text-sm font-medium relative group" data-ai-response="{{ ch.ai_response }}"
+                        data-id="{{ ch.id }}" data-references-response="{{ ch.references_response }}"
+                        data-user-message="{{ ch.user_message }}">
+                        {{ ch.user_message }}
+                        <img src="/static/icons/x.svg" alt="Delete"
+                            class="delete-icon absolute hidden group-hover:block right-0 top-1/2 transform -translate-y-1/2 w-5 h-5">
+                    </li>
+                    {% endfor %}
+                </ul>
+
+                <div class="absolute bottom-[2.2rem] left-0 w-full bg-white/30 backdrop-blur-sm z-50">
+                    <button class="w-full my-4 text-sm font-bold rounded transition-colors" id="clear-history-btn">
+                        Clear History
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <div id="toggle-button-open" class="pt-4 grid place-content-top cursor-pointer hidden">
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                    d="M24.5 15.5549L22.3686 13.4808L20.236 15.5549M22.6879 13.9993C22.6879 19.154 18.3925 23.3327 13.0939 23.3327C7.79535 23.3327 3.5 19.154 3.5 13.9993C3.5 8.84469 7.79535 4.66602 13.0939 4.66602C16.6138 4.66602 19.6909 6.51001 21.3602 9.25915M13.0939 8.81416V13.9993L16.2919 16.0734"
+                    stroke="#2C78B1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+        </div>
+
+        <div class="flex gap-4 flex-1 transition-all min-w-0">
+            <!-- Main Chat Area -->
+            <div class="flex-1 flex flex-col gap-0 min-w-0">
+                <!-- Agent Header -->
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-3">
+                        {% if selected_agent %}
+                        <div class="w-10 h-10 rounded-full overflow-hidden">
+                            <img src="{{ selected_agent.avatar_url }}" alt="{{ selected_agent.name }}"
+                                class="w-full h-full object-cover">
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-lg font-semibold text-gray-900">{{ selected_agent.name }}</h3>
+                            <span class="px-2 py-1 text-xs font-medium rounded-full {{ selected_agent.badge_color }}">{{ selected_agent.category }}</span>
+                        </div>
+                        {% else %}
+                        <!-- Default Agent A when no selected_agent -->
+                        <div class="w-10 h-10 rounded-full overflow-hidden">
+                            <img src="/static/icons/agent_a.svg" alt="Agent A" class="w-full h-full object-cover">
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-lg font-semibold text-gray-900">Agent A</h3>
+                            <span class="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-700">Carbon</span>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="w-64">
+                        <!-- Dropdown Container -->
+                        <div id="dropdown-container" class="relative">
+                            <!-- Dropdown Button -->
+                            <button id="dropdown-button"
+                                class="w-full bg-white flex items-center justify-between gap-3 px-4 py-3 rounded-lg border border-gray-200 shadow-sm hover:border-gray-300 transition-all">
+                                <span id="dropdown-label" class="text-base font-medium text-gray-900">{% if selected_agent %}{{ selected_agent.name }}{% else %}Agent A{% endif %}</span>
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" class="transition-transform duration-200" id="dropdown-arrow">
+                                    <path d="M5 7.5L10 12.5L15 7.5" stroke="#6B7280" stroke-width="1.5" stroke-linecap="round"
+                                        stroke-linejoin="round" />
+                                </svg>
+                            </button>
+
+                            <!-- Dropdown Menu -->
+                            <div id="dropdown-menu"
+                                class="hidden bg-white mt-2 p-3 space-y-2 absolute w-full right-0 z-[200] rounded-lg border border-gray-200 shadow-lg max-h-80 overflow-y-auto">
+                                
+                                <!-- Dynamic Categories from virtualAgent -->
+                                {% regroup virtualAgent by category as agent_categories %}
+                                {% for category in agent_categories %}
+                                <div>
+                                    <h4 class="text-xs font-medium text-gray-600 mb-1 sticky top-0 bg-white py-1">{{ category.grouper }} Agents</h4>
+                                    <div class="space-y-1">
+                                        {% for agent in category.list %}
+                                        <label
+                                            class="flex items-center justify-between gap-3 py-1.5 px-2 cursor-pointer hover:bg-gray-50 transition-colors rounded-md"
+                                            onclick="selectAgentFromDropdown('{{ agent.id }}', '{{ agent.name }}')">
+                                            <div class="flex items-center gap-2">
+                                                <div class="w-6 h-6 rounded-full overflow-hidden flex-shrink-0">
+                                                    <img src="{{ agent.avatar_url }}" alt="{{ agent.name }}" class="w-full h-full object-cover">
+                                                </div>
+                                                <div class="min-w-0 flex-1">
+                                                    <p class="text-xs font-medium text-gray-900 truncate">{{ agent.name }}</p>
+                                                    <p class="text-[10px] text-gray-500 truncate">{{ agent.description|truncatechars:25 }}</p>
+                                                </div>
+                                            </div>
+                                            {% if selected_agent and selected_agent.id == agent.id %}
+                                            <div class="w-4 h-4 rounded-full border-2 border-blue-600 bg-blue-600 flex items-center justify-center flex-shrink-0">
+                                                <div class="w-1.5 h-1.5 rounded-full bg-white"></div>
+                                            </div>
+                                            {% else %}
+                                            <div class="w-4 h-4 rounded-full border-2 border-gray-300 bg-white flex-shrink-0"></div>
+                                            {% endif %}
+                                            <input type="radio" name="agent-dropdown" value="{{ agent.id }}" class="sr-only" {% if agent.id == 'agent_a' %}checked{% endif %}>
+                                        </label>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="relative text-neutral-950 flex-1 flex flex-col gap-0 overflow-hidden">
+                    <!-- Chat Container -->
+                    <div class="flex-1 overflow-y-auto mb-14 pb-8 [&::-webkit-scrollbar-track]:rounded-full">
+                        <!-- S:AI Chat -->
+                        <div id="ai-chat" class="absolute inset-0 grid place-content-center">
+                            <div class="space-y-4 -translate-y-full">
+                                <div class="w-16 h-16 mx-auto rounded-full overflow-hidden">
+                                    {% if selected_agent %}
+                                    <img src="{{ selected_agent.avatar_url }}" alt="{{ selected_agent.name }}"
+                                        class="w-full h-full object-cover">
+                                    {% else %}
+                                    <div
+                                        class="w-full h-full bg-gradient-to-tr from-[#DDD6FE] to-[#CFF9FE] grid place-content-center">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                            xmlns="http://www.w3.org/2000/svg">
+                                            <path
+                                                d="M18.5 8V3M5.5 21V16M16 5.5H21M3 18.5H8M6.5 2L5.71554 3.56892C5.45005 4.09989 5.31731 4.36538 5.13997 4.59545C4.98261 4.79959 4.79959 4.98261 4.59545 5.13997C4.36538 5.31731 4.0999 5.45005 3.56892 5.71554L2 6.5L3.56892 7.28446C4.0999 7.54995 4.36538 7.68269 4.59545 7.86003C4.79959 8.01739 4.98261 8.20041 5.13997 8.40455C5.31731 8.63462 5.45005 8.9001 5.71554 9.43108L6.5 11L7.28446 9.43108C7.54995 8.9001 7.68269 8.63462 7.86003 8.40455C8.01739 8.20041 8.20041 8.01739 8.40455 7.86003C8.63462 7.68269 8.9001 7.54995 9.43108 7.28446L11 6.5L9.43108 5.71554C8.9001 5.45005 8.63462 5.31731 8.40455 5.13997C8.20041 4.98261 8.01739 4.79959 7.86003 4.59545C7.68269 4.36538 7.54995 4.0999 7.28446 3.56892L6.5 2ZM17 12L16.0489 13.9022C15.7834 14.4332 15.6506 14.6987 15.4733 14.9288C15.3159 15.1329 15.1329 15.3159 14.9288 15.4733C14.6987 15.6506 14.4332 15.7834 13.9023 16.0489L12 17L13.9023 17.9511C14.4332 18.2166 14.6987 18.3494 14.9288 18.5267C15.1329 18.6841 15.3159 18.8671 15.4733 19.0712C15.6506 19.3013 15.7834 19.5668 16.0489 20.0977L17 22L17.9511 20.0978C18.2166 19.5668 18.3494 19.3013 18.5267 19.0712C18.6841 18.8671 18.8671 18.6841 19.0712 18.5267C19.3013 18.3494 19.5668 18.2166 20.0977 17.9511L22 17L20.0977 16.0489C19.5668 15.7834 19.3013 15.6506 19.0712 15.4733C18.8671 15.3159 18.6841 15.1329 18.5267 14.9288C18.3494 14.6987 18.2166 14.4332 17.9511 13.9023L17 12Z"
+                                                stroke="#1A417C" stroke-width="2" stroke-linecap="round"
+                                                stroke-linejoin="round" />
+                                        </svg>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                {% if selected_agent %}
+                                <p class="text-xl text-center font-bold text-neutral-700">Chat with {{ selected_agent.name }}</p>
+                                <p class="text-sm text-center text-neutral-600">I'm {{ selected_agent.name }}, your
+                                    Virtual Agent for {{ selected_agent.description }}</p>
+                                {% else %}
+                                <p class="text-2xl text-center font-bold text-neutral-700">How can I help you today?</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <!-- E:AI Chat -->
+
+                        <!-- S:Bubbles Chat -->
+                        <!-- Chat Container -->
+                        <div id="chat-container" class="flex flex-col items-end gap-6 hidden">
+                            <!-- Message chat -->
+                        </div>
+                        <!-- E:Bubbles Chat -->
+                    </div>
+
+                    <!-- Chatbox -->
+                    <div
+                        class="absolute left-0 right-0 bottom-0 min-h-14 bg-white flex gap-3 justify-between px-3 py-4 border border-[#E5E7EB] rounded-lg shadow-sm hover:border-[#D1D5DB] transition-all">
+                        <div class="flex items-center gap-2">
+                            <!-- Upload File Button - Available for all agents -->
+                            <button id="upload-file-btn" class="min-h-[26px] h-[26px] min-w-[26px] w-[26px] grid place-content-center" title="Upload files (PDF, PNG, JPG, JPEG) - Multiple files supported">
+                                <div class="icon-chat-upload size-6"></div>
+                            </button>
+                            
+                            <!-- Hidden file input -->
+                            <input type="file" id="file-input" accept=".pdf,.png,.jpg,.jpeg,.csv,.xlsx" multiple style="display: none;">
+                            
+                            <!-- Export Excel Button - For Justine and Sola -->
+                            {% if selected_agent.id == 'agent_justine' or selected_agent.id == 'agent_sola' %}
+                            <button id="export-excel-btn" class="min-h-[26px] h-[26px] min-w-[26px] w-[26px] grid place-content-center">
+                                <div class="icon-export-excel size-6"></div>
+                            </button>
+                            {% endif %}
+                            <!-- <button class="min-h-[26px] h-[26px] min-w-[26px] w-[26px] grid place-content-center">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M8 1.5V14.5M1.5 8H14.5" stroke="#565F6C" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                            </button> -->
+                        </div>
+                        <input id="chat-input"
+                            class="flex-1 text-sm font-medium text-left text-[#22262A] placeholder:text-[#9CA3AF] !outline-none focus:outline-none focus:ring-0 border-0"
+                            placeholder="Type a new question..." />
+                        <button id="send-button"
+                            class="min-h-[26px] h-[26px] min-w-[26px] w-[26px] grid place-content-center">
+                            <svg width="22" height="20" viewBox="0 0 22 20" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path
+                                    d="M9.50043 10.0008H4.00043M3.91577 10.2923L1.58085 17.267C1.39742 17.8149 1.3057 18.0889 1.37152 18.2576C1.42868 18.4041 1.55144 18.5152 1.70292 18.5575C1.87736 18.6061 2.14083 18.4876 2.66776 18.2505L19.3792 10.7303C19.8936 10.4989 20.1507 10.3831 20.2302 10.2224C20.2993 10.0827 20.2993 9.91883 20.2302 9.77916C20.1507 9.6184 19.8936 9.50268 19.3792 9.27123L2.66193 1.74849C2.13659 1.51209 1.87392 1.39389 1.69966 1.44237C1.54832 1.48448 1.42556 1.59527 1.36821 1.74151C1.30216 1.90991 1.3929 2.18328 1.57437 2.73004L3.91642 9.7863C3.94759 9.8802 3.96317 9.92716 3.96933 9.97518C3.97479 10.0178 3.97473 10.0609 3.96916 10.1035C3.96289 10.1515 3.94718 10.1984 3.91577 10.2923Z"
+                                    stroke="#565F6C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                        </button>
+                    </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== GLOBAL VARIABLES =====
+        const requestPlatform = "governance"; // Hackathon demo - fixed platform
+        const agent_id = "{{ selected_agent.id|default:'agent_emmy' }}";
+        let chat_type = "{{ agent_chat_type|default:'Company' }}";
+
+        // ===== DOM ELEMENTS =====
+        const dropdownButton = document.getElementById('dropdown-button');
+        const dropdownMenu = document.getElementById('dropdown-menu');
+        const dropdownContainer = document.getElementById('dropdown-container');
+        const toggleButtonClose = document.getElementById('toggle-button-close');
+        const toggleButtonOpen = document.getElementById('toggle-button-open');
+        const chatHistory = document.getElementById('chat-history');
+        const chatContainer = document.getElementById('chat-container');
+        const sendButton = document.getElementById('send-button');
+        const chatInput = document.getElementById('chat-input');
+        
+        // Lock/Unlock UI functions for export
+        function lockUIForExport() {
+            console.log('[EXPORT] Locking UI...');
+            // Disable all interactive elements
+            if (chatInput) {
+                chatInput.disabled = true;
+                chatInput.style.opacity = '0.5';
+                chatInput.style.cursor = 'not-allowed';
+            }
+            if (sendButton) {
+                sendButton.disabled = true;
+                sendButton.style.opacity = '0.5';
+                sendButton.style.cursor = 'not-allowed';
+            }
+            if (exportExcelBtn) {
+                exportExcelBtn.disabled = true;
+                exportExcelBtn.style.opacity = '0.5';
+                exportExcelBtn.style.cursor = 'not-allowed';
+            }
+            if (fileInput) {
+                fileInput.disabled = true;
+            }
+            
+            // Add overlay to prevent any interactions
+            let overlay = document.getElementById('export-overlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'export-overlay';
+                overlay.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.3);
+                    z-index: 9998;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    pointer-events: all;
+                `;
+                overlay.innerHTML = `
+                    <div style="background: white; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                        <div style="font-weight: 600; margin-bottom: 10px;">🔄 Exporting Excel...</div>
+                        <div style="color: #666; font-size: 14px;">Please wait while we process your data</div>
+                    </div>
+                `;
+                document.body.appendChild(overlay);
+            }
+        }
+        
+        function unlockUIForExport() {
+            console.log('[EXPORT] Unlocking UI...');
+            // Enable all interactive elements
+            if (chatInput) {
+                chatInput.disabled = false;
+                chatInput.style.opacity = '1';
+                chatInput.style.cursor = 'text';
+            }
+            if (sendButton) {
+                sendButton.disabled = false;
+                sendButton.style.opacity = '1';
+                sendButton.style.cursor = 'pointer';
+            }
+            if (exportExcelBtn) {
+                exportExcelBtn.disabled = false;
+                exportExcelBtn.style.opacity = '1';
+                exportExcelBtn.style.cursor = 'pointer';
+            }
+            if (fileInput) {
+                fileInput.disabled = false;
+            }
+            
+            // Remove overlay
+            const overlay = document.getElementById('export-overlay');
+            if (overlay) {
+                overlay.remove();
+            }
+        }
+        const aiChat = document.getElementById('ai-chat');
+        const clearHistory = document.getElementById('clear-history-btn');
+        const uploadBtn = document.getElementById('upload-file-btn');
+        const fileInput = document.getElementById('file-input');
+        const exportExcelBtn = document.getElementById('export-excel-btn');
+
+        // ===== CORE FUNCTIONS =====
+        
+        // Add message to chat
+        // Store last user message for feedback modal
+        let lastUserMessage = '';
+        
+        // Store mapping of actionBarId to chatHistoryId for later updates
+        const actionBarToChatHistoryMap = new Map();
+        
+        function addMessage(message, isUserMessage = true, isSystem = false, references = [], userQuestion = null, chatHistoryId = null) {
+            if (aiChat) aiChat.classList.add('hidden');
+            if (chatContainer) chatContainer.classList.remove('hidden');
+
+            // Store user message for feedback
+            if (isUserMessage) {
+                lastUserMessage = message;
+            }
+
+            const messageDiv = document.createElement('div');
+            if (isSystem) {
+                messageDiv.className = 'loading-message bg-white w-fit min-h-14 p-4 rounded-lg rounded-ss-none overflow-hidden border border-[#E5E7EB] shadow-sm mr-auto';
+            } else if (isUserMessage) {
+                messageDiv.className = 'bg-[#FEF2F2] w-fit min-h-14 p-4 rounded-lg rounded-tr-none overflow-hidden border border-[#FECACA] ms-[92px]';
+            } else {
+                // AI message - add 'relative' for absolute positioning and padding-bottom for icons
+                messageDiv.className = 'bg-white w-fit min-h-14 p-4 pb-10 rounded-lg rounded-ss-none overflow-hidden border border-[#E5E7EB] shadow-sm mr-auto relative';
+                // Store user question with AI message div for feedback
+                if (userQuestion) {
+                    messageDiv.setAttribute('data-user-question', userQuestion);
+                } else {
+                    messageDiv.setAttribute('data-user-question', lastUserMessage);
+                }
+                // Store chat history ID for feedback
+                if (chatHistoryId) {
+                    messageDiv.setAttribute('data-chat-history-id', String(chatHistoryId));
+                    console.log('[MESSAGE] Stored chatHistoryId in messageDiv:', chatHistoryId);
+                } else {
+                    console.warn('[MESSAGE] No chatHistoryId provided for message');
+                }
+            }
+
+            if (isSystem) {
+                const loadingMessage = document.createElement('div');
+                loadingMessage.className = 'text-center text-gray-500 font-medium p-2 flex items-center gap-2 justify-center';
+                loadingMessage.innerHTML = `
+                <span class="loading-text text-neutral-950">Please wait, AI is responding</span>
+                <div class="h-1 w-1 bg-black rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                <div class="h-1 w-1 bg-black rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                <div class="h-1 w-1 bg-black rounded-full animate-bounce"></div>
+            `;
+                messageDiv.appendChild(loadingMessage);
+            } else {
+                // Handle undefined/null message
+                if (!message || (typeof message === 'string' && message.length == 0)) {
+                    message = "I can't provide an answer to this question at the moment."
+                }
+                const formattedMessage = formatMessageContent(message);
+                messageDiv.appendChild(formattedMessage);
+
+                // Add action icons (copy, like, unlike) for AI messages - positioned at bottom
+                if (!isUserMessage && !isSystem) {
+                    const actionBarId = `action-bar-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                    const actionBar = document.createElement('div');
+                    actionBar.id = actionBarId;
+                    actionBar.className = 'absolute bottom-2 left-3 flex items-center gap-1.5 z-10 pt-2';
+                    // Store chat history ID in actionBar for feedback
+                    if (chatHistoryId) {
+                        actionBar.setAttribute('data-chat-history-id', String(chatHistoryId));
+                        console.log('[MESSAGE] Stored chatHistoryId in actionBar:', chatHistoryId, 'actionBarId:', actionBarId);
+                    } else {
+                        console.warn('[MESSAGE] No chatHistoryId for actionBar:', actionBarId);
+                    }
+                    
+                    // Copy button
+                    const copyBtn = document.createElement('button');
+                    copyBtn.className = 'p-1.5 rounded hover:bg-gray-100 transition-colors';
+                    copyBtn.title = 'Copy message';
+                    copyBtn.innerHTML = `
+                        <svg width="18px" height="18px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v4h4a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-4H4a2 2 0 0 1-2-2V4zm8 12v4h10V10h-4v4a2 2 0 0 1-2 2h-4zm4-2V4H4v10h10z" fill="#0D0D0D"/></svg>
+                    `;
+                    copyBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        copyMessageToClipboard(message);
+                    };
+                    
+                    // Like button (thumbs up) - red color
+                    const likeBtn = document.createElement('button');
+                    likeBtn.className = 'p-1.5 rounded hover:bg-gray-100 transition-colors';
+                    likeBtn.title = 'Like this response';
+                    likeBtn.innerHTML = `
+                        <svg width="18px" height="18px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <g id="style=linear">
+                        <g id="like">
+                        <path id="vector" d="M7.66003 10.1022L11.76 4.00221C12.16 3.40221 13.16 3.00221 13.96 3.30221C14.86 3.60221 15.46 4.60221 15.26 5.50221L14.76 8.70221C14.66 9.40221 15.16 9.90221 15.76 9.90221H19.76C21.26 9.90221 22.1801 11.0522 21.66 12.5022C21.14 13.9522 20.6801 16.5522 19.26 18.8022C18.6102 19.8318 17.8975 20.5522 16.6801 20.5522C12.6801 20.5522 6.66003 20.5522 6.66003 20.5522" stroke="#000000" stroke-width="1.5" stroke-miterlimit="10"/>
+                        <path id="rec" d="M2.18005 10.5522C2.18005 9.99996 2.62777 9.55225 3.18005 9.55225H6.68005C7.23234 9.55225 7.68005 9.99996 7.68005 10.5522V20.5522H3.18005C2.62777 20.5522 2.18005 20.1045 2.18005 19.5522V10.5522Z" stroke="#000000" stroke-width="1.5"/>
+                        </g>
+                        </g>
+                        </svg>
+                    `;
+                    likeBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        handleLikeMessage(actionBarId, true);
+                    };
+                    
+                    // Unlike button (thumbs down) - red color
+                    const unlikeBtn = document.createElement('button');
+                    unlikeBtn.className = 'p-1.5 rounded hover:bg-gray-100 transition-colors';
+                    unlikeBtn.title = 'Dislike this response';
+                    unlikeBtn.innerHTML = `
+                        <svg width="18px" height="18px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M8 14V4M8 14L4 14V4.00002L8 4M8 14L13.1956 20.0615C13.6886 20.6367 14.4642 20.884 15.1992 20.7002L15.2467 20.6883C16.5885 20.3529 17.1929 18.7894 16.4258 17.6387L14 14H18.5604C19.8225 14 20.7691 12.8454 20.5216 11.6078L19.3216 5.60779C19.1346 4.67294 18.3138 4.00002 17.3604 4.00002L8 4" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    `;
+                    unlikeBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        const userQuestion = messageDiv.getAttribute('data-user-question') || lastUserMessage;
+                        showFeedbackModal(userQuestion, message, actionBarId);
+                    };
+                    
+                    actionBar.appendChild(copyBtn);
+                    actionBar.appendChild(likeBtn);
+                    actionBar.appendChild(unlikeBtn);
+                    messageDiv.appendChild(actionBar);
+                    
+                    // Store actionBarId in messageDiv for easy lookup
+                    messageDiv.setAttribute('data-action-bar-id', actionBarId);
+                    
+                    // Store mapping for later update if chatHistoryId is not available yet
+                    if (!chatHistoryId) {
+                        actionBarToChatHistoryMap.set(actionBarId, null);
+                    }
+                }
+
+                // Add references if provided
+                if (!isUserMessage && references.length > 0) {
+                    const footerDiv = document.createElement('div');
+                    footerDiv.className = 'mt-2';
+                    
+                    // Create unique ID for this references section
+                    const referencesId = `references-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                    
+                    footerDiv.innerHTML = `
+                        <div class="flex flex-col gap-2">
+                            <div class="flex flex-row items-center justify-between gap-2">
+                                <button 
+                                    id="${referencesId}-toggle"
+                                    class="text-sm font-medium text-neutral-700 flex items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                                    onclick="toggleReferences('${referencesId}')">
+                                    <span>${references.length} references</span>
+                                    <svg id="${referencesId}-arrow" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" class="transition-transform">
+                                        <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                </button>
+                                <div class="text-xs text-neutral-700">AI-generated content may be incorrect</div>
+                            </div>
+                            <div id="${referencesId}-list" class="hidden mt-2 space-y-2 pl-4 border-l-2 border-gray-200">
+                                ${references.map((ref, index) => {
+                                    const title = ref.title || ref.url || `Reference ${index + 1}`;
+                                    const url = ref.url || '#';
+                                    return `
+                                        <a href="${url}" target="_blank" rel="noopener noreferrer" 
+                                           class="block text-sm text-blue-600 hover:text-blue-800 hover:underline transition-colors">
+                                            ${index + 1}. ${title}
+                                        </a>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                    `;
+                    messageDiv.appendChild(footerDiv);
+                }
+            }
+
+            if (chatContainer) {
+                chatContainer.appendChild(messageDiv);
+            }
+
+            if (isUserMessage && chatInput) {
+                chatInput.value = '';
+            }
+
+            chatContainer?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+            
+            return messageDiv; // Return element for potential updates
+        }
+        
+        // Function to update chatHistoryId on an existing message by actionBarId
+        function updateMessageChatHistoryIdByActionBar(actionBarId, chatHistoryId) {
+            if (!actionBarId || !chatHistoryId) {
+                console.warn('[UPDATE] Missing actionBarId or chatHistoryId:', { actionBarId, chatHistoryId });
+                return false;
+            }
+            
+            console.log('[UPDATE] Starting update for actionBarId:', actionBarId, 'chatHistoryId:', chatHistoryId);
+            
+            const actionBar = document.getElementById(actionBarId);
+            if (!actionBar) {
+                console.warn('[UPDATE] actionBar not found:', actionBarId);
+                return false;
+            }
+            
+            // Update actionBar
+            actionBar.setAttribute('data-chat-history-id', String(chatHistoryId));
+            console.log('[UPDATE] Updated actionBar with chatHistoryId:', chatHistoryId);
+            
+            // Find parent messageDiv and update it - try multiple methods
+            let messageDiv = null;
+            
+            // Method 1: Find by data-action-bar-id attribute (most reliable)
+            messageDiv = document.querySelector(`[data-action-bar-id="${actionBarId}"]`);
+            if (messageDiv) {
+                console.log('[UPDATE] ✅ Found messageDiv by querySelector');
+            }
+            
+            // Method 2: Find by traversing up from actionBar (actionBar is inside messageDiv)
+            if (!messageDiv) {
+                messageDiv = actionBar.parentElement;
+                while (messageDiv && messageDiv !== document.body) {
+                    if (messageDiv.hasAttribute('data-action-bar-id')) {
+                        const storedActionBarId = messageDiv.getAttribute('data-action-bar-id');
+                        if (storedActionBarId === actionBarId) {
+                            console.log('[UPDATE] ✅ Found messageDiv by traversing up');
+                            break;
+                        }
+                    }
+                    // Also check if it's a message div (has the class or structure)
+                    if (messageDiv.classList && messageDiv.classList.contains('bg-white')) {
+                        // This might be the messageDiv, check if it has the actionBarId
+                        if (messageDiv.hasAttribute('data-action-bar-id')) {
+                            const storedActionBarId = messageDiv.getAttribute('data-action-bar-id');
+                            if (storedActionBarId === actionBarId) {
+                                console.log('[UPDATE] ✅ Found messageDiv by class and attribute');
+                                break;
+                            }
+                        }
+                    }
+                    messageDiv = messageDiv.parentElement;
+                }
+            }
+            
+            // Method 3: Find by closest (fallback)
+            if (!messageDiv) {
+                messageDiv = actionBar.closest('[data-action-bar-id]');
+                if (messageDiv) {
+                    const storedActionBarId = messageDiv.getAttribute('data-action-bar-id');
+                    if (storedActionBarId === actionBarId) {
+                        console.log('[UPDATE] ✅ Found messageDiv by closest');
+                    } else {
+                        messageDiv = null; // Wrong element
+                    }
+                }
+            }
+            
+            if (messageDiv) {
+                messageDiv.setAttribute('data-chat-history-id', String(chatHistoryId));
+                const verifiedId = messageDiv.getAttribute('data-chat-history-id');
+                console.log('[UPDATE] ✅ Successfully updated chatHistoryId in messageDiv:', chatHistoryId);
+                console.log('[UPDATE] Verified - messageDiv now has chatHistoryId:', verifiedId);
+                
+                // Also verify actionBar has the ID
+                const actionBarId = actionBar.getAttribute('data-chat-history-id');
+                console.log('[UPDATE] Verified - actionBar now has chatHistoryId:', actionBarId);
+                
+                if (verifiedId === String(chatHistoryId) && actionBarId === String(chatHistoryId)) {
+                    console.log('[UPDATE] ✅ Both messageDiv and actionBar have correct chatHistoryId');
+                    return true;
+                } else {
+                    console.warn('[UPDATE] ⚠️ ID mismatch - messageDiv:', verifiedId, 'actionBar:', actionBarId, 'expected:', chatHistoryId);
+                    return false;
+                }
+            } else {
+                console.warn('[UPDATE] ❌ Could not find messageDiv for actionBarId:', actionBarId);
+                console.warn('[UPDATE] actionBar parent:', actionBar.parentElement);
+                console.warn('[UPDATE] All elements with data-action-bar-id:', Array.from(document.querySelectorAll('[data-action-bar-id]')).map(el => ({
+                    actionBarId: el.getAttribute('data-action-bar-id'),
+                    chatHistoryId: el.getAttribute('data-chat-history-id'),
+                    tagName: el.tagName,
+                    className: el.className
+                })));
+                return false;
+            }
+        }
+
+        // Format message content
+        function formatMessageContent(message) {
+            const lines = message.split("\n");
+            let formattedMessage = document.createElement('div');
+
+            lines.forEach(line => {
+                line = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+                if (line.startsWith("- ")) {
+                    const li = document.createElement('li');
+                    li.innerHTML = line.substring(2);
+                    formattedMessage.appendChild(li);
+                } else if (line.trim() === "") {
+                    formattedMessage.appendChild(document.createElement('br'));
+                } else {
+                    const p = document.createElement('p');
+                    p.innerHTML = line;
+                    formattedMessage.appendChild(p);
+                }
+            });
+
+            return formattedMessage;
+        }
+
+        // Remove loading message
+        function removeLoadingMessage() {
+            const loadingMessage = document.querySelector('.loading-message');
+            if (loadingMessage) {
+                loadingMessage.remove();
+            }
+        }
+
+        // Send message to backend
+        async function sendMessageToBackend(messageInput) {
+            try {
+                // Show loading message với text khác cho agent_justine, agent_lisa, và agent_sola
+                if (agent_id === 'agent_justine' || agent_id === 'agent_lisa' || agent_id === 'agent_sola') {
+                    addMessage('🔍 Searching documents with vector search...', false, true);
+                } else {
+                    addMessage('', false, true); // Normal loading
+                }
+
+                const payload = {
+                        message: messageInput,
+                        chat_type: chat_type,
+                        agent_id: agent_id
+                };
+
+                const response = await fetch(`/${requestPlatform}/dashboard/${companyId}/governance/ai-assistant/chat`, {
+                    method: "POST",
+                    body: JSON.stringify(payload),
+                    headers: {
+                        "X-CSRFToken": csrfToken,
+                        "Content-Type": "application/json",
+                    },
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to send message to backend');
+                }
+
+                responseData = await response.json();
+                console.log('[CHAT] Response data:', responseData);
+                console.log('[CHAT] ChatHistory ID from backend:', responseData.id);
+                console.log('[CHAT] Full responseData keys:', Object.keys(responseData));
+                console.log('[CHAT] responseData.id type:', typeof responseData.id, 'value:', responseData.id);
+                removeLoadingMessage();
+                
+                // Handle references - check both lowercase and uppercase
+                const references = responseData.data["references"] || responseData.data["REFERENCES"] || [];
+                // Try multiple possible keys for message
+                const aiResponse = responseData.data["message"] || responseData.data.message || responseData.data[messageInput] || "No response available";
+                console.log('[CHAT] AI Response:', aiResponse);
+                
+                // Handle download URL for Chang agent (zip file download)
+                if (agent_id === 'agent_chang' && responseData.data["download_url"]) {
+                    const downloadUrl = responseData.data["download_url"];
+                    const zipFilename = responseData.data["zip_filename"] || "chang_data.zip";
+                    console.log('[CHANG] Download URL found:', downloadUrl);
+                    console.log('[CHANG] Zip filename:', zipFilename);
+                    
+                    // Trigger download automatically
+                    setTimeout(() => {
+                        // Use full URL with platform prefix if download_url is relative
+                        const fullUrl = downloadUrl.startsWith('/') 
+                            ? `/${requestPlatform}${downloadUrl}` 
+                            : downloadUrl;
+                        
+                        console.log('[CHANG] Attempting download with URL:', fullUrl);
+                        
+                        // Trigger download directly - backend will find the file by company_id and user_id
+                        const link = document.createElement('a');
+                        link.href = fullUrl;
+                        link.download = zipFilename;
+                        link.style.display = 'none';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        console.log('[CHANG] Download triggered for:', zipFilename);
+                    }, 500); // Small delay to ensure message is displayed first
+                }
+                
+                // Check if this is a gap analysis request that needs status polling
+                // Backend returns: gap_analysis_task_id, gap_analysis_regulation_id, gap_analysis_status
+                const gapAnalysisStatus = responseData.data["gap_analysis_task_id"] ? {
+                    gap_analysis_task_id: responseData.data["gap_analysis_task_id"],
+                    gap_analysis_regulation_id: responseData.data["gap_analysis_regulation_id"],
+                    gap_analysis_status: responseData.data["gap_analysis_status"] || "running"
+                } : null;
+                console.log('[CHAT] Gap analysis status:', gapAnalysisStatus);
+                console.log('[CHAT] Agent ID:', agent_id);
+                console.log('[CHAT] Full responseData:', JSON.stringify(responseData, null, 2));
+                
+                // Get chat history ID - it's at the root level of responseData
+                const chatHistoryId = responseData.id || null;
+                console.log('[CHAT] Extracted chatHistoryId:', chatHistoryId);
+                console.log('[CHAT] responseData.id value:', responseData.id, 'type:', typeof responseData.id);
+                
+                if (gapAnalysisStatus && agent_id === "agent_lisa") {
+                    console.log('[GAP ANALYSIS] ✅ Conditions met - starting status polling...');
+                    console.log('[GAP ANALYSIS] Gap analysis status data:', gapAnalysisStatus);
+                    // Add initial message (pass user question for feedback and chat history ID)
+                    console.log('[GAP ANALYSIS] Adding message with chatHistoryId:', chatHistoryId);
+                    const messageElement = addMessage(aiResponse, false, false, references, messageInput, chatHistoryId);
+                    // Always try to update chatHistoryId after message is created - use responseData.id directly
+                    if (messageElement && responseData.id) {
+                        const actionBarId = messageElement.getAttribute('data-action-bar-id');
+                        console.log('[GAP ANALYSIS] messageElement actionBarId:', actionBarId, 'responseData.id:', responseData.id);
+                        if (actionBarId) {
+                            // Always update to ensure ID is stored, even if it was passed to addMessage
+                            console.log('[GAP ANALYSIS] Updating chatHistoryId for actionBarId:', actionBarId, 'with ID:', responseData.id);
+                            const updated = updateMessageChatHistoryIdByActionBar(actionBarId, responseData.id);
+                            if (updated) {
+                                // Also store in map for future reference
+                                actionBarToChatHistoryMap.set(actionBarId, responseData.id);
+                                console.log('[GAP ANALYSIS] ✅ Updated and stored in map. Map now has:', Array.from(actionBarToChatHistoryMap.entries()));
+                            } else {
+                                console.error('[GAP ANALYSIS] ❌ Failed to update chatHistoryId');
+                            }
+                        } else {
+                            console.warn('[GAP ANALYSIS] ⚠️ No actionBarId found on messageElement');
+                        }
+                    } else {
+                        console.warn('[GAP ANALYSIS] ⚠️ Cannot update - messageElement:', messageElement, 'responseData.id:', responseData.id);
+                    }
+                    console.log('[GAP ANALYSIS] Message element created:', messageElement);
+                    
+                    // Start polling for status updates
+                    if (messageElement) {
+                        console.log('[GAP ANALYSIS] Calling pollGapAnalysisStatus...');
+                        pollGapAnalysisStatus(gapAnalysisStatus, messageElement);
+                        console.log('[GAP ANALYSIS] pollGapAnalysisStatus called successfully');
+                    } else {
+                        console.error('[GAP ANALYSIS] ❌ Failed to create message element, cannot start polling');
+                    }
+                } else {
+                    console.log('[GAP ANALYSIS] ⚠️ Skipping polling - gapAnalysisStatus:', gapAnalysisStatus, 'agent_id:', agent_id);
+                    // Add AI response to chat (pass user question for feedback and chat history ID)
+                    console.log('[CHAT] Adding message with chatHistoryId:', chatHistoryId);
+                    updateChangCurrentDataTypeFromMessage(aiResponse);
+                    const messageElement = addMessage(aiResponse, false, false, references, messageInput, chatHistoryId);
+                    if (agent_id === 'agent_chang' && messageElement) {
+                        attachChangUploadButtons(messageElement);
+                    }
+                    // Handle factory search result for Andy agent (after message is added)
+                    if (agent_id === 'agent_andy' && responseData.data["factory_search_result"] && messageElement) {
+                        const factoryResult = responseData.data["factory_search_result"];
+                        console.log('[ANDY] Factory search result found:', factoryResult);
+                        
+                        if (factoryResult.success && factoryResult.saved_files && factoryResult.saved_files.length > 0) {
+                            // Create download buttons container
+                            const downloadContainer = document.createElement('div');
+                            downloadContainer.className = 'mt-3 flex flex-wrap gap-2';
+                            
+                            factoryResult.saved_files.forEach(fileInfo => {
+                                const downloadBtn = document.createElement('button');
+                                const fileTypeLabel = fileInfo.type === 'json' ? '📄 Download JSON' : '📄 Download Report';
+                                downloadBtn.textContent = fileTypeLabel;
+                                downloadBtn.className = 'px-4 py-2 text-sm font-medium text-white bg-[#F13D30] rounded-lg hover:bg-[#DC6B64] transition-colors';
+                                
+                                downloadBtn.onclick = (e) => {
+                                    e.stopPropagation();
+                                    const fullUrl = fileInfo.download_url.startsWith('/') 
+                                        ? `/${requestPlatform}${fileInfo.download_url}` 
+                                        : fileInfo.download_url;
+                                    console.log('[ANDY] Downloading file:', fullUrl);
+                                    
+                                    const link = document.createElement('a');
+                                    link.href = fullUrl;
+                                    link.download = fileInfo.file_name;
+                                    link.style.display = 'none';
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    document.body.removeChild(link);
+                                };
+                                
+                                downloadContainer.appendChild(downloadBtn);
+                            });
+                            
+                            messageElement.appendChild(downloadContainer);
+                            
+                            // Display factory inventory data if available
+                            if (factoryResult.factory_inventory && factoryResult.factory_inventory.length > 0) {
+                                const dataContainer = document.createElement('div');
+                                dataContainer.className = 'mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200';
+                                dataContainer.innerHTML = `
+                                    <div class="text-sm font-semibold text-gray-700 mb-2">📊 Factory Inventory Data (${factoryResult.facilities_count} facilities):</div>
+                                    <div class="text-xs text-gray-600 max-h-48 overflow-y-auto">
+                                        <pre class="whitespace-pre-wrap font-mono">${JSON.stringify(factoryResult.factory_inventory, null, 2)}</pre>
+                                    </div>
+                                `;
+                                messageElement.appendChild(dataContainer);
+                            }
+                        }
+                    }
+                    // Always try to update chatHistoryId after message is created - use responseData.id directly
+                    if (messageElement && responseData.id) {
+                        const actionBarId = messageElement.getAttribute('data-action-bar-id');
+                        console.log('[CHAT] messageElement actionBarId:', actionBarId, 'responseData.id:', responseData.id);
+                        if (actionBarId) {
+                            // Always update to ensure ID is stored, even if it was passed to addMessage
+                            console.log('[CHAT] Updating chatHistoryId for actionBarId:', actionBarId, 'with ID:', responseData.id);
+                            const updated = updateMessageChatHistoryIdByActionBar(actionBarId, responseData.id);
+                            if (updated) {
+                                // Also store in map for future reference
+                                actionBarToChatHistoryMap.set(actionBarId, responseData.id);
+                                console.log('[CHAT] ✅ Updated and stored in map. Map now has:', Array.from(actionBarToChatHistoryMap.entries()));
+                            } else {
+                                console.error('[CHAT] ❌ Failed to update chatHistoryId');
+                            }
+                        } else {
+                            console.warn('[CHAT] ⚠️ No actionBarId found on messageElement');
+                        }
+                    } else {
+                        console.warn('[CHAT] ⚠️ Cannot update - messageElement:', messageElement, 'responseData.id:', responseData.id);
+                    }
+                }
+                
+                // Update chat history with chatHistoryId
+                const finalChatHistoryId = responseData.id || chatHistoryId;
+                updateChatHistory(messageInput, aiResponse, references, finalChatHistoryId);
+                
+            } catch (error) {
+                console.error('Error sending message to backend:', error);
+                removeLoadingMessage();
+                addMessage("Please try again later.", false);
+            }
+        }
+
+        // Poll gap analysis status and update message
+        async function pollGapAnalysisStatus(gapAnalysisStatus, messageElement) {
+            console.log('[GAP ANALYSIS] pollGapAnalysisStatus function called with:', gapAnalysisStatus);
+            
+            if (!gapAnalysisStatus) {
+                console.error('[GAP ANALYSIS] ❌ gapAnalysisStatus is null/undefined');
+                return;
+            }
+            
+            const { gap_analysis_task_id, gap_analysis_regulation_id, gap_analysis_status: initialStatus } = gapAnalysisStatus;
+            console.log('[GAP ANALYSIS] Extracted values - task_id:', gap_analysis_task_id, 'regulation_id:', gap_analysis_regulation_id);
+            
+            if (!gap_analysis_task_id || !gap_analysis_regulation_id) {
+                console.error('[GAP ANALYSIS] ❌ Missing gap_analysis_task_id or gap_analysis_regulation_id');
+                return;
+            }
+            
+            // Call Django endpoint to check status
+            // Gap analysis not implemented in hackathon demo
+            const statusUrl = `/api/gap-analysis/status/?task_id=${gap_analysis_task_id}`;
+            console.log('[GAP ANALYSIS] Status URL:', statusUrl);
+            const pollInterval = 5000; // Poll every 5 seconds
+            const maxPollTime = 10 * 60 * 1000; // 10 minutes max
+            const startTime = Date.now();
+            let pollCount = 0;
+
+            const pollStatus = async () => {
+                console.log('[GAP ANALYSIS] pollStatus function called (attempt will be:', pollCount + 1, ')');
+                if (Date.now() - startTime > maxPollTime) {
+                    console.log('[GAP ANALYSIS] Max poll time reached, stopping');
+                    if (messageElement) {
+                        const formattedMessage = formatMessageContent("⏱️ Gap analysis is taking longer than expected. Please check back later or contact support.");
+                        messageElement.innerHTML = '';
+                        messageElement.appendChild(formattedMessage);
+                    }
+                    return;
+                }
+
+                pollCount++;
+                console.log(`[GAP ANALYSIS] Polling status (attempt ${pollCount}) from ${statusUrl}...`);
+                try {
+                    // Call Django endpoint
+                    console.log(`[GAP ANALYSIS] Making fetch request to: ${statusUrl}`);
+                    const response = await fetch(statusUrl, {
+                        method: "GET",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-CSRFToken": csrfToken,
+                        },
+                    });
+                    console.log(`[GAP ANALYSIS] Fetch response received:`, response.status, response.statusText);
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error(`[GAP ANALYSIS] Response not OK:`, errorText);
+                        throw new Error(`Failed to get status: ${response.status} ${response.statusText}`);
+                    }
+
+                    const result = await response.json();
+                    console.log(`[GAP ANALYSIS] Status response:`, result);
+                    
+                    if (!result.ok) {
+                        console.error(`[GAP ANALYSIS] Status check failed: ${result.error || 'Unknown error'}`);
+                        if (messageElement) {
+                            const formattedMessage = formatMessageContent(`❌ Error checking gap analysis status: ${result.error || 'Unknown error'}`);
+                            messageElement.innerHTML = '';
+                            messageElement.appendChild(formattedMessage);
+                        }
+                        return;
+                    }
+                    
+                    // Django endpoint returns {ok: true, status, progress, message, result}
+                    const status = result.status;
+                    const progress = result.progress || 0;
+                    const message = result.message || 'Processing...';
+
+                    console.log(`[GAP ANALYSIS] Status: ${status}, Progress: ${progress}%`);
+
+                    // Update message element with current status
+                    if (messageElement) {
+                        const statusMessage = `🔄 Gap analysis is processing in the background...\n\n⏳ Status: ${status}\n📊 Progress: ${progress}%\n\n${message}`;
+                        const formattedMessage = formatMessageContent(statusMessage);
+                        
+                        // Find and preserve references footer if it exists
+                        const footerDiv = messageElement.querySelector('.mt-2'); // References footer
+                        
+                        // Clear all children except footer
+                        const children = Array.from(messageElement.children);
+                        children.forEach(child => {
+                            if (child !== footerDiv) {
+                                messageElement.removeChild(child);
+                            }
+                        });
+                        
+                        // Insert new formatted message before footer (or as first child if no footer)
+                        if (footerDiv) {
+                            messageElement.insertBefore(formattedMessage, footerDiv);
+                        } else {
+                            messageElement.appendChild(formattedMessage);
+                        }
+                        
+                        chatContainer?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                        console.log(`[GAP ANALYSIS] Message updated with status: ${status}, progress: ${progress}%`);
+                    } else {
+                        console.warn('[GAP ANALYSIS] messageElement is null, cannot update message');
+                    }
+
+                    if (status === 'completed') {
+                        console.log('[GAP ANALYSIS] ✅ Status: completed - Analysis completed successfully');
+                        
+                        // Save results to database FIRST (before showing final message)
+                        if (result.result && result.result.sections) {
+                            console.log('[GAP ANALYSIS] 💾 Saving results to database...', {
+                                sections_count: result.result.sections.length,
+                                regulation_id: gap_analysis_regulation_id
+                            });
+                            
+                            // Results are already saved to database by background task
+                            console.log('[GAP ANALYSIS] ✅ Results are automatically saved to database by background task');
+                        } else {
+                            console.warn('[GAP ANALYSIS] ⚠️ No sections found in result, cannot save to database');
+                        }
+                        
+                        // Format final message with summary
+                        let finalMessage = `✅ Gap analysis completed successfully!\n\n`;
+                        if (result.result && result.result.summary) {
+                            const summary = result.result.summary;
+                            finalMessage += `**Summary:**\n`;
+                            finalMessage += `- Total sections: ${result.result.sections?.length || 0}\n`;
+                            finalMessage += `- Filled datapoints: ${summary.filled_datapoints || 0}\n`;
+                            finalMessage += `- Missing datapoints: ${summary.missing_datapoints || 0}\n`;
+                            finalMessage += `- Completion: ${summary.completion_percentage || 0}%\n\n`;
+                            
+                            if (result.result.sections && result.result.sections.length > 0) {
+                                finalMessage += `**Sections:**\n`;
+                                result.result.sections.forEach(section => {
+                                    finalMessage += `- **${section.section_name}**: ${section.filled_datapoints}/${section.total_datapoints} datapoints filled (${section.completion_percentage}%)\n`;
+                                });
+                            }
+                        }
+                        
+                        if (messageElement) {
+                            const formattedMessage = formatMessageContent(finalMessage);
+                            messageElement.innerHTML = '';
+                            messageElement.appendChild(formattedMessage);
+                            
+                            // Update ChatHistory in database with final message
+                            const chatHistoryId = messageElement.getAttribute('data-chat-history-id');
+                            if (chatHistoryId) {
+                                console.log('[GAP ANALYSIS] 💾 Updating ChatHistory with final message, chatHistoryId:', chatHistoryId);
+                                updateChatHistoryInDatabase(chatHistoryId, finalMessage);
+                            } else {
+                                console.warn('[GAP ANALYSIS] ⚠️ No chatHistoryId found, cannot update ChatHistory');
+                            }
+                        }
+                        return; // Stop polling
+                    } else if (status === 'failed') {
+                        console.log('[GAP ANALYSIS] Analysis failed');
+                        const errorMessage = `❌ Gap analysis failed: ${result.error || 'Unknown error'}`;
+                        if (messageElement) {
+                            const formattedMessage = formatMessageContent(errorMessage);
+                            messageElement.innerHTML = '';
+                            messageElement.appendChild(formattedMessage);
+                        }
+                        return; // Stop polling
+                    } else {
+                        // Continue polling for processing/pending status
+                        setTimeout(pollStatus, pollInterval);
+                    }
+                } catch (error) {
+                    console.error('[GAP ANALYSIS] Error polling status:', error);
+                    // Continue polling even on error (might be temporary network issue)
+                    setTimeout(pollStatus, pollInterval);
+                }
+            };
+
+            // Start polling immediately (backend will handle timing)
+            console.log('[GAP ANALYSIS] Starting polling function, will poll in 2 seconds...');
+            setTimeout(pollStatus, 5000); // First poll after 2 seconds
+        }
+
+        // Function to update ChatHistory in database with new message
+        async function updateChatHistoryInDatabase(chatHistoryId, aiResponse) {
+            try {
+                console.log('[GAP ANALYSIS] 💾 Updating ChatHistory in database...', {
+                    chat_history_id: chatHistoryId,
+                    message_length: aiResponse.length
+                });
+                
+                // Chat history update not implemented in hackathon demo
+                const response = await fetch(`/api/chat-history/update/`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken,
+                    },
+                    body: JSON.stringify({
+                        chat_history_id: chatHistoryId,
+                        ai_response: aiResponse
+                    })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.ok) {
+                        console.log('[GAP ANALYSIS] ✅ ChatHistory updated successfully in database');
+                    } else {
+                        console.error('[GAP ANALYSIS] ❌ Update failed:', result.error);
+                    }
+                } else {
+                    const error = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+                    console.error('[GAP ANALYSIS] ❌ HTTP error updating ChatHistory:', error.error);
+                }
+            } catch (error) {
+                console.error('[GAP ANALYSIS] ❌ Exception updating ChatHistory in database:', error);
+            }
+        }
+
+        // Function removed - gap analysis results are now saved automatically by background task
+
+        // Handle file upload
+        const CHANG_DATA_TYPES = [
+            'Did you upload financial data and organisation information on the platform',
+            'Carbon footprint',
+            'Water use',
+            'Crop data',
+            'Livestock',
+            'Mining',
+            'Oil gas',
+            'Land use',
+        ];
+        let changCurrentDataType = null;
+        let changUploadTargetType = null;
+
+        // Try to extract current Chang data type from AI message text
+        function updateChangCurrentDataTypeFromMessage(message) {
+            if (!message || agent_id !== 'agent_chang') return;
+            const match = message.match(/for ['‘’](.+?)['’]/i);
+            if (match && match[1]) {
+                changCurrentDataType = match[1].trim();
+                console.log('[CHANG] Detected current data type:', changCurrentDataType);
+            }
+        }
+
+        // Attach per-data-type upload buttons in AI messages for Chang
+        function attachChangUploadButtons(messageDiv) {
+            try {
+                if (agent_id !== 'agent_chang') return;
+                const paras = messageDiv.querySelectorAll('p');
+                paras.forEach((p) => {
+                    const txt = (p.textContent || '').trim();
+                    const m = txt.match(/^Upload file for ['‘’](.+?)['’]:/i);
+                    if (m && m[1]) {
+                        const dt = m[1].trim();
+                        const btn = document.createElement('button');
+                        btn.textContent = 'Upload';
+                        btn.className = 'ml-2 px-2 py-1 text-sm rounded bg-blue-100 hover:bg-blue-200';
+                        btn.onclick = (e) => {
+                            e.stopPropagation();
+                            changCurrentDataType = dt;
+                            changUploadTargetType = dt;
+                            if (fileInput) fileInput.click();
+                        };
+                        p.appendChild(btn);
+                    }
+                });
+            } catch (err) {
+                console.warn('[CHANG] attachChangUploadButtons error:', err);
+            }
+        }
+
+        async function handleMultipleFileUpload(files) {
+            try {
+                // Validate files parameter
+                if (!files || files.length === 0) {
+                    console.error('No files provided to handleMultipleFileUpload');
+                    addMessage('No files selected for upload', false);
+                    return;
+                }
+                
+                // Agent Chang: upload each file directly to chat API in sequence
+                if (agent_id === 'agent_chang') {
+                    for (const f of files) {
+                        await handleFileUpload(f);
+                    }
+                    return;
+                }
+                
+                // Agent Justine, Agent Lisa, Agent Sola, và Agent AI Act: dùng API upload riêng (BE đã xử lý RAG)
+                if (agent_id === 'agent_justine' || agent_id === 'agent_lisa' || agent_id === 'agent_sola' || agent_id === 'agent_ai_act') {
+                    addMessage('', false, true); // Loading message
+                    
+                    const formData = new FormData();
+                    // Append all files to FormData
+                    for (let i = 0; i < files.length; i++) {
+                        formData.append('file_url', files[i]);
+                    }
+                    
+                    // Set data_type based on agent
+                    if (agent_id === 'agent_justine') {
+                        formData.append('data_type', 'ai_input_invoice_justine');
+                    } else if (agent_id === 'agent_lisa') {
+                        formData.append('data_type', 'ai_input_gap_analysis_lisa');
+                    } else if (agent_id === 'agent_sola') {
+                        formData.append('data_type', 'ai_input_sola');
+                    } else if (agent_id === 'agent_ai_act') {
+                        formData.append('data_type', 'ai_input_ai_act');
+                    }
+                    
+                        // Data hub upload not implemented in hackathon demo
+                        const response = await fetch(`/api/upload/`, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-CSRFToken': csrfToken,
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                    });
+
+                    const result = await response.json();
+                    removeLoadingMessage();
+                    
+                    if (!response.ok || !result.success) {
+                        throw new Error(result.message || result.error || 'Upload failed');
+                    }
+                    
+                    // Show success message
+                    if (files.length === 1) {
+                        const sizeInfo = ` (${(files[0].size / 1024 / 1024).toFixed(2)} MB)`;
+                        addMessage(`✅ ${files[0].name}${sizeInfo} - File uploaded and processing with RAG...`, true);
+                    } else {
+                        const totalSize = Array.from(files).reduce((sum, file) => sum + file.size, 0);
+                        const summaryMessage = `📎 Uploaded ${files.length} files (${(totalSize / 1024 / 1024).toFixed(2)} MB total) - Processing with RAG...`;
+                        addMessage(summaryMessage, true);
+                    }
+                    
+                    return; // Done for agents with direct upload
+                }
+                
+                // For other agents (including agent_chang now), just show file names
+                if (files && files.length > 0) {
+                    const fileNames = Array.from(files).map(f => f.name).join(', ');
+                    const fileMessage = `📎 Files: ${fileNames}`;
+                    addMessage(fileMessage, true);
+                } else {
+                    addMessage('📎 Files uploaded', true);
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+                removeLoadingMessage();
+                addMessage(`Sorry, there was an error uploading your files: ${error.message}`, false);
+            }
+        }
+
+        async function handleFileUpload(file) {
+            try {
+                // Agent Chang: send file directly to chat API (not data hub)
+                if (agent_id === 'agent_chang') {
+                    addMessage('', false, true); // Loading message
+                    
+                    const formData = new FormData();
+                    formData.append('message', ''); // Empty message to advance flow
+                    formData.append('agent_id', agent_id);
+                    formData.append('file', file); // Append the actual file object
+                    
+                    // Add note for Chang agent with data_type
+                    const noteObj = {};
+                    if (changCurrentDataType) noteObj.data_type = changCurrentDataType;
+                    formData.append('note', JSON.stringify(noteObj));
+                    
+                    const response = await fetch(`/${requestPlatform}/dashboard/${companyId}/governance/ai-assistant/chat`, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-CSRFToken': csrfToken,
+                            // Content-Type is automatically set by browser for FormData
+                        },
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to upload file');
+                    }
+
+                    const responseData = await response.json();
+                    removeLoadingMessage();
+                    
+                    const sizeInfo = ` (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+                    addMessage(`✅ ${file.name}${sizeInfo} - File uploaded.`, true);
+                    
+                    // Process AI response to advance flow
+                    const references = responseData.data["references"] || responseData.data["REFERENCES"] || [];
+                    const aiResponse = responseData.data["message"] || responseData.data.message || "";
+                    if (aiResponse) {
+                        updateChangCurrentDataTypeFromMessage(aiResponse);
+                        const messageElement = addMessage(aiResponse, false, false, references);
+                        if (messageElement) {
+                            attachChangUploadButtons(messageElement);
+                        }
+                    }
+                    
+                    return; // Done for agent_chang
+                }
+                
+                // Agent Justine, Agent Lisa, Agent Sola, và Agent AI Act: dùng API upload riêng (BE đã xử lý RAG)
+                if (agent_id === 'agent_justine' || agent_id === 'agent_lisa' || agent_id === 'agent_sola' || agent_id === 'agent_ai_act') {
+                    addMessage('', false, true); // Loading message
+                    
+                    const formData = new FormData();
+                    formData.append('file_url', file);
+                    
+                    // Set data_type based on agent
+                    if (agent_id === 'agent_justine') {
+                        formData.append('data_type', 'ai_input_invoice_justine');
+                    } else if (agent_id === 'agent_lisa') {
+                        formData.append('data_type', 'ai_input_gap_analysis_lisa');
+                    } else if (agent_id === 'agent_sola') {
+                        formData.append('data_type', 'ai_input_sola');
+                    } else if (agent_id === 'agent_ai_act') {
+                        formData.append('data_type', 'ai_input_ai_act');
+                    }
+                    
+                        // Data hub upload not implemented in hackathon demo
+                        const response = await fetch(`/api/upload/`, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-CSRFToken': csrfToken,
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                    });
+
+                    const result = await response.json();
+                    removeLoadingMessage();
+                    
+                    if (!response.ok || !result.success) {
+                        throw new Error(result.message || result.error || 'Upload failed');
+                    }
+                    
+                    const sizeInfo = ` (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+                    addMessage(`✅ ${file.name}${sizeInfo} - File uploaded.`, true);
+                    
+                    return; // Done for agents with direct upload
+                } else {
+                    const fileMessage = `📎 File: ${file.name}`;
+                    addMessage(fileMessage, true);
+                    // sendMessageToBackend(fileMessage);
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+                removeLoadingMessage();
+                addMessage(`Sorry, there was an error uploading your file: ${error.message}`, false);
+            }
+        }
+        
+        // Handle export Excel: call BE to generate and download Excel
+        async function handleExportExcel() {
+            try {
+                // Lock UI immediately
+                lockUIForExport();
+                
+                addMessage('', false, true); // Loading message
+                
+                // Export to Excel not implemented in hackathon demo
+                let url = '/api/export/'; // Placeholder
+                
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                if (!response.ok) {
+                    let msg = 'Export failed';
+                    try { const err = await response.json(); msg = err.message || msg; } catch (_) {}
+                    removeLoadingMessage();
+                    unlockUIForExport(); // Unlock on error
+                    addMessage(`❌ ${msg}`, false);
+                    return;
+                }
+
+                // Check content-type BEFORE parsing response
+                // Justine returns Excel file, Sola returns JSON with task_id
+                const contentType = response.headers.get('content-type') || '';
+                
+                // If it's an Excel file (Justine export), handle as blob directly
+                if (contentType.includes('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') || 
+                    contentType.includes('application/octet-stream')) {
+                    // Justine: direct Excel file download
+                    const blob = await response.blob();
+                    const urlBlob = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = urlBlob;
+                    const filename = `invoice_data_${companyId}_${Date.now()}.xlsx`;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(urlBlob);
+                    document.body.removeChild(a);
+                    
+                    removeLoadingMessage();
+                    unlockUIForExport(); // Unlock on success
+                    addMessage('✅ Excel file generated and downloaded successfully!', false);
+                    return;
+                }
+                
+                // If it's JSON (Sola export with task_id), parse as JSON
+                if (contentType.includes('application/json')) {
+                    const data = await response.json();
+                    
+                    // For Sola: background task - poll status (only show loading, no message)
+                    if (agent_id === 'agent_sola' && data.task_id) {
+                        // Keep loading message, don't add new message
+                        // Update loading message text to show export status
+                        const loadingMessage = document.querySelector('.loading-message .loading-text');
+                        if (loadingMessage) {
+                            loadingMessage.textContent = 'Exporting data...';
+                        }
+                        console.log(`[SOLA EXPORT] Started export task: ${data.task_id}`);
+                        pollSolaExportStatus(data.task_id);
+                        return;
+                    }
+                    
+                    // If JSON but no task_id, it's an error
+                    removeLoadingMessage();
+                    unlockUIForExport(); // Unlock on error
+                    addMessage(`❌ ${data.message || 'Export failed'}`, false);
+                    return;
+                }
+                
+                // Fallback: try to handle as blob (for other file types)
+                const blob = await response.blob();
+                const urlBlob = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = urlBlob;
+                const filename = `invoice_data_${companyId}_${Date.now()}.xlsx`;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(urlBlob);
+                document.body.removeChild(a);
+                
+                removeLoadingMessage();
+                unlockUIForExport(); // Unlock on success
+                addMessage('✅ Excel file generated and downloaded successfully!', false);
+            } catch (error) {
+                console.error('Export error:', error);
+                removeLoadingMessage();
+                unlockUIForExport(); // Unlock on error
+                addMessage(`❌ Export failed: ${error.message}`, false);
+            }
+        }
+        
+        // Poll Sola export status
+        async function pollSolaExportStatus(taskId) {
+            const maxAttempts = 120; // 10 minutes max (5s * 120)
+            let attempts = 0;
+            
+            const poll = async () => {
+                try {
+                    // Export status not implemented in hackathon demo
+                    const statusUrl = `/api/export/status/?task_id=${taskId}`;
+                    const response = await fetch(statusUrl, {
+                        method: 'GET',
+                        headers: {
+                            'X-CSRFToken': csrfToken,
+                        }
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Failed to check status');
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if (!data.ok) {
+                        throw new Error(data.error || 'Status check failed');
+                    }
+                    
+                    const status = data.status;
+                    const progress = data.progress || 0;
+                    const message = data.message || '';
+                    
+                    console.log(`[SOLA EXPORT] Status: ${status}, Progress: ${progress}%, Message: ${message}`);
+                    
+                    // Update loading message text instead of adding new message
+                    const loadingMessage = document.querySelector('.loading-message .loading-text');
+                    if (loadingMessage) {
+                        if (progress > 0) {
+                            loadingMessage.textContent = `Exporting data... ${progress}%`;
+                        } else {
+                            loadingMessage.textContent = message || 'Exporting data...';
+                        }
+                    }
+                    
+                    if (status === 'completed') {
+                        console.log(`[SOLA EXPORT] Task completed, downloading file...`);
+                        // Download file
+                        // Export download not implemented in hackathon demo
+                        const downloadUrl = `/api/export/download/?task_id=${taskId}`;
+                        const downloadResponse = await fetch(downloadUrl, {
+                            method: 'GET',
+                            headers: {
+                                'X-CSRFToken': csrfToken,
+                            }
+                        });
+                        
+                        if (!downloadResponse.ok) {
+                            const errorData = await downloadResponse.json().catch(() => ({}));
+                            unlockUIForExport(); // Unlock on error
+                            throw new Error(errorData.error || 'Failed to download file');
+                        }
+                        
+                        const blob = await downloadResponse.blob();
+                        const urlBlob = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = urlBlob;
+                        a.download = `sola_data_${companyId}_${Date.now()}.xlsx`;
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(urlBlob);
+                        document.body.removeChild(a);
+                        
+                        console.log(`[SOLA EXPORT] File downloaded successfully`);
+                        
+                        // Remove loading message, don't add success message
+                        removeLoadingMessage();
+                        unlockUIForExport(); // Unlock on success
+                        return; // Stop polling
+                    } else if (status === 'failed') {
+                        // Remove loading message on failure
+                        removeLoadingMessage();
+                        unlockUIForExport(); // Unlock on failure
+                        throw new Error(data.error || 'Export failed');
+                    } else if (status === 'processing' || status === 'running') {
+                        // Continue polling
+                        attempts++;
+                        if (attempts >= maxAttempts) {
+                            unlockUIForExport(); // Unlock on timeout
+                            throw new Error('Export timeout - please try again');
+                        }
+                        setTimeout(poll, 5000); // Poll every 5 seconds
+                    }
+                } catch (error) {
+                    console.error('Poll error:', error);
+                    // Remove loading message on error, don't add error message
+                    removeLoadingMessage();
+                    unlockUIForExport(); // Unlock on error
+                }
+            };
+            
+            // Start polling
+            setTimeout(poll, 2000); // First poll after 2 seconds
+        }
+
+        // Handle chat history click
+        function handleChatHistoryClick(event) {
+            // Check if the clicked element is a delete icon
+            if (event.target.classList.contains('delete-icon')) {
+                event.stopPropagation();
+                const messageElement = event.target.closest("li");
+                const messageId = messageElement.getAttribute("data-id");
+                deleteMessage(messageId, messageElement);
+                return;
+            }
+
+            // Find the closest <li> element
+            const chatItem = event.target.closest('li');
+            if (chatItem && chatItem.tagName.toLowerCase() === 'li') {
+                const userMessage = chatItem.getAttribute('data-user-message');
+                const aiResponse = chatItem.getAttribute('data-ai-response');
+                const referencesResponse = chatItem.getAttribute('data-references-response');
+                const chatHistoryId = chatItem.getAttribute('data-id'); // Get chatHistoryId from data-id
+                
+                console.log('[CHAT HISTORY] Loading message with chatHistoryId:', chatHistoryId);
+
+                // Show chat interface
+                if (chatContainer) chatContainer.classList.remove('hidden');
+                if (aiChat) aiChat.classList.add('hidden');
+
+                // Add separator if not first chat
+                const isFirstChat = chatContainer && chatContainer.children.length === 0;
+                if (!isFirstChat) {
+                    addChatSeparator();
+                }
+
+                // Add user message
+                addMessage(userMessage, true);
+
+                // Add AI response with references and chatHistoryId
+                try {
+                    const references = referencesResponse ? JSON.parse(referencesResponse) : [];
+                    const messageElement = addMessage(aiResponse, false, false, references, userMessage, chatHistoryId);
+                    console.log('[CHAT HISTORY] Added message with chatHistoryId:', chatHistoryId);
+                    
+                    // Store in map for feedback
+                    if (messageElement && chatHistoryId) {
+                        const actionBarId = messageElement.getAttribute('data-action-bar-id');
+                        if (actionBarId) {
+                            actionBarToChatHistoryMap.set(actionBarId, chatHistoryId);
+                            console.log('[CHAT HISTORY] Stored in map:', actionBarId, '->', chatHistoryId);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error parsing references:', error);
+                    const messageElement = addMessage(aiResponse, false, false, [], userMessage, chatHistoryId);
+                    if (messageElement && chatHistoryId) {
+                        const actionBarId = messageElement.getAttribute('data-action-bar-id');
+                        if (actionBarId) {
+                            actionBarToChatHistoryMap.set(actionBarId, chatHistoryId);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Add chat separator
+        function addChatSeparator() {
+            const currentChatContainer = document.getElementById('chat-container');
+            if (!currentChatContainer) return;
+            
+            const separatorDiv = document.createElement('div');
+            separatorDiv.className = 'flex items-center gap-3 my-6 px-4';
+            separatorDiv.innerHTML = `
+                <div class="flex-1 h-px bg-gray-200"></div>
+                <span class="text-xs text-gray-500 font-medium bg-gray-50 px-3 py-1 rounded-full">Previous Conversation</span>
+                <div class="flex-1 h-px bg-gray-200"></div>
+            `;
+            
+            currentChatContainer.appendChild(separatorDiv);
+        }
+
+        // Delete message
+        function deleteMessage(id, messageElement) {
+            fetch(`/${requestPlatform}/dashboard/${companyId}/governance/ai-assistant/chat/delete/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    "X-CSRFToken": csrfToken,
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    messageElement.remove();
+                } else {
+                    console.error('Failed to delete message:', response.status, response.statusText);
+                }
+            })
+            .catch(error => {
+                console.error('Error deleting message:', error);
+            });
+        }
+
+        // Select agent from dropdown
+        function selectAgentFromDropdown(agentId, agentName) {
+            // Update dropdown label
+            document.getElementById('dropdown-label').textContent = agentName;
+            
+            // Close dropdown
+            document.getElementById('dropdown-menu').classList.add('hidden');
+            document.getElementById('dropdown-arrow').style.transform = 'rotate(0deg)';
+            
+            // Navigate to the selected agent's chat page
+            window.location.href = `/ai-assistant/chat/${agentId}/`;
+        }
+
+        // Clear chat history
+        async function clearChatHistory() {
+            try {
+                const response = await fetch(`/${requestPlatform}/dashboard/${companyId}/governance/ai-assistant/chat/clear_history/${agent_id}`, {
+                    method: "PUT",
+                    body: JSON.stringify({ message: "", chat_type }),
+                    headers: {
+                        "X-CSRFToken": csrfToken,
+                        "Content-Type": "application/json",
+                    },
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to clear chat history');
+                }
+
+                // Clear the UI
+                if (chatContainer) chatContainer.innerHTML = '';
+                if (aiChat) aiChat.classList.remove('hidden');
+                
+                // Clear chat history list
+                const chatList = document.getElementById('chat-list');
+                if (chatList) chatList.innerHTML = '';
+                
+            } catch (error) {
+                console.error('Error clearing chat history:', error);
+            }
+        }
+
+        // Toggle references visibility
+        function toggleReferences(referencesId) {
+            const list = document.getElementById(`${referencesId}-list`);
+            const arrow = document.getElementById(`${referencesId}-arrow`);
+            
+            if (list && arrow) {
+                const isHidden = list.classList.contains('hidden');
+                if (isHidden) {
+                    list.classList.remove('hidden');
+                    arrow.style.transform = 'rotate(90deg)';
+                } else {
+                    list.classList.add('hidden');
+                    arrow.style.transform = 'rotate(0deg)';
+                }
+            }
+        }
+
+        // Copy message to clipboard
+        function copyMessageToClipboard(message) {
+            // Extract text from HTML if needed
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = message;
+            const textContent = tempDiv.textContent || tempDiv.innerText || message;
+            
+            navigator.clipboard.writeText(textContent).then(() => {
+                // Show temporary feedback
+                const toast = document.createElement('div');
+                toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-opacity';
+                toast.textContent = 'Copied to clipboard!';
+                document.body.appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    setTimeout(() => toast.remove(), 300);
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+                alert('Failed to copy message to clipboard');
+            });
+        }
+
+        // Helper function to escape HTML
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Show feedback modal when clicking unlike
+        function showFeedbackModal(userQuestion, aiAnswer, actionBarId) {
+            const modalId = `feedback-modal-${Date.now()}`;
+            const modal = document.createElement('div');
+            modal.id = modalId;
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            
+            // Store actionBarId in modal for later retrieval
+            modal.setAttribute('data-action-bar-id', actionBarId);
+            
+            // Escape HTML to prevent XSS
+            const safeUserQuestion = escapeHtml(userQuestion || 'No question available');
+            const safeAiAnswer = escapeHtml(aiAnswer || 'No answer available');
+            
+            modal.innerHTML = `
+                <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+                    <div class="p-6">
+                        <!-- Header -->
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-xl font-semibold text-gray-900">Provide more feedback</h2>
+                            <button onclick="closeFeedbackModal('${modalId}')" class="text-gray-400 hover:text-gray-600 transition-colors">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        <!-- User Question -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                User Question
+                            </label>
+                            <div class="bg-[#cae2f2] p-4 rounded-lg border border-gray-200">
+                                <p class="text-gray-800 whitespace-pre-wrap">${safeUserQuestion}</p>
+                            </div>
+                        </div>
+                        
+                        <!-- AI Answer -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                AI Answer
+                            </label>
+                            <div class="bg-white p-4 rounded-lg border border-gray-200">
+                                <div class="text-gray-800 whitespace-pre-wrap">${safeAiAnswer}</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Correction Text Input -->
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Please add specific details or the correct answer
+                            </label>
+                            <textarea 
+                                id="${modalId}-correction" 
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none" 
+                                rows="4" 
+                                placeholder="Enter the correct answer or your feedback details..."></textarea>
+                        </div>
+                        
+                        <!-- Submit Button -->
+                        <div class="flex justify-end gap-3">
+                            <button 
+                                type="button"
+                                onclick="closeFeedbackModal('${modalId}')" 
+                                class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium">
+                                Cancel
+                            </button>
+                            <button 
+                                type="button"
+                                onclick="submitFeedback('${modalId}', '${actionBarId}')" 
+                                class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                                Send Feedback
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Close on background click
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeFeedbackModal(modalId);
+                }
+            });
+        }
+        
+        // Close feedback modal
+        function closeFeedbackModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.remove();
+            }
+        }
+        
+        // Submit feedback
+        function submitFeedback(modalId, actionBarId) {
+            const modal = document.getElementById(modalId);
+            if (!modal) return;
+            
+            // Get actionBarId from modal if not provided
+            if (!actionBarId) {
+                actionBarId = modal.getAttribute('data-action-bar-id');
+            }
+            
+            // Get correction
+            const correction = modal.querySelector(`#${modalId}-correction`).value.trim();
+            
+            // Build feedback object
+            const feedback = {
+                rating: "bad", // Default to bad since they clicked unlike
+                correction: correction || null,
+                timestamp: new Date().toISOString()
+            };
+            
+            // Get chat history ID from actionBar or messageDiv
+            let messageId = null;
+            
+            console.log('[FEEDBACK] Looking for chatHistoryId, actionBarId:', actionBarId);
+            
+            // First, try to get from map
+            if (actionBarId && actionBarToChatHistoryMap.has(actionBarId)) {
+                messageId = actionBarToChatHistoryMap.get(actionBarId);
+                console.log('[FEEDBACK] Found chatHistoryId from map:', messageId);
+            }
+            
+            // Try to find actionBar first
+            const actionBar = actionBarId ? document.getElementById(actionBarId) : null;
+            console.log('[FEEDBACK] actionBar element found:', actionBar);
+            if (actionBar) {
+                if (!messageId) {
+                    messageId = actionBar.getAttribute('data-chat-history-id');
+                    console.log('[FEEDBACK] Found actionBar, chatHistoryId from attribute:', messageId);
+                }
+                if (messageId) {
+                    console.log('[FEEDBACK] All attributes on actionBar:', Array.from(actionBar.attributes).map(a => `${a.name}="${a.value}"`).join(', '));
+                    // Update map for future use
+                    actionBarToChatHistoryMap.set(actionBarId, messageId);
+                } else {
+                    console.warn('[FEEDBACK] actionBar found but no chatHistoryId attribute');
+                }
+            } else {
+                console.warn('[FEEDBACK] actionBar not found with ID:', actionBarId);
+            }
+            
+            // If not in actionBar, try to get from parent messageDiv
+            if (!messageId && actionBar) {
+                const messageDiv = actionBar.closest('[data-chat-history-id]');
+                if (messageDiv) {
+                    messageId = messageDiv.getAttribute('data-chat-history-id');
+                    console.log('[FEEDBACK] Found messageDiv, chatHistoryId:', messageId);
+                }
+            }
+            
+            // Fallback: search for messageDiv containing this actionBar
+            if (!messageId && actionBar) {
+                // Find parent messageDiv (should be the closest div with relative positioning)
+                let parent = actionBar.parentElement;
+                while (parent && parent !== document.body) {
+                    if (parent.hasAttribute('data-chat-history-id')) {
+                        messageId = parent.getAttribute('data-chat-history-id');
+                        console.log('[FEEDBACK] Found parent messageDiv, chatHistoryId:', messageId);
+                        break;
+                    }
+                    parent = parent.parentElement;
+                }
+            }
+            
+            // Last resort: search all messageDivs for one containing this actionBar
+            if (!messageId) {
+                // Try to find messageDiv by data-action-bar-id attribute
+                const messageDivByActionBar = document.querySelector(`[data-action-bar-id="${actionBarId}"]`);
+                if (messageDivByActionBar) {
+                    messageId = messageDivByActionBar.getAttribute('data-chat-history-id');
+                    console.log('[FEEDBACK] Found messageDiv by data-action-bar-id, chatHistoryId:', messageId);
+                }
+            }
+            
+            // Last resort: search all messageDivs for one containing this actionBar
+            if (!messageId) {
+                const allMessageDivs = document.querySelectorAll('[data-action-bar-id]');
+                for (const msgDiv of allMessageDivs) {
+                    const storedActionBarId = msgDiv.getAttribute('data-action-bar-id');
+                    if (storedActionBarId === actionBarId) {
+                        messageId = msgDiv.getAttribute('data-chat-history-id');
+                        console.log('[FEEDBACK] Found messageDiv by searching data-action-bar-id, chatHistoryId:', messageId);
+                        break;
+                    }
+                }
+            }
+            
+            if (!messageId) {
+                console.error('[FEEDBACK] ❌ Could not find chat history ID for feedback');
+                console.error('[FEEDBACK] actionBarId:', actionBarId);
+                console.error('[FEEDBACK] actionBar element:', actionBar);
+                console.error('[FEEDBACK] Map contents:', Array.from(actionBarToChatHistoryMap.entries()));
+                console.error('[FEEDBACK] All messageDivs with data-action-bar-id:', Array.from(document.querySelectorAll('[data-action-bar-id]')).map(d => ({
+                    actionBarId: d.getAttribute('data-action-bar-id'),
+                    chatHistoryId: d.getAttribute('data-chat-history-id'),
+                    allAttributes: Array.from(d.attributes).map(a => `${a.name}="${a.value}"`).join(', ')
+                })));
+                console.error('[FEEDBACK] All actionBars:', Array.from(document.querySelectorAll('[id^="action-bar-"]')).map(b => ({
+                    id: b.id,
+                    chatHistoryId: b.getAttribute('data-chat-history-id'),
+                    allAttributes: Array.from(b.attributes).map(a => `${a.name}="${a.value}"`).join(', ')
+                })));
+                alert('Error: Could not find message ID. Please try again.');
+                return;
+            }
+            
+            // Feedback not implemented in hackathon demo
+            const requestPlatform = 'governance';
+            fetch(`/api/ai-assistant/chat/feedback/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    message_id: messageId,
+                    feedback: feedback
+                })
+            }).then(response => {
+                if (response.ok) {
+                    console.log('Feedback submitted successfully:', feedback);
+                } else {
+                    console.error('Failed to submit feedback');
+                }
+            }).catch(error => {
+                console.error('Error submitting feedback:', error);
+            });
+            
+            // Update unlike button state if rating is bad
+            if (feedback.rating === 'bad') {
+            handleLikeMessage(actionBarId, false);
+            } else if (feedback.rating === 'good') {
+                handleLikeMessage(actionBarId, true);
+            }
+            
+            // Show success message
+            const toast = document.createElement('div');
+            toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-opacity';
+            toast.textContent = 'Thank you for your feedback!';
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 2000);
+            
+            // Close modal
+            closeFeedbackModal(modalId);
+        }
+        
+        // Helper function to get CSRF token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Handle like/unlike message
+        function handleLikeMessage(actionBarId, isLike) {
+            const actionBar = document.getElementById(actionBarId);
+            if (!actionBar) return;
+            
+            // Get like and unlike buttons
+            const likeBtn = actionBar.querySelector('button:nth-child(2)');
+            const unlikeBtn = actionBar.querySelector('button:nth-child(3)');
+            
+            if (isLike) {
+                // Toggle like state
+                const isLiked = likeBtn.classList.contains('liked');
+                const likePath = likeBtn.querySelector('svg path');
+                if (isLiked) {
+                    likeBtn.classList.remove('liked');
+                    likePath.setAttribute('stroke', '#EF4444');
+                    likePath.setAttribute('fill', 'none');
+                } else {
+                    likeBtn.classList.add('liked');
+                    likePath.setAttribute('stroke', '#DC2626');
+                    likePath.setAttribute('fill', '#DC2626');
+                    // Remove unlike if it was active
+                    if (unlikeBtn.classList.contains('unliked')) {
+                        unlikeBtn.classList.remove('unliked');
+                        const unlikePath = unlikeBtn.querySelector('svg path');
+                        unlikePath.setAttribute('stroke', '#EF4444');
+                        unlikePath.setAttribute('fill', 'none');
+                    }
+                }
+            } else {
+                // Toggle unlike state
+                const isUnliked = unlikeBtn.classList.contains('unliked');
+                const unlikePath = unlikeBtn.querySelector('svg path');
+                if (isUnliked) {
+                    unlikeBtn.classList.remove('unliked');
+                    unlikePath.setAttribute('stroke', '#EF4444');
+                    unlikePath.setAttribute('fill', 'none');
+                } else {
+                    unlikeBtn.classList.add('unliked');
+                    unlikePath.setAttribute('stroke', '#DC2626');
+                    unlikePath.setAttribute('fill', '#DC2626');
+                    // Remove like if it was active
+                    if (likeBtn.classList.contains('liked')) {
+                        likeBtn.classList.remove('liked');
+                        const likePath = likeBtn.querySelector('svg path');
+                        likePath.setAttribute('stroke', '#EF4444');
+                        likePath.setAttribute('fill', 'none');
+                    }
+                }
+            }
+        }
+
+        // Update chat history with new message
+        function updateChatHistory(userMessage, aiResponse, references = [], chatHistoryId = null) {
+            const chatList = document.getElementById('chat-list');
+            if (!chatList) return;
+
+            // Create new message element
+            const newMessage = document.createElement('li');
+            newMessage.className = 'truncate text-sm font-medium relative group';
+            newMessage.setAttribute('data-ai-response', aiResponse);
+            newMessage.setAttribute('data-user-message', userMessage);
+            newMessage.setAttribute('data-references-response', JSON.stringify(references));
+            // Use actual chatHistoryId if provided, otherwise use timestamp as fallback
+            newMessage.setAttribute('data-id', chatHistoryId || Date.now());
+            console.log('[CHAT HISTORY] Added to history with chatHistoryId:', chatHistoryId || Date.now());
+
+            // Create message content
+            newMessage.innerHTML = `
+                ${userMessage}
+                <img src="/static/icons/x.svg" alt="Delete" class="delete-icon absolute hidden group-hover:block right-0 top-1/2 transform -translate-y-1/2 w-5 h-5">
+            `;
+
+            // Add to top of list
+            chatList.insertBefore(newMessage, chatList.firstChild);
+        }
+
+        // ===== EVENT LISTENERS =====
+        
+        // Initialize all event listeners
+        function initializeEventListeners() {
+            // Chat input events
+            chatInput?.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    const messageInput = chatInput.value.trim();
+                    if (messageInput) {
+                        addMessage(messageInput, true);
+                        sendMessageToBackend(messageInput);
+                    }
+                }
+            });
+
+            // Send button
+            sendButton?.addEventListener('click', () => {
+                const messageInput = chatInput.value.trim();
+                if (messageInput) {
+                    addMessage(messageInput, true);
+                    sendMessageToBackend(messageInput);
+                }
+            });
+
+            // File upload
+            uploadBtn?.addEventListener('click', () => {
+                fileInput?.click();
+            });
+
+            fileInput?.addEventListener('change', (event) => {
+                const files = event.target.files;
+                console.log('File input changed, files:', files);
+                console.log('Files length:', files ? files.length : 'undefined');
+                
+                if (files && files.length > 0) {
+                    // Convert FileList to Array to ensure proper handling
+                    const filesArray = Array.from(files);
+                    console.log('Files array:', filesArray);
+                    
+                    // Handle multiple files in single request
+                    handleMultipleFileUpload(filesArray);
+                    // Clear the input so the same files can be selected again
+                    event.target.value = '';
+                } else {
+                    console.log('No files selected');
+                }
+            });
+
+            // Export Excel (only for Justine)
+            exportExcelBtn?.addEventListener('click', () => {
+                handleExportExcel();
+            });
+
+            // Clear history
+            clearHistory?.addEventListener('click', () => {
+                clearChatHistory();
+            });
+
+            // Toggle buttons
+            toggleButtonClose?.addEventListener('click', () => {
+                chatHistory?.classList.toggle('hidden');
+                toggleButtonOpen?.classList.remove('hidden');
+            });
+
+            toggleButtonOpen?.addEventListener('click', () => {
+                chatHistory?.classList.remove('hidden');
+                toggleButtonOpen?.classList.toggle('hidden');
+            });
+
+            // Dropdown
+            dropdownButton?.addEventListener('click', (event) => {
+            event.stopPropagation();
+                const isHidden = dropdownMenu?.classList.contains('hidden');
+                const arrow = document.getElementById('dropdown-arrow');
+                
+                if (isHidden) {
+                    dropdownMenu?.classList.remove('hidden');
+                    arrow?.style.setProperty('transform', 'rotate(180deg)');
+                } else {
+                    dropdownMenu?.classList.add('hidden');
+                    arrow?.style.setProperty('transform', 'rotate(0deg)');
+                }
+            });
+
+            // Close dropdown when clicking outside
+            window.addEventListener('click', ({ target }) => {
+                if (!dropdownContainer?.contains(target)) {
+                    dropdownMenu?.classList.add('hidden');
+                    const arrow = document.getElementById('dropdown-arrow');
+                    arrow?.style.setProperty('transform', 'rotate(0deg)');
+                }
+            });
+        }
+
+        // ===== INITIALIZATION =====
+        
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeEventListeners);
+        } else {
+            initializeEventListeners();
+        }
+        
+        // Auto-start chat for agent_chang on page load to show initial questionnaire question
+        if (agent_id === 'agent_chang') {
+            // Check if chat container is empty (no messages yet)
+            // Messages can have various classes, so check for any child elements
+            const hasMessages = chatContainer && chatContainer.children && chatContainer.children.length > 0;
+            
+            // If no messages, automatically send "begin_session" command to trigger questionnaire question
+            if (!hasMessages) {
+                // Small delay to ensure DOM is fully ready
+                setTimeout(() => {
+                    console.log('[CHANG] Beginning chat session to show questionnaire question');
+                    sendMessageToBackend('begin_session');
+                }, 100);
+            }
+        }
+    </script>
+    {% endblock %}

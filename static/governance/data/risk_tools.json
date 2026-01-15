@@ -1,0 +1,1446 @@
+{
+    "version": "2.0",
+    "name": "AI Risk Assessment Tools & APIs",
+    "description": "Comprehensive free tools, APIs, and software for automated risk assessment across 13 categories",
+    "categories": {
+        "legal": {
+            "name": "Legal",
+            "icon": "⚖️",
+            "tools": [
+                {
+                    "name": "EU AI Act Classifier",
+                    "type": "api",
+                    "description": "Classify AI systems according to EU AI Act risk levels based on use case and sector",
+                    "provider": "Custom/Internal",
+                    "capabilities": [
+                        "Risk classification",
+                        "Annex mapping",
+                        "Documentation gaps"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "SPDX License Checker",
+                    "type": "api",
+                    "description": "Validate open source licenses for training data compliance",
+                    "provider": "SPDX.org",
+                    "endpoint": "https://spdx.org/licenses/",
+                    "capabilities": [
+                        "License detection",
+                        "Copyleft analysis",
+                        "Compatibility check"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "TinEye Reverse Image Search",
+                    "type": "api",
+                    "description": "Detect potential IP infringement in AI-generated images",
+                    "provider": "TinEye",
+                    "endpoint": "https://tineye.com/",
+                    "capabilities": [
+                        "Image matching",
+                        "Source tracking",
+                        "Copyright detection"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "Copyscape Plagiarism Checker",
+                    "type": "api",
+                    "description": "Check AI outputs for potential plagiarism and content copying",
+                    "provider": "Copyscape",
+                    "endpoint": "https://www.copyscape.com/",
+                    "capabilities": [
+                        "Text matching",
+                        "Plagiarism score",
+                        "Source URLs"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "EUR-Lex API",
+                    "type": "api",
+                    "description": "Access EU legislation database for compliance checking",
+                    "provider": "European Union",
+                    "endpoint": "https://eur-lex.europa.eu/api",
+                    "capabilities": [
+                        "Regulation lookup",
+                        "Legal references",
+                        "Document retrieval"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "GDPR Article Checker",
+                    "type": "tool",
+                    "description": "Map AI operations to relevant GDPR articles",
+                    "provider": "Custom",
+                    "capabilities": [
+                        "Article mapping",
+                        "Lawful basis check",
+                        "Rights coverage"
+                    ],
+                    "free": true
+                }
+            ]
+        },
+        "cybersecurity": {
+            "name": "Cybersecurity",
+            "icon": "🔒",
+            "tools": [
+                {
+                    "name": "HaveIBeenPwned API",
+                    "type": "api",
+                    "description": "Check if passwords or emails have been exposed in data breaches",
+                    "provider": "Troy Hunt",
+                    "endpoint": "https://api.pwnedpasswords.com/",
+                    "capabilities": [
+                        "Password breach check",
+                        "Email exposure",
+                        "Breach count"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "NVD CVE Lookup",
+                    "type": "api",
+                    "description": "Search NIST National Vulnerability Database for CVEs",
+                    "provider": "NIST",
+                    "endpoint": "https://services.nvd.nist.gov/rest/json/cves/2.0",
+                    "capabilities": [
+                        "CVE details",
+                        "CVSS scores",
+                        "Severity ratings"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "VirusTotal API",
+                    "type": "api",
+                    "description": "Scan files and URLs for malware and security threats",
+                    "provider": "Google/VirusTotal",
+                    "endpoint": "https://www.virustotal.com/api/v3/",
+                    "documentation_url": "https://docs.virustotal.com/reference/overview",
+                    "signup_url": "https://www.virustotal.com/gui/join-us",
+                    "requires_key": true,
+                    "capabilities": [
+                        "Malware detection",
+                        "URL scanning",
+                        "File analysis"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "Shodan Search",
+                    "type": "api",
+                    "description": "Search for exposed devices and services on the internet",
+                    "provider": "Shodan",
+                    "endpoint": "https://api.shodan.io/",
+                    "documentation_url": "https://developer.shodan.io/api",
+                    "signup_url": "https://account.shodan.io/register",
+                    "requires_key": true,
+                    "capabilities": [
+                        "Port scanning",
+                        "Service detection",
+                        "Vulnerability mapping"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "URLhaus Malware URLs",
+                    "type": "api",
+                    "description": "Check URLs against known malware distribution sites",
+                    "provider": "abuse.ch",
+                    "endpoint": "https://urlhaus-api.abuse.ch/v1/",
+                    "documentation_url": "https://urlhaus.abuse.ch/api/",
+                    "requires_key": false,
+                    "capabilities": [
+                        "Malware URL check",
+                        "Threat intel",
+                        "Blocklist lookup"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "Hardenize",
+                    "type": "tool",
+                    "description": "Comprehensive security configuration analysis",
+                    "provider": "Hardenize",
+                    "endpoint": "https://www.hardenize.com/",
+                    "capabilities": [
+                        "TLS analysis",
+                        "DNS security",
+                        "Email security"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "SSL Labs API",
+                    "type": "api",
+                    "description": "Deep analysis of SSL/TLS configuration",
+                    "provider": "Qualys",
+                    "endpoint": "https://api.ssllabs.com/api/v3/",
+                    "capabilities": [
+                        "SSL grade",
+                        "Certificate check",
+                        "Vulnerability scan"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "AbuseIPDB",
+                    "type": "api",
+                    "description": "Check IP addresses against abuse reports database",
+                    "provider": "AbuseIPDB",
+                    "endpoint": "https://api.abuseipdb.com/api/v2/",
+                    "documentation_url": "https://docs.abuseipdb.com/",
+                    "signup_url": "https://www.abuseipdb.com/register",
+                    "requires_key": true,
+                    "capabilities": [
+                        "IP reputation",
+                        "Abuse reports",
+                        "Confidence score"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "Prompt Injection Detector",
+                    "type": "tool",
+                    "description": "Detect prompt injection and jailbreak attempts in LLM inputs",
+                    "provider": "Custom/Rebuff patterns",
+                    "capabilities": [
+                        "Injection detection",
+                        "Pattern matching",
+                        "Risk scoring"
+                    ],
+                    "free": true
+                }
+            ]
+        },
+        "environment": {
+            "name": "Environment",
+            "icon": "🌱",
+            "tools": [
+                {
+                    "name": "CodeCarbon",
+                    "type": "library",
+                    "description": "Track carbon emissions from compute operations",
+                    "provider": "MLCo2",
+                    "github": "https://github.com/mlco2/codecarbon",
+                    "capabilities": [
+                        "CO2 tracking",
+                        "Energy monitoring",
+                        "Regional factors"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "ML CO2 Impact Calculator",
+                    "type": "tool",
+                    "description": "Estimate carbon footprint of ML model training",
+                    "provider": "ML CO2 Impact",
+                    "endpoint": "https://mlco2.github.io/impact/",
+                    "capabilities": [
+                        "GPU hours to CO2",
+                        "Cloud vs on-prem",
+                        "Offset suggestions"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "Electricity Maps API",
+                    "type": "api",
+                    "description": "Real-time carbon intensity of electricity by region",
+                    "provider": "Electricity Maps",
+                    "endpoint": "https://api.electricitymap.org/",
+                    "capabilities": [
+                        "Carbon intensity",
+                        "Grid mix",
+                        "Forecasts"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "Green Web Foundation API",
+                    "type": "api",
+                    "description": "Check if websites and hosting use green energy",
+                    "provider": "Green Web Foundation",
+                    "endpoint": "https://api.thegreenwebfoundation.org/",
+                    "capabilities": [
+                        "Green hosting check",
+                        "Provider lookup",
+                        "Certification"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "Cloud Carbon Footprint",
+                    "type": "tool",
+                    "description": "Measure cloud usage carbon footprint across providers",
+                    "provider": "Thoughtworks",
+                    "github": "https://github.com/cloud-carbon-footprint/cloud-carbon-footprint",
+                    "capabilities": [
+                        "AWS/GCP/Azure support",
+                        "Emissions tracking",
+                        "Recommendations"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "Website Carbon Calculator",
+                    "type": "api",
+                    "description": "Calculate carbon emissions of web pages",
+                    "provider": "Wholegrain Digital",
+                    "endpoint": "https://api.websitecarbon.com/",
+                    "capabilities": [
+                        "Page CO2 estimate",
+                        "Data transfer",
+                        "Green hosting"
+                    ],
+                    "free": true
+                }
+            ]
+        },
+        "technical": {
+            "name": "Technical",
+            "icon": "⚙️",
+            "tools": [
+                {
+                    "name": "Evidently AI",
+                    "type": "library",
+                    "description": "ML model monitoring and data drift detection",
+                    "provider": "Evidently AI",
+                    "github": "https://github.com/evidentlyai/evidently",
+                    "capabilities": [
+                        "Data drift",
+                        "Model performance",
+                        "Feature analysis"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "Alibi Detect",
+                    "type": "library",
+                    "description": "Outlier, drift and adversarial detection",
+                    "provider": "Seldon",
+                    "github": "https://github.com/SeldonIO/alibi-detect",
+                    "capabilities": [
+                        "Drift detection",
+                        "Outlier detection",
+                        "Adversarial detection"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "RAGAS",
+                    "type": "library",
+                    "description": "Evaluation framework for RAG pipelines",
+                    "provider": "Exploding Gradients",
+                    "github": "https://github.com/explodinggradients/ragas",
+                    "capabilities": [
+                        "Faithfulness",
+                        "Answer relevancy",
+                        "Context precision"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "DeepEval",
+                    "type": "library",
+                    "description": "Unit testing framework for LLM applications",
+                    "provider": "Confident AI",
+                    "github": "https://github.com/confident-ai/deepeval",
+                    "capabilities": [
+                        "Hallucination test",
+                        "Toxicity test",
+                        "Bias detection"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "Hugging Face Evaluate",
+                    "type": "library",
+                    "description": "Standard evaluation metrics for ML models",
+                    "provider": "Hugging Face",
+                    "github": "https://github.com/huggingface/evaluate",
+                    "capabilities": [
+                        "Accuracy metrics",
+                        "NLP metrics",
+                        "Fairness metrics"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "LangSmith",
+                    "type": "platform",
+                    "description": "Debug and monitor LLM applications",
+                    "provider": "LangChain",
+                    "endpoint": "https://smith.langchain.com/",
+                    "capabilities": [
+                        "Trace logging",
+                        "Error debugging",
+                        "Performance monitoring"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "Weights & Biases",
+                    "type": "platform",
+                    "description": "ML experiment tracking and model monitoring",
+                    "provider": "Weights & Biases",
+                    "endpoint": "https://wandb.ai/",
+                    "capabilities": [
+                        "Experiment tracking",
+                        "Model versioning",
+                        "Hyperparameter tuning"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "PromptFoo",
+                    "type": "tool",
+                    "description": "Test and evaluate LLM prompts systematically",
+                    "provider": "PromptFoo",
+                    "github": "https://github.com/promptfoo/promptfoo",
+                    "capabilities": [
+                        "Prompt testing",
+                        "Model comparison",
+                        "Regression testing"
+                    ],
+                    "free": true
+                }
+            ]
+        },
+        "trust": {
+            "name": "Trust",
+            "icon": "🤝",
+            "tools": [
+                {
+                    "name": "SHAP Explainer",
+                    "type": "library",
+                    "description": "Explain ML model predictions with SHAP values",
+                    "provider": "Slundberg",
+                    "github": "https://github.com/slundberg/shap",
+                    "capabilities": [
+                        "Feature importance",
+                        "Local explanations",
+                        "Visualizations"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "LIME",
+                    "type": "library",
+                    "description": "Local interpretable model-agnostic explanations",
+                    "provider": "Marco Ribeiro",
+                    "github": "https://github.com/marcotcr/lime",
+                    "capabilities": [
+                        "Text explanations",
+                        "Image explanations",
+                        "Tabular explanations"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "Captum",
+                    "type": "library",
+                    "description": "PyTorch model interpretability library",
+                    "provider": "Meta/Facebook",
+                    "github": "https://github.com/pytorch/captum",
+                    "capabilities": [
+                        "Attribution methods",
+                        "Concept analysis",
+                        "Influence functions"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "InterpretML",
+                    "type": "library",
+                    "description": "Interpretable machine learning techniques",
+                    "provider": "Microsoft",
+                    "github": "https://github.com/interpretml/interpret",
+                    "capabilities": [
+                        "Glass-box models",
+                        "Black-box explanations",
+                        "Dashboard"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "What-If Tool",
+                    "type": "tool",
+                    "description": "Explore ML models without code",
+                    "provider": "Google PAIR",
+                    "github": "https://github.com/PAIR-code/what-if-tool",
+                    "capabilities": [
+                        "Interactive exploration",
+                        "Fairness analysis",
+                        "Counterfactuals"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "Axe Accessibility",
+                    "type": "tool",
+                    "description": "Web accessibility testing for AI interfaces",
+                    "provider": "Deque",
+                    "github": "https://github.com/dequelabs/axe-core",
+                    "capabilities": [
+                        "WCAG compliance",
+                        "A11y testing",
+                        "Auto-remediation"
+                    ],
+                    "free": true
+                }
+            ]
+        },
+        "fundamental_rights": {
+            "name": "Fundamental Rights",
+            "icon": "⚖️",
+            "tools": [
+                {
+                    "name": "AI Fairness 360",
+                    "type": "library",
+                    "description": "Comprehensive fairness metrics and bias mitigation",
+                    "provider": "IBM",
+                    "github": "https://github.com/Trusted-AI/AIF360",
+                    "capabilities": [
+                        "Bias metrics",
+                        "Mitigation algorithms",
+                        "Dataset analysis"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "Fairlearn",
+                    "type": "library",
+                    "description": "Assess and improve fairness of ML models",
+                    "provider": "Microsoft",
+                    "github": "https://github.com/fairlearn/fairlearn",
+                    "capabilities": [
+                        "Demographic parity",
+                        "Equalized odds",
+                        "Dashboard"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "Aequitas",
+                    "type": "library",
+                    "description": "Bias and fairness audit toolkit",
+                    "provider": "University of Chicago",
+                    "github": "https://github.com/dssg/aequitas",
+                    "capabilities": [
+                        "Bias audit",
+                        "Fairness metrics",
+                        "Group analysis"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "Perspective API",
+                    "type": "api",
+                    "description": "Detect toxic and harmful content",
+                    "provider": "Google Jigsaw",
+                    "endpoint": "https://perspectiveapi.com/",
+                    "capabilities": [
+                        "Toxicity scoring",
+                        "Threat detection",
+                        "Insult detection"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "Moderation API",
+                    "type": "api",
+                    "description": "Content moderation for harmful outputs",
+                    "provider": "OpenAI",
+                    "endpoint": "https://api.openai.com/v1/moderations",
+                    "documentation_url": "https://platform.openai.com/docs/api-reference/moderations",
+                    "signup_url": "https://platform.openai.com/signup",
+                    "requires_key": true,
+                    "capabilities": [
+                        "Hate detection",
+                        "Violence detection",
+                        "Self-harm detection"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "Disaggregated Evaluation",
+                    "type": "tool",
+                    "description": "Evaluate model performance across demographic groups",
+                    "provider": "Custom",
+                    "capabilities": [
+                        "Subgroup analysis",
+                        "Performance gaps",
+                        "Disparity metrics"
+                    ],
+                    "free": true
+                }
+            ]
+        },
+        "privacy": {
+            "name": "Privacy",
+            "icon": "🔐",
+            "tools": [
+                {
+                    "name": "Presidio",
+                    "type": "library",
+                    "description": "PII detection and anonymization",
+                    "provider": "Microsoft",
+                    "github": "https://github.com/microsoft/presidio",
+                    "capabilities": [
+                        "PII detection",
+                        "Anonymization",
+                        "Multi-language"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "spaCy NER",
+                    "type": "library",
+                    "description": "Named entity recognition for PII detection",
+                    "provider": "Explosion",
+                    "github": "https://github.com/explosion/spaCy",
+                    "capabilities": [
+                        "Entity extraction",
+                        "Custom models",
+                        "Multi-language"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "Faker",
+                    "type": "library",
+                    "description": "Generate fake data for anonymization",
+                    "provider": "Faker",
+                    "github": "https://github.com/joke2k/faker",
+                    "capabilities": [
+                        "Fake names",
+                        "Fake addresses",
+                        "Fake emails"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "ARX Data Anonymization",
+                    "type": "tool",
+                    "description": "K-anonymity, l-diversity, t-closeness",
+                    "provider": "ARX",
+                    "github": "https://github.com/arx-deidentifier/arx",
+                    "capabilities": [
+                        "K-anonymity",
+                        "Differential privacy",
+                        "Risk assessment"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "OpenDP",
+                    "type": "library",
+                    "description": "Differential privacy algorithms",
+                    "provider": "OpenDP",
+                    "github": "https://github.com/opendp/opendp",
+                    "capabilities": [
+                        "Privacy budget",
+                        "Noise injection",
+                        "Query privacy"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "Email Validator",
+                    "type": "api",
+                    "description": "Validate and check email addresses",
+                    "provider": "Hunter.io",
+                    "endpoint": "https://hunter.io/",
+                    "capabilities": [
+                        "Format validation",
+                        "Disposable check",
+                        "Domain search"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "GDPR Keyword Scanner",
+                    "type": "tool",
+                    "description": "Detect sensitive GDPR-relevant data categories",
+                    "provider": "Custom",
+                    "capabilities": [
+                        "Health data",
+                        "Biometric data",
+                        "Political opinions"
+                    ],
+                    "free": true
+                }
+            ]
+        },
+        "societal": {
+            "name": "Societal",
+            "icon": "🌍",
+            "tools": [
+                {
+                    "name": "Perspective API",
+                    "type": "api",
+                    "description": "Measure toxicity and harmful content",
+                    "provider": "Google Jigsaw",
+                    "endpoint": "https://perspectiveapi.com/",
+                    "capabilities": [
+                        "Toxicity",
+                        "Severe toxicity",
+                        "Identity attack"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "Detoxify",
+                    "type": "library",
+                    "description": "Detect toxic comments using ML",
+                    "provider": "Unitaryai",
+                    "github": "https://github.com/unitaryai/detoxify",
+                    "capabilities": [
+                        "Toxicity detection",
+                        "Multilingual",
+                        "Multiple labels"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "ClaimBuster API",
+                    "type": "api",
+                    "description": "Detect check-worthy claims for fact-checking",
+                    "provider": "UT Arlington",
+                    "endpoint": "https://idir.uta.edu/claimbuster/api/",
+                    "capabilities": [
+                        "Claim detection",
+                        "Check-worthiness",
+                        "Topic classification"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "TextBlob Sentiment",
+                    "type": "library",
+                    "description": "Simple sentiment analysis",
+                    "provider": "TextBlob",
+                    "github": "https://github.com/sloria/TextBlob",
+                    "capabilities": [
+                        "Polarity",
+                        "Subjectivity",
+                        "Noun phrases"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "VADER Sentiment",
+                    "type": "library",
+                    "description": "Rule-based sentiment analysis for social media",
+                    "provider": "NLTK",
+                    "github": "https://github.com/cjhutto/vaderSentiment",
+                    "capabilities": [
+                        "Sentiment scores",
+                        "Emoji support",
+                        "Slang handling"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "Hate Speech Detector",
+                    "type": "tool",
+                    "description": "Detect hate speech patterns in text",
+                    "provider": "Custom",
+                    "capabilities": [
+                        "Hate categories",
+                        "Severity scoring",
+                        "Multi-language"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "Misinformation Keywords",
+                    "type": "tool",
+                    "description": "Detect red flags for misinformation",
+                    "provider": "Custom",
+                    "capabilities": [
+                        "Conspiracy patterns",
+                        "Pseudoscience",
+                        "Fearmongering"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "AI Content Detector",
+                    "type": "tool",
+                    "description": "Detect AI-generated content patterns",
+                    "provider": "Custom",
+                    "capabilities": [
+                        "AI detection",
+                        "Perplexity analysis",
+                        "Burstiness"
+                    ],
+                    "free": true
+                }
+            ]
+        },
+        "third_party": {
+            "name": "Third-Party",
+            "icon": "🔗",
+            "tools": [
+                {
+                    "name": "Snyk OSS",
+                    "type": "tool",
+                    "description": "Scan dependencies for vulnerabilities",
+                    "provider": "Snyk",
+                    "endpoint": "https://snyk.io/",
+                    "capabilities": [
+                        "Vulnerability scan",
+                        "Fix suggestions",
+                        "License check"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "Safety (PyUp)",
+                    "type": "cli",
+                    "description": "Check Python dependencies for security issues",
+                    "provider": "PyUp",
+                    "github": "https://github.com/pyupio/safety",
+                    "capabilities": [
+                        "CVE detection",
+                        "Remediation",
+                        "CI integration"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "npm audit",
+                    "type": "cli",
+                    "description": "Audit npm packages for vulnerabilities",
+                    "provider": "npm",
+                    "capabilities": [
+                        "Security audit",
+                        "Fix suggestions",
+                        "Severity levels"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "Syft SBOM Generator",
+                    "type": "cli",
+                    "description": "Generate Software Bill of Materials",
+                    "provider": "Anchore",
+                    "github": "https://github.com/anchore/syft",
+                    "capabilities": [
+                        "SBOM generation",
+                        "Multiple formats",
+                        "Container support"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "Grype Vulnerability Scanner",
+                    "type": "cli",
+                    "description": "Scan SBOMs and containers for vulnerabilities",
+                    "provider": "Anchore",
+                    "github": "https://github.com/anchore/grype",
+                    "capabilities": [
+                        "CVE matching",
+                        "Severity scoring",
+                        "Container scanning"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "OSSF Scorecard",
+                    "type": "tool",
+                    "description": "Security health metrics for open source projects",
+                    "provider": "OpenSSF",
+                    "github": "https://github.com/ossf/scorecard",
+                    "capabilities": [
+                        "Security score",
+                        "Best practices",
+                        "CI/CD check"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "License Checker",
+                    "type": "tool",
+                    "description": "Verify license compatibility of dependencies",
+                    "provider": "Custom",
+                    "capabilities": [
+                        "License detection",
+                        "Copyleft check",
+                        "Compatibility"
+                    ],
+                    "free": true
+                }
+            ]
+        },
+        "business": {
+            "name": "Business",
+            "icon": "💼",
+            "tools": [
+                {
+                    "name": "ROI Calculator",
+                    "type": "calculator",
+                    "description": "Calculate AI project return on investment",
+                    "provider": "Custom",
+                    "capabilities": [
+                        "Cost analysis",
+                        "Benefit projection",
+                        "Payback period"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "Downtime Cost Calculator",
+                    "type": "calculator",
+                    "description": "Estimate financial impact of AI system downtime",
+                    "provider": "Custom",
+                    "capabilities": [
+                        "Hourly cost",
+                        "Revenue impact",
+                        "SLA penalties"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "Risk Scoring Matrix",
+                    "type": "tool",
+                    "description": "Calculate risk scores based on probability and impact",
+                    "provider": "Custom",
+                    "capabilities": [
+                        "Risk matrix",
+                        "Severity scoring",
+                        "Prioritization"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "Vendor Comparison Tool",
+                    "type": "tool",
+                    "description": "Compare AI vendors on cost and capabilities",
+                    "provider": "Custom",
+                    "capabilities": [
+                        "Feature matrix",
+                        "Pricing comparison",
+                        "Risk factors"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "Data Breach Cost Estimator",
+                    "type": "calculator",
+                    "description": "Estimate potential cost of data breaches",
+                    "provider": "Based on IBM/Ponemon",
+                    "capabilities": [
+                        "Breach cost",
+                        "Record count",
+                        "Industry factors"
+                    ],
+                    "free": true
+                }
+            ]
+        },
+        "health_safety": {
+            "name": "Health & Safety",
+            "icon": "🏥",
+            "tools": [
+                {
+                    "name": "FHIR Validator",
+                    "type": "api",
+                    "description": "Validate health data against FHIR standards",
+                    "provider": "HL7",
+                    "endpoint": "https://fhir.org/",
+                    "capabilities": [
+                        "FHIR validation",
+                        "Resource checking",
+                        "Code system lookup"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "ICD-10 Lookup",
+                    "type": "api",
+                    "description": "Look up medical diagnosis codes",
+                    "provider": "WHO/CMS",
+                    "endpoint": "https://clinicaltables.nlm.nih.gov/api/",
+                    "capabilities": [
+                        "Code lookup",
+                        "Description",
+                        "Category"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "OpenFDA Drug API",
+                    "type": "api",
+                    "description": "Access FDA drug information and adverse events",
+                    "provider": "FDA",
+                    "endpoint": "https://api.fda.gov/drug/event.json?limit=1",
+                    "capabilities": [
+                        "Drug information",
+                        "Adverse events",
+                        "Label data"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "Safety Case Generator",
+                    "type": "tool",
+                    "description": "Create structured safety arguments",
+                    "provider": "GSN/SACM patterns",
+                    "capabilities": [
+                        "Goal structuring",
+                        "Evidence mapping",
+                        "Claim support"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "Human Override Monitor",
+                    "type": "tool",
+                    "description": "Track human override rates in automated systems",
+                    "provider": "Custom",
+                    "capabilities": [
+                        "Override logging",
+                        "Pattern analysis",
+                        "Alert thresholds"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "Confidence Calibration",
+                    "type": "tool",
+                    "description": "Assess prediction confidence calibration",
+                    "provider": "Custom",
+                    "capabilities": [
+                        "Calibration curves",
+                        "ECE metric",
+                        "Reliability diagrams"
+                    ],
+                    "free": true
+                },
+                {
+                    "name": "Critical Alert Detector",
+                    "type": "tool",
+                    "description": "Detect missed critical conditions (false negatives)",
+                    "provider": "Custom",
+                    "capabilities": [
+                        "Sensitivity analysis",
+                        "Threshold tuning",
+                        "Alert review"
+                    ],
+                    "free": true
+                }
+            ]
+        },
+        "gdpr_compliance": {
+            "name": "GDPR Compliance",
+            "icon": "🔐",
+            "tools": [
+                {
+                    "name": "OneTrust DPIA Tool",
+                    "type": "platform",
+                    "description": "Data Protection Impact Assessment automation for high-risk processing",
+                    "provider": "OneTrust",
+                    "endpoint": "https://www.onetrust.com/products/privacy-impact-assessment/",
+                    "requires_key": true,
+                    "free": false,
+                    "capabilities": [
+                        "DPIA automation",
+                        "Risk scoring",
+                        "Template library",
+                        "Workflow management"
+                    ],
+                    "applicable_regulation": "GDPR"
+                },
+                {
+                    "name": "Cookiebot Scanner",
+                    "type": "api",
+                    "description": "Scan websites for cookies and tracking technologies for consent compliance",
+                    "provider": "Cookiebot/Usercentrics",
+                    "endpoint": "https://www.cookiebot.com/",
+                    "requires_key": true,
+                    "free": true,
+                    "capabilities": [
+                        "Cookie scanning",
+                        "Consent management",
+                        "Banner generation",
+                        "Compliance reports"
+                    ],
+                    "applicable_regulation": "GDPR"
+                },
+                {
+                    "name": "GDPR Enforcement Tracker API",
+                    "type": "api",
+                    "description": "Track GDPR fines and enforcement actions across EU",
+                    "provider": "CMS Law",
+                    "endpoint": "https://www.enforcementtracker.com/",
+                    "requires_key": false,
+                    "free": true,
+                    "capabilities": [
+                        "Fine database",
+                        "DPA decisions",
+                        "Trend analysis",
+                        "Country breakdown"
+                    ],
+                    "applicable_regulation": "GDPR"
+                },
+                {
+                    "name": "DataGrail DSAR Automation",
+                    "type": "platform",
+                    "description": "Automate Data Subject Access Requests (DSARs) handling",
+                    "provider": "DataGrail",
+                    "endpoint": "https://www.datagrail.io/",
+                    "requires_key": true,
+                    "free": false,
+                    "capabilities": [
+                        "DSAR intake",
+                        "Identity verification",
+                        "Data discovery",
+                        "Response automation"
+                    ],
+                    "applicable_regulation": "GDPR"
+                },
+                {
+                    "name": "PrivacyPolicies.com Generator",
+                    "type": "tool",
+                    "description": "Generate GDPR-compliant privacy policies",
+                    "provider": "PrivacyPolicies.com",
+                    "endpoint": "https://www.privacypolicies.com/",
+                    "requires_key": false,
+                    "free": true,
+                    "capabilities": [
+                        "Policy generation",
+                        "Multi-language",
+                        "GDPR templates",
+                        "Cookie policy"
+                    ],
+                    "applicable_regulation": "GDPR"
+                },
+                {
+                    "name": "Breach Notification Calculator",
+                    "type": "tool",
+                    "description": "Calculate 72-hour breach notification requirements and assess risk to individuals",
+                    "provider": "Custom",
+                    "requires_key": false,
+                    "free": true,
+                    "capabilities": [
+                        "72hr deadline tracking",
+                        "Risk assessment",
+                        "DPA notification",
+                        "Individual notification"
+                    ],
+                    "applicable_regulation": "GDPR"
+                },
+                {
+                    "name": "Lawful Basis Assessment Tool",
+                    "type": "tool",
+                    "description": "Determine appropriate lawful basis for data processing",
+                    "provider": "ICO UK",
+                    "endpoint": "https://ico.org.uk/for-organisations/lawful-basis-interactive-guidance-tool/",
+                    "requires_key": false,
+                    "free": true,
+                    "capabilities": [
+                        "Lawful basis selection",
+                        "Consent assessment",
+                        "Legitimate interest",
+                        "Documentation"
+                    ],
+                    "applicable_regulation": "GDPR"
+                },
+                {
+                    "name": "Records of Processing (RoPA) Tool",
+                    "type": "tool",
+                    "description": "Generate and maintain Article 30 Records of Processing Activities",
+                    "provider": "Custom",
+                    "requires_key": false,
+                    "free": true,
+                    "capabilities": [
+                        "Processing inventory",
+                        "Data mapping",
+                        "Retention periods",
+                        "Legal basis tracking"
+                    ],
+                    "applicable_regulation": "GDPR"
+                },
+                {
+                    "name": "Transcend Data Mapping",
+                    "type": "platform",
+                    "description": "Automated data discovery and mapping for GDPR compliance",
+                    "provider": "Transcend",
+                    "endpoint": "https://transcend.io/",
+                    "requires_key": true,
+                    "free": false,
+                    "capabilities": [
+                        "Data discovery",
+                        "System inventory",
+                        "Data flow mapping",
+                        "Vendor tracking"
+                    ],
+                    "applicable_regulation": "GDPR"
+                },
+                {
+                    "name": "International Transfer Assessment",
+                    "type": "tool",
+                    "description": "Assess international data transfers per Schrems II requirements",
+                    "provider": "Custom/EDPB",
+                    "requires_key": false,
+                    "free": true,
+                    "capabilities": [
+                        "TIA documentation",
+                        "SCC assessment",
+                        "Third country laws",
+                        "Supplementary measures"
+                    ],
+                    "applicable_regulation": "GDPR"
+                }
+            ]
+        },
+        "eu_ai_act_compliance": {
+            "name": "EU AI Act Compliance",
+            "icon": "🤖",
+            "tools": [
+                {
+                    "name": "AI Act Risk Classification API",
+                    "type": "api",
+                    "description": "Classify AI systems according to EU AI Act risk tiers (Prohibited, High-Risk, Limited, Minimal)",
+                    "provider": "Custom/Credo AI",
+                    "requires_key": false,
+                    "free": true,
+                    "capabilities": [
+                        "Risk tier classification",
+                        "Annex III mapping",
+                        "Use case analysis",
+                        "Sector classification"
+                    ],
+                    "applicable_regulation": "EU AI Act"
+                },
+                {
+                    "name": "Model Cards Generator",
+                    "type": "tool",
+                    "description": "Generate standardized model documentation per EU AI Act Article 11 requirements",
+                    "provider": "Hugging Face",
+                    "endpoint": "https://huggingface.co/docs/hub/model-cards",
+                    "requires_key": false,
+                    "free": true,
+                    "capabilities": [
+                        "Model documentation",
+                        "Intended use",
+                        "Limitations",
+                        "Bias assessment"
+                    ],
+                    "applicable_regulation": "EU AI Act"
+                },
+                {
+                    "name": "Conformity Assessment Checklist",
+                    "type": "tool",
+                    "description": "Track conformity assessment requirements for high-risk AI systems",
+                    "provider": "Custom",
+                    "requires_key": false,
+                    "free": true,
+                    "capabilities": [
+                        "Requirement tracking",
+                        "Evidence collection",
+                        "Gap analysis",
+                        "Declaration of Conformity"
+                    ],
+                    "applicable_regulation": "EU AI Act"
+                },
+                {
+                    "name": "AI System Registry",
+                    "type": "platform",
+                    "description": "Register high-risk AI systems in EU public database per Article 71",
+                    "provider": "EU Database (upcoming)",
+                    "endpoint": "https://ec.europa.eu/",
+                    "requires_key": true,
+                    "free": true,
+                    "capabilities": [
+                        "System registration",
+                        "Public transparency",
+                        "Notified body link",
+                        "Provider details"
+                    ],
+                    "applicable_regulation": "EU AI Act"
+                },
+                {
+                    "name": "Technical Documentation Generator",
+                    "type": "tool",
+                    "description": "Generate Annex IV compliant technical documentation for high-risk AI",
+                    "provider": "Custom",
+                    "requires_key": false,
+                    "free": true,
+                    "capabilities": [
+                        "Annex IV templates",
+                        "System description",
+                        "Design specifications",
+                        "Validation results"
+                    ],
+                    "applicable_regulation": "EU AI Act"
+                },
+                {
+                    "name": "Human Oversight Monitor",
+                    "type": "tool",
+                    "description": "Track and log human oversight actions per Article 14 requirements",
+                    "provider": "Custom",
+                    "requires_key": false,
+                    "free": true,
+                    "capabilities": [
+                        "Override logging",
+                        "Decision review",
+                        "Intervention tracking",
+                        "Competency records"
+                    ],
+                    "applicable_regulation": "EU AI Act"
+                },
+                {
+                    "name": "AI Transparency Labels",
+                    "type": "tool",
+                    "description": "Generate Article 50 transparency disclosures for AI-generated content",
+                    "provider": "Custom",
+                    "requires_key": false,
+                    "free": true,
+                    "capabilities": [
+                        "Deepfake labeling",
+                        "AI content marking",
+                        "Watermarking",
+                        "Disclosure templates"
+                    ],
+                    "applicable_regulation": "EU AI Act"
+                },
+                {
+                    "name": "FRIA Generator",
+                    "type": "tool",
+                    "description": "Generate Fundamental Rights Impact Assessments for high-risk AI",
+                    "provider": "Custom",
+                    "requires_key": false,
+                    "free": true,
+                    "capabilities": [
+                        "Rights mapping",
+                        "Impact assessment",
+                        "Stakeholder analysis",
+                        "Mitigation planning"
+                    ],
+                    "applicable_regulation": "EU AI Act"
+                },
+                {
+                    "name": "Post-Market Monitoring Dashboard",
+                    "type": "platform",
+                    "description": "Implement Article 72 post-market monitoring for AI systems",
+                    "provider": "Custom",
+                    "requires_key": false,
+                    "free": true,
+                    "capabilities": [
+                        "Incident tracking",
+                        "Performance monitoring",
+                        "User feedback",
+                        "Corrective actions"
+                    ],
+                    "applicable_regulation": "EU AI Act"
+                },
+                {
+                    "name": "Serious Incident Reporter",
+                    "type": "tool",
+                    "description": "Report serious incidents to market surveillance authorities per Article 73",
+                    "provider": "Custom",
+                    "requires_key": false,
+                    "free": true,
+                    "capabilities": [
+                        "Incident classification",
+                        "15-day reporting",
+                        "Authority notification",
+                        "Root cause analysis"
+                    ],
+                    "applicable_regulation": "EU AI Act"
+                },
+                {
+                    "name": "Quality Management System (QMS) Tracker",
+                    "type": "platform",
+                    "description": "Implement and track Article 17 QMS requirements for AI providers",
+                    "provider": "Custom",
+                    "requires_key": false,
+                    "free": true,
+                    "capabilities": [
+                        "QMS documentation",
+                        "Process tracking",
+                        "Audit trails",
+                        "Continuous improvement"
+                    ],
+                    "applicable_regulation": "EU AI Act"
+                },
+                {
+                    "name": "AI Logging System",
+                    "type": "tool",
+                    "description": "Automatic logging per Article 12 requirements for traceability",
+                    "provider": "Custom",
+                    "requires_key": false,
+                    "free": true,
+                    "capabilities": [
+                        "Event logging",
+                        "Retention management",
+                        "Access controls",
+                        "Audit export"
+                    ],
+                    "applicable_regulation": "EU AI Act"
+                },
+                {
+                    "name": "Downstream Provider Notification",
+                    "type": "tool",
+                    "description": "Manage Annex XII information sharing with downstream providers",
+                    "provider": "Custom",
+                    "requires_key": false,
+                    "free": true,
+                    "capabilities": [
+                        "Provider registry",
+                        "Information templates",
+                        "Update notifications",
+                        "Acknowledgment tracking"
+                    ],
+                    "applicable_regulation": "EU AI Act"
+                },
+                {
+                    "name": "CE Marking Generator",
+                    "type": "tool",
+                    "description": "Generate CE marking documentation for AI products",
+                    "provider": "Custom",
+                    "requires_key": false,
+                    "free": true,
+                    "capabilities": [
+                        "CE declaration",
+                        "Notified body refs",
+                        "Standards compliance",
+                        "Documentation package"
+                    ],
+                    "applicable_regulation": "EU AI Act"
+                }
+            ]
+        }
+    },
+    "integration_patterns": {
+        "sync_assessment": {
+            "description": "Synchronous API call during assessment",
+            "use_case": "Real-time risk scoring",
+            "example": "Call PII detector before submitting assessment"
+        },
+        "scheduled_scan": {
+            "description": "Periodic background scanning",
+            "use_case": "Continuous monitoring",
+            "example": "Daily dependency vulnerability scan"
+        },
+        "event_triggered": {
+            "description": "Scan triggered by specific events",
+            "use_case": "Change detection",
+            "example": "Run bias check after model update"
+        },
+        "manual_review": {
+            "description": "Human-initiated deep assessment",
+            "use_case": "Quarterly reviews",
+            "example": "Annual algorithmic impact assessment"
+        }
+    }
+}

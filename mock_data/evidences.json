@@ -1,0 +1,20 @@
+[
+  {
+    "id": 1,
+    "use_case_id": 1,
+    "file_name": "chatbot_documentation.pdf",
+    "file_url": "/static/governance/img/sample.pdf",
+    "description": "Chatbot system documentation",
+    "uploaded_by": "demo_user",
+    "created_at": "2024-01-15T10:00:00Z"
+  },
+  {
+    "id": 2,
+    "use_case_id": 2,
+    "file_name": "content_moderation_report.pdf",
+    "file_url": "/static/governance/img/sample.pdf",
+    "description": "Content moderation evaluation report",
+    "uploaded_by": "demo_user",
+    "created_at": "2024-01-20T14:30:00Z"
+  }
+]
