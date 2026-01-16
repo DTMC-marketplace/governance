@@ -73,7 +73,7 @@
         </div>
         <button
             class="flex items-center gap-2 px-4 py-2.5 bg-white border border-[#F13D30] rounded-full text-sm font-semibold text-[#F13D30] cursor-pointer hover:bg-[#FEF2F2] transition-colors">
-            <img src="/static/icons/icon-benchmarking.svg" alt="Add" class="w-4 h-4">
+            <img src="{% static 'governance/img/icon-benchmarking.svg' %}" alt="Add" class="w-4 h-4">
             Add AI Agent
         </button>
     </div>
@@ -513,7 +513,7 @@
                     {% with report=reports_dict|get_item:report_type %}
                     <div class="evaluation-report-item flex items-center justify-between p-3 rounded-lg border bg-white border-green-500 cursor-pointer hover:bg-[#F9FAFB] report-upload-area" data-report-type="{{ report_type }}" onclick="triggerReportUpload('{{ report_type }}'); event.stopPropagation();">
                         <div class="flex items-center gap-3 flex-1">
-                            <img src="{% static 'icons/file-icon.svg' %}" alt="Report" class="w-5 h-5">
+                            <img src="{% static 'governance/img/file-icon.svg' %}" alt="Report" class="w-5 h-5">
                             <div class="flex flex-col flex-1">
                                 <span class="text-sm font-medium text-[#111827]">{{ report_label }}</span>
                                 <span class="text-xs text-[#6B7280]">{{ report.file_name }}</span>
@@ -545,7 +545,7 @@
                 {% else %}
                 <div class="evaluation-report-item flex items-center justify-between p-3 rounded-lg border bg-[#F9FAFB] border-2 border-dashed border-[#D1D5DB] cursor-pointer report-upload-area" data-report-type="{{ report_type }}" onclick="triggerReportUpload('{{ report_type }}'); event.stopPropagation();">
                     <div class="flex items-center gap-3 flex-1">
-                        <img src="{% static 'icons/file-icon.svg' %}" alt="Report" class="w-5 h-5">
+                        <img src="{% static 'governance/img/file-icon.svg' %}" alt="Report" class="w-5 h-5">
                         <div class="flex flex-col flex-1">
                             <span class="text-sm font-medium text-[#4B5563]">{{ report_label }}</span>
                             <span class="text-xs text-[#6B7280]">.xlsx / .json / .csv</span>
@@ -570,7 +570,7 @@
     <div class="bg-white rounded-lg border border-[#E5E7EB] p-6">
         <div class="flex items-center justify-between mb-4">
             <div class="flex items-center gap-2">
-                <img src="/static/icons/icon-benchmarking.svg" alt="Dataset" class="w-5 h-5">
+                <img src="{% static 'governance/img/icon-benchmarking.svg' %}" alt="Dataset" class="w-5 h-5">
                 <div>
                     <h3 class="text-lg font-semibold text-[#111827]">Governance Plan</h3>
                     <p class="text-sm text-[#6B7280] mt-1">Risks types</p>

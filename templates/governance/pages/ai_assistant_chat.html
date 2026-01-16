@@ -11,7 +11,6 @@
 {% endblock %}
 
 {% block dashboard_content %}
-<div class="flex flex-col gap-5">
     <!-- Breadcrumb Navigation -->
     <div class="flex items-center gap-3">
         <a href="{% url 'ai_assistant' %}" class="w-6 h-6 bg-transparent border-none cursor-pointer p-0 flex items-center justify-center">
@@ -24,200 +23,201 @@
     </div>
 
     <!-- Chat Container -->
-    <div class="flex flex-col gap-4 h-[calc(100vh-120px)] bg-white rounded-lg overflow-hidden">
-        <div class="flex gap-2 flex-1 min-h-0 p-4 overflow-hidden">
+    <div class="flex flex-col gap-4 h-full bg-white rounded-lg overflow-hidden">
+        <div class="flex gap-2 flex-1 p-4 overflow-hidden">
 
-        <aside id="chat-history"
-            class="w-[220px] bg-white text-text-tertiary p-4 rounded-lg border border-[#E5E7EB] shadow-sm transition-all flex-shrink-0 flex flex-col h-full">
-            <div class="flex items-center justify-between gap-2 flex-shrink-0">
-                <p id="chat-title" class="text-lg font-semibold transition-all">Chat History</p>
-                <div id="toggle-button-close" class="grid place-content-center">
-                    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path
-                            d="M24.5 15.5549L22.3686 13.4808L20.236 15.5549M22.6879 13.9993C22.6879 19.154 18.3925 23.3327 13.0939 23.3327C7.79535 23.3327 3.5 19.154 3.5 13.9993C3.5 8.84469 7.79535 4.66602 13.0939 4.66602C16.6138 4.66602 19.6909 6.51001 21.3602 9.25915M13.0939 8.81416V13.9993L16.2919 16.0734"
-                            stroke="#2C78B1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                    </svg>
-                </div>
-            </div>
-            <div class="flex-1 min-h-0 overflow-hidden flex flex-col">
-                <ul id="chat-list" class="space-y-4 mt-6 transition-all overflow-y-auto flex-1" onclick="handleChatHistoryClick(event)">
-                    {% for ch in chat_histories %}
-                    <li class="truncate text-sm font-medium relative group" data-ai-response="{{ ch.ai_response }}"
-                        data-id="{{ ch.id }}" data-references-response="{{ ch.references_response }}"
-                        data-user-message="{{ ch.user_message }}">
-                        {{ ch.user_message }}
-                        <img src="/static/icons/x.svg" alt="Delete"
-                            class="delete-icon absolute hidden group-hover:block right-0 top-1/2 transform -translate-y-1/2 w-5 h-5">
-                    </li>
-                    {% endfor %}
-                </ul>
-
-                <div class="mt-auto pt-2 flex-shrink-0">
-                    <button class="w-full py-2 text-sm font-bold rounded transition-colors" id="clear-history-btn">
-                        Clear History
-                    </button>
-                </div>
-            </div>
-        </aside>
-
-        <div id="toggle-button-open" class="pt-4 grid place-content-top cursor-pointer hidden">
-            <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path
-                    d="M24.5 15.5549L22.3686 13.4808L20.236 15.5549M22.6879 13.9993C22.6879 19.154 18.3925 23.3327 13.0939 23.3327C7.79535 23.3327 3.5 19.154 3.5 13.9993C3.5 8.84469 7.79535 4.66602 13.0939 4.66602C16.6138 4.66602 19.6909 6.51001 21.3602 9.25915M13.0939 8.81416V13.9993L16.2919 16.0734"
-                    stroke="#2C78B1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
-        </div>
-
-        <div class="flex gap-4 flex-1 transition-all min-w-0 h-full overflow-hidden">
-            <!-- Main Chat Area -->
-            <div class="flex-1 flex flex-col gap-0 min-w-0 h-full overflow-hidden">
-                <!-- Agent Header -->
-                <div class="flex items-center justify-between mb-4 flex-shrink-0">
-                    <div class="flex items-center gap-3">
-                        {% if selected_agent %}
-                        <div class="w-10 h-10 rounded-full overflow-hidden">
-                            <img src="{{ selected_agent.avatar_url }}" alt="{{ selected_agent.name }}"
-                                class="w-full h-full object-cover">
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <h3 class="text-lg font-semibold text-gray-900">{{ selected_agent.name }}</h3>
-                            <span class="px-2 py-1 text-xs font-medium rounded-full {{ selected_agent.badge_color }}">{{ selected_agent.category }}</span>
-                        </div>
-                        {% else %}
-                        <!-- Default Agent A when no selected_agent -->
-                        <div class="w-10 h-10 rounded-full overflow-hidden">
-                            <img src="/static/icons/agent_a.svg" alt="Agent A" class="w-full h-full object-cover">
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <h3 class="text-lg font-semibold text-gray-900">Agent A</h3>
-                            <span class="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-700">Carbon</span>
-                        </div>
-                        {% endif %}
-                    </div>
-
-                    <div class="w-64">
-                        <!-- Dropdown Container -->
-                        <div id="dropdown-container" class="relative">
-                            <!-- Dropdown Button -->
-                            <button id="dropdown-button"
-                                class="w-full bg-white flex items-center justify-between gap-3 px-4 py-3 rounded-lg border border-gray-200 shadow-sm hover:border-gray-300 transition-all">
-                                <span id="dropdown-label" class="text-base font-medium text-gray-900">{% if selected_agent %}{{ selected_agent.name }}{% else %}Agent A{% endif %}</span>
-                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" class="transition-transform duration-200" id="dropdown-arrow">
-                                    <path d="M5 7.5L10 12.5L15 7.5" stroke="#6B7280" stroke-width="1.5" stroke-linecap="round"
-                                        stroke-linejoin="round" />
-                                </svg>
-                            </button>
-
-                            <!-- Dropdown Menu -->
-                            <div id="dropdown-menu"
-                                class="hidden bg-white mt-2 p-3 space-y-2 absolute w-full right-0 z-[200] rounded-lg border border-gray-200 shadow-lg max-h-80 overflow-y-auto">
-                                
-                                <!-- Dynamic Categories from virtualAgent -->
-                                {% regroup virtualAgent by category as agent_categories %}
-                                {% for category in agent_categories %}
-                                <div>
-                                    <h4 class="text-xs font-medium text-gray-600 mb-1 sticky top-0 bg-white py-1">{{ category.grouper }} Agents</h4>
-                                    <div class="space-y-1">
-                                        {% for agent in category.list %}
-                                        <label
-                                            class="flex items-center justify-between gap-3 py-1.5 px-2 cursor-pointer hover:bg-gray-50 transition-colors rounded-md"
-                                            onclick="selectAgentFromDropdown('{{ agent.id }}', '{{ agent.name }}')">
-                                            <div class="flex items-center gap-2">
-                                                <div class="w-6 h-6 rounded-full overflow-hidden flex-shrink-0">
-                                                    <img src="{{ agent.avatar_url }}" alt="{{ agent.name }}" class="w-full h-full object-cover">
-                                                </div>
-                                                <div class="min-w-0 flex-1">
-                                                    <p class="text-xs font-medium text-gray-900 truncate">{{ agent.name }}</p>
-                                                    <p class="text-[10px] text-gray-500 truncate">{{ agent.description|truncatechars:25 }}</p>
-                                                </div>
-                                            </div>
-                                            {% if selected_agent and selected_agent.id == agent.id %}
-                                            <div class="w-4 h-4 rounded-full border-2 border-blue-600 bg-blue-600 flex items-center justify-center flex-shrink-0">
-                                                <div class="w-1.5 h-1.5 rounded-full bg-white"></div>
-                                            </div>
-                                            {% else %}
-                                            <div class="w-4 h-4 rounded-full border-2 border-gray-300 bg-white flex-shrink-0"></div>
-                                            {% endif %}
-                                            <input type="radio" name="agent-dropdown" value="{{ agent.id }}" class="sr-only" {% if agent.id == 'agent_a' %}checked{% endif %}>
-                                        </label>
-                                        {% endfor %}
-                                    </div>
-                                </div>
-                                {% endfor %}
-                            </div>
-                        </div>
+            <aside id="chat-history"
+                class="w-[220px] bg-white text-text-tertiary p-4 rounded-lg border border-[#E5E7EB] shadow-sm transition-all flex-shrink-0 flex flex-col h-full">
+                <div class="flex items-center justify-between gap-2 flex-shrink-0">
+                    <p id="chat-title" class="text-lg font-semibold transition-all">Chat History</p>
+                    <div id="toggle-button-close" class="grid place-content-center">
+                        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M24.5 15.5549L22.3686 13.4808L20.236 15.5549M22.6879 13.9993C22.6879 19.154 18.3925 23.3327 13.0939 23.3327C7.79535 23.3327 3.5 19.154 3.5 13.9993C3.5 8.84469 7.79535 4.66602 13.0939 4.66602C16.6138 4.66602 19.6909 6.51001 21.3602 9.25915M13.0939 8.81416V13.9993L16.2919 16.0734"
+                                stroke="#2C78B1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
                     </div>
                 </div>
+                <div class="flex-1 min-h-0 overflow-hidden flex flex-col">
+                    <ul id="chat-list" class="space-y-4 mt-6 transition-all overflow-y-auto flex-1" onclick="handleChatHistoryClick(event)">
+                        {% for ch in chat_histories %}
+                        <li class="truncate text-sm font-medium relative group" data-ai-response="{{ ch.ai_response }}"
+                            data-id="{{ ch.id }}" data-references-response="{{ ch.references_response }}"
+                            data-user-message="{{ ch.user_message }}">
+                            {{ ch.user_message }}
+                            <img src="/static/icons/x.svg" alt="Delete"
+                                class="delete-icon absolute hidden group-hover:block right-0 top-1/2 transform -translate-y-1/2 w-5 h-5">
+                        </li>
+                        {% endfor %}
+                    </ul>
 
-
-                <div class="relative text-neutral-950 flex-1 flex flex-col gap-0 overflow-hidden min-h-0 h-full">
-                    <!-- Chat Container -->
-                    <div class="flex-1 overflow-y-auto pb-20 [&::-webkit-scrollbar-track]:rounded-full min-h-0 h-full relative">
-                        <!-- S:AI Chat -->
-                        <div id="ai-chat" class="absolute inset-0 grid place-content-center z-10">
-                            <div class="space-y-4">
-                                <div class="w-16 h-16 mx-auto rounded-full overflow-hidden">
-                                    {% if selected_agent %}
-                                    <img src="{{ selected_agent.avatar_url }}" alt="{{ selected_agent.name }}"
-                                        class="w-full h-full object-cover">
-                                    {% else %}
-                                    <div
-                                        class="w-full h-full bg-gradient-to-tr from-[#DDD6FE] to-[#CFF9FE] grid place-content-center">
-                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
-                                            xmlns="http://www.w3.org/2000/svg">
-                                            <path
-                                                d="M18.5 8V3M5.5 21V16M16 5.5H21M3 18.5H8M6.5 2L5.71554 3.56892C5.45005 4.09989 5.31731 4.36538 5.13997 4.59545C4.98261 4.79959 4.79959 4.98261 4.59545 5.13997C4.36538 5.31731 4.0999 5.45005 3.56892 5.71554L2 6.5L3.56892 7.28446C4.0999 7.54995 4.36538 7.68269 4.59545 7.86003C4.79959 8.01739 4.98261 8.20041 5.13997 8.40455C5.31731 8.63462 5.45005 8.9001 5.71554 9.43108L6.5 11L7.28446 9.43108C7.54995 8.9001 7.68269 8.63462 7.86003 8.40455C8.01739 8.20041 8.20041 8.01739 8.40455 7.86003C8.63462 7.68269 8.9001 7.54995 9.43108 7.28446L11 6.5L9.43108 5.71554C8.9001 5.45005 8.63462 5.31731 8.40455 5.13997C8.20041 4.98261 8.01739 4.79959 7.86003 4.59545C7.68269 4.36538 7.54995 4.0999 7.28446 3.56892L6.5 2ZM17 12L16.0489 13.9022C15.7834 14.4332 15.6506 14.6987 15.4733 14.9288C15.3159 15.1329 15.1329 15.3159 14.9288 15.4733C14.6987 15.6506 14.4332 15.7834 13.9023 16.0489L12 17L13.9023 17.9511C14.4332 18.2166 14.6987 18.3494 14.9288 18.5267C15.1329 18.6841 15.3159 18.8671 15.4733 19.0712C15.6506 19.3013 15.7834 19.5668 16.0489 20.0977L17 22L17.9511 20.0978C18.2166 19.5668 18.3494 19.3013 18.5267 19.0712C18.6841 18.8671 18.8671 18.6841 19.0712 18.5267C19.3013 18.3494 19.5668 18.2166 20.0977 17.9511L22 17L20.0977 16.0489C19.5668 15.7834 19.3013 15.6506 19.0712 15.4733C18.8671 15.3159 18.6841 15.1329 18.5267 14.9288C18.3494 14.6987 18.2166 14.4332 17.9511 13.9023L17 12Z"
-                                                stroke="#1A417C" stroke-width="2" stroke-linecap="round"
-                                                stroke-linejoin="round" />
-                                        </svg>
-                                    </div>
-                                    {% endif %}
-                                </div>
-                                {% if selected_agent %}
-                                <p class="text-xl text-center font-bold text-neutral-700">Chat with {{ selected_agent.name }}</p>
-                                <p class="text-sm text-center text-neutral-600">I'm {{ selected_agent.name }}, your
-                                    Virtual Agent for {{ selected_agent.description }}</p>
-                                {% else %}
-                                <p class="text-2xl text-center font-bold text-neutral-700">How can I help you today?</p>
-                                {% endif %}
-                            </div>
-                        </div>
-                        <!-- E:AI Chat -->
-
-                        <!-- S:Bubbles Chat -->
-                        <!-- Chat Container -->
-                        <div id="chat-container" class="flex flex-col items-end gap-6 hidden">
-                            <!-- Message chat -->
-                        </div>
-                        <!-- E:Bubbles Chat -->
-                    </div>
-
-                    <!-- Chatbox -->
-                    <div
-                        class="absolute left-0 right-0 bottom-0 min-h-14 bg-white flex gap-3 justify-between px-3 py-4 border border-[#E5E7EB] rounded-lg shadow-sm hover:border-[#D1D5DB] transition-all">
-                        <div class="flex items-center gap-2">
-                            <!-- Upload File Button - Available for all agents -->
-                            <button id="upload-file-btn" class="min-h-[26px] h-[26px] min-w-[26px] w-[26px] grid place-content-center" title="Upload files (PDF, PNG, JPG, JPEG) - Multiple files supported">
-                                <div class="icon-chat-upload size-6"></div>
-                            </button>
-                            
-                            <!-- Hidden file input -->
-                            <input type="file" id="file-input" accept=".pdf,.png,.jpg,.jpeg,.csv,.xlsx" multiple style="display: none;">
-                        </div>
-                        <input id="chat-input"
-                            class="flex-1 text-sm font-medium text-left text-[#22262A] placeholder:text-[#9CA3AF] !outline-none focus:outline-none focus:ring-0 border-0"
-                            placeholder="Type a new question..." />
-                        <button id="send-button"
-                            class="min-h-[26px] h-[26px] min-w-[26px] w-[26px] grid place-content-center">
-                            <svg width="22" height="20" viewBox="0 0 22 20" fill="none"
-                                xmlns="http://www.w3.org/2000/svg">
-                                <path
-                                    d="M9.50043 10.0008H4.00043M3.91577 10.2923L1.58085 17.267C1.39742 17.8149 1.3057 18.0889 1.37152 18.2576C1.42868 18.4041 1.55144 18.5152 1.70292 18.5575C1.87736 18.6061 2.14083 18.4876 2.66776 18.2505L19.3792 10.7303C19.8936 10.4989 20.1507 10.3831 20.2302 10.2224C20.2993 10.0827 20.2993 9.91883 20.2302 9.77916C20.1507 9.6184 19.8936 9.50268 19.3792 9.27123L2.66193 1.74849C2.13659 1.51209 1.87392 1.39389 1.69966 1.44237C1.54832 1.48448 1.42556 1.59527 1.36821 1.74151C1.30216 1.90991 1.3929 2.18328 1.57437 2.73004L3.91642 9.7863C3.94759 9.8802 3.96317 9.92716 3.96933 9.97518C3.97479 10.0178 3.97473 10.0609 3.96916 10.1035C3.96289 10.1515 3.94718 10.1984 3.91577 10.2923Z"
-                                    stroke="#565F6C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                            </svg>
+                    <div class="mt-auto pt-2 flex-shrink-0">
+                        <button class="w-full py-2 text-sm font-bold rounded transition-colors" id="clear-history-btn">
+                            Clear History
                         </button>
                     </div>
+                </div>
+            </aside>
 
+            <div id="toggle-button-open" class="pt-4 grid place-content-top cursor-pointer hidden">
+                <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M24.5 15.5549L22.3686 13.4808L20.236 15.5549M22.6879 13.9993C22.6879 19.154 18.3925 23.3327 13.0939 23.3327C7.79535 23.3327 3.5 19.154 3.5 13.9993C3.5 8.84469 7.79535 4.66602 13.0939 4.66602C16.6138 4.66602 19.6909 6.51001 21.3602 9.25915M13.0939 8.81416V13.9993L16.2919 16.0734"
+                        stroke="#2C78B1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+            </div>
+
+            <div class="flex gap-4 flex-1 transition-all min-w-0 h-full overflow-hidden">
+                <!-- Main Chat Area -->
+                <div class="flex-1 flex flex-col gap-0 min-w-0 h-full overflow-hidden">
+                    <!-- Agent Header -->
+                    <div class="flex items-center justify-between mb-4 flex-shrink-0">
+                        <div class="flex items-center gap-3">
+                            {% if selected_agent %}
+                            <div class="w-10 h-10 rounded-full overflow-hidden">
+                                <img src="{{ selected_agent.avatar_url }}" alt="{{ selected_agent.name }}"
+                                    class="w-full h-full object-cover">
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <h3 class="text-lg font-semibold text-gray-900">{{ selected_agent.name }}</h3>
+                                <span class="px-2 py-1 text-xs font-medium rounded-full {{ selected_agent.badge_color }}">{{ selected_agent.category }}</span>
+                            </div>
+                            {% else %}
+                            <!-- Default Agent A when no selected_agent -->
+                            <div class="w-10 h-10 rounded-full overflow-hidden">
+                                <img src="/static/icons/agent_a.svg" alt="Agent A" class="w-full h-full object-cover">
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <h3 class="text-lg font-semibold text-gray-900">Agent A</h3>
+                                <span class="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-700">Carbon</span>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="w-64">
+                            <!-- Dropdown Container -->
+                            <div id="dropdown-container" class="relative">
+                                <!-- Dropdown Button -->
+                                <button id="dropdown-button"
+                                    class="w-full bg-white flex items-center justify-between gap-3 px-4 py-3 rounded-lg border border-gray-200 shadow-sm hover:border-gray-300 transition-all">
+                                    <span id="dropdown-label" class="text-base font-medium text-gray-900">{% if selected_agent %}{{ selected_agent.name }}{% else %}Agent A{% endif %}</span>
+                                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" class="transition-transform duration-200" id="dropdown-arrow">
+                                        <path d="M5 7.5L10 12.5L15 7.5" stroke="#6B7280" stroke-width="1.5" stroke-linecap="round"
+                                            stroke-linejoin="round" />
+                                    </svg>
+                                </button>
+
+                                <!-- Dropdown Menu -->
+                                <div id="dropdown-menu"
+                                    class="hidden bg-white mt-2 p-3 space-y-2 absolute w-full right-0 z-[200] rounded-lg border border-gray-200 shadow-lg max-h-80 overflow-y-auto">
+                                    
+                                    <!-- Dynamic Categories from virtualAgent -->
+                                    {% regroup virtualAgent by category as agent_categories %}
+                                    {% for category in agent_categories %}
+                                    <div>
+                                        <h4 class="text-xs font-medium text-gray-600 mb-1 sticky top-0 bg-white py-1">{{ category.grouper }} Agents</h4>
+                                        <div class="space-y-1">
+                                            {% for agent in category.list %}
+                                            <label
+                                                class="flex items-center justify-between gap-3 py-1.5 px-2 cursor-pointer hover:bg-gray-50 transition-colors rounded-md"
+                                                onclick="selectAgentFromDropdown('{{ agent.id }}', '{{ agent.name }}')">
+                                                <div class="flex items-center gap-2">
+                                                    <div class="w-6 h-6 rounded-full overflow-hidden flex-shrink-0">
+                                                        <img src="{{ agent.avatar_url }}" alt="{{ agent.name }}" class="w-full h-full object-cover">
+                                                    </div>
+                                                    <div class="min-w-0 flex-1">
+                                                        <p class="text-xs font-medium text-gray-900 truncate">{{ agent.name }}</p>
+                                                        <p class="text-[10px] text-gray-500 truncate">{{ agent.description|truncatechars:25 }}</p>
+                                                    </div>
+                                                </div>
+                                                {% if selected_agent and selected_agent.id == agent.id %}
+                                                <div class="w-4 h-4 rounded-full border-2 border-blue-600 bg-blue-600 flex items-center justify-center flex-shrink-0">
+                                                    <div class="w-1.5 h-1.5 rounded-full bg-white"></div>
+                                                </div>
+                                                {% else %}
+                                                <div class="w-4 h-4 rounded-full border-2 border-gray-300 bg-white flex-shrink-0"></div>
+                                                {% endif %}
+                                                <input type="radio" name="agent-dropdown" value="{{ agent.id }}" class="sr-only" {% if agent.id == 'agent_a' %}checked{% endif %}>
+                                            </label>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div class="relative text-neutral-950 flex-1 flex flex-col gap-0 overflow-hidden min-h-0 h-full">
+                        <!-- Chat Container -->
+                        <div class="flex-1 overflow-y-auto pb-20 [&::-webkit-scrollbar-track]:rounded-full min-h-0 h-full relative">
+                            <!-- S:AI Chat -->
+                            <div id="ai-chat" class="absolute inset-0 grid place-content-center z-10">
+                                <div class="space-y-4">
+                                    <div class="w-16 h-16 mx-auto rounded-full overflow-hidden">
+                                        {% if selected_agent %}
+                                        <img src="{{ selected_agent.avatar_url }}" alt="{{ selected_agent.name }}"
+                                            class="w-full h-full object-cover">
+                                        {% else %}
+                                        <div
+                                            class="w-full h-full bg-gradient-to-tr from-[#DDD6FE] to-[#CFF9FE] grid place-content-center">
+                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                                xmlns="http://www.w3.org/2000/svg">
+                                                <path
+                                                    d="M18.5 8V3M5.5 21V16M16 5.5H21M3 18.5H8M6.5 2L5.71554 3.56892C5.45005 4.09989 5.31731 4.36538 5.13997 4.59545C4.98261 4.79959 4.79959 4.98261 4.59545 5.13997C4.36538 5.31731 4.0999 5.45005 3.56892 5.71554L2 6.5L3.56892 7.28446C4.0999 7.54995 4.36538 7.68269 4.59545 7.86003C4.79959 8.01739 4.98261 8.20041 5.13997 8.40455C5.31731 8.63462 5.45005 8.9001 5.71554 9.43108L6.5 11L7.28446 9.43108C7.54995 8.9001 7.68269 8.63462 7.86003 8.40455C8.01739 8.20041 8.20041 8.01739 8.40455 7.86003C8.63462 7.68269 8.9001 7.54995 9.43108 7.28446L11 6.5L9.43108 5.71554C8.9001 5.45005 8.63462 5.31731 8.40455 5.13997C8.20041 4.98261 8.01739 4.79959 7.86003 4.59545C7.68269 4.36538 7.54995 4.0999 7.28446 3.56892L6.5 2ZM17 12L16.0489 13.9022C15.7834 14.4332 15.6506 14.6987 15.4733 14.9288C15.3159 15.1329 15.1329 15.3159 14.9288 15.4733C14.6987 15.6506 14.4332 15.7834 13.9023 16.0489L12 17L13.9023 17.9511C14.4332 18.2166 14.6987 18.3494 14.9288 18.5267C15.1329 18.6841 15.3159 18.8671 15.4733 19.0712C15.6506 19.3013 15.7834 19.5668 16.0489 20.0977L17 22L17.9511 20.0978C18.2166 19.5668 18.3494 19.3013 18.5267 19.0712C18.6841 18.8671 18.8671 18.6841 19.0712 18.5267C19.3013 18.3494 19.5668 18.2166 20.0977 17.9511L22 17L20.0977 16.0489C19.5668 15.7834 19.3013 15.6506 19.0712 15.4733C18.8671 15.3159 18.6841 15.1329 18.5267 14.9288C18.3494 14.6987 18.2166 14.4332 17.9511 13.9023L17 12Z"
+                                                    stroke="#1A417C" stroke-width="2" stroke-linecap="round"
+                                                    stroke-linejoin="round" />
+                                            </svg>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    {% if selected_agent %}
+                                    <p class="text-xl text-center font-bold text-neutral-700">Chat with {{ selected_agent.name }}</p>
+                                    <p class="text-sm text-center text-neutral-600">I'm {{ selected_agent.name }}, your
+                                        Virtual Agent for {{ selected_agent.description }}</p>
+                                    {% else %}
+                                    <p class="text-2xl text-center font-bold text-neutral-700">How can I help you today?</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <!-- E:AI Chat -->
+
+                            <!-- S:Bubbles Chat -->
+                            <!-- Chat Container -->
+                            <div id="chat-container" class="flex flex-col items-end gap-6 hidden">
+                                <!-- Message chat -->
+                            </div>
+                            <!-- E:Bubbles Chat -->
+                        </div>
+
+                        <!-- Chatbox -->
+                        <div
+                            class="absolute left-0 right-0 bottom-0 min-h-14 bg-white flex gap-3 justify-between px-3 py-4 border border-[#E5E7EB] rounded-lg shadow-sm hover:border-[#D1D5DB] transition-all z-20">
+                            <div class="flex items-center gap-2">
+                                <!-- Upload File Button - Available for all agents -->
+                                <button id="upload-file-btn" type="button" class="min-h-[26px] h-[26px] min-w-[26px] w-[26px] grid place-content-center cursor-pointer" title="Upload files (PDF, PNG, JPG, JPEG) - Multiple files supported">
+                                    <img src="{% static 'governance/img/chat-upload.svg' %}" alt="Upload" class="w-6 h-6 pointer-events-none">
+                                </button>
+                                
+                                <!-- Hidden file input -->
+                                <input type="file" id="file-input" accept=".pdf,.png,.jpg,.jpeg,.csv,.xlsx" multiple style="display: none;">
+                            </div>
+                            <input id="chat-input" type="text"
+                                class="flex-1 text-sm font-medium text-left text-[#22262A] placeholder:text-[#9CA3AF] !outline-none focus:outline-none focus:ring-0 border-0"
+                                placeholder="Type a new question..." />
+                            <button id="send-button" type="button"
+                                class="min-h-[26px] h-[26px] min-w-[26px] w-[26px] grid place-content-center cursor-pointer">
+                                <svg width="22" height="20" viewBox="0 0 22 20" fill="none"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path
+                                        d="M9.50043 10.0008H4.00043M3.91577 10.2923L1.58085 17.267C1.39742 17.8149 1.3057 18.0889 1.37152 18.2576C1.42868 18.4041 1.55144 18.5152 1.70292 18.5575C1.87736 18.6061 2.14083 18.4876 2.66776 18.2505L19.3792 10.7303C19.8936 10.4989 20.1507 10.3831 20.2302 10.2224C20.2993 10.0827 20.2993 9.91883 20.2302 9.77916C20.1507 9.6184 19.8936 9.50268 19.3792 9.27123L2.66193 1.74849C2.13659 1.51209 1.87392 1.39389 1.69966 1.44237C1.54832 1.48448 1.42556 1.59527 1.36821 1.74151C1.30216 1.90991 1.3929 2.18328 1.57437 2.73004L3.91642 9.7863C3.94759 9.8802 3.96317 9.92716 3.96933 9.97518C3.97479 10.0178 3.97473 10.0609 3.96916 10.1035C3.96289 10.1515 3.94718 10.1984 3.91577 10.2923Z"
+                                        stroke="#565F6C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                            </button>
+                        </div>
+
+                    </div>
                 </div>
             </div>
         </div>
@@ -230,19 +230,11 @@
         let chat_type = "{{ agent_chat_type|default:'Company' }}";
 
         // ===== DOM ELEMENTS =====
+        // Initialize these elements - they will be available after DOM is ready
         const dropdownButton = document.getElementById('dropdown-button');
         const dropdownMenu = document.getElementById('dropdown-menu');
-        const dropdownContainer = document.getElementById('dropdown-container');
-        const toggleButtonClose = document.getElementById('toggle-button-close');
-        const toggleButtonOpen = document.getElementById('toggle-button-open');
-        const chatHistory = document.getElementById('chat-history');
-        const chatContainer = document.getElementById('chat-container');
-        const sendButton = document.getElementById('send-button');
-        const chatInput = document.getElementById('chat-input');
-        const aiChat = document.getElementById('ai-chat');
-        const clearHistory = document.getElementById('clear-history-btn');
-        const uploadBtn = document.getElementById('upload-file-btn');
-        const fileInput = document.getElementById('file-input');
+        let dropdownContainer, toggleButtonClose, toggleButtonOpen, chatHistory, chatContainer;
+        let sendButton, chatInput, aiChat, clearHistory, uploadBtn, fileInput;
 
         // ===== CORE FUNCTIONS =====
         
@@ -1289,8 +1281,29 @@
         
         // Initialize all event listeners
         function initializeEventListeners() {
+            // Get all DOM elements (ensure DOM is ready)
+            dropdownContainer = document.getElementById('dropdown-container');
+            toggleButtonClose = document.getElementById('toggle-button-close');
+            toggleButtonOpen = document.getElementById('toggle-button-open');
+            chatHistory = document.getElementById('chat-history');
+            chatContainer = document.getElementById('chat-container');
+            sendButton = document.getElementById('send-button');
+            chatInput = document.getElementById('chat-input');
+            aiChat = document.getElementById('ai-chat');
+            clearHistory = document.getElementById('clear-history-btn');
+            uploadBtn = document.getElementById('upload-file-btn');
+            fileInput = document.getElementById('file-input');
+            
+            // Debug: Check if elements are found
+            console.log('=== DEBUG: Initializing event listeners ===');
+            console.log('uploadBtn:', uploadBtn);
+            console.log('fileInput:', fileInput);
+            console.log('sendButton:', sendButton);
+            console.log('chatInput:', chatInput);
+            
             // Chat input events
             chatInput?.addEventListener('keydown', (event) => {
+                console.log('Chat input keydown:', event.key);
                 if (event.key === 'Enter') {
                     event.preventDefault();
                     const messageInput = chatInput.value.trim();
@@ -1300,10 +1313,18 @@
                     }
                 }
             });
+            
+            // Also add click event to chat input for debugging
+            chatInput?.addEventListener('click', (e) => {
+                console.log('Chat input clicked!', e);
+            });
 
             // Send button
-            sendButton?.addEventListener('click', () => {
-                const messageInput = chatInput.value.trim();
+            sendButton?.addEventListener('click', (e) => {
+                console.log('Send button clicked!', e);
+                e.preventDefault();
+                e.stopPropagation();
+                const messageInput = chatInput?.value.trim();
                 if (messageInput) {
                     addMessage(messageInput, true);
                     sendMessageToBackend(messageInput);
@@ -1311,8 +1332,16 @@
             });
 
             // File upload
-            uploadBtn?.addEventListener('click', () => {
-                fileInput?.click();
+            uploadBtn?.addEventListener('click', (e) => {
+                console.log('Upload button clicked!', e);
+                e.preventDefault();
+                e.stopPropagation();
+                if (fileInput) {
+                    console.log('Triggering file input click');
+                    fileInput.click();
+                } else {
+                    console.error('fileInput is null!');
+                }
             });
 
             fileInput?.addEventListener('change', (event) => {
