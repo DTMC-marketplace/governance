@@ -63,7 +63,7 @@ def multi_agent_use_cases(request):
     paginator = Paginator(use_cases_data['use_cases_data'], limit)
     page_obj = paginator.get_page(page_number)
     
-    # Convert use cases for template compatibility
+    # Convert use cases for template compatibility (filtered by agent)
     use_cases_list = []
     for uc_data in use_cases_data['use_cases_data']:
         use_cases_list.append({
@@ -74,10 +74,24 @@ def multi_agent_use_cases(request):
             'datasets': uc_data['datasets'],
         })
     
+    # For converting evidences/reports/comments, we need ALL use cases to find use_case names
+    # even if the data is already filtered by agent in the use case
+    # Get all use cases from the container to build complete list for conversion
+    all_use_cases_list = []
+    all_use_cases_repo = container.use_case_repository
+    all_use_cases_entities = all_use_cases_repo.get_all()
+    
+    # Build complete use cases list for conversion (to find use_case names)
+    for use_case_entity in all_use_cases_entities:
+        all_use_cases_list.append({
+            'use_case': use_case_entity,
+        })
+    
     # Convert evidences, reports, comments to objects for template compatibility
-    evidences = convert_evidences_to_objects(use_cases_data['evidences'], use_cases_list)
-    evaluation_reports = convert_reports_to_objects(use_cases_data['evaluation_reports'], use_cases_list)
-    review_comments = convert_comments_to_objects(use_cases_data['review_comments'])
+    # Use all_use_cases_list to find use_case names (data is already filtered by agent in use case)
+    evidences = convert_evidences_to_objects(use_cases_data['evidences'], all_use_cases_list)
+    evaluation_reports = convert_reports_to_objects(use_cases_data['evaluation_reports'], all_use_cases_list)
+    review_comments = convert_comments_to_objects(use_cases_data['review_comments'], all_use_cases_list)
     
     # Build reports_dict from converted objects
     reports_dict = {}
@@ -91,16 +105,59 @@ def multi_agent_use_cases(request):
     for agent in use_cases_data['all_agents']:
         all_agents.append(agent)
     
+    # Convert agent to dict for template compatibility
+    # If agent is not found but agent_name is provided, try to find it from all_agents
+    agent_dict = None
+    agent_obj = use_cases_data.get('agent')
+    if agent_obj:
+        agent_dict = {
+            'id': agent_obj.id,
+            'name': agent_obj.name,
+            'business_unit': agent_obj.business_unit,
+            'compliance_status': agent_obj.compliance_status.value if hasattr(agent_obj.compliance_status, 'value') else str(agent_obj.compliance_status),
+            'ai_act_role': agent_obj.ai_act_role.value if hasattr(agent_obj.ai_act_role, 'value') else str(agent_obj.ai_act_role),
+            'vendor': agent_obj.vendor,
+            'risk_classification': agent_obj.risk_classification.value if hasattr(agent_obj.risk_classification, 'value') else str(agent_obj.risk_classification),
+            'investment_type': agent_obj.investment_type,
+        }
+    
+    # If still not found and agent_name is provided, try to find from all_agents
+    if not agent_dict and agent_name:
+        # Use case-insensitive matching to handle URL encoding
+        agent_name_lower = agent_name.lower().strip()
+        for agent in all_agents:
+            if agent.name.lower().strip() == agent_name_lower:
+                agent_dict = {
+                    'id': agent.id,
+                    'name': agent.name,
+                    'business_unit': agent.business_unit,
+                    'compliance_status': agent.compliance_status.value if hasattr(agent.compliance_status, 'value') else str(agent.compliance_status),
+                    'ai_act_role': agent.ai_act_role.value if hasattr(agent.ai_act_role, 'value') else str(agent.ai_act_role),
+                    'vendor': agent.vendor,
+                    'risk_classification': agent.risk_classification.value if hasattr(agent.risk_classification, 'value') else str(agent.risk_classification),
+                    'investment_type': agent.investment_type,
+                }
+                break
+    
     # Re-paginate with converted use cases
     paginator = Paginator(use_cases_list, limit)
     page_obj = paginator.get_page(page_number)
+    
+    # Debug: Print context values
+    print(f"DEBUG: agent_name = {agent_name}")
+    print(f"DEBUG: agent_dict = {agent_dict}")
+    print(f"DEBUG: selected_use_case = {use_cases_data['selected_use_case']}")
+    print(f"DEBUG: evidences count = {len(evidences)}")
+    print(f"DEBUG: evaluation_reports count = {len(evaluation_reports)}")
+    print(f"DEBUG: review_comments count = {len(review_comments)}")
+    print(f"DEBUG: use_cases_list count = {len(use_cases_list)}")
     
     context = {
         "company": company,
         "subpage": "multi_agent_use_cases",
         "breadcrumbs": breadcrumbs,
-        "agent_name": use_cases_data['agent_name'],
-        "agent": use_cases_data['agent'],
+        "agent_name": use_cases_data.get('agent_name', agent_name),
+        "agent": agent_dict,
         "use_cases_data": page_obj.object_list,
         "page_obj": page_obj,
         "search_term": use_cases_data['search_term'],

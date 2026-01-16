@@ -65,6 +65,21 @@ class GetMultiAgentUseCasesUseCase:
         datasets_data = self._dataset_repository.get_all()
         agents_data = self._agent_repository.get_all()
         
+        # Filter by agent if provided
+        agent = None
+        if agent_name:
+            # Use case-insensitive matching to handle URL encoding
+            agent_name_lower = agent_name.lower().strip()
+            agent = next(
+                (a for a in agents_data if a.name.lower().strip() == agent_name_lower), 
+                None
+            )
+            if agent:
+                use_cases_data = [
+                    uc for uc in use_cases_data 
+                    if uc.agent_id == agent.id
+                ]
+        
         # Filter by search term
         if search_term:
             use_cases_data = [
@@ -78,12 +93,12 @@ class GetMultiAgentUseCasesUseCase:
             # Find and assign agent to use_case
             agent_id = use_case.agent_id
             if agent_id:
-                agent = next(
+                use_case_agent = next(
                     (a for a in agents_data if a.id == agent_id), 
                     None
                 )
-                if agent:
-                    use_case.agent = agent
+                if use_case_agent:
+                    use_case.agent = use_case_agent
                 else:
                     # Create a default agent if not found using factory
                     from ...domain.factories.agent_factory import AgentFactory
@@ -149,6 +164,7 @@ class GetMultiAgentUseCasesUseCase:
         review_comments_data = self._review_comment_repository.get_by_use_case_id(None)
         
         if selected_use_case:
+            # Filter by selected use case
             evidences_data = [
                 e for e in evidences_data 
                 if e.get('use_case_id') == selected_use_case.id
@@ -160,6 +176,21 @@ class GetMultiAgentUseCasesUseCase:
             review_comments_data = [
                 c for c in review_comments_data 
                 if c.get('use_case_id') == selected_use_case.id
+            ]
+        elif agent and use_cases_list:
+            # Filter by all use cases of the agent
+            agent_use_case_ids = [uc['use_case'].id for uc in use_cases_list]
+            evidences_data = [
+                e for e in evidences_data 
+                if e.get('use_case_id') in agent_use_case_ids
+            ]
+            evaluation_reports_data = [
+                r for r in evaluation_reports_data 
+                if r.get('use_case_id') in agent_use_case_ids
+            ]
+            review_comments_data = [
+                c for c in review_comments_data 
+                if c.get('use_case_id') in agent_use_case_ids
             ]
         
         # Build reports dict
@@ -182,7 +213,7 @@ class GetMultiAgentUseCasesUseCase:
         
         return {
             'agent_name': agent_name,
-            'agent': None,
+            'agent': agent,
             'use_cases_data': use_cases_list,  # Return all, pagination in view
             'search_term': search_term,
             'limit': limit,

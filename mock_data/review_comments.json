@@ -2,10 +2,71 @@
   {
     "id": 1,
     "use_case_id": 1,
-    "content": "The chatbot implementation looks good, but we need to add more GDPR compliance measures.",
+    "content": "The AI Act compliance implementation looks good, but we need to add more GDPR compliance measures.",
     "author": "demo_user",
     "author_id": 1,
     "created_at": "2024-01-18T10:00:00Z",
+    "replies": [
+      {
+        "id": 1,
+        "content": "I agree, we should prioritize GDPR compliance in the next iteration.",
+        "author": "reviewer_1",
+        "author_id": 2,
+        "created_at": "2024-01-18T14:30:00Z"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "use_case_id": 1,
+    "content": "Please review the risk assessment section and ensure all high-risk scenarios are covered.",
+    "author": "reviewer_2",
+    "author_id": 3,
+    "created_at": "2024-01-19T09:15:00Z",
+    "replies": []
+  },
+  {
+    "id": 3,
+    "use_case_id": 2,
+    "content": "The battery quality inspection system needs additional testing for edge cases.",
+    "author": "demo_user",
+    "author_id": 1,
+    "created_at": "2024-01-20T11:00:00Z",
+    "replies": []
+  },
+  {
+    "id": 4,
+    "use_case_id": 3,
+    "content": "RAG documentation QA system is working well. Consider adding more validation rules.",
+    "author": "reviewer_1",
+    "author_id": 2,
+    "created_at": "2024-01-21T10:30:00Z",
+    "replies": [
+      {
+        "id": 2,
+        "content": "Good suggestion. I'll add validation rules in the next update.",
+        "author": "demo_user",
+        "author_id": 1,
+        "created_at": "2024-01-21T15:00:00Z"
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "use_case_id": 4,
+    "content": "Sola Agent use case documentation is comprehensive. Well done!",
+    "author": "reviewer_2",
+    "author_id": 3,
+    "created_at": "2024-01-22T09:00:00Z",
+    "replies": []
+  },
+  {
+    "id": 6,
+    "use_case_id": 5,
+    "content": "Test 2 use case requires more detailed compliance documentation.",
+    "author": "demo_user",
+    "author_id": 1,
+    "created_at": "2024-01-23T14:00:00Z",
     "replies": []
   }
 ]

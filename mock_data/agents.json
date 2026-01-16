@@ -1,32 +1,52 @@
 [
   {
     "id": 1,
-    "name": "Customer Service AI",
-    "business_unit": "Customer Support",
+    "name": "AI Act",
+    "business_unit": "Branch",
     "compliance_status": "assessing",
     "ai_act_role": "deployer",
-    "vendor": "OpenAI",
+    "vendor": "DTM",
     "risk_classification": "limited_risks",
     "investment_type": "internal"
   },
   {
     "id": 2,
-    "name": "Content Moderation System",
-    "business_unit": "Content Management",
-    "compliance_status": "reviewing",
+    "name": "quality IA for battery",
+    "business_unit": "Business Unit 1",
+    "compliance_status": "assessing",
     "ai_act_role": "provider",
-    "vendor": "Anthropic",
+    "vendor": "",
     "risk_classification": "high_risks",
     "investment_type": "internal"
   },
   {
     "id": 3,
-    "name": "Recommendation Engine",
-    "business_unit": "Product",
+    "name": "Rag for documentations QA",
+    "business_unit": "banque postale bureau",
+    "compliance_status": "assessing",
+    "ai_act_role": "provider",
+    "vendor": "Cleary",
+    "risk_classification": "limited_risks",
+    "investment_type": "internal"
+  },
+  {
+    "id": 4,
+    "name": "Sola Agent",
+    "business_unit": "Headquarter",
+    "compliance_status": "reviewing",
+    "ai_act_role": "deployer",
+    "vendor": "DT Master Nature",
+    "risk_classification": "limited_risks",
+    "investment_type": "internal"
+  },
+  {
+    "id": 5,
+    "name": "test 2",
+    "business_unit": "",
     "compliance_status": "assessing",
     "ai_act_role": "deployer",
-    "vendor": "Internal",
-    "risk_classification": "minimal_risks",
+    "vendor": "",
+    "risk_classification": "limited_risks",
     "investment_type": "internal"
   }
 ]

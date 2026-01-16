@@ -65,8 +65,10 @@ class GetAssessmentDataUseCase:
         # Filter by agent if provided
         agent = None
         if agent_name:
+            # Use case-insensitive matching to handle URL encoding
+            agent_name_lower = agent_name.lower().strip()
             agent = next(
-                (a for a in agents_data if a.name == agent_name), 
+                (a for a in agents_data if a.name.lower().strip() == agent_name_lower), 
                 None
             )
         
@@ -122,6 +124,7 @@ class GetAssessmentDataUseCase:
         review_comments_data = self._review_comment_repository.get_by_use_case_id(None)
         
         if selected_use_case:
+            # Filter by selected use case
             evidences_data = [
                 e for e in evidences_data 
                 if e.get('use_case_id') == selected_use_case.id
@@ -133,6 +136,21 @@ class GetAssessmentDataUseCase:
             review_comments_data = [
                 c for c in review_comments_data 
                 if c.get('use_case_id') == selected_use_case.id
+            ]
+        elif agent and use_cases_list:
+            # Filter by all use cases of the agent
+            agent_use_case_ids = [uc['use_case'].id for uc in use_cases_list]
+            evidences_data = [
+                e for e in evidences_data 
+                if e.get('use_case_id') in agent_use_case_ids
+            ]
+            evaluation_reports_data = [
+                r for r in evaluation_reports_data 
+                if r.get('use_case_id') in agent_use_case_ids
+            ]
+            review_comments_data = [
+                c for c in review_comments_data 
+                if c.get('use_case_id') in agent_use_case_ids
             ]
         
         # Build reports dict

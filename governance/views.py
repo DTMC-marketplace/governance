@@ -295,11 +295,24 @@ if not USE_CLEAN_ARCHITECTURE:
                 })
             
             # Calculate progress
+            total_models = sum(len(uc.get('models', [])) for uc in agent_use_cases)
+            total_datasets = sum(len(uc.get('datasets', [])) for uc in agent_use_cases)
+            total_evidences = 0
+            total_reports = 0
+            
+            # Data collection progress: total = 8 (models + datasets + evidences + reports + other fields)
+            completed = min(total_models + total_datasets + total_evidences + total_reports, 8)
+            total = 8
+            percentage = int((completed / total) * 100) if total > 0 else 0
+            
             progress = {
-                'models': sum(len(uc.get('models', [])) for uc in agent_use_cases),
-                'datasets': sum(len(uc.get('datasets', [])) for uc in agent_use_cases),
-                'evidences': 0,
-                'reports': 0,
+                'models': total_models,
+                'datasets': total_datasets,
+                'evidences': total_evidences,
+                'reports': total_reports,
+                'completed': completed,
+                'total': total,
+                'percentage': percentage,
             }
             
             # Create mock agent object
@@ -308,6 +321,20 @@ if not USE_CLEAN_ARCHITECTURE:
                     self.id = data.get('id')
                     self.name = data.get('name', '')
                     self.description = data.get('description', '')
+                    self.compliance_status = data.get('compliance_status', 'assessing')
+                    self.ai_act_role = data.get('ai_act_role', 'deployer')
+                    self.vendor = data.get('vendor', '')
+                    self.risk_classification = data.get('risk_classification', 'limited_risks')
+                    self.business_unit = data.get('business_unit', '')
+                    
+                def get_ai_act_role_display(self):
+                    role_map = {
+                        'deployer': 'Deployer',
+                        'provider': 'Provider',
+                        'importer': 'Importer',
+                        'distributor': 'Distributor',
+                    }
+                    return role_map.get(self.ai_act_role, self.ai_act_role.title())
             
             agents_list.append({
                 'agent': MockAgent(agent_data),
@@ -398,7 +425,7 @@ def ai_assistant(request, id=None):
     categories.sort()
     
     # Add implementation status
-    implemented_agents = ["agent_emmy", "agent_justine", "agent_sola", "agent_lisa", "agent_ai_act"]
+    implemented_agents = ["agent_ai_act"]
     virtual_agents_with_status = []
     for agent in VIRTUAL_AGENT:
         agent_copy = agent.copy()

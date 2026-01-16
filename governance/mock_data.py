@@ -165,9 +165,12 @@ def convert_reports_to_objects(reports_data, use_cases_list):
     return reports
 
 
-def convert_comments_to_objects(comments_data):
-    """Convert review comment dicts to objects with author attribute"""
+def convert_comments_to_objects(comments_data, use_cases_list=None):
+    """Convert review comment dicts to objects with author and use_case attributes"""
     from datetime import datetime, timedelta
+    
+    if use_cases_list is None:
+        use_cases_list = []
     
     comments = []
     for c_data in comments_data:
@@ -175,6 +178,16 @@ def convert_comments_to_objects(comments_data):
         # Create author object
         author_username = c_data.get('author', 'demo_user')
         comment.author = MockObject(username=author_username, id=c_data.get('author_id', 1))
+        
+        # Find use_case for this comment
+        use_case_id = c_data.get('use_case_id')
+        if use_case_id:
+            use_case = next((uc['use_case'] for uc in use_cases_list if uc['use_case'].id == use_case_id), None)
+            if not use_case:
+                use_case = MockObject(id=use_case_id, name="Unknown Use Case")
+            comment.use_case = use_case
+        else:
+            comment.use_case = MockObject(id=None, name="No Use Case")
         
         # Handle created_at - convert string to datetime if needed
         created_at = c_data.get('created_at')

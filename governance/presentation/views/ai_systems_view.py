@@ -88,11 +88,24 @@ def ai_systems(request):
             })
         
         # Calculate progress
+        total_models = sum(len(uc.models) for uc in agent_use_cases)
+        total_datasets = sum(len(uc.datasets) for uc in agent_use_cases)
+        total_evidences = 0  # Would need evidence repository
+        total_reports = 0  # Would need report repository
+        
+        # Data collection progress: total = 8 (models + datasets + evidences + reports + other fields)
+        completed = min(total_models + total_datasets + total_evidences + total_reports, 8)
+        total = 8
+        percentage = int((completed / total) * 100) if total > 0 else 0
+        
         progress = {
-            'models': sum(len(uc.models) for uc in agent_use_cases),
-            'datasets': sum(len(uc.datasets) for uc in agent_use_cases),
-            'evidences': 0,  # Would need evidence repository
-            'reports': 0,  # Would need report repository
+            'models': total_models,
+            'datasets': total_datasets,
+            'evidences': total_evidences,
+            'reports': total_reports,
+            'completed': completed,
+            'total': total,
+            'percentage': percentage,
         }
         
         agents_list.append({

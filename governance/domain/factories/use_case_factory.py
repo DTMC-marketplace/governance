@@ -3,7 +3,7 @@ Use Case Factory - Factory Pattern for creating UseCase entities
 """
 from typing import Dict, Any, List
 from ..entities.use_case import UseCase, ReviewStatus
-from ..application.exceptions.domain_exceptions import InvalidEntityException
+from ...application.exceptions.domain_exceptions import InvalidEntityException
 
 
 class UseCaseFactory:

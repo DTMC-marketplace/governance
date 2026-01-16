@@ -3,7 +3,7 @@ Agent Factory - Factory Pattern for creating Agent entities
 """
 from typing import Dict, Any
 from ..entities.agent import Agent, ComplianceStatus, AIActRole, RiskClassification
-from ..application.exceptions.domain_exceptions import InvalidEntityException
+from ...application.exceptions.domain_exceptions import InvalidEntityException
 
 
 class AgentFactory:

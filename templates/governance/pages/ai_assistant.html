@@ -179,7 +179,6 @@ document.addEventListener('click', function(e) {
                     <a href="#" onclick="filterAgentsByCategory('{{ category|lower }}')" class="flex items-center px-4 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] filter-option" data-category="{{ category|lower }}">
                         <span class="w-2 h-2 rounded-full 
                             {% if category == 'Carbon' %}bg-red-500
-                            {% elif category == 'Biodiversity' %}bg-green-500
                             {% elif category == 'Circular Economy' %}bg-green-600
                             {% elif category == 'Climate' %}bg-orange-500
                             {% elif category == 'Compliance' %}bg-teal-600
