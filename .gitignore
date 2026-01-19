@@ -3,6 +3,9 @@ __pycache__/
 *.py[codz]
 *$py.class
 
+# AI Act Store Info (contains API store names)
+ai_act_store_info.txt
+
 # C extensions
 *.so
 

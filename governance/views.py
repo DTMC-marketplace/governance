@@ -24,6 +24,9 @@ try:
 except ImportError:
     USE_CLEAN_ARCHITECTURE = False
 
+# Import AI Act Chat API view
+from .presentation.views.ai_act_chat_view import ai_act_chat_api
+
 from .mock_data import (
     get_mock_agents, get_mock_use_cases, get_mock_models, get_mock_datasets,
     get_mock_evidences, get_mock_evaluation_reports, get_mock_review_comments,

@@ -2,3 +2,5 @@
 # No database, no authentication - for demo only
 
 Django>=4.2,<5.0
+google-genai>=0.2.0
+python-dotenv>=1.0.0

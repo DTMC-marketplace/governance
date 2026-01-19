@@ -13,6 +13,8 @@ urlpatterns = [
     path("ai-systems/", views.ai_systems, name="ai_systems"),
     path("ai-models/", views.ai_models, name="ai_models"),
     path("ai-assistant/", views.ai_assistant, name="ai_assistant"),
+    # AI Assistant Chat API (must be before parameterized path)
+    path("ai-assistant/chat", views.ai_act_chat_api, name="ai_assistant_chat_api"),
     path("ai-assistant/chat/<str:id>/", views.ai_assistant, name="ai_assistant_chat"),
     
     # AI Systems API

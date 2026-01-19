@@ -226,6 +226,8 @@
     <script>
         // ===== GLOBAL VARIABLES =====
         const requestPlatform = "governance"; // Hackathon demo - fixed platform
+        // companyId is already declared in base.html, just override it for hackathon demo
+        companyId = "demo"; // Hackathon demo - fixed company ID
         const agent_id = "{{ selected_agent.id|default:'agent_ai_act' }}";
         let chat_type = "{{ agent_chat_type|default:'Company' }}";
 
@@ -563,7 +565,12 @@
                         agent_id: agent_id
                 };
 
-                const response = await fetch(`/${requestPlatform}/dashboard/${companyId}/governance/ai-assistant/chat`, {
+                // Use simplified endpoint for hackathon demo
+                const chatEndpoint = agent_id === 'agent_ai_act' 
+                    ? '/ai-assistant/chat' 
+                    : `/${requestPlatform}/dashboard/${companyId}/governance/ai-assistant/chat`;
+                
+                const response = await fetch(chatEndpoint, {
                     method: "POST",
                     body: JSON.stringify(payload),
                     headers: {
@@ -1141,7 +1148,7 @@
             }
             
             // Feedback not implemented in hackathon demo
-            const requestPlatform = 'governance';
+            // Use the global requestPlatform variable (already declared at top of script)
             fetch(`/api/ai-assistant/chat/feedback/`, {
                 method: 'POST',
                 headers: {

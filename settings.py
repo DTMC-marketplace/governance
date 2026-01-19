@@ -2,7 +2,12 @@
 Django settings for Governance Hackathon Standalone Project
 No database, no authentication, no security - for demo only
 """
+import os
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Build paths inside the project
 BASE_DIR = Path(__file__).resolve().parent
@@ -65,6 +70,21 @@ TEMPLATES = [
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# AI Act / Gemini API Configuration
+# SECURITY: API keys should be loaded from environment variables in production
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
+AI_ACT_ARTICLES_DIR = BASE_DIR / 'ai_act_articles'
+AI_ACT_STORE_INFO_PATH = BASE_DIR / 'ai_act_store_info.txt'
+AI_ACT_STORE_NAME = os.environ.get('AI_ACT_STORE_NAME', '')
+# Free tier models: gemini-2.5-flash, gemini-2.5-flash-lite, gemini-3-flash-preview
+# Note: gemini-1.5-* models are deprecated
+AI_ACT_MODEL_NAME = os.environ.get('AI_ACT_MODEL_NAME', 'gemini-2.5-flash')
+# Use File Search (slower but more accurate) or manual context (faster)
+# Set to False to skip File Search and use manual context directly for faster responses
+AI_ACT_USE_FILE_SEARCH = os.environ.get('AI_ACT_USE_FILE_SEARCH', 'False').lower() == 'true'
+# API timeout in seconds
+AI_ACT_API_TIMEOUT = int(os.environ.get('AI_ACT_API_TIMEOUT', '30'))
+
 # Logging Configuration
 LOGGING = {
     'version': 1,
@@ -97,6 +117,21 @@ LOGGING = {
             'propagate': False,
         },
         'django.server': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'governance': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'governance.presentation.views': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'governance.infrastructure.services': {
             'handlers': ['console'],
             'level': 'INFO',
             'propagate': False,
