@@ -9,6 +9,10 @@ urlpatterns = [
     # Main Dashboard
     path("", views.governance_dashboard, name="dashboard"),
     
+    # Organization
+    path("organization/", views.organization, name="organization"),
+    path("api/organization/save/", views.api_save_organization, name="api_save_organization"),
+    
     # AI Systems
     path("ai-systems/", views.ai_systems, name="ai_systems"),
     path("ai-models/", views.ai_models, name="ai_models"),

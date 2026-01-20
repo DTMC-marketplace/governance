@@ -1,0 +1,637 @@
+{% extends "governance/base.html" %}
+{% load static %}
+
+{% block title %}Organization Information{% endblock %}
+
+{% block dashboard_content %}
+<div class="flex flex-col gap-6 mx-auto">
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <button onclick="window.history.back()" class="w-6 h-6 bg-transparent border-none cursor-pointer p-0 flex items-center justify-center">
+                <img src="{% static 'governance/img/arrow-left.svg' %}" alt="Back" class="w-3.5 h-3.5">
+            </button>
+            <span class="text-sm font-semibold text-[#F13D30]">Organization</span>
+        </div>
+    </div>
+
+    <!-- Title -->
+    <div>
+        <h1 class="text-2xl font-bold text-[#22262A] mb-2">Organization Information</h1>
+        <p class="text-sm text-[#6B7280]">Configure your organization details and AI compliance settings</p>
+    </div>
+
+    <!-- Section 1: Document & Evidence Upload -->
+    <div class="bg-white rounded-lg border border-[#E5E7EB] shadow-sm">
+        <div class="p-6 border-b border-[#E5E7EB] cursor-pointer" onclick="toggleSection('section1')">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-lg font-semibold text-[#22262A]">1. Document & Evidence Upload</h2>
+                    <p class="text-sm text-[#6B7280] mt-1">Upload documents for AI-assisted form completion.</p>
+                </div>
+                <img src="{% static 'governance/img/chevron-up.svg' %}" alt="Toggle" class="w-5 h-5 section-toggle" id="section1-toggle">
+            </div>
+        </div>
+        <div class="p-6 section-content" id="section1-content">
+            <!-- File Upload Zone -->
+            <div class="border-2 border-dashed border-[#D1D5DB] rounded-lg p-8 text-center mb-6">
+                <p class="text-sm text-[#6B7280] mb-2">Click or drag and drop to add more evidence document...</p>
+                <p class="text-sm text-[#6B7280] mb-4">or</p>
+                <p class="text-xs text-[#6B7280] mb-4">PDF, DOC, JPG, XLS, XLSX, CSV</p>
+                <input type="file" id="file-upload" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.xls,.xlsx,.csv" class="hidden">
+                <button onclick="document.getElementById('file-upload').click()" class="bg-[#F13D30] text-white px-6 py-2.5 rounded-lg font-medium hover:bg-[#d63529] transition-colors flex items-center gap-2 mx-auto">
+                    <span>📎</span> Choose File
+                </button>
+            </div>
+
+            <!-- Uploaded Documents List -->
+            <div id="uploaded-documents" class="space-y-3 mb-6">
+                <!-- Documents will be added here dynamically -->
+            </div>
+
+            <!-- AI Read & Auto-fill options -->
+            <div class="flex gap-3 items-center">
+                <span class="text-sm text-[#6B7280]">Al Read & Auto-fill from:</span>
+                <button class="ai-read-toggle active px-4 py-2 rounded-lg bg-[#F13D30] text-white font-medium shadow-sm flex items-center gap-2" data-option="all">
+                    <img src="{% static 'governance/img/sparkle.svg' %}" alt="Sparkle" class="w-4 h-4" style="filter: brightness(0) invert(1);">
+                    <span>All files</span>
+                </button>
+                <button class="ai-read-toggle px-4 py-2 rounded-lg border border-[#F13D30] text-[#F13D30] font-medium bg-white flex items-center gap-2" data-option="selected">
+                    <img src="{% static 'governance/img/sparkle.svg' %}" alt="Sparkle" class="w-4 h-4" style="filter: brightness(0) saturate(100%) invert(32%) sepia(98%) saturate(1500%) hue-rotate(344deg) brightness(98%) contrast(95%);">
+                    <span>Selected files</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 2: Organisation Profile -->
+    <div class="bg-white rounded-lg border border-[#E5E7EB] shadow-sm">
+        <div class="p-6 border-b border-[#E5E7EB] cursor-pointer" onclick="toggleSection('section2')">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-lg font-semibold text-[#22262A]">2. Organisation Profile</h2>
+                    <p class="text-sm text-[#6B7280] mt-1">Basic information about your organization.</p>
+                </div>
+                <img src="{% static 'governance/img/chevron-up.svg' %}" alt="Toggle" class="w-5 h-5 section-toggle" id="section2-toggle">
+            </div>
+        </div>
+        <div class="p-6 section-content" id="section2-content">
+            <form id="org-profile-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-[#374151] mb-1">Entity Name <span class="text-[#F13D30]">*</span></label>
+                    <input type="text" name="entity_name" placeholder="Enter legal entity Name" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-[#374151] mb-1">Registration Number</label>
+                    <input type="text" name="registration_number" placeholder="Enter registration number" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-[#374151] mb-1">Headquarter Address</label>
+                    <input type="text" name="headquarter_address" placeholder="Enter full address" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-[#374151] mb-1">Country <span class="text-[#F13D30]">*</span></label>
+                        <input type="text" name="country" placeholder="Enter country" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-[#374151] mb-1">Postal Code</label>
+                        <input type="text" name="postal_code" placeholder="Enter postal code" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-[#374151] mb-1">Legal Representative <span class="text-[#F13D30]">*</span></label>
+                    <input type="text" name="legal_representative" placeholder="Enter representative name" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-[#374151] mb-1">Entity Contact Email <span class="text-[#F13D30]">*</span></label>
+                    <input type="email" name="contact_email" placeholder="contact@company.com" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-[#374151] mb-1">Contact Phone</label>
+                    <input type="tel" name="contact_phone" placeholder="+1 (555) 000-0000" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-[#374151] mb-1">Public authority/body? <span class="text-[#F13D30]">*</span></label>
+                    <input type="text" name="public_authority" placeholder="Yes/No" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-[#374151] mb-1">Internal AI compliance owner? <span class="text-[#F13D30]">*</span></label>
+                    <div class="grid grid-cols-2 gap-4 mt-2">
+                        <div>
+                            <label class="block text-xs text-[#6B7280] mb-1">Name <span class="text-[#F13D30]">*</span></label>
+                            <input type="text" name="compliance_owner_name" placeholder="Enter compliance owner name" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-[#6B7280] mb-1">Email <span class="text-[#F13D30]">*</span></label>
+                            <input type="email" name="compliance_owner_email" placeholder="compliance@company.com" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-[#374151] mb-1">Department <span class="text-[#F13D30]">*</span></label>
+                    <input type="text" name="department" placeholder="Enter department" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
+                </div>
+                <div class="flex justify-end gap-3 pt-4">
+                    <button type="button" class="px-6 py-2 border border-[#F13D30] text-[#F13D30] rounded-lg font-medium hover:bg-[#F13D30] hover:text-white transition-colors">Cancel</button>
+                    <button type="submit" class="px-6 py-2 bg-[#F13D30] text-white rounded-lg font-medium hover:bg-[#d63529] transition-colors">Confirm and Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Section 3: Scope / Applicability Screening -->
+    <div class="bg-white rounded-lg border border-[#E5E7EB] shadow-sm">
+        <div class="p-6 border-b border-[#E5E7EB] cursor-pointer" onclick="toggleSection('section3')">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-lg font-semibold text-[#22262A]">3. Scope / Applicability Screening</h2>
+                    <p class="text-sm text-[#6B7280] mt-1">Determine AI Act applicability and scope.</p>
+                </div>
+                <img src="{% static 'governance/img/chevron-up.svg' %}" alt="Toggle" class="w-5 h-5 section-toggle" id="section3-toggle">
+            </div>
+        </div>
+        <div class="p-6 section-content" id="section3-content">
+            <form id="scope-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-[#374151] mb-1">Q1: Do you place AI systems and/or GPAI models on the EU/EEA market? <span class="text-[#F13D30]">*</span></label>
+                    <input type="text" name="q1" placeholder="Yes/No" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-[#374151] mb-1">Q2: Which roles best describe your typical activities? (Select all that apply as default role(s), editable per system) <span class="text-[#6B7280]">ℹ</span></label>
+                    <div class="flex flex-wrap gap-3 mt-2">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="q2_roles" value="provider" class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">Provider</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="q2_roles" value="deployer" class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">Deployer</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="q2_roles" value="importer" class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">Importer</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="q2_roles" value="distributor" class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">Distributor</span>
+                        </label>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-[#374151] mb-1">Q3: Is the system deployed/used in the EU/EEA? <span class="text-[#F13D30]">*</span></label>
+                    <input type="text" name="q3" placeholder="Yes/No" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-[#374151] mb-1">Q4: Does the system affect persons in the EU/EEA (outputs used in EU/EEA)? <span class="text-[#F13D30]">*</span></label>
+                    <input type="text" name="q4" placeholder="Yes/No" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
+                </div>
+                <div class="flex justify-end gap-3 pt-4">
+                    <button type="button" class="px-6 py-2 border border-[#F13D30] text-[#F13D30] rounded-lg font-medium hover:bg-[#F13D30] hover:text-white transition-colors">Cancel</button>
+                    <button type="submit" class="px-6 py-2 bg-[#F13D30] text-white rounded-lg font-medium hover:bg-[#d63529] transition-colors">Confirm and Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Section 4: Governance Setup (Internal Controls) -->
+    <div class="bg-white rounded-lg border border-[#E5E7EB] shadow-sm">
+        <div class="p-6 border-b border-[#E5E7EB] cursor-pointer" onclick="toggleSection('section4')">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-lg font-semibold text-[#22262A]">4. Governance Setup (Internal Controls)</h2>
+                    <p class="text-sm text-[#6B7280] mt-1">Define internal governance for AI compliance.</p>
+                </div>
+                <img src="{% static 'governance/img/chevron-up.svg' %}" alt="Toggle" class="w-5 h-5 section-toggle" id="section4-toggle">
+            </div>
+        </div>
+        <div class="p-6 section-content" id="section4-content">
+            <form id="governance-form" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-[#374151] mb-2">Q1: Do you have organization-wide written internal AI governance policies? <span class="text-[#F13D30]">*</span></label>
+                    <div class="flex gap-4">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="q1" value="yes" class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">Yes</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="q1" value="no" class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">No</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="q1" value="in_progress" checked class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">In progress</span>
+                        </label>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-[#374151] mb-2">Q2: Do you have a compliance escalation path? <span class="text-[#F13D30]">*</span></label>
+                    <div class="flex gap-4">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="q2" value="yes" checked class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">Yes</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="q2" value="no" class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">No</span>
+                        </label>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-[#374151] mb-2">Q3: Do you maintain a register of AI systems used by the organisation? <span class="text-[#F13D30]">*</span></label>
+                    <div class="flex gap-4 mb-3">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="q3" value="yes" checked class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">Yes</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="q3" value="no" class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">No</span>
+                        </label>
+                    </div>
+                    <div class="flex gap-2 mt-3">
+                        <input type="text" name="q3_link" placeholder="Paste a link from Section 1 or an external link" value="https://example.com/register" class="flex-1 px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
+                        <button type="button" onclick="saveLink('q3')" class="px-4 py-2 bg-[#F13D30] text-white rounded-lg font-medium hover:bg-[#d63529] transition-colors">Save link</button>
+                    </div>
+                    <div class="mt-2 text-sm text-green-600 flex items-center gap-2">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            class="w-5 h-5 text-[#DC2626]">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14,2 14,8 20,8" />
+                            <line x1="16" y1="13" x2="8" y2="13" />
+                            <line x1="16" y1="17" x2="8" y2="17" />
+                            <polyline points="10,9 9,9 8,9" />
+                        </svg> 
+                        <span>Document link saved</span>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-[#374151] mb-2">Q4: Do you maintain version history for AI systems in production? <span class="text-[#F13D30]">*</span></label>
+                    <div class="flex gap-4">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="q4" value="yes" checked class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">Yes (You will be asked to provide evidence per system)</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="q4" value="no" class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">No</span>
+                        </label>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-[#374151] mb-2">Q5: Do you have third party/vendor assessment procedures or policy for AI suppliers? <span class="text-[#F13D30]">*</span></label>
+                    <div class="flex gap-4 mb-3">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="q5" value="yes" class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">Yes</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="q5" value="no" checked class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">No</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="q5" value="not_applicable" class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">Not Applicable</span>
+                        </label>
+                    </div>
+                    <div class="flex gap-2 mt-3">
+                        <input type="text" name="q5_link" placeholder="Paste a link from Section 1 or an external link" class="flex-1 px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
+                        <button type="button" onclick="saveLink('q5')" class="px-4 py-2 bg-[#F13D30] text-white rounded-lg font-medium hover:bg-[#d63529] transition-colors">Save link</button>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 pt-4">
+                    <button type="button" class="px-6 py-2 border border-[#F13D30] text-[#F13D30] rounded-lg font-medium hover:bg-[#F13D30] hover:text-white transition-colors">Cancel</button>
+                    <button type="submit" class="px-6 py-2 bg-[#F13D30] text-white rounded-lg font-medium hover:bg-[#d63529] transition-colors">Confirm and Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Section 5: AI Literacy (Mandatory Requirement) -->
+    <div class="bg-white rounded-lg border border-[#E5E7EB] shadow-sm">
+        <div class="p-6 border-b border-[#E5E7EB] cursor-pointer" onclick="toggleSection('section5')">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-lg font-semibold text-[#22262A]">5. AI Literacy (Mandatory Requirement)</h2>
+                    <p class="text-sm text-[#6B7280] mt-1">Demonstrate AI literacy and training programs.</p>
+                </div>
+                <img src="{% static 'governance/img/chevron-up.svg' %}" alt="Toggle" class="w-5 h-5 section-toggle" id="section5-toggle">
+            </div>
+        </div>
+        <div class="p-6 section-content" id="section5-content">
+            <form id="ai-literacy-form" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-[#374151] mb-2">Q1: Users: Which internal teams or external contractors use AI systems for your organisation? (Select all that apply) <span class="text-[#F13D30]">*</span></label>
+                    <div class="grid grid-cols-2 gap-3 mt-2">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="q1_teams" value="product_engineering" class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">Product / Engineering</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="q1_teams" value="data_ml" class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">Data / ML team</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="q1_teams" value="operations" class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">Operations / Analysts</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="q1_teams" value="hr" class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">HR / Recruitment</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="q1_teams" value="compliance" class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">Compliance / Legal</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="q1_teams" value="customer_support" class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">Customer support</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="q1_teams" value="sales" class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">Sales / Marketing</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="q1_teams" value="management" class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">Senior management</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="q1_teams" value="external" class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">External contractors / service providers</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="q1_teams" value="other" class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">Other:</span>
+                            <input type="text" name="q1_other" placeholder="Specify" class="flex-1 px-2 py-1 border border-[#D1D5DB] rounded text-sm">
+                        </label>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-[#374151] mb-1">Q2: User number: Approximately how many people use or oversee AI systems? <span class="text-[#F13D30]">*</span></label>
+                    <input type="number" name="q2" placeholder="Enter number" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-[#374151] mb-2">Q3: Training: Do those users receive AI literacy training? <span class="text-[#F13D30]">*</span></label>
+                    <div class="flex gap-4">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="q3" value="yes_implemented" class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">Yes [implemented]</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="q3" value="partly" checked class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">Partly implemented</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="q3" value="no" class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">No</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="q3" value="planned" class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">Planned</span>
+                        </label>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-[#374151] mb-2">Q4: Content: Does the training cover the following? (Select all that apply) <span class="text-[#F13D30]">*</span></label>
+                    <div class="grid grid-cols-2 gap-3 mt-2">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="q4_content" value="limitations" class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">Understanding AI limitations and errors</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="q4_content" value="bias" class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">Bias and discrimination risks</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="q4_content" value="oversight" class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">Proper human oversight / how to challenge AI outputs</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="q4_content" value="security" class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">Security and misuse risks</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="q4_content" value="reporting" class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">Reporting issues or incidents</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="q4_content" value="role_specific" class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">Role-specific guidance (e.g., HR / compliance / operations)</span>
+                        </label>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-[#374151] mb-2">Q5: Evidence: Do you keep evidence that training occurred (e.g., attendance logs, completion certificates)? <span class="text-[#F13D30]">*</span></label>
+                    <div class="flex gap-4">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="q5" value="yes" checked class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">Yes</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="q5" value="no" class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">No</span>
+                        </label>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-[#374151] mb-2">Q6: Updates: Is AI literacy training refreshed when AI systems or risks change? <span class="text-[#F13D30]">*</span></label>
+                    <div class="flex gap-4">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="q6" value="yes" class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">Yes</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="q6" value="no" class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">No</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="q6" value="not_sure" class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">Not sure</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="q6" value="planned" checked class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">Planned</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 pt-4">
+                    <button type="button" class="px-6 py-2 border border-[#F13D30] text-[#F13D30] rounded-lg font-medium hover:bg-[#F13D30] hover:text-white transition-colors">Cancel</button>
+                    <button type="submit" class="px-6 py-2 bg-[#F13D30] text-white rounded-lg font-medium hover:bg-[#d63529] transition-colors">Confirm and Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Save Whole Page Button -->
+    <div class="flex justify-end pb-6">
+        <button onclick="saveWholePage()" class="px-8 py-3 bg-[#F13D30] text-white rounded-lg font-semibold hover:bg-[#d63529] transition-colors">Save Whole Page</button>
+    </div>
+</div>
+
+<style>
+.section-content {
+    display: block;
+}
+.section-toggle {
+    transition: transform 0.3s ease;
+}
+</style>
+
+<script>
+// Section toggle functionality
+function toggleSection(sectionId) {
+    const content = document.getElementById(sectionId + '-content');
+    const toggle = document.getElementById(sectionId + '-toggle');
+    
+    if (content.style.display === 'none' || !content.style.display) {
+        content.style.display = 'block';
+        toggle.style.transform = 'rotate(0deg)';
+        toggle.src = "{% static 'governance/img/chevron-up.svg' %}";
+    } else {
+        content.style.display = 'none';
+        toggle.style.transform = 'rotate(180deg)';
+        toggle.src = "{% static 'governance/img/chevron-down.svg' %}";
+    }
+}
+
+// File upload handling
+document.getElementById('file-upload')?.addEventListener('change', function(e) {
+    const files = Array.from(e.target.files);
+    const container = document.getElementById('uploaded-documents');
+    
+    files.forEach(file => {
+        const fileItem = document.createElement('div');
+        fileItem.className = 'flex items-center justify-between p-3 bg-gray-50 rounded-lg';
+        fileItem.innerHTML = `
+            <div class="flex items-center gap-3">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    class="w-5 h-5 text-[#DC2626]">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <polyline points="14,2 14,8 20,8" />
+                    <line x1="16" y1="13" x2="8" y2="13" />
+                    <line x1="16" y1="17" x2="8" y2="17" />
+                    <polyline points="10,9 9,9 8,9" />
+                </svg>
+                <div>
+                    <p class="text-sm font-medium text-[#374151]">${file.name}</p>
+                    <p class="text-xs text-[#6B7280]">Uploaded just now</p>
+                </div>
+            </div>
+            <button onclick="generateLink('${file.name}')" class="px-4 py-1.5 bg-[#F13D30] text-white text-sm rounded-lg hover:bg-[#d63529] transition-colors">Generate link</button>
+        `;
+        container.appendChild(fileItem);
+    });
+    
+    e.target.value = '';
+});
+
+// AI Read toggle
+document.querySelectorAll('.ai-read-toggle').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.ai-read-toggle').forEach(b => {
+            b.classList.remove('active');
+            b.classList.remove('bg-[#F13D30]', 'text-white', 'shadow-sm');
+            b.classList.add('border', 'border-[#F13D30]', 'text-[#F13D30]', 'bg-white');
+            // Update icon to red
+            const icon = b.querySelector('img');
+            if (icon) {
+                icon.style.filter = 'brightness(0) saturate(100%) invert(32%) sepia(98%) saturate(1500%) hue-rotate(344deg) brightness(98%) contrast(95%)';
+            }
+        });
+        this.classList.add('active', 'bg-[#F13D30]', 'text-white', 'shadow-sm');
+        this.classList.remove('border', 'border-[#F13D30]', 'text-[#F13D30]', 'bg-white');
+        // Update icon to white
+        const icon = this.querySelector('img');
+        if (icon) {
+            icon.style.filter = 'brightness(0) invert(1)';
+        }
+    });
+});
+
+// Save link function
+function saveLink(questionId) {
+    const input = document.querySelector(`input[name="${questionId}_link"]`);
+    if (input && input.value) {
+        alert('Link saved: ' + input.value);
+        // Here you would send to backend
+    }
+}
+
+// Generate link function
+function generateLink(fileName) {
+    const link = `https://example.com/files/${fileName}`;
+    navigator.clipboard.writeText(link).then(() => {
+        alert('Link copied to clipboard: ' + link);
+    });
+}
+
+// Form submission handlers
+document.getElementById('org-profile-form')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    console.log('Org Profile:', Object.fromEntries(formData));
+    // Send to backend
+    alert('Organization profile saved!');
+});
+
+document.getElementById('scope-form')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const roles = Array.from(document.querySelectorAll('input[name="q2_roles"]:checked')).map(cb => cb.value);
+    console.log('Scope:', Object.fromEntries(formData), {roles});
+    alert('Scope screening saved!');
+});
+
+document.getElementById('governance-form')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    console.log('Governance:', Object.fromEntries(formData));
+    alert('Governance setup saved!');
+});
+
+document.getElementById('ai-literacy-form')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const teams = Array.from(document.querySelectorAll('input[name="q1_teams"]:checked')).map(cb => cb.value);
+    const content = Array.from(document.querySelectorAll('input[name="q4_content"]:checked')).map(cb => cb.value);
+    console.log('AI Literacy:', Object.fromEntries(formData), {teams, content});
+    alert('AI Literacy information saved!');
+});
+
+// Save whole page
+function saveWholePage() {
+    const allData = {
+        documents: Array.from(document.querySelectorAll('#uploaded-documents > div')).map(div => ({
+            name: div.querySelector('p').textContent,
+            uploaded: div.querySelector('.text-xs').textContent
+        })),
+        orgProfile: Object.fromEntries(new FormData(document.getElementById('org-profile-form'))),
+        scope: Object.fromEntries(new FormData(document.getElementById('scope-form'))),
+        governance: Object.fromEntries(new FormData(document.getElementById('governance-form'))),
+        aiLiteracy: Object.fromEntries(new FormData(document.getElementById('ai-literacy-form')))
+    };
+    
+    console.log('All data:', allData);
+    // Send to backend
+    fetch('/api/organization/save/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify(allData)
+    }).then(response => response.json())
+      .then(data => {
+          if (data.success) {
+              alert('All data saved successfully!');
+          } else {
+              alert('Error saving data: ' + (data.error || 'Unknown error'));
+          }
+      })
+      .catch(error => {
+          console.error('Error:', error);
+          alert('Error saving data');
+      });
+}
+</script>
+{% endblock %}

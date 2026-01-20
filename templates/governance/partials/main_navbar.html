@@ -23,6 +23,10 @@
             <img src="{% static 'governance/img/nav-3-stars.svg' %}" alt="AI Assistant" class="nav-icon w-5 h-5 flex-shrink-0 transition-all duration-200 object-contain">
             <span class="nav-label flex-1 whitespace-nowrap overflow-hidden text-ellipsis text-sm font-medium leading-5">AI Assistant</span>
         </a>
+        <a href="{% url 'organization' %}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg no-underline text-[#4B5563] text-sm font-medium leading-5 transition-all duration-200 hover:bg-[rgba(220,107,100,0.08)] hover:text-[#4B5563]" data-nav="organization">
+            <img src="{% static 'governance/img/icon-organization.svg' %}" alt="Organization" class="nav-icon w-5 h-5 flex-shrink-0 transition-all duration-200 object-contain">
+            <span class="nav-label flex-1 whitespace-nowrap overflow-hidden text-ellipsis text-sm font-medium leading-5">Organization</span>
+        </a>
     </div>
 
     <!-- AI Systems Sub Menu Section (Only show when on a specific AI system page) -->

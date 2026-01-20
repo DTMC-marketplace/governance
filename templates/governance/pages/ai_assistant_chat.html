@@ -45,7 +45,7 @@
                             data-id="{{ ch.id }}" data-references-response="{{ ch.references_response }}"
                             data-user-message="{{ ch.user_message }}">
                             {{ ch.user_message }}
-                            <img src="/static/icons/x.svg" alt="Delete"
+                            <img src="{% static 'governance/img/x.svg' %}" alt="Delete"
                                 class="delete-icon absolute hidden group-hover:block right-0 top-1/2 transform -translate-y-1/2 w-5 h-5">
                         </li>
                         {% endfor %}
@@ -1304,7 +1304,7 @@
             // Create message content
             newMessage.innerHTML = `
                 ${userMessage}
-                <img src="/static/icons/x.svg" alt="Delete" class="delete-icon absolute hidden group-hover:block right-0 top-1/2 transform -translate-y-1/2 w-5 h-5">
+                <img src="{% static 'governance/img/x.svg' %}" alt="Delete" class="delete-icon absolute hidden group-hover:block right-0 top-1/2 transform -translate-y-1/2 w-5 h-5">
             `;
 
             // Add to top of list

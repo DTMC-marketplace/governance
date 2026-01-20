@@ -1506,7 +1506,68 @@ def api_check_store_info(request):
     except Exception as e:
         info['service_status'] = f'Failed to initialize: {str(e)}'
     
-    return JsonResponse({
-        'success': True,
-        'info': info
+        return JsonResponse({
+            'success': True,
+            'info': info
+        })
+
+
+def organization(request):
+    """
+    Organization Information page.
+    Displays form for configuring organization details and AI compliance settings.
+    """
+    # For hackathon demo, use mock data
+    # In production, this would load from database
+    organization_data = {
+        'documents': [],
+        'org_profile': {},
+        'scope': {},
+        'governance': {},
+        'ai_literacy': {}
+    }
+    
+    return render(request, 'governance/pages/organization.html', {
+        'organization_data': organization_data,
+        'company': MockCompany() if 'MockCompany' in globals() else None,
     })
+
+
+@require_http_methods(["POST"])
+def api_save_organization(request):
+    """
+    Save organization information from all sections.
+    For hackathon demo, stores in memory.
+    """
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    try:
+        data = json.loads(request.body)
+        
+        # In a real application, this would save to database
+        # For demo, we'll just log and return success
+        logger.info(f"Organization data received: {len(data)} sections")
+        
+        # Store in a simple in-memory dict (would be database in production)
+        if not hasattr(api_save_organization, '_storage'):
+            api_save_organization._storage = {}
+        
+        api_save_organization._storage = data
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Organization information saved successfully'
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'success': False,
+            'error': 'Invalid JSON in request body'
+        }, status=400)
+    except Exception as e:
+        logger.error(f"Error saving organization data: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'error': f'An error occurred: {str(e)}'
+        }, status=500)
