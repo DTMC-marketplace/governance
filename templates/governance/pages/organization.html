@@ -468,6 +468,31 @@
     </div>
 </div>
 
+<!-- Share Link Modal -->
+<div id="share-link-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+  <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 relative">
+    <button type="button" class="absolute top-4 right-4 text-[#9CA3AF] hover:text-[#4B5563]" onclick="closeShareModal()">
+      <img src="{% static 'governance/img/x.svg' %}" alt="Close" class="w-4 h-4">
+    </button>
+    <h3 class="text-lg font-semibold text-[#111827] mb-2">Share Link</h3>
+    <p class="text-sm text-[#6B7280] mb-4">
+      Share the link to the file:
+      <span id="share-file-name" class="font-semibold text-[#111827]">File.pdf</span>
+    </p>
+    <div class="flex items-center gap-3">
+      <input id="share-link-input" type="text" readonly
+         class="flex-1 px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm text-[#111827] bg-[#F9FAFB] focus:outline-none">
+      <button type="button" id="share-link-copy-btn"
+        class="flex items-center gap-2 px-4 py-2 bg-[#F13D30] text-white text-sm font-medium rounded-lg hover:bg-[#d63529] transition-colors">
+        <svg id="share-link-chain-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+        </svg>
+        <span id="share-link-text">Copy</span>
+      </button>
+    </div>
+  </div>
+</div>
+
 <style>
 .section-content {
     display: block;
@@ -557,13 +582,65 @@ function saveLink(questionId) {
     }
 }
 
+// Generate link modal helpers
+function openShareModal(fileName, link) {
+    const modal = document.getElementById('share-link-modal');
+    const nameEl = document.getElementById('share-file-name');
+    const inputEl = document.getElementById('share-link-input');
+    const copyBtn = document.getElementById('share-link-copy-btn');
+    if (!modal || !nameEl || !inputEl || !copyBtn) return;
+
+    nameEl.textContent = fileName;
+    inputEl.value = link;
+    modal.classList.remove('hidden');
+
+    // Reset button to initial state
+    const iconEl = document.getElementById('share-link-chain-icon');
+    const textEl = document.getElementById('share-link-text');
+    if (iconEl && textEl) {
+        // Reset to chain-link icon
+        iconEl.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>';
+        textEl.textContent = 'Copy';
+    }
+}
+
+function closeShareModal() {
+    const modal = document.getElementById('share-link-modal');
+    if (modal) modal.classList.add('hidden');
+}
+
 // Generate link function
 function generateLink(fileName) {
-    const link = `https://example.com/files/${fileName}`;
-    navigator.clipboard.writeText(link).then(() => {
-        alert('Link copied to clipboard: ' + link);
-    });
+    const safeName = fileName || 'document';
+    const randomId = (self.crypto && self.crypto.randomUUID) ? self.crypto.randomUUID() : Date.now().toString(36);
+    const link = `https://${randomId}`;
+    openShareModal(safeName, link);
 }
+
+// Copy button handler
+document.getElementById('share-link-copy-btn')?.addEventListener('click', function() {
+    const inputEl = document.getElementById('share-link-input');
+    const iconEl = document.getElementById('share-link-chain-icon');
+    const textEl = document.getElementById('share-link-text');
+    
+    if (!inputEl || !inputEl.value || !iconEl || !textEl) return;
+    
+    navigator.clipboard.writeText(inputEl.value).then(() => {
+        // Change icon to checkmark
+        iconEl.innerHTML = '<polyline points="20,6 9,17 4,12" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"></polyline>';
+        // Change text to "Copied"
+        textEl.textContent = 'Copied';
+    }).catch(() => {
+        alert('Unable to copy link');
+    });
+});
+
+// Close modal when clicking outside content
+document.getElementById('share-link-modal')?.addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeShareModal();
+    }
+});
 
 // Form submission handlers
 document.getElementById('org-profile-form')?.addEventListener('submit', function(e) {
