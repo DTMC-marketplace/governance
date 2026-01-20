@@ -1571,3 +1571,135 @@ def api_save_organization(request):
             'success': False,
             'error': f'An error occurred: {str(e)}'
         }, status=500)
+
+
+def ai_inventory(request):
+    """
+    AI Inventory page - Table view of all AI systems.
+    Displays systems with status, role, risk classification, and compliance status.
+    """
+    ensure_governance_platform(request)
+    
+    company = MockCompany()
+    breadcrumbs = [
+        {"name": "AI Inventory", "url": request.build_absolute_uri()},
+    ]
+    
+    # Get mock data
+    agents_data = get_mock_agents()
+    
+    # Transform agents data to systems format for the table
+    ai_systems = []
+    systems_need_attention = 0
+    
+    # Status mapping
+    status_map = {
+        'assessing': 'In progress',
+        'reviewing': 'In progress',
+        'compliant': 'In production',
+        'non_compliant': 'Testing',
+    }
+    
+    # Badge classes
+    status_badge_classes = {
+        'In production': 'bg-green-100 text-green-700',
+        'Testing': 'bg-orange-100 text-orange-700',
+        'Planned': 'bg-gray-100 text-gray-700',
+        'In progress': 'bg-blue-100 text-blue-700',
+    }
+    
+    risk_badge_classes = {
+        'Minimal': 'bg-green-100 text-green-700',
+        'Limited transparency': 'bg-yellow-100 text-yellow-700',
+        'High-risk': 'bg-orange-100 text-orange-700',
+        'Not assessed': 'bg-gray-100 text-gray-700',
+    }
+    
+    compliance_badge_classes = {
+        'Compliant': 'bg-green-100 text-green-700',
+        'In progress': 'bg-blue-100 text-blue-700',
+        'Not started': 'bg-gray-100 text-gray-700',
+    }
+    
+    # Role mapping
+    role_map = {
+        'deployer': 'Deployer',
+        'provider': 'Provider',
+        'importer': 'Importer',
+        'distributor': 'Distributor',
+    }
+    
+    # Risk classification mapping
+    risk_map = {
+        'limited_risks': 'Limited transparency',
+        'high_risks': 'High-risk',
+        'minimal_risks': 'Minimal',
+    }
+    
+    # Provider type mapping (mock data based on vendor)
+    provider_type_map = {
+        '': 'In-house',  # No vendor = in-house
+        'DTM': 'In-house',
+        'DT Master Nature': 'In-house',
+        'Cleary': 'External',
+    }
+    
+    # Mock last updated dates (in days ago from today)
+    import random
+    from datetime import datetime, timedelta
+    
+    for idx, agent in enumerate(agents_data):
+        compliance_status = agent.get('compliance_status', 'assessing')
+        status = status_map.get(compliance_status, 'Planned')
+        
+        # Check if needs attention
+        if compliance_status in ['assessing', 'reviewing']:
+            systems_need_attention += 1
+        
+        # Map compliance status for display
+        compliance_display = {
+            'assessing': 'In progress',
+            'reviewing': 'In progress',
+            'compliant': 'Compliant',
+            'non_compliant': 'Not started',
+        }.get(compliance_status, 'Not started')
+        
+        # Get risk classification
+        risk_class = agent.get('risk_classification', 'limited_risks')
+        risk_display = risk_map.get(risk_class, 'Not assessed')
+        
+        # Get owner (business unit)
+        owner = agent.get('business_unit', '') or '—'
+        
+        # Get provider type
+        vendor = agent.get('vendor', '')
+        provider_type = provider_type_map.get(vendor, 'Mixed' if vendor else 'In-house')
+        
+        # Generate mock last updated date (varying dates for different systems)
+        # Use system index to create varied dates
+        days_ago = [15, 18, 10, 5, 20][idx % 5]  # Cycle through different days
+        last_updated_date = datetime.now() - timedelta(days=days_ago)
+        last_updated = last_updated_date.strftime('%b %d, %Y')
+        
+        ai_systems.append({
+            'id': agent.get('id'),
+            'name': agent.get('name', 'Unnamed System'),
+            'owner': owner,
+            'status': status,
+            'status_badge_class': status_badge_classes.get(status, 'bg-gray-100 text-gray-700'),
+            'role': role_map.get(agent.get('ai_act_role', 'deployer'), 'Deployer'),
+            'risk_classification': risk_display,
+            'risk_badge_class': risk_badge_classes.get(risk_display, 'bg-gray-100 text-gray-700'),
+            'compliance_status': compliance_display,
+            'compliance_badge_class': compliance_badge_classes.get(compliance_display, 'bg-gray-100 text-gray-700'),
+            'last_updated': last_updated,
+            'provider_type': provider_type,
+        })
+    
+    return render(request, 'governance/pages/ai_inventory.html', {
+        'company': company,
+        'subpage': 'ai_inventory',
+        'breadcrumbs': breadcrumbs,
+        'ai_systems': ai_systems,
+        'systems_need_attention': systems_need_attention,
+    })

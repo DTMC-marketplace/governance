@@ -13,6 +13,9 @@ urlpatterns = [
     path("organization/", views.organization, name="organization"),
     path("api/organization/save/", views.api_save_organization, name="api_save_organization"),
     
+    # AI Inventory
+    path("ai-inventory/", views.ai_inventory, name="ai_inventory"),
+    
     # AI Systems
     path("ai-systems/", views.ai_systems, name="ai_systems"),
     path("ai-models/", views.ai_models, name="ai_models"),
