@@ -1,0 +1,1078 @@
+{% extends "governance/base.html" %}
+{% load static %}
+
+{% block title %}{{ agent.name }} - AI System Detail{% endblock %}
+
+{% block dashboard_content %}
+<style>
+/* Styled select to match provided design (rounded, padded, custom arrow) */
+.styled-select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-color: #fff;
+    border: 1px solid #D1D5DB;
+    border-radius: 0.75rem; /* 12px */
+    padding: 0.75rem 3rem 0.75rem 0.75rem;
+    width: 100%;
+    color: #374151;
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+.styled-select:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(241, 61, 48, 0.15);
+    border-color: #F13D30;
+}
+.styled-select-wrapper {
+    position: relative;
+}
+.styled-select-wrapper svg {
+    pointer-events: none;
+}
+</style>
+<div class="flex flex-col gap-6 mx-auto">
+    <!-- Breadcrumb Navigation -->
+    <div class="flex items-center gap-3">
+        <button class="w-6 h-6 bg-transparent border-none cursor-pointer p-0 flex items-center justify-center" onclick="history.back()">
+            <img src="{% static 'governance/img/arrow-left.svg' %}" alt="Back" class="w-3.5 h-3.5">
+        </button>
+        <button class="w-6 h-6 bg-transparent border-none cursor-pointer p-0 flex items-center justify-center" onclick="history.forward()">
+            <img src="{% static 'governance/img/arrow-right-gray.svg' %}" alt="Forward" class="w-3.5 h-3.5">
+        </button>
+        <span class="text-sm font-semibold text-[#F13D30]">AI Inventory / {{ agent.name }}</span>
+    </div>
+
+
+    <!-- Title -->
+    <div class="flex items-center justify-between">
+        <h1 class="text-2xl font-bold text-[#22262A]">{{ agent.name }}</h1>
+        <a href="{% url 'ai_inventory' %}" class="flex items-center gap-2 px-4 py-2 border border-[#D1D5DB] text-[#374151] text-sm font-medium rounded-lg hover:bg-[#F9FAFB] transition-colors">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+            Back to List
+        </a>
+    </div>
+
+    <!-- Tabs -->
+    <div class="border-b border-[#E5E7EB]">
+        <div class="flex gap-6">
+            <button onclick="switchTab('profile')" id="tab-profile" class="tab-button active px-4 py-3 text-sm font-medium text-[#F13D30] border-b-2 border-[#F13D30]">
+                Profile
+            </button>
+            <button onclick="switchTab('assessment')" id="tab-assessment" class="tab-button px-4 py-3 text-sm font-medium text-[#6B7280] border-b-2 border-transparent hover:text-[#F13D30]">
+                Assessment
+            </button>
+            <button onclick="switchTab('result')" id="tab-result" class="tab-button px-4 py-3 text-sm font-medium text-[#6B7280] border-b-2 border-transparent hover:text-[#F13D30]">
+                Result
+            </button>
+        </div>
+    </div>
+
+    <!-- Tab Content: Profile -->
+    <div id="content-profile" class="tab-content">
+         <!-- Section 1: Document & Evidence Upload -->
+        <div class="flex flex-col gap-6">
+            <div class="bg-white rounded-lg border border-[#E5E7EB] shadow-sm">
+                <div class="p-6 border-b border-[#E5E7EB] cursor-pointer" onclick="toggleSection('section1')">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="text-lg font-semibold text-[#22262A]">1. Document & Evidence Upload</h2>
+                            <p class="text-sm text-[#6B7280] mt-1">Upload documents for AI-assisted form completion.</p>
+                        </div>
+                        <img src="{% static 'governance/img/chevron-up.svg' %}" alt="Toggle" class="w-5 h-5 section-toggle" id="section1-toggle">
+                    </div>
+                </div>
+                <div class="p-6 section-content" id="section1-content">
+                    <!-- File Upload Zone -->
+                    <div class="border-2 border-dashed border-[#D1D5DB] rounded-lg p-8 text-center mb-6">
+                        <p class="text-sm text-[#6B7280] mb-2">Click or drag and drop to add more evidence document...</p>
+                        <p class="text-sm text-[#6B7280] mb-4">or</p>
+                        <p class="text-xs text-[#6B7280] mb-4">PDF, DOC, JPG, XLS, XLSX, CSV</p>
+                        <input type="file" id="file-upload" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.xls,.xlsx,.csv" class="hidden">
+                        <button onclick="document.getElementById('file-upload').click()" class="bg-[#F13D30] text-white px-6 py-2.5 rounded-lg font-medium hover:bg-[#d63529] transition-colors flex items-center gap-2 mx-auto">
+                            <span>📎</span> Choose File
+                        </button>
+                    </div>
+
+                    <!-- Uploaded Documents List -->
+                    <div id="uploaded-documents" class="space-y-3 mb-6">
+                        {% for doc in uploaded_documents %}
+                        <div class="flex items-center justify-between p-3 bg-white rounded-lg border border-[#E5E7EB]">
+                            <div class="flex items-center gap-3">
+                                <label class="cursor-pointer">
+                                    <input type="checkbox" class="file-checkbox hidden" data-file-id="doc-{{ forloop.counter0 }}" onchange="toggleFileSelection(this)" {% if forloop.counter0 < 2 %}checked{% endif %}>
+                                    <div class="file-checkbox-display w-5 h-5 border-2 {% if forloop.counter0 < 2 %}border-[#F13D30]{% else %}border-[#111827]{% endif %} rounded flex items-center justify-center">
+                                        <svg class="check-icon w-3 h-3 text-[#F13D30] {% if forloop.counter0 >= 2 %}hidden{% endif %}" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                        </svg>
+                                    </div>
+                                </label>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    class="w-5 h-5 text-[#DC2626]">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                    <polyline points="14,2 14,8 20,8" />
+                                    <line x1="16" y1="13" x2="8" y2="13" />
+                                    <line x1="16" y1="17" x2="8" y2="17" />
+                                    <polyline points="10,9 9,9 8,9" />
+                                </svg>
+                                <div>
+                                    <p class="text-sm font-medium text-[#111827]">{{ doc.name }}</p>
+                                    <p class="text-xs text-[#6B7280]">Uploaded {{ doc.uploaded }}</p>
+                                </div>
+                            </div>
+                            <button onclick="generateLink('{{ doc.name }}')" class="flex items-center gap-2 px-4 py-1.5 bg-[#F13D30] text-white text-sm rounded-lg hover:bg-[#d63529] transition-colors">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                                </svg>
+                                Generate link
+                            </button>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- AI Read & Auto-fill options -->
+                    <div class="flex gap-3 items-center">
+                        <span class="text-sm text-[#6B7280]">Al Read & Auto-fill from:</span>
+                        <button class="ai-read-toggle active px-4 py-2 rounded-lg bg-[#F13D30] text-white font-medium shadow-sm flex items-center gap-2" data-option="all">
+                            <img src="{% static 'governance/img/sparkle.svg' %}" alt="Sparkle" class="w-4 h-4" style="filter: brightness(0) invert(1);">
+                            <span>All files</span>
+                        </button>
+                        <button class="ai-read-toggle px-4 py-2 rounded-lg border border-[#F13D30] text-[#F13D30] font-medium bg-white flex items-center gap-2" data-option="selected">
+                            <img src="{% static 'governance/img/sparkle.svg' %}" alt="Sparkle" class="w-4 h-4" style="filter: brightness(0) saturate(100%) invert(32%) sepia(98%) saturate(1500%) hue-rotate(344deg) brightness(98%) contrast(95%);">
+                            <span>Selected files</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 2: System Identity -->
+            <div class="bg-white rounded-lg border border-[#E5E7EB] shadow-sm">
+                <div class="p-6 border-b border-[#E5E7EB] cursor-pointer" onclick="toggleSection('section2')">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="text-lg font-semibold text-[#22262A]">2. System Identity</h2>
+                            <p class="text-sm text-[#6B7280] mt-1">Basic information about this AI system.</p>
+                        </div>
+                        <img src="{% static 'governance/img/chevron-up.svg' %}" alt="Toggle" class="w-5 h-5 section-toggle" id="section2-toggle">
+                    </div>
+                </div>
+                <div class="p-6 section-content" id="section2-content">
+                    <form id="system-identity-form" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-[#374151] mb-1">Q1: AI System Name <span class="text-[#F13D30]">*</span></label>
+                            <input type="text" name="ai_system_name" value="{{ agent.name }}" placeholder="Customer Service Chatbot" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-[#374151] mb-1">Q2: Internal system ID / reference</label>
+                            <input type="text" name="internal_system_id" placeholder="Enter internal system ID or reference" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-[#374151] mb-1">Q3: Commercial name of the AI system, if any</label>
+                            <input type="text" name="commercial_name" placeholder="Enter commercial name" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-[#374151] mb-1">Q4: Owner / Responsible Team <span class="text-[#F13D30]">*</span></label>
+                            <div class="mb-3">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" name="same_as_compliance_owner" checked class="w-4 h-4">
+                                    <span class="text-sm text-[#374151]">Same as internal AI compliance owner</span>
+                                </label>
+                            </div>
+                            <div class="grid grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-xs text-[#6B7280] mb-1">Name</label>
+                                    <input type="text" name="owner_name" placeholder="Enter name" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-[#6B7280] mb-1">Email</label>
+                                    <input type="email" name="owner_email" placeholder="Enter email" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-[#6B7280] mb-1">Department</label>
+                                    <input type="text" name="owner_department" placeholder="Enter department" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-[#374151] mb-1">Q5: System status <span class="text-[#F13D30]">*</span></label>
+                            <div class="styled-select-wrapper">
+                                <select name="system_status" class="styled-select">
+                                    <option value="planned" selected>Planned</option>
+                                    <option value="in_development">In development</option>
+                                    <option value="testing_pilot">Testing / Pilot</option>
+                                    <option value="in_production">In use (production)</option>
+                                    <option value="retired">Retired</option>
+                                </select>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5 text-[#9CA3AF] absolute right-3 top-1/2 transform -translate-y-1/2">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-[#374151] mb-1">Q6: Go-live date (planned or actual)</label>
+                            <input type="text" name="go_live_date" placeholder="21/01/2026" value="21/01/2026" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-[#374151] mb-1">Q7: Is this system part of a broader product / service? <span class="text-[#F13D30]">*</span></label>
+                            <div class="flex gap-4">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="part_of_product" value="yes" checked class="w-4 h-4">
+                                    <span class="text-sm text-[#374151]">Yes</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="part_of_product" value="no" class="w-4 h-4">
+                                    <span class="text-sm text-[#374151]">No</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="flex justify-end gap-3 pt-4">
+                            <button type="button" class="px-6 py-2 border border-[#F13D30] text-[#F13D30] rounded-lg font-medium hover:bg-[#F13D30] hover:text-white transition-colors">Cancel</button>
+                            <button type="submit" class="px-6 py-2 bg-[#F13D30] text-white rounded-lg font-medium hover:bg-[#d63529] transition-colors">Confirm and Save</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Section 3: Source & Operator Role -->
+            <div class="bg-white rounded-lg border border-[#E5E7EB] shadow-sm">
+                <div class="p-6 border-b border-[#E5E7EB] cursor-pointer" onclick="toggleSection('section3')">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="text-lg font-semibold text-[#22262A]">3. Source & Operator Role</h2>
+                            <p class="text-sm text-[#6B7280] mt-1">Define your organization's role and system source</p>
+                        </div>
+                        <img src="{% static 'governance/img/chevron-up.svg' %}" alt="Toggle" class="w-5 h-5 section-toggle" id="section3-toggle">
+                    </div>
+                </div>
+                <div class="p-6 section-content" id="section3-content">
+                    <div class="space-y-6">
+                        <!-- Q1 -->
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-[#374151]">Q1: In Organization module, your default role is set to be: <span class="font-semibold text-[#F13D30]">"Deployer"</span>. Does your organisation's default role apply to this AI system? <span class="text-[#F13D30]">*</span></label>
+                            <div class="flex flex-wrap gap-4">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="default_role_apply" value="yes" class="w-4 h-4">
+                                    <span class="text-sm text-[#374151]">Yes</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="default_role_apply" value="no" class="w-4 h-4" checked>
+                                    <span class="text-sm text-[#374151]">No</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Q2 -->
+                        <div class="space-y-2">
+                            <div class="flex items-center gap-2">
+                                <label class="block text-sm font-medium text-[#374151]">Q2: Your role for this AI system <span class="text-[#F13D30]">*</span></label>
+                                <div class="relative group">
+                                    <div class="w-5 h-5 rounded-full bg-[#E5E7EB] flex items-center justify-center cursor-help">
+                                        <span class="text-xs text-[#6B7280] font-medium">?</span>
+                                    </div>
+                                    <div class="absolute left-0 top-6 z-50 hidden group-hover:block w-64 bg-[#374151] text-white text-xs rounded-lg p-3 shadow-lg">
+                                        <div class="space-y-1">
+                                            <div><strong>Provider:</strong> Develops, produces or trains AI systems</div>
+                                            <div><strong>Deployer:</strong> Uses AI systems under its authority</div>
+                                            <div><strong>Importer:</strong> Places AI systems on EU market</div>
+                                            <div><strong>Distributor:</strong> Makes AI systems available on EU market</div>
+                                        </div>
+                                        <div class="absolute -top-1 left-3 w-2 h-2 bg-[#374151] transform rotate-45"></div>
+                                    </div>
+                                </div>
+                                <span class="text-xs text-[#9CA3AF]">Multiple selections allowed</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <label class="flex items-center gap-3 border border-[#E5E7EB] rounded-xl px-4 py-3 cursor-pointer">
+                                    <input type="checkbox" name="roles[]" value="provider" class="w-4 h-4">
+                                    <span class="text-sm text-[#374151]">Provider</span>
+                                </label>
+                                <label class="flex items-center gap-3 border border-[#E5E7EB] rounded-xl px-4 py-3 cursor-pointer">
+                                    <input type="checkbox" name="roles[]" value="deployer" class="w-4 h-4">
+                                    <span class="text-sm text-[#374151]">Deployer</span>
+                                </label>
+                                <label class="flex items-center gap-3 border border-[#E5E7EB] rounded-xl px-4 py-3 cursor-pointer">
+                                    <input type="checkbox" name="roles[]" value="importer" class="w-4 h-4">
+                                    <span class="text-sm text-[#374151]">Importer</span>
+                                </label>
+                                <label class="flex items-center gap-3 border border-[#E5E7EB] rounded-xl px-4 py-3 cursor-pointer">
+                                    <input type="checkbox" name="roles[]" value="distributor" class="w-4 h-4">
+                                    <span class="text-sm text-[#374151]">Distributor</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Q3 -->
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-[#374151]">Q3: System source <span class="text-[#F13D30]">*</span></label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <label class="flex items-center gap-3 border border-[#E5E7EB] rounded-xl px-4 py-3 cursor-pointer">
+                                    <input type="radio" name="system_source" value="in_house" class="w-4 h-4" checked>
+                                    <span class="text-sm text-[#374151]">In-house</span>
+                                </label>
+                                <label class="flex items-center gap-3 border border-[#E5E7EB] rounded-xl px-4 py-3 cursor-pointer">
+                                    <input type="radio" name="system_source" value="vendor" class="w-4 h-4">
+                                    <span class="text-sm text-[#374151]">Vendor / Third-party</span>
+                                </label>
+                                <label class="flex items-center gap-3 border border-[#E5E7EB] rounded-xl px-4 py-3 cursor-pointer">
+                                    <input type="radio" name="system_source" value="mixed" class="w-4 h-4">
+                                    <span class="text-sm text-[#374151]">Mixed</span>
+                                </label>
+                                <label class="flex items-center gap-3 border border-[#E5E7EB] rounded-xl px-4 py-3 cursor-pointer">
+                                    <input type="radio" name="system_source" value="unknown" class="w-4 h-4">
+                                    <span class="text-sm text-[#374151]">Unknown</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Q4 -->
+                        <div class="space-y-2">
+                            <div class="flex items-center gap-2">
+                                <label class="block text-sm font-medium text-[#374151]">Q4: Do you modify / customize this AI system before use or resale? <span class="text-[#F13D30]">*</span></label>
+                                <div class="relative group">
+                                    <div class="w-5 h-5 rounded-full bg-[#E5E7EB] flex items-center justify-center cursor-help">
+                                        <span class="text-xs text-[#6B7280] font-medium">?</span>
+                                    </div>
+                                    <div class="absolute left-0 top-6 z-50 hidden group-hover:block w-64 bg-[#374151] text-white text-xs rounded-lg p-3 shadow-lg">
+                                        <div>Examples: fine-tuning, retraining, changing decision logic, changing intended purpose, re-branding</div>
+                                        <div class="absolute -top-1 left-3 w-2 h-2 bg-[#374151] transform rotate-45"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-3 gap-3">
+                                <label class="flex items-center gap-3 border border-[#E5E7EB] rounded-xl px-4 py-3 cursor-pointer">
+                                    <input type="radio" name="modify_customize" value="yes" class="w-4 h-4" checked>
+                                    <span class="text-sm text-[#374151]">Yes</span>
+                                </label>
+                                <label class="flex items-center gap-3 border border-[#E5E7EB] rounded-xl px-4 py-3 cursor-pointer">
+                                    <input type="radio" name="modify_customize" value="no" class="w-4 h-4">
+                                    <span class="text-sm text-[#374151]">No</span>
+                                </label>
+                                <label class="flex items-center gap-3 border border-[#E5E7EB] rounded-xl px-4 py-3 cursor-pointer">
+                                    <input type="radio" name="modify_customize" value="unknown" class="w-4 h-4">
+                                    <span class="text-sm text-[#374151]">Unknown</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Q5 -->
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-[#374151]">Q5: Is this AI system offered / used in the EU / EEA? <span class="text-[#F13D30]">*</span></label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <label class="flex items-center gap-3 border border-[#E5E7EB] rounded-xl px-4 py-3 cursor-pointer">
+                                    <input type="radio" name="eu_usage" value="yes" class="w-4 h-4" checked>
+                                    <span class="text-sm text-[#374151]">Yes</span>
+                                </label>
+                                <label class="flex items-center gap-3 border border-[#E5E7EB] rounded-xl px-4 py-3 cursor-pointer">
+                                    <input type="radio" name="eu_usage" value="no" class="w-4 h-4">
+                                    <span class="text-sm text-[#374151]">No</span>
+                                </label>
+                                <label class="flex items-center gap-3 border border-[#E5E7EB] rounded-xl px-4 py-3 cursor-pointer">
+                                    <input type="radio" name="eu_usage" value="planned" class="w-4 h-4">
+                                    <span class="text-sm text-[#374151]">Planned</span>
+                                </label>
+                                <label class="flex items-center gap-3 border border-[#E5E7EB] rounded-xl px-4 py-3 cursor-pointer">
+                                    <input type="radio" name="eu_usage" value="unknown" class="w-4 h-4">
+                                    <span class="text-sm text-[#374151]">Unknown</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Q6 -->
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-[#374151]">Q6: Do system outputs affect persons located in the EU / EEA? <span class="text-[#F13D30]">*</span></label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <label class="flex items-center gap-3 border border-[#E5E7EB] rounded-xl px-4 py-3 cursor-pointer">
+                                    <input type="radio" name="eu_effect" value="yes" class="w-4 h-4" checked>
+                                    <span class="text-sm text-[#374151]">Yes</span>
+                                </label>
+                                <label class="flex items-center gap-3 border border-[#E5E7EB] rounded-xl px-4 py-3 cursor-pointer">
+                                    <input type="radio" name="eu_effect" value="no" class="w-4 h-4">
+                                    <span class="text-sm text-[#374151]">No</span>
+                                </label>
+                                <label class="flex items-center gap-3 border border-[#E5E7EB] rounded-xl px-4 py-3 cursor-pointer">
+                                    <input type="radio" name="eu_effect" value="planned" class="w-4 h-4">
+                                    <span class="text-sm text-[#374151]">Planned</span>
+                                </label>
+                                <label class="flex items-center gap-3 border border-[#E5E7EB] rounded-xl px-4 py-3 cursor-pointer">
+                                    <input type="radio" name="eu_effect" value="unknown" class="w-4 h-4">
+                                    <span class="text-sm text-[#374151]">Unknown</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex justify-end gap-3 pt-4">
+                            <button type="button" class="px-6 py-2 border border-[#F13D30] text-[#F13D30] rounded-lg font-medium hover:bg-[#F13D30] hover:text-white transition-colors">Cancel</button>
+                            <button type="button" class="px-6 py-2 bg-[#F13D30] text-white rounded-lg font-medium hover:bg-[#d63529] transition-colors">Confirm and Save</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 4: Intended Purpose & Decision Use -->
+            <div class="bg-white rounded-lg border border-[#E5E7EB] shadow-sm">
+                <div class="p-6 border-b border-[#E5E7EB] cursor-pointer" onclick="toggleSection('section4')">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="text-lg font-semibold text-[#22262A]">4. Intended Purpose & Decision Use</h2>
+                            <p class="text-sm text-[#6B7280] mt-1">Define the purpose and usage domain</p>
+                        </div>
+                        <img src="{% static 'governance/img/chevron-up.svg' %}" alt="Toggle" class="w-5 h-5 section-toggle" id="section4-toggle">
+                    </div>
+                </div>
+                <div class="p-6 section-content" id="section4-content">
+                    <div class="space-y-6">
+                        <!-- Q1 -->
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-[#374151]">Q1: What is the intended purpose of this system? (1–3 sentences) <span class="text-[#F13D30]">*</span></label>
+                            <textarea name="intended_purpose" rows="4" placeholder="Describe the intended purpose of this AI system..." class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]"></textarea>
+                        </div>
+
+                        <!-- Q2 -->
+                        <div class="space-y-2">
+                            <div class="flex items-center gap-2">
+                                <label class="block text-sm font-medium text-[#374151]">Q2: In which sector / domain is this system used? <span class="text-[#F13D30]">*</span></label>
+                                <span class="text-xs text-[#9CA3AF]">Multiple selections allowed</span>
+                            </div>
+                            <div class="space-y-2">
+                                {% for option in sector_options %}
+                                <label class="flex items-center gap-3 border border-[#E5E7EB] rounded-xl px-4 py-3 cursor-pointer">
+                                    <input type="checkbox" name="sector_domain" value="{{ option }}" class="w-4 h-4">
+                                    <span class="text-sm text-[#374151]">{{ option }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Q3 -->
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-[#374151]">Q3: Is this AI system a safety component of a product, or itself a product, covered by EU harmonisation legislation in Annex I? <span class="text-[#F13D30]">*</span></label>
+                            <div class="flex flex-wrap gap-4">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="safety_component" value="yes" class="w-4 h-4" checked>
+                                    <span class="text-sm text-[#374151]">Yes</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="safety_component" value="no" class="w-4 h-4">
+                                    <span class="text-sm text-[#374151]">No</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex justify-end gap-3 pt-4">
+                            <button type="button" class="px-6 py-2 border border-[#F13D30] text-[#F13D30] rounded-lg font-medium hover:bg-[#F13D30] hover:text-white transition-colors">Cancel</button>
+                            <button type="button" class="px-6 py-2 bg-[#F13D30] text-white rounded-lg font-medium hover:bg-[#d63529] transition-colors">Confirm and Save</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 5: Deployment & Stakeholders -->
+            <div class="bg-white rounded-lg border border-[#E5E7EB] shadow-sm">
+                <div class="p-6 border-b border-[#E5E7EB] cursor-pointer" onclick="toggleSection('section5')">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="text-lg font-semibold text-[#22262A]">5. Deployment & Stakeholders</h2>
+                            <p class="text-sm text-[#6B7280] mt-1">Define deployment context and affected parties</p>
+                        </div>
+                        <img src="{% static 'governance/img/chevron-up.svg' %}" alt="Toggle" class="w-5 h-5 section-toggle" id="section5-toggle">
+                    </div>
+                </div>
+                <div class="p-6 section-content" id="section5-content">
+                    <div class="space-y-8">
+                        <!-- Q1 -->
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-[#374151]">Q1: In what context will this AI system be deployed? <span class="text-[#F13D30]">*</span></label>
+                            <div class="space-y-2">
+                                {% for option in deployment_contexts %}
+                                <label class="flex items-center gap-3 cursor-pointer">
+                                    <input type="radio" name="deployment_context" value="{{ option }}" class="w-4 h-4">
+                                    <span class="text-sm text-[#374151]">{{ option }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Q2 -->
+                        <div class="space-y-2">
+                            <div class="flex items-center gap-2">
+                                <label class="block text-sm font-medium text-[#374151]">Q2: Who will use this AI system? <span class="text-[#F13D30]">*</span></label>
+                                <span class="text-xs text-[#9CA3AF]">Multiple selections allowed</span>
+                            </div>
+                            <div class="space-y-2">
+                                {% for option in system_users %}
+                                <label class="flex items-center gap-3 cursor-pointer">
+                                    <input type="checkbox" name="system_users" value="{{ option }}" class="w-4 h-4">
+                                    <span class="text-sm text-[#374151]">{{ option }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Q3 -->
+                        <div class="space-y-2">
+                            <div class="flex items-center gap-2">
+                                <label class="block text-sm font-medium text-[#374151]">Q3: Who can be affected by the AI system's outputs? <span class="text-[#F13D30]">*</span></label>
+                                <span class="text-xs text-[#9CA3AF]">Multiple selections allowed</span>
+                            </div>
+                            <div class="space-y-2">
+                                {% for option in affected_outputs %}
+                                <label class="flex items-center gap-3 cursor-pointer">
+                                    <input type="checkbox" name="affected_outputs" value="{{ option }}" class="w-4 h-4">
+                                    <span class="text-sm text-[#374151]">{{ option }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Q4 -->
+                        <div class="space-y-2">
+                            <div class="flex items-center gap-2">
+                                <label class="block text-sm font-medium text-[#374151]">Q4: Does the AI system affect vulnerable persons? <span class="text-[#F13D30]">*</span></label>
+                                <span class="text-xs text-[#9CA3AF]">Multiple selections allowed</span>
+                            </div>
+                            <div class="space-y-2">
+                                {% for option in vulnerable_groups %}
+                                <label class="flex items-center gap-3 cursor-pointer">
+                                    <input type="checkbox" name="vulnerable_groups" value="{{ option }}" class="w-4 h-4">
+                                    <span class="text-sm text-[#374151]">{{ option }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex justify-end gap-3 pt-4">
+                            <button type="button" class="px-6 py-2 border border-[#F13D30] text-[#F13D30] rounded-lg font-medium hover:bg-[#F13D30] hover:text-white transition-colors">Cancel</button>
+                            <button type="button" class="px-6 py-2 bg-[#F13D30] text-white rounded-lg font-medium hover:bg-[#d63529] transition-colors">Confirm and Save</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 6: Workflow, Outputs & Decision Impact -->
+            <div class="bg-white rounded-lg border border-[#E5E7EB] shadow-sm">
+                <div class="p-6 border-b border-[#E5E7EB] cursor-pointer" onclick="toggleSection('section6')">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="text-lg font-semibold text-[#22262A]">6. Workflow, Outputs & Decision Impact</h2>
+                            <p class="text-sm text-[#6B7280] mt-1">Define how the system operates and its decision-making role</p>
+                        </div>
+                        <img src="{% static 'governance/img/chevron-up.svg' %}" alt="Toggle" class="w-5 h-5 section-toggle" id="section6-toggle">
+                    </div>
+                </div>
+                <div class="p-6 section-content" id="section6-content">
+                    <div class="space-y-6">
+                        <!-- Q1 -->
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-[#374151]">Q1: What does the AI system do in the workflow? <span class="text-[#F13D30]">*</span></label>
+                            <div class="space-y-2">
+                                {% for option in workflow_roles %}
+                                <label class="flex items-center gap-3 cursor-pointer">
+                                    <input type="radio" name="workflow_role" value="{{ option }}" class="w-4 h-4">
+                                    <span class="text-sm text-[#374151]">{{ option }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Q2 -->
+                        <div class="space-y-2">
+                            <div class="flex items-center gap-2">
+                                <label class="block text-sm font-medium text-[#374151]">Q2: What type of output does the AI system produce? <span class="text-[#F13D30]">*</span></label>
+                                <span class="text-xs text-[#9CA3AF]">Select all that apply</span>
+                            </div>
+                            <div class="space-y-2">
+                                {% for option in output_types %}
+                                <label class="flex items-center gap-3 cursor-pointer">
+                                    <input type="checkbox" name="output_types" value="{{ option }}" class="w-4 h-4">
+                                    <span class="text-sm text-[#374151]">{{ option }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Q3 -->
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-[#374151]">Q3: Is the AI output used to make or influence decisions about individuals (natural persons)? <span class="text-[#F13D30]">*</span></label>
+                            <div class="flex flex-wrap gap-4">
+                                {% for option in decision_influence %}
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="decision_influence" value="{{ option }}" class="w-4 h-4">
+                                    <span class="text-sm text-[#374151]">{{ option }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Q4 -->
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-[#374151]">Q4: Does the AI system automatically execute actions based on its output? <span class="text-[#F13D30]">*</span></label>
+                            <div class="flex flex-wrap gap-4">
+                                {% for option in auto_execute %}
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="auto_execute" value="{{ option }}" class="w-4 h-4">
+                                    <span class="text-sm text-[#374151]">{{ option }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex justify-end gap-3 pt-4">
+                            <button type="button" class="px-6 py-2 border border-[#F13D30] text-[#F13D30] rounded-lg font-medium hover:bg-[#F13D30] hover:text-white transition-colors">Cancel</button>
+                            <button type="button" class="px-6 py-2 bg-[#F13D30] text-white rounded-lg font-medium hover:bg-[#d63529] transition-colors">Confirm and Save</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 7: Capabilities -->
+            <div class="bg-white rounded-lg border border-[#E5E7EB] shadow-sm">
+                <div class="p-6 border-b border-[#E5E7EB] cursor-pointer" onclick="toggleSection('section7')">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="text-lg font-semibold text-[#22262A]">7. Capabilities</h2>
+                            <p class="text-sm text-[#6B7280] mt-1">Identify specific capabilities and interaction modes</p>
+                        </div>
+                        <img src="{% static 'governance/img/chevron-up.svg' %}" alt="Toggle" class="w-5 h-5 section-toggle" id="section7-toggle">
+                    </div>
+                </div>
+                <div class="p-6 section-content" id="section7-content">
+                    <div class="space-y-6">
+                        <!-- Q1 -->
+                        <div class="space-y-2">
+                            <div class="flex items-center gap-2">
+                                <label class="block text-sm font-medium text-[#374151]">Q1: Does your AI system use any of the following capabilities or practices? <span class="text-[#F13D30]">*</span></label>
+                                <span class="text-xs text-[#9CA3AF]">Select all that apply</span>
+                            </div>
+                            <div class="space-y-2">
+                                {% for option in capability_practices %}
+                                <label class="flex items-center gap-3 cursor-pointer">
+                                    <input type="checkbox" name="capability_practices" value="{{ option }}" class="w-4 h-4">
+                                    <span class="text-sm text-[#374151]">{{ option }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Q2 -->
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-[#374151]">Q2: Does the AI system interact directly with natural persons? (e.g., chatbot, voicebot, assistant) <span class="text-[#F13D30]">*</span></label>
+                            <div class="flex flex-wrap gap-4">
+                                {% for option in interacts_natural_persons %}
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="interacts_persons" value="{{ option }}" class="w-4 h-4">
+                                    <span class="text-sm text-[#374151]">{{ option }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Q3 -->
+                        <div class="space-y-2">
+                            <div class="flex items-center gap-2">
+                                <label class="block text-sm font-medium text-[#374151]">Q3: Does the AI system generate synthetic content that may be perceived as human-made? <span class="text-[#F13D30]">*</span></label>
+                                <span class="text-xs text-[#9CA3AF]">Multiple selections allowed</span>
+                            </div>
+                            <div class="space-y-2">
+                                {% for option in synthetic_content %}
+                                <label class="flex items-center gap-3 cursor-pointer">
+                                    <input type="checkbox" name="synthetic_content" value="{{ option }}" class="w-4 h-4">
+                                    <span class="text-sm text-[#374151]">{{ option }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex justify-end gap-3 pt-4">
+                            <button type="button" class="px-6 py-2 border border-[#F13D30] text-[#F13D30] rounded-lg font-medium hover:bg-[#F13D30] hover:text-white transition-colors">Cancel</button>
+                            <button type="button" class="px-6 py-2 bg-[#F13D30] text-white rounded-lg font-medium hover:bg-[#d63529] transition-colors">Confirm and Save</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 8: Technical Profile (Model & Data) -->
+            <div class="bg-white rounded-lg border border-[#E5E7EB] shadow-sm">
+                <div class="p-6 border-b border-[#E5E7EB] cursor-pointer" onclick="toggleSection('section8')">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="text-lg font-semibold text-[#22262A]">8. Technical Profile (Model & Data)</h2>
+                            <p class="text-sm text-[#6B7280] mt-1">Technical details about the AI model and data processing</p>
+                        </div>
+                        <img src="{% static 'governance/img/chevron-up.svg' %}" alt="Toggle" class="w-5 h-5 section-toggle" id="section8-toggle">
+                    </div>
+                </div>
+                <div class="p-6 section-content" id="section8-content">
+                    <div class="space-y-6">
+                        <!-- Q1 -->
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-[#374151]">Q1: What kind of AI is used? <span class="text-[#F13D30]">*</span></label>
+                            <div class="space-y-2">
+                                {% for option in ai_kinds %}
+                                <label class="flex items-center gap-3 cursor-pointer">
+                                    <input type="radio" name="ai_kind" value="{{ option }}" class="w-4 h-4">
+                                    <span class="text-sm text-[#374151]">{{ option }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Q2 -->
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-[#374151]">Q2: Is this system provided as a general-purpose AI (GPAI) model / component or does it integrate one? <span class="text-[#F13D30]">*</span></label>
+                            <div class="flex flex-wrap gap-4">
+                                {% for option in gpai_integration %}
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="gpai_integration" value="{{ option }}" class="w-4 h-4">
+                                    <span class="text-sm text-[#374151]">{{ option }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Q3 -->
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-[#374151]">Q3: What is the training source? <span class="text-[#F13D30]">*</span></label>
+                            <div class="space-y-2">
+                                {% for option in training_sources %}
+                                <label class="flex items-center gap-3 cursor-pointer">
+                                    <input type="radio" name="training_source" value="{{ option }}" class="w-4 h-4">
+                                    <span class="text-sm text-[#374151]">{{ option }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Q4 -->
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-[#374151]">Q4: How often does the model / system update? <span class="text-[#F13D30]">*</span></label>
+                            <div class="space-y-2">
+                                {% for option in update_frequency %}
+                                <label class="flex items-center gap-3 cursor-pointer">
+                                    <input type="radio" name="update_frequency" value="{{ option }}" class="w-4 h-4">
+                                    <span class="text-sm text-[#374151]">{{ option }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Q5 -->
+                        <div class="space-y-2">
+                            <div class="flex items-center gap-2">
+                                <label class="block text-sm font-medium text-[#374151]">Q5: What data types are processed? <span class="text-[#F13D30]">*</span></label>
+                                <span class="text-xs text-[#9CA3AF]">Multiple selections allowed</span>
+                            </div>
+                            <div class="space-y-2">
+                                {% for option in data_types %}
+                                <label class="flex items-center gap-3 cursor-pointer">
+                                    <input type="checkbox" name="data_types" value="{{ option }}" class="w-4 h-4">
+                                    <span class="text-sm text-[#374151]">{{ option }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex justify-end gap-3 pt-4">
+                            <button type="button" class="px-6 py-2 border border-[#F13D30] text-[#F13D30] rounded-lg font-medium hover:bg-[#F13D30] hover:text-white transition-colors">Cancel</button>
+                            <button type="button" class="px-6 py-2 bg-[#F13D30] text-white rounded-lg font-medium hover:bg-[#d63529] transition-colors">Confirm and Save</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    <!-- Footer action -->
+    <div class="flex justify-end mt-8">
+        <button type="button" class="px-6 py-3 bg-[#F13D30] text-white text-base font-semibold rounded-xl shadow hover:bg-[#d63529] transition-colors">
+            Save all and proceed to Assessment
+        </button>
+    </div>
+
+    </div>
+
+    <!-- Tab Content: Assessment -->
+    <div id="content-assessment" class="tab-content hidden">
+        <div class="flex flex-col gap-6">
+            <!-- Info banner -->
+            <div class="rounded-lg border border-[#FCD34D] bg-[#FFFBEB] text-[#92400E] px-4 py-3 text-sm">
+                Assessment is based on the information provided in the Profile page. Please review the assessment below and confirm or update them using the legal references provided.
+            </div>
+
+            <!-- Blocks list -->
+            <div class="space-y-3">
+                {% for block in assessment_blocks %}
+                <div class="flex items-center justify-between px-4 py-4 bg-white border border-[#E5E7EB] rounded-xl shadow-sm">
+                    <div class="flex items-center gap-3">
+                        <div class="text-base font-semibold text-[#111827]">{{ block.title }}</div>
+                    </div>
+                    <span class="px-3 py-1 text-sm font-medium text-[#6B7280] bg-[#F3F4F6] rounded-full">{{ block.status }}</span>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Footer buttons -->
+            <div class="flex justify-between items-center pt-2">
+                <button type="button" class="px-5 py-2.5 border border-[#CBD5E1] text-[#374151] rounded-xl font-medium hover:bg-[#F3F4F6] transition-colors">
+                    Back to Profile
+                </button>
+                <button type="button" class="px-6 md:px-10 py-3 bg-[#F13D30] text-white font-semibold rounded-xl shadow hover:bg-[#d63529] transition-colors">
+                    Proceed to Result
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab Content: Result -->
+    <div id="content-result" class="tab-content hidden">
+        <div class="flex flex-col gap-6">
+            <!-- Assessment Result Header -->
+            <div class="bg-[#F9FAFB] rounded-lg border border-[#E5E7EB] shadow-sm p-6">
+                <h2 class="text-xl font-bold text-[#111827] mb-2">Assessment Result</h2>
+                <p class="text-sm text-[#6B7280]">Summary of EU AI Act compliance assessment for this AI system</p>
+            </div>
+
+            <!-- Result Blocks -->
+            <div class="space-y-4">
+                {% for block in result_blocks %}
+                <div class="bg-white rounded-lg border border-[#E5E7EB] shadow-sm p-6">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <h3 class="text-base font-semibold text-[#111827] mb-2">{{ block.title }}</h3>
+                            {% if block.description %}
+                            <p class="text-sm text-[#6B7280]">{{ block.description }}</p>
+                            {% endif %}
+                        </div>
+                        <span class="px-3 py-1 text-sm font-medium rounded-full {{ block.status_class }}">
+                            {{ block.status }}
+                        </span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Footer Button -->
+            <div class="flex justify-start pt-2">
+                <button type="button" onclick="switchTab('assessment')" class="px-5 py-2.5 border border-[#CBD5E1] text-[#374151] rounded-xl font-medium hover:bg-[#F3F4F6] transition-colors">
+                    Back to Assessment
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Share Link Modal -->
+<div id="share-link-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+  <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 relative">
+    <button type="button" class="absolute top-4 right-4 text-[#9CA3AF] hover:text-[#4B5563]" onclick="closeShareModal()">
+      <img src="{% static 'governance/img/x.svg' %}" alt="Close" class="w-4 h-4">
+    </button>
+    <h3 class="text-lg font-semibold text-[#111827] mb-2">Share Link</h3>
+    <p class="text-sm text-[#6B7280] mb-4">
+      Share link for: 
+      <span id="share-file-name" class="font-semibold text-[#111827]">File.pdf</span>
+    </p>
+    <div class="flex items-center gap-3">
+      <input id="share-link-input" type="text" readonly
+         class="flex-1 px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm text-[#111827] bg-[#F9FAFB] focus:outline-none">
+      <button type="button" id="share-link-copy-btn"
+         class="px-4 py-2 bg-[#F13D30] text-white text-sm font-medium rounded-lg hover:bg-[#d63529] transition-colors flex items-center gap-2">
+        <svg id="share-link-chain-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+        </svg>
+        <span id="share-link-text">Copy</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Tab switching
+function switchTab(tabName) {
+    // Hide all tab contents
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.add('hidden');
+    });
+    
+    // Remove active class from all tabs
+    document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.remove('active', 'text-[#F13D30]', 'border-[#F13D30]');
+        btn.classList.add('text-[#6B7280]', 'border-transparent');
+    });
+    
+    // Show selected tab content
+    document.getElementById('content-' + tabName).classList.remove('hidden');
+    
+    // Add active class to selected tab
+    const activeTab = document.getElementById('tab-' + tabName);
+    activeTab.classList.add('active', 'text-[#F13D30]', 'border-[#F13D30]');
+    activeTab.classList.remove('text-[#6B7280]', 'border-transparent');
+}
+
+// Section toggle
+function toggleSection(sectionId) {
+    const content = document.getElementById(sectionId + '-content');
+    const toggle = document.getElementById(sectionId + '-toggle');
+    
+    if (content.style.display === 'none') {
+        content.style.display = 'block';
+        toggle.src = '{% static "governance/img/chevron-up.svg" %}';
+    } else {
+        content.style.display = 'none';
+        toggle.src = '{% static "governance/img/chevron-down.svg" %}';
+    }
+}
+
+// File upload handling
+document.getElementById('file-upload')?.addEventListener('change', function(e) {
+    const files = Array.from(e.target.files);
+    const container = document.getElementById('uploaded-documents');
+    
+    files.forEach(file => {
+        const fileId = 'file-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+        const fileItem = document.createElement('div');
+        fileItem.className = 'flex items-center justify-between p-3 bg-white rounded-lg border border-[#E5E7EB]';
+        fileItem.innerHTML = `
+            <div class="flex items-center gap-3">
+                <label class="cursor-pointer">
+                    <input type="checkbox" class="file-checkbox hidden" data-file-id="${fileId}" onchange="toggleFileSelection(this)">
+                    <div class="file-checkbox-display w-5 h-5 border-2 border-[#111827] rounded flex items-center justify-center">
+                        <svg class="hidden check-icon w-3 h-3 text-[#F13D30]" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                        </svg>
+                    </div>
+                </label>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    class="w-5 h-5 text-[#DC2626]">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <polyline points="14,2 14,8 20,8" />
+                    <line x1="16" y1="13" x2="8" y2="13" />
+                    <line x1="16" y1="17" x2="8" y2="17" />
+                    <polyline points="10,9 9,9 8,9" />
+                </svg>
+                <div>
+                    <p class="text-sm font-medium text-[#111827]">${file.name}</p>
+                    <p class="text-xs text-[#6B7280]">Uploaded just now</p>
+                </div>
+            </div>
+            <button onclick="generateLink('${file.name}')" class="flex items-center gap-2 px-4 py-1.5 bg-[#F13D30] text-white text-sm rounded-lg hover:bg-[#d63529] transition-colors">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                </svg>
+                Generate link
+            </button>
+        `;
+        container.appendChild(fileItem);
+    });
+    
+    e.target.value = '';
+});
+
+// Toggle file selection
+function toggleFileSelection(checkbox) {
+    const display = checkbox.nextElementSibling;
+    const checkIcon = display.querySelector('.check-icon');
+    
+    if (checkbox.checked) {
+        display.classList.remove('border-[#111827]');
+        display.classList.add('border-[#F13D30]', 'bg-white');
+        checkIcon.classList.remove('hidden');
+    } else {
+        display.classList.remove('border-[#F13D30]');
+        display.classList.add('border-[#111827]');
+        checkIcon.classList.add('hidden');
+    }
+}
+
+// AI Read toggle
+document.querySelectorAll('.ai-read-toggle').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.ai-read-toggle').forEach(b => {
+            b.classList.remove('active');
+            b.classList.remove('bg-[#F13D30]', 'text-white', 'shadow-sm');
+            b.classList.add('border', 'border-[#F13D30]', 'text-[#F13D30]', 'bg-white');
+            // Update icon to red
+            const icon = b.querySelector('img');
+            if (icon) {
+                icon.style.filter = 'brightness(0) saturate(100%) invert(32%) sepia(98%) saturate(1500%) hue-rotate(344deg) brightness(98%) contrast(95%)';
+            }
+        });
+        this.classList.add('active', 'bg-[#F13D30]', 'text-white', 'shadow-sm');
+        this.classList.remove('border', 'border-[#F13D30]', 'text-[#F13D30]', 'bg-white');
+        // Update icon to white
+        const icon = this.querySelector('img');
+        if (icon) {
+            icon.style.filter = 'brightness(0) invert(1)';
+        }
+    });
+});
+
+// Generate link function
+function generateLink(fileName) {
+    const safeName = fileName || 'document';
+    const randomId = (self.crypto && self.crypto.randomUUID) ? self.crypto.randomUUID() : Date.now().toString(36);
+    const link = `https://${randomId}`;
+    openShareModal(safeName, link);
+}
+
+// Generate link modal helpers
+function openShareModal(fileName, link) {
+    const modal = document.getElementById('share-link-modal');
+    const nameEl = document.getElementById('share-file-name');
+    const inputEl = document.getElementById('share-link-input');
+    const copyBtn = document.getElementById('share-link-copy-btn');
+    if (!modal || !nameEl || !inputEl || !copyBtn) return;
+
+    nameEl.textContent = fileName;
+    inputEl.value = link;
+    modal.classList.remove('hidden');
+
+    // Reset button to initial state
+    const iconEl = document.getElementById('share-link-chain-icon');
+    const textEl = document.getElementById('share-link-text');
+    if (iconEl && textEl) {
+        // Reset to chain-link icon
+        iconEl.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>';
+        textEl.textContent = 'Copy';
+    }
+}
+
+function closeShareModal() {
+    const modal = document.getElementById('share-link-modal');
+    if (modal) modal.classList.add('hidden');
+}
+
+// Copy button handler
+document.getElementById('share-link-copy-btn')?.addEventListener('click', function() {
+    const inputEl = document.getElementById('share-link-input');
+    const iconEl = document.getElementById('share-link-chain-icon');
+    const textEl = document.getElementById('share-link-text');
+    
+    if (!inputEl || !inputEl.value || !iconEl || !textEl) return;
+    
+    navigator.clipboard.writeText(inputEl.value).then(() => {
+        // Change icon to checkmark
+        iconEl.innerHTML = '<polyline points="20,6 9,17 4,12" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"></polyline>';
+        // Change text to "Copied"
+        textEl.textContent = 'Copied';
+    }).catch(() => {
+        alert('Unable to copy link');
+    });
+});
+
+// Close modal when clicking outside content
+document.getElementById('share-link-modal')?.addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeShareModal();
+    }
+});
+</script>
+{% endblock %}

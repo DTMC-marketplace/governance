@@ -1598,6 +1598,7 @@ def ai_inventory(request):
         'reviewing': 'In progress',
         'compliant': 'In production',
         'non_compliant': 'Testing',
+        'planned': 'Planned',
     }
     
     # Badge classes
@@ -1634,6 +1635,7 @@ def ai_inventory(request):
         'limited_risks': 'Limited transparency',
         'high_risks': 'High-risk',
         'minimal_risks': 'Minimal',
+        'not_assessed': 'Not assessed',
     }
     
     # Provider type mapping (mock data based on vendor)
@@ -1652,6 +1654,10 @@ def ai_inventory(request):
         compliance_status = agent.get('compliance_status', 'assessing')
         status = status_map.get(compliance_status, 'Planned')
         
+        # Handle 'planned' status specially
+        if compliance_status == 'planned':
+            status = 'Planned'
+        
         # Check if needs attention
         if compliance_status in ['assessing', 'reviewing']:
             systems_need_attention += 1
@@ -1662,6 +1668,7 @@ def ai_inventory(request):
             'reviewing': 'In progress',
             'compliant': 'Compliant',
             'non_compliant': 'Not started',
+            'planned': 'Not started',
         }.get(compliance_status, 'Not started')
         
         # Get risk classification
@@ -1702,4 +1709,246 @@ def ai_inventory(request):
         'breadcrumbs': breadcrumbs,
         'ai_systems': ai_systems,
         'systems_need_attention': systems_need_attention,
+    })
+
+
+def ai_system_detail(request, agent_id):
+    """
+    AI System Detail page - Shows detailed information about a specific AI system.
+    Displays Profile, Assessment, and Result tabs.
+    """
+    ensure_governance_platform(request)
+    
+    company = MockCompany()
+    
+    # Get agent data
+    agents_data = get_mock_agents()
+    agent = next((a for a in agents_data if str(a.get('id')) == str(agent_id)), None)
+    
+    if not agent:
+        from django.http import Http404
+        raise Http404("AI System not found")
+    
+    # Mock uploaded documents for Profile tab
+    uploaded_documents = [
+        {'name': 'Company_Registration.pdf', 'uploaded': '2 mins ago'},
+        {'name': 'AI_Policy_Document.docx', 'uploaded': '5 mins ago'},
+        {'name': 'Compliance_Report_2024.pdf', 'uploaded': '10 mins ago'},
+    ]
+
+    sector_options = [
+        "Biometric identification and categorisation",
+        "Critical infrastructure management",
+        "Education & vocational training",
+        "Employment & workforce management",
+        "Access to essential private or public services & benefits",
+        "Law enforcement",
+        "Migration, asylum & border control",
+        "Justice & democratic processes",
+        "Other / not listed:",
+    ]
+
+    deployment_contexts = [
+        "Workplace (employee-facing)",
+        "Educational institution",
+        "Healthcare setting",
+        "Law enforcement / public security",
+        "Public administration / government service",
+        "General public / consumer-facing",
+        "Other:",
+    ]
+
+    system_users = [
+        "Internal employees",
+        "External contractors / service providers",
+        "Customers / consumers",
+        "Students",
+        "Patients",
+        "Public authority staff",
+        "Other:",
+    ]
+
+    affected_outputs = [
+        "Employees",
+        "Job applicants",
+        "Students",
+        "Patients",
+        "Customers / consumers",
+        "Citizens / residents",
+        "Other:",
+    ]
+
+    vulnerable_groups = [
+        "Children / minors",
+        "Persons with disabilities",
+        "Persons in socio-economic vulnerability",
+        "None / not applicable",
+        "Unknown",
+    ]
+
+    workflow_roles = [
+        "Provides insights / recommendations only (human decides)",
+        "Supports decisions (human approval required)",
+        "Automatically makes decisions / actions (no human approval)",
+        "Mixed / depends on case",
+        "Unknown",
+    ]
+
+    output_types = [
+        "Score / rating",
+        "Ranking",
+        "Recommendation",
+        "Classification / label",
+        "Prediction / forecasting",
+        "Matching (e.g., job matching, content matching)",
+        "Detection (e.g., fraud detection)",
+        "Identification / verification",
+        "Generated content (text / image / audio / video)",
+        "Automated decision (system executes action)",
+        "Other:",
+    ]
+
+    decision_influence = [
+        "Yes",
+        "No",
+        "Not sure",
+    ]
+
+    auto_execute = [
+        "No (advisory only)",
+        "Yes (automatic actions)",
+        "Mixed",
+        "Unknown",
+    ]
+
+    capability_practices = [
+        "Subliminal / manipulative / deceptive techniques that materially distort behaviour and are likely to cause significant harm",
+        "Exploitation of vulnerabilities (age, disability, or social / economic situation) to distort behaviour likely causing significant harm",
+        "Social scoring leading to detrimental / unfavourable treatment (esp. unjustified / disproportionate)",
+        "Criminal offence risk assessment / prediction based solely on profiling or personality traits (individual predictive policing)",
+        "Untargeted scraping of facial images from the internet or CCTV to build / expand facial recognition databases",
+        "Emotion recognition in the workplace or in education settings",
+        "Biometric categorisation that infers or predicts sensitive traits (e.g., race, political opinions, religion, trade union membership, sexual orientation)",
+        "Real-time remote biometric identification (RBI) in publicly accessible spaces for law enforcement purposes",
+        "None of the above",
+    ]
+
+    interacts_natural_persons = [
+        "Yes",
+        "No",
+        "Unknown",
+    ]
+
+    synthetic_content = [
+        "Text",
+        "Image",
+        "Audio",
+        "Video",
+        "No",
+        "Unknown",
+    ]
+
+    ai_kinds = [
+        "Rules-based automation",
+        "Machine learning",
+        "Deep learning",
+        "Generative AI",
+        "Hybrid",
+        "Unknown",
+    ]
+
+    gpai_integration = [
+        "Yes",
+        "No",
+        "Unknown",
+    ]
+
+    training_sources = [
+        "In-house training",
+        "Vendor-trained model (no training by us)",
+        "Fine-tuned by us",
+        "Unknown / not applicable",
+    ]
+
+    update_frequency = [
+        "Static / never",
+        "Periodic retraining",
+        "Continuous learning",
+        "Unknown",
+    ]
+
+    data_types = [
+        "Personal data",
+        "Sensitive data (health, biometric, etc.)",
+        "Employee data",
+        "Children / minors data",
+        "Public web data",
+        "Non-personal / industrial data",
+        "Unknown",
+    ]
+
+    assessment_blocks = [
+        {"title": "Block 1 — Prohibited Practices Screening", "status": "Not assessed"},
+        {"title": "Block 2 — High-Risk Classification", "status": "Not assessed"},
+        {"title": "Block 3 — Transparency Obligation", "status": "Not assessed"},
+        {"title": "Block 4 — GPAI (General-Purpose AI) Applicability", "status": "Not assessed"},
+    ]
+
+    result_blocks = [
+        {
+            "title": "Block 1 — Prohibited Practices",
+            "description": "This AI system does not fall under prohibited practices. It may proceed to further compliance assessment.",
+            "status": "Not Prohibited",
+            "status_class": "bg-green-100 text-green-700",
+        },
+        {
+            "title": "Block 2 — High-Risk Classification",
+            "description": "This AI system requires further review to determine its high-risk classification. Additional information or clarification is needed.",
+            "status": "Needs Review",
+            "status_class": "bg-yellow-100 text-yellow-700",
+        },
+        {
+            "title": "Block 3 — Transparency Obligation",
+            "description": "",
+            "status": "Not assessed",
+            "status_class": "bg-yellow-100 text-yellow-700",
+        },
+        {
+            "title": "Block 4 — GPAI (General-Purpose AI) Applicability",
+            "description": "",
+            "status": "Not assessed",
+            "status_class": "bg-yellow-100 text-yellow-700",
+        },
+    ]
+    
+    breadcrumbs = [
+        {"name": "AI Inventory", "url": "/ai-inventory/"},
+        {"name": "AI System", "url": request.build_absolute_uri()},
+    ]
+    
+    return render(request, 'governance/pages/ai_system_detail.html', {
+        'company': company,
+        'subpage': 'ai_system_detail',
+        'breadcrumbs': breadcrumbs,
+        'agent': agent,
+        'uploaded_documents': uploaded_documents,
+        'sector_options': sector_options,
+        'deployment_contexts': deployment_contexts,
+        'system_users': system_users,
+        'affected_outputs': affected_outputs,
+        'vulnerable_groups': vulnerable_groups,
+        'workflow_roles': workflow_roles,
+        'output_types': output_types,
+        'decision_influence': decision_influence,
+        'auto_execute': auto_execute,
+        'capability_practices': capability_practices,
+        'interacts_natural_persons': interacts_natural_persons,
+        'synthetic_content': synthetic_content,
+        'ai_kinds': ai_kinds,
+        'gpai_integration': gpai_integration,
+        'training_sources': training_sources,
+        'update_frequency': update_frequency,
+        'data_types': data_types,
+        'assessment_blocks': assessment_blocks,
+        'result_blocks': result_blocks,
     })

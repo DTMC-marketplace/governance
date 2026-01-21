@@ -15,6 +15,7 @@ urlpatterns = [
     
     # AI Inventory
     path("ai-inventory/", views.ai_inventory, name="ai_inventory"),
+    path("ai-inventory/<int:agent_id>/", views.ai_system_detail, name="ai_system_detail"),
     
     # AI Systems
     path("ai-systems/", views.ai_systems, name="ai_systems"),

@@ -16,20 +16,29 @@ class AgentFactory:
         Factory Pattern: Encapsulates object creation logic
         """
         try:
+            # Normalize compliance_status
+            compliance_status = data.get('compliance_status', 'assessing')
+            if compliance_status not in [s.value for s in ComplianceStatus]:
+                compliance_status = 'assessing'  # Default to assessing if invalid
+            
+            # Normalize risk_classification
+            risk_classification = data.get('risk_classification', 'limited_risks')
+            if risk_classification not in [r.value for r in RiskClassification]:
+                risk_classification = 'limited_risks'  # Default to limited_risks if invalid
+            
+            # Normalize ai_act_role
+            ai_act_role = data.get('ai_act_role', 'deployer')
+            if ai_act_role not in [r.value for r in AIActRole]:
+                ai_act_role = 'deployer'  # Default to deployer if invalid
+            
             return Agent(
                 id=data.get('id'),
                 name=data.get('name', ''),
                 business_unit=data.get('business_unit'),
-                compliance_status=ComplianceStatus(
-                    data.get('compliance_status', 'assessing')
-                ),
-                ai_act_role=AIActRole(
-                    data.get('ai_act_role', 'deployer')
-                ),
+                compliance_status=ComplianceStatus(compliance_status),
+                ai_act_role=AIActRole(ai_act_role),
                 vendor=data.get('vendor'),
-                risk_classification=RiskClassification(
-                    data.get('risk_classification', 'limited_risks')
-                ),
+                risk_classification=RiskClassification(risk_classification),
                 investment_type=data.get('investment_type'),
             )
         except (ValueError, KeyError) as e:

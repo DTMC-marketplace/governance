@@ -34,7 +34,7 @@
     </div>
 
     <!-- AI Systems Sub Menu Section (Only show when on a specific AI system page) -->
-    <div class="nav-section my-1 collapsed" id="ai-systems-submenu-section">
+    <!-- <div class="nav-section my-1 collapsed" id="ai-systems-submenu-section">
         <div class="nav-section-header flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#4B5563] text-sm font-medium leading-5 transition-all duration-200 hover:bg-[rgba(220,107,100,0.08)] hover:text-[#4B5563]">
             <a href="{% url 'ai_systems' %}" class="flex items-center gap-3 flex-1 no-underline text-[#4B5563] hover:text-[#4B5563]">
                 <img src="{% static 'governance/img/selected_ai_systems.svg' %}" alt="AI Systems" class="nav-icon w-5 h-5">
@@ -49,7 +49,6 @@
             <a href="{% url 'assessment' %}{% if request.GET.agent %}?agent={{ request.GET.agent|urlencode }}{% endif %}" class="nav-link sub-item flex items-center gap-3 px-3 py-2 rounded-lg text-[#4B5563] text-sm font-medium transition-all duration-200 hover:bg-[rgba(220,107,100,0.08)] hover:text-[#4B5563]" data-nav="questionnaires">Questionnaires</a>
             <a href="{% url 'risk_overview' %}{% if request.GET.agent %}?agent={{ request.GET.agent|urlencode }}{% endif %}" class="nav-link sub-item flex items-center gap-3 px-3 py-2 rounded-lg text-[#4B5563] text-sm font-medium transition-all duration-200 hover:bg-[rgba(220,107,100,0.08)] hover:text-[#4B5563]" data-nav="risks">Risks</a>
             <a href="{% url 'digital_regulations' %}{% if request.GET.agent %}?agent={{ request.GET.agent|urlencode }}{% endif %}" class="nav-link sub-item flex items-center gap-3 px-3 py-2 rounded-lg text-[#4B5563] text-sm font-medium transition-all duration-200 hover:bg-[rgba(220,107,100,0.08)] hover:text-[#4B5563]" data-nav="compliance">Compliance</a>
-             <!-- Artifacts Section (Expandable) -->
             <div class="secondary-nav-section expanded">
                 <div class="secondary-nav-section-header flex items-center justify-between cursor-pointer" onclick="toggleSecondaryNavSection(this)">
                     <span class="text-sm font-medium text-[#4B5563]">Artifacts</span>
@@ -62,7 +61,7 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div> -->
 
     <div class="flex flex-col gap-0.5">
         <a href="{% url 'questionnaire_library' %}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg no-underline text-[#4B5563] text-sm font-medium leading-5 transition-all duration-200 hover:bg-[rgba(220,107,100,0.08)] hover:text-[#4B5563]" data-nav="data-collection">
@@ -73,7 +72,7 @@
 
     <!-- Data Hub Section -->
     <div class="nav-section my-1">
-        <div class="nav-section-header flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#4B5563] text-sm font-medium leading-5 cursor-pointer transition-all duration-200 hover:bg-[rgba(220,107,100,0.08)] hover:text-[#4B5563]" onclick="toggleSection(this)">
+        <div class="nav-section-header flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#4B5563] text-sm font-medium leading-5 cursor-pointer transition-all duration-200 hover:bg-[rgba(220,107,100,0.08)] hover:text-[#4B5563]" onclick="toggleNavSection(this)">
             <img src="{% static 'governance/img/nav-6-horizontal-chart.svg' %}" alt="Data Hub" class="nav-icon w-5 h-5">
             <span class="nav-label text-sm font-medium">Data Hub</span>
             <img src="{% static 'governance/img/chevron-up.svg' %}" alt="Toggle" class="chevron w-4 h-4 ml-auto flex-shrink-0 transition-transform duration-200">
@@ -318,269 +317,230 @@
 </style>
 
 <script>
-    function toggleSection(header) {
-        const section = header.closest('.nav-section');
-        section.classList.toggle('collapsed');
-    }
-
-    function toggleSecondaryNavSection(element) {
-        const section = element.closest('.secondary-nav-section');
-        if (section) {
-            section.classList.toggle('expanded');
-        }
-    }
-    
-    function toggleRiskAssessmentSection(header) {
-        const section = header.closest('.nav-section');
-        section.classList.toggle('collapsed');
+    // Wrap in IIFE to avoid conflicts with other scripts
+    (function() {
+        'use strict';
         
-        // Prevent sidebar from collapsing when Risk Assessment section is expanded
-        const sidebar = document.querySelector('.main-sidebar');
-        const mainContent = document.getElementById('main-content');
-        if (sidebar && mainContent) {
-            if (section.classList.contains('collapsed')) {
-                // Section is collapsed, check if we should collapse sidebar
-                // Only collapse if no other sections are expanded
-                const allSections = document.querySelectorAll('.nav-section');
-                let hasExpandedSection = false;
-                allSections.forEach(sec => {
-                    if (!sec.classList.contains('collapsed')) {
-                        hasExpandedSection = true;
-                    }
-                });
-                // Don't auto-collapse sidebar, keep it expanded
-            } else {
-                // Section is expanded, ensure sidebar is full width
-                sidebar.classList.remove('collapsed');
-                if (mainContent) {
-                    mainContent.style.marginLeft = '240px';
-                }
+        // Constants
+        const ACTIVE_STYLES = {
+            bg: '#F3F4F6',
+            color: '#DC6B64',
+            textClass: 'text-[#4B5563]'
+        };
+
+        // Utility functions
+        const toggleNavSection = (header) => {
+            if (!header || typeof header.closest !== 'function') return;
+            header.closest('.nav-section')?.classList.toggle('collapsed');
+        };
+        
+        // Expose to window for inline onclick handlers
+        window.toggleNavSection = toggleNavSection;
+
+    const toggleSecondaryNavSection = (element) => {
+        element.closest('.secondary-nav-section')?.classList.toggle('expanded');
+    };
+
+    const removeActiveStyles = (link) => {
+        link.classList.remove('active');
+        link.style.backgroundColor = '';
+        link.style.color = '';
+        const label = link.querySelector('.nav-label');
+        if (label) {
+            label.style.color = '';
+            label.classList.remove(ACTIVE_STYLES.textClass);
+        }
+        link.classList.remove(ACTIVE_STYLES.textClass);
+    };
+
+    const applyActiveStyles = (link) => {
+        link.classList.add('active');
+        link.classList.remove(ACTIVE_STYLES.textClass);
+        
+        const label = link.querySelector('.nav-label');
+        if (label) {
+            label.classList.remove(ACTIVE_STYLES.textClass);
+        }
+
+        if (link.classList.contains('sub-item')) {
+            link.style.backgroundColor = ACTIVE_STYLES.bg;
+            link.style.color = ACTIVE_STYLES.color;
+            if (label) {
+                label.style.color = ACTIVE_STYLES.color;
             }
         }
-    }
-    
-    // Set active nav item based on current page
-    function setActiveNavItem() {
+    };
+
+    // Navigation mapping
+    const getActiveNav = (path, url) => {
+        const navMap = [
+            { paths: ['/ai-assistant', '/ai_assistant'], nav: 'ai-assistant' },
+            { paths: ['/organization'], nav: 'organization' },
+            { paths: ['/ai-inventory'], nav: 'ai-inventory' },
+            { paths: ['/questionnaire', '/data-collection'], nav: 'data-collection' },
+            { paths: ['/models', '/ai-models'], nav: 'models' },
+            { paths: ['/datasets'], nav: 'datasets' },
+            { paths: ['/vendors'], nav: 'vendors' },
+            { paths: ['/investment'], nav: 'investments' },
+            { paths: ['/framework', '/reporting'], nav: 'reporting' },
+        ];
+
+        for (const { paths, nav } of navMap) {
+            if (paths.some(p => path.includes(p))) {
+                return nav;
+            }
+        }
+
+        // AI Systems detail pages
+        if (path.includes('/ai-systems') && !path.match(/\/ai-systems\/[^\/]+/)) {
+            return 'ai-systems';
+        }
+
+        if (path.includes('/assessment') || path.includes('/risk-overview') || 
+            path.includes('/risks') || path.includes('/multi-agent-use-cases') || 
+            path.includes('/digital-regulations') || path.includes('/eu-act/') || 
+            url.includes('agent=')) {
+            return 'ai-systems';
+        }
+
+        return 'dashboard';
+    };
+
+    const getActiveSubNav = (path, url) => {
+        const subNavMap = [
+            { paths: ['/risk-overview', '/risks'], nav: 'risks' },
+            { paths: ['/digital-regulations', '/eu-act/', '/digital-regulations/eu-act/'], nav: 'compliance' },
+            { paths: ['/review-history'], nav: 'review-history' },
+            { paths: ['/reports'], nav: 'reports' },
+            { paths: ['/assessment-library'], nav: 'data-sets' },
+        ];
+
+        for (const { paths, nav } of subNavMap) {
+            if (paths.some(p => path.includes(p))) {
+                return nav;
+            }
+        }
+
+        if (path.includes('/questionnaires/') || 
+            (path.includes('/assessment/') && !path.includes('/assessment-library') && 
+             !path.match(/\/assessment\/\d+\//))) {
+            return 'questionnaires';
+        }
+
+        if (path.includes('/assessment') && !path.includes('/assessment-library')) {
+            return 'all-use-cases';
+        }
+
+        if (path.includes('/multi-agent-use-cases') || url.includes('agent=')) {
+            return 'overview';
+        }
+
+        return '';
+    };
+
+    // Set active navigation
+    const setActiveNavItem = () => {
         const navLinks = document.querySelectorAll('.nav-link');
-        const currentPath = window.location.pathname;
-        const currentUrl = window.location.href;
-        
-        // Check if we're on account pages
-        if (currentPath.includes('/accounts/')) {
-            const accountCenterLink = document.querySelector('[data-nav="account-center"]');
-            if (accountCenterLink) {
-                navLinks.forEach(link => link.classList.remove('active'));
-                accountCenterLink.classList.add('active');
+        const path = window.location.pathname;
+        const url = window.location.href;
+
+        // Handle account pages
+        if (path.includes('/accounts/')) {
+            const accountLink = document.querySelector('[data-nav="account-center"]');
+            if (accountLink) {
+                navLinks.forEach(removeActiveStyles);
+                applyActiveStyles(accountLink);
                 return;
             }
         }
-        
-        // Default to dashboard
-        let activeNav = 'dashboard';
-        
-        // Determine active nav based on URL
-        let activeSubNav = '';
-        
-        if (currentPath.includes('/ai-assistant') || currentPath.includes('/ai_assistant')) {
-            activeNav = 'ai-assistant';
-        } else if (currentPath.includes('/ai-systems') && !currentPath.match(/\/ai-systems\/[^\/]+/)) {
-            // Only /ai-systems/ (list page), not a detail page
-            activeNav = 'ai-systems';
-        } else if (currentPath.includes('/assessment') || currentPath.includes('/risk-overview') || currentPath.includes('/risks') || currentPath.includes('/multi-agent-use-cases') || currentPath.includes('/digital-regulations') || currentPath.includes('/eu-act/') || currentPath.includes('/digital-regulations/eu-act/') || currentUrl.includes('agent=')) {
-            // On a specific AI system detail page - show sub menu
-            activeNav = 'ai-systems';
-            
-            // Check specific pages first (order matters!)
-            // Check risk-overview FIRST before other checks (most specific first)
-            if (currentPath.includes('/risk-overview') || currentPath.includes('/risks')) {
-                activeSubNav = 'risks';
-                console.log('[Nav] Matched risk-overview, setting activeSubNav to risks');
-            } else if (currentPath.includes('/digital-regulations') || currentPath.includes('/eu-act/') || currentPath.includes('/digital-regulations/eu-act/')) {
-                activeSubNav = 'compliance';
-            } else if (currentPath.includes('/review-history')) {
-                activeSubNav = 'review-history';
-            } else if (currentPath.includes('/reports')) {
-                activeSubNav = 'reports';
-            } else if (currentPath.includes('/assessment-library')) {
-                activeSubNav = 'data-sets';
-            } else if (currentPath.includes('/questionnaires/') || 
-                      (currentPath.includes('/assessment/') && 
-                       !currentPath.includes('/assessment-library') && 
-                       !currentPath.match(/\/assessment\/\d+\//))) {
-                // Questionnaires page: /assessment/ (exact, no ID) or /questionnaires/
-                activeSubNav = 'questionnaires';
-            } else if (currentPath.includes('/assessment') && !currentPath.includes('/assessment-library')) {
-                // Other assessment pages (not questionnaires) - like /assessment/123/
-                activeSubNav = 'all-use-cases';
-            } else if (currentPath.includes('/multi-agent-use-cases')) {
-                // Overview page - must check this after other specific pages
-                activeSubNav = 'overview';
-            } else if (currentUrl.includes('agent=')) {
-                // Default to overview for any detail page with agent parameter but no specific path
-                activeSubNav = 'overview';
-            } else {
-                // Final fallback to overview
-                activeSubNav = 'overview';
-            }
-        } else if (currentPath.includes('/questionnaire') || currentPath.includes('/data-collection')) {
-            activeNav = 'data-collection';
-        } else if (currentPath.includes('/models') || currentPath.includes('/ai-models')) {
-            activeNav = 'models';
-        } else if (currentPath.includes('/datasets')) {
-            activeNav = 'datasets';
-        } else if (currentPath.includes('/vendors')) {
-            activeNav = 'vendors';
-        } else if (currentPath.includes('/investment')) {
-            activeNav = 'investments';
-        } else if (currentPath.includes('/framework') || currentPath.includes('/reporting')) {
-            activeNav = 'reporting';
-        }
-        
-        // Remove active class from all nav links
-        navLinks.forEach(link => {
-            link.classList.remove('active');
-        });
-        
-        // Add active class to current nav item (main nav or sub-nav)
-        console.log('[Nav] Setting active nav', { activeNav, activeSubNav, currentPath: window.location.pathname });
+
+        const activeNav = getActiveNav(path, url);
+        const activeSubNav = getActiveSubNav(path, url);
+
+        // Reset all links
+        navLinks.forEach(removeActiveStyles);
+
+        // Apply active to matching links
         navLinks.forEach(link => {
             const navKey = link.getAttribute('data-nav');
             if (navKey === activeNav || navKey === activeSubNav) {
-                link.classList.add('active');
-                // Remove Tailwind text color class to allow active color to show
-                if (link.classList.contains('text-[#4B5563]')) {
-                    link.classList.remove('text-[#4B5563]');
-                }
-                // Also remove from nav-label span if exists
-                const navLabel = link.querySelector('.nav-label');
-                if (navLabel && navLabel.classList.contains('text-[#4B5563]')) {
-                    navLabel.classList.remove('text-[#4B5563]');
-                }
-                // Force apply active styles with inline styles for sub-items
-                if (link.classList.contains('sub-item')) {
-                    link.style.backgroundColor = '#F3F4F6';
-                    link.style.color = '#DC6B64';
-                    if (navLabel) {
-                        navLabel.style.color = '#DC6B64';
-                    }
-                }
-                console.log('[Nav] Set active:', navKey, link);
-            } else {
-                // Remove active class and inline styles from other links
-                link.classList.remove('active');
-                if (link.classList.contains('sub-item')) {
-                    link.style.backgroundColor = '';
-                    link.style.color = '';
-                    const navLabel = link.querySelector('.nav-label');
-                    if (navLabel) {
-                        navLabel.style.color = '';
-                    }
-                }
+                applyActiveStyles(link);
             }
         });
-        
-        // Expand parent section if a sub-item is active
+
+        // Expand parent section for active sub-item
         const activeSubLink = document.querySelector('.nav-link.sub-item.active');
         if (activeSubLink) {
-            const parentSection = activeSubLink.closest('.nav-section');
-            if (parentSection) {
-                parentSection.classList.remove('collapsed');
-            }
+            activeSubLink.closest('.nav-section')?.classList.remove('collapsed');
         }
-    }
-    
-    // Handle click on nav links
-    document.addEventListener('DOMContentLoaded', function() {
-        // Initialize sidebar state
+    };
+
+    // Handle nav link clicks
+    const handleNavClick = (e) => {
+        const navLinks = document.querySelectorAll('.nav-link');
+        navLinks.forEach(removeActiveStyles);
+        applyActiveStyles(e.currentTarget);
+
+        // Expand parent section for sub-items
+        if (e.currentTarget.classList.contains('sub-item')) {
+            e.currentTarget.closest('.nav-section')?.classList.remove('collapsed');
+        }
+    };
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
         const sidebar = document.querySelector('.main-sidebar');
         const mainContent = document.getElementById('main-content');
+        const path = window.location.pathname;
+        const url = window.location.href;
+
+        // Initialize sidebar state
         if (sidebar && mainContent) {
-            setTimeout(function() {
-                const marginLeft = window.getComputedStyle(mainContent).marginLeft;
-                if (marginLeft === '72px') {
+            setTimeout(() => {
+                if (window.getComputedStyle(mainContent).marginLeft === '72px') {
                     sidebar.classList.add('collapsed');
                 }
             }, 100);
         }
-        
-        // Show/hide AI Systems sub menu based on page
-        const currentPath = window.location.pathname;
-        const currentUrl = window.location.href;
+
+        // Handle AI Systems submenu visibility
         const aiSystemsSubMenu = document.getElementById('ai-systems-submenu-section');
-        
-        // Check if we're on the AI systems list page (exact match /ai-systems/)
-        const isAISystemsListPage = currentPath.match(/\/ai-systems\/?$/) || 
-                                     (currentPath.includes('/ai-systems') && !currentPath.match(/\/ai-systems\/[^\/]+/));
-        
-        // Check if we're on a specific AI system detail page
-        // Detail pages include: multi-agent-use-cases (with or without agent param), assessment, digital-regulations, eu-act pages, risk-overview
-        const isAISystemDetailPage = currentPath.includes('/multi-agent-use-cases') ||
-                                     ((currentPath.includes('/assessment') && !currentPath.includes('/assessment-library')) && !isAISystemsListPage) ||
-                                     (currentPath.includes('/digital-regulations') && !isAISystemsListPage) ||
-                                     (currentPath.includes('/eu-act/') && !isAISystemsListPage) ||
-                                     (currentPath.includes('/digital-regulations/eu-act/') && !isAISystemsListPage) ||
-                                     (currentPath.includes('/risk-overview') && !isAISystemsListPage) ||
-                                     (currentUrl.includes('agent=') && (currentPath.includes('/multi-agent-use-cases') || currentPath.includes('/digital-regulations') || currentPath.includes('/eu-act/') || currentPath.includes('/digital-regulations/eu-act/') || currentPath.includes('/risk-overview')));
-        
-        if (isAISystemsListPage && aiSystemsSubMenu) {
-            // Hide sub menu for list page
-            aiSystemsSubMenu.classList.add('collapsed');
-        } else if (isAISystemDetailPage && aiSystemsSubMenu) {
-            // Show sub menu for detail pages
-            aiSystemsSubMenu.classList.remove('collapsed');
-            // Ensure sidebar is full width
-            if (sidebar) {
-                sidebar.classList.remove('collapsed');
-                if (mainContent) {
-                    mainContent.style.marginLeft = '240px';
-                }
+        if (aiSystemsSubMenu) {
+            const isListPage = path.match(/\/ai-systems\/?$/) || 
+                              (path.includes('/ai-systems') && !path.match(/\/ai-systems\/[^\/]+/));
+            const isDetailPage = path.includes('/multi-agent-use-cases') ||
+                                (path.includes('/assessment') && !path.includes('/assessment-library') && !isListPage) ||
+                                (path.includes('/digital-regulations') && !isListPage) ||
+                                (path.includes('/eu-act/') && !isListPage) ||
+                                (path.includes('/risk-overview') && !isListPage) ||
+                                (url.includes('agent='));
+
+            if (isListPage) {
+                aiSystemsSubMenu.classList.add('collapsed');
+            } else if (isDetailPage) {
+                aiSystemsSubMenu.classList.remove('collapsed');
+                sidebar?.classList.remove('collapsed');
+                if (mainContent) mainContent.style.marginLeft = '240px';
+            } else {
+                aiSystemsSubMenu.classList.add('collapsed');
             }
-        } else if (aiSystemsSubMenu) {
-            // Default: hide sub menu if not on detail page
-            aiSystemsSubMenu.classList.add('collapsed');
         }
-        
-        // Set active nav item AFTER determining sub menu visibility
-        // This will set "Overview" as active when on /multi-agent-use-cases/ page
+
+        // Set active nav
         setActiveNavItem();
-        
-        // Verify Overview is active for multi-agent-use-cases page
-        const currentPathCheck = window.location.pathname;
-        const currentUrlCheck = window.location.href;
-        if (currentPathCheck.includes('/multi-agent-use-cases') && currentUrlCheck.includes('agent=')) {
-            setTimeout(() => {
-                const overviewLink = document.querySelector('[data-nav="overview"]');
-                if (overviewLink && !overviewLink.classList.contains('active')) {
-                    // Force set active if not already set
-                    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-                    overviewLink.classList.add('active');
-                    console.log('[Nav] Force set Overview as active');
-                }
-            }, 100);
-        }
-        
-        // Add click handlers to update active state
-        const navLinks = document.querySelectorAll('.nav-link');
-        navLinks.forEach(link => {
-            link.addEventListener('click', function(e) {
-                // Remove active from all
-                navLinks.forEach(l => l.classList.remove('active'));
-                // Add active to clicked item
-                this.classList.add('active');
+
+        // Attach click handlers
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', handleNavClick);
+        });
+
+        // Handle section toggles
+        document.querySelectorAll('.nav-section-header button').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleNavSection(btn.closest('.nav-section-header'));
             });
         });
-        
-        // Handle section toggling
-        const sectionHeaders = document.querySelectorAll('.nav-section-header');
-        sectionHeaders.forEach(header => {
-            const toggleButton = header.querySelector('button');
-            if (toggleButton) {
-                toggleButton.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    const section = header.closest('.nav-section');
-                    section.classList.toggle('collapsed');
-                });
-            }
-        });
     });
+    })(); // End IIFE
 </script>

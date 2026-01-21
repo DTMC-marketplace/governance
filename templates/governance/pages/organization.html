@@ -4,6 +4,33 @@
 {% block title %}Organization Information{% endblock %}
 
 {% block dashboard_content %}
+<style>
+/* Styled select shared with AI system detail */
+.styled-select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-color: #fff;
+    border: 1px solid #D1D5DB;
+    border-radius: 0.75rem; /* 12px */
+    padding: 0.75rem 3rem 0.75rem 0.75rem;
+    width: 100%;
+    color: #374151;
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+.styled-select:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(241, 61, 48, 0.15);
+    border-color: #F13D30;
+}
+.styled-select-wrapper {
+    position: relative;
+}
+.styled-select-wrapper svg {
+    pointer-events: none;
+}
+</style>
 <div class="flex flex-col gap-6 mx-auto">
     <!-- Header -->
     <div class="flex items-center justify-between">
@@ -34,7 +61,7 @@
         </div>
         <div class="p-6 section-content" id="section1-content">
             <!-- File Upload Zone -->
-            <div class="border-2 border-dashed border-[#D1D5DB] rounded-lg p-8 text-center mb-6">
+            <div id="file-drop-zone" class="border-2 border-dashed border-[#D1D5DB] rounded-lg p-8 text-center mb-6 transition-colors">
                 <p class="text-sm text-[#6B7280] mb-2">Click or drag and drop to add more evidence document...</p>
                 <p class="text-sm text-[#6B7280] mb-4">or</p>
                 <p class="text-xs text-[#6B7280] mb-4">PDF, DOC, JPG, XLS, XLSX, CSV</p>
@@ -113,7 +140,17 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-[#374151] mb-1">Public authority/body? <span class="text-[#F13D30]">*</span></label>
-                    <input type="text" name="public_authority" placeholder="Yes/No" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
+                    <div class="styled-select-wrapper">
+                        <select name="public_authority" class="styled-select">
+                            <option value="" selected>Select an option</option>
+                            <option value="yes">Yes</option>
+                            <option value="no">No</option>
+                            <option value="planned">Planned</option>
+                        </select>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5 text-[#9CA3AF] absolute right-3 top-1/2 transform -translate-y-1/2">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </div>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-[#374151] mb-1">Internal AI compliance owner? <span class="text-[#F13D30]">*</span></label>
@@ -155,7 +192,20 @@
             <form id="scope-form" class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium text-[#374151] mb-1">Q1: Do you place AI systems and/or GPAI models on the EU/EEA market? <span class="text-[#F13D30]">*</span></label>
-                    <input type="text" name="q1" placeholder="Yes/No" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
+                    <div class="flex gap-4">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="q1" value="yes" class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">Yes</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="q1" value="no" class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">No</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="q1" value="planned" checked class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">Planned</span>
+                        </label>
+                    </div>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-[#374151] mb-1">Q2: Which roles best describe your typical activities? (Select all that apply as default role(s), editable per system) <span class="text-[#6B7280]">ℹ</span></label>
@@ -180,11 +230,37 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-[#374151] mb-1">Q3: Is the system deployed/used in the EU/EEA? <span class="text-[#F13D30]">*</span></label>
-                    <input type="text" name="q3" placeholder="Yes/No" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
+                    <div class="flex gap-4">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="q3" value="yes" class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">Yes</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="q3" value="no" class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">No</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="q3" value="planned" checked class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">Planned</span>
+                        </label>
+                    </div>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-[#374151] mb-1">Q4: Does the system affect persons in the EU/EEA (outputs used in EU/EEA)? <span class="text-[#F13D30]">*</span></label>
-                    <input type="text" name="q4" placeholder="Yes/No" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
+                    <div class="flex gap-4">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="q4" value="yes" class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">Yes</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="q4" value="no" class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">No</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="q4" value="planned" checked class="w-4 h-4">
+                            <span class="text-sm text-[#374151]">Planned</span>
+                        </label>
+                    </div>
                 </div>
                 <div class="flex justify-end gap-3 pt-4">
                     <button type="button" class="px-6 py-2 border border-[#F13D30] text-[#F13D30] rounded-lg font-medium hover:bg-[#F13D30] hover:text-white transition-colors">Cancel</button>
@@ -249,7 +325,7 @@
                             <span class="text-sm text-[#374151]">No</span>
                         </label>
                     </div>
-                    <div class="flex gap-2 mt-3">
+                    <!-- <div class="flex gap-2 mt-3">
                         <input type="text" name="q3_link" placeholder="Paste a link from Section 1 or an external link" value="https://example.com/register" class="flex-1 px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
                         <button type="button" onclick="saveLink('q3')" class="px-4 py-2 bg-[#F13D30] text-white rounded-lg font-medium hover:bg-[#d63529] transition-colors">Save link</button>
                     </div>
@@ -263,7 +339,7 @@
                             <polyline points="10,9 9,9 8,9" />
                         </svg> 
                         <span>Document link saved</span>
-                    </div>
+                    </div> -->
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-[#374151] mb-2">Q4: Do you maintain version history for AI systems in production? <span class="text-[#F13D30]">*</span></label>
@@ -294,10 +370,10 @@
                             <span class="text-sm text-[#374151]">Not Applicable</span>
                         </label>
                     </div>
-                    <div class="flex gap-2 mt-3">
+                    <!-- <div class="flex gap-2 mt-3">
                         <input type="text" name="q5_link" placeholder="Paste a link from Section 1 or an external link" class="flex-1 px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
                         <button type="button" onclick="saveLink('q5')" class="px-4 py-2 bg-[#F13D30] text-white rounded-lg font-medium hover:bg-[#d63529] transition-colors">Save link</button>
-                    </div>
+                    </div> -->
                 </div>
                 <div class="flex justify-end gap-3 pt-4">
                     <button type="button" class="px-6 py-2 border border-[#F13D30] text-[#F13D30] rounded-lg font-medium hover:bg-[#F13D30] hover:text-white transition-colors">Cancel</button>
@@ -505,8 +581,19 @@
 <script>
 // Section toggle functionality
 function toggleSection(sectionId) {
+    // Safety check: ensure sectionId is a string
+    if (typeof sectionId !== 'string') {
+        console.error('toggleSection expects a string sectionId, got:', typeof sectionId, sectionId);
+        return;
+    }
+    
     const content = document.getElementById(sectionId + '-content');
     const toggle = document.getElementById(sectionId + '-toggle');
+    
+    if (!content || !toggle) {
+        console.warn('toggleSection: content or toggle element not found for', sectionId);
+        return;
+    }
     
     if (content.style.display === 'none' || !content.style.display) {
         content.style.display = 'block';
@@ -519,16 +606,28 @@ function toggleSection(sectionId) {
     }
 }
 
-// File upload handling
-document.getElementById('file-upload')?.addEventListener('change', function(e) {
-    const files = Array.from(e.target.files);
+// File upload handling (click + drag/drop)
+const uploadInput = document.getElementById('file-upload');
+const dropZone = document.getElementById('file-drop-zone');
+
+function addFiles(files) {
     const container = document.getElementById('uploaded-documents');
-    
+    if (!container || !files?.length) return;
+
     files.forEach(file => {
+        const fileId = 'file-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
         const fileItem = document.createElement('div');
-        fileItem.className = 'flex items-center justify-between p-3 bg-gray-50 rounded-lg';
+        fileItem.className = 'flex items-center justify-between p-3 bg-white rounded-lg border border-[#E5E7EB]';
         fileItem.innerHTML = `
             <div class="flex items-center gap-3">
+                <label class="cursor-pointer">
+                    <input type="checkbox" class="file-checkbox hidden" data-file-id="${fileId}" onchange="toggleFileSelection(this)">
+                    <div class="file-checkbox-display w-5 h-5 border-2 border-[#111827] rounded flex items-center justify-center">
+                        <svg class="hidden check-icon w-3 h-3 text-[#F13D30]" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                        </svg>
+                    </div>
+                </label>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                     class="w-5 h-5 text-[#DC2626]">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -538,17 +637,65 @@ document.getElementById('file-upload')?.addEventListener('change', function(e) {
                     <polyline points="10,9 9,9 8,9" />
                 </svg>
                 <div>
-                    <p class="text-sm font-medium text-[#374151]">${file.name}</p>
+                    <p class="text-sm font-medium text-[#111827]">${file.name}</p>
                     <p class="text-xs text-[#6B7280]">Uploaded just now</p>
                 </div>
             </div>
-            <button onclick="generateLink('${file.name}')" class="px-4 py-1.5 bg-[#F13D30] text-white text-sm rounded-lg hover:bg-[#d63529] transition-colors">Generate link</button>
+            <button onclick="generateLink('${file.name}')" class="flex items-center gap-2 px-4 py-1.5 bg-[#F13D30] text-white text-sm rounded-lg hover:bg-[#d63529] transition-colors">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                </svg>
+                Generate link
+            </button>
         `;
         container.appendChild(fileItem);
     });
-    
+}
+
+uploadInput?.addEventListener('change', (e) => {
+    addFiles(Array.from(e.target.files));
     e.target.value = '';
 });
+
+if (dropZone) {
+    ['dragenter', 'dragover'].forEach(evt =>
+        dropZone.addEventListener(evt, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.classList.add('border-[#F13D30]', 'bg-[#FFF5F4]');
+        })
+    );
+
+    ['dragleave', 'drop'].forEach(evt =>
+        dropZone.addEventListener(evt, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.classList.remove('border-[#F13D30]', 'bg-[#FFF5F4]');
+        })
+    );
+
+    dropZone.addEventListener('drop', (e) => {
+        const files = Array.from(e.dataTransfer?.files || []);
+        addFiles(files);
+    });
+}
+
+// Toggle file selection
+function toggleFileSelection(checkbox) {
+    const display = checkbox.nextElementSibling;
+    const checkIcon = display.querySelector('.check-icon');
+    
+    if (checkbox.checked) {
+        display.classList.remove('border-[#111827]');
+        display.classList.add('border-[#F13D30]', 'bg-white');
+        checkIcon.classList.remove('hidden');
+    } else {
+        display.classList.remove('border-[#F13D30]');
+        display.classList.add('border-[#111827]');
+        checkIcon.classList.add('hidden');
+    }
+}
 
 // AI Read toggle
 document.querySelectorAll('.ai-read-toggle').forEach(btn => {

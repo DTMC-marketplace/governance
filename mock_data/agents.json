@@ -1,6 +1,46 @@
 [
   {
     "id": 1,
+    "name": "Customer Service Chatbot",
+    "business_unit": "Product Team",
+    "compliance_status": "compliant",
+    "ai_act_role": "deployer",
+    "vendor": "DTM",
+    "risk_classification": "limited_risks",
+    "investment_type": "internal"
+  },
+  {
+    "id": 2,
+    "name": "Resume Screening AI",
+    "business_unit": "HR Department",
+    "compliance_status": "non_compliant",
+    "ai_act_role": "provider",
+    "vendor": "Cleary",
+    "risk_classification": "high_risks",
+    "investment_type": "internal"
+  },
+  {
+    "id": 3,
+    "name": "Predictive Maintenance System",
+    "business_unit": "Operations Team",
+    "compliance_status": "compliant",
+    "ai_act_role": "deployer",
+    "vendor": "DT Master Nature",
+    "risk_classification": "minimal_risks",
+    "investment_type": "internal"
+  },
+  {
+    "id": 4,
+    "name": "Credit Scoring Model",
+    "business_unit": "Risk Analytics",
+    "compliance_status": "assessing",
+    "ai_act_role": "provider",
+    "vendor": "",
+    "risk_classification": "limited_risks",
+    "investment_type": "internal"
+  },
+  {
+    "id": 5,
     "name": "AI Act",
     "business_unit": "Branch",
     "compliance_status": "assessing",
@@ -10,43 +50,53 @@
     "investment_type": "internal"
   },
   {
-    "id": 2,
+    "id": 6,
     "name": "quality IA for battery",
     "business_unit": "Business Unit 1",
-    "compliance_status": "assessing",
+    "compliance_status": "reviewing",
     "ai_act_role": "provider",
     "vendor": "",
     "risk_classification": "high_risks",
     "investment_type": "internal"
   },
   {
-    "id": 3,
+    "id": 7,
     "name": "Rag for documentations QA",
     "business_unit": "banque postale bureau",
-    "compliance_status": "assessing",
-    "ai_act_role": "provider",
+    "compliance_status": "compliant",
+    "ai_act_role": "importer",
     "vendor": "Cleary",
     "risk_classification": "limited_risks",
     "investment_type": "internal"
   },
   {
-    "id": 4,
+    "id": 8,
     "name": "Sola Agent",
     "business_unit": "Headquarter",
-    "compliance_status": "reviewing",
+    "compliance_status": "non_compliant",
     "ai_act_role": "deployer",
     "vendor": "DT Master Nature",
+    "risk_classification": "minimal_risks",
+    "investment_type": "internal"
+  },
+  {
+    "id": 9,
+    "name": "Document Processing AI",
+    "business_unit": "Legal Department",
+    "compliance_status": "assessing",
+    "ai_act_role": "provider",
+    "vendor": "",
     "risk_classification": "limited_risks",
     "investment_type": "internal"
   },
   {
-    "id": 5,
-    "name": "test 2",
-    "business_unit": "",
-    "compliance_status": "assessing",
+    "id": 10,
+    "name": "Fraud Detection System",
+    "business_unit": "Security Team",
+    "compliance_status": "compliant",
     "ai_act_role": "deployer",
-    "vendor": "",
-    "risk_classification": "limited_risks",
+    "vendor": "DTM",
+    "risk_classification": "high_risks",
     "investment_type": "internal"
   }
 ]

@@ -106,7 +106,7 @@ class GetMultiAgentUseCasesUseCase:
                         'id': agent_id,
                         'name': 'Unknown Agent',
                         'description': '',
-                        'compliance_status': 'not_assessed',
+                        'compliance_status': 'assessing',
                         'risk_classification': 'limited_risks',
                     })
             else:
@@ -116,7 +116,7 @@ class GetMultiAgentUseCasesUseCase:
                     'id': None,
                     'name': 'No Agent',
                     'description': '',
-                    'compliance_status': 'not_assessed',
+                    'compliance_status': 'assessing',
                     'risk_classification': 'limited_risks',
                 })
             
