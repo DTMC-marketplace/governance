@@ -22,7 +22,7 @@
             <h1 class="text-2xl font-bold text-[#22262A] mb-1">AI Systems</h1>
         </div>
         <div class="flex items-center gap-3">
-            <button onclick="openImportModal()" class="flex items-center gap-1 px-4 py-2 border border-[#F13D30] bg-white rounded-lg text-sm font-semibold text-[#F13D30] cursor-pointer transition-all duration-200 hover:bg-[#FEF5F4]">
+            <button onclick="openImportModal()" class="px-4 py-2 bg-white border border-[#DC180A] text-[#F13D30] rounded-full font-semibold text-sm hover:bg-[#FEEDEC] transition-colors flex items-center gap-2">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                     <polyline points="7 10 12 15 17 10"></polyline>
@@ -30,7 +30,7 @@
                 </svg>
                 <span>Import</span>
             </button>
-            <button onclick="openExportModal()" class="flex items-center gap-1 px-4 py-2 border border-[#F13D30] bg-white rounded-lg text-sm font-semibold text-[#F13D30] cursor-pointer transition-all duration-200 hover:bg-[#FEF5F4]">
+            <button onclick="openExportModal()" class="px-4 py-2 bg-white border border-[#DC180A] text-[#F13D30] rounded-full font-semibold text-sm hover:bg-[#FEEDEC] transition-colors flex items-center gap-2">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                     <polyline points="17 8 12 3 7 8"></polyline>
@@ -43,123 +43,182 @@
 
     <!-- Alert Banner -->
     {% if systems_need_attention > 0 %}
-    <div class="flex items-start gap-3 p-4 bg-[#FEF2F2] border-l-4 border-[#F13D30] rounded-lg">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5 text-[#F13D30]">
-            <circle cx="12" cy="12" r="10" />
-            <path d="M12 16v-4M12 8h.01" />
-        </svg>
-        <div class="flex-1">
-            <p class="text-sm font-semibold text-[#111827] mb-1">{{ systems_need_attention }} systems need attention</p>
-            <p class="text-sm text-[#6B7280]">Complete the compliance assessment for systems with "Not started" or "In progress" status</p>
+    <div class="bg-[#FEEDEC] border-l-4 border-[#F13D30] rounded-lg p-4 mb-6">
+        <div class="flex items-start gap-3">
+            <div class="w-5 h-5 rounded-full bg-[#F13D30] flex items-center justify-center shrink-0 mt-0.5">
+                <span class="text-white text-xs font-bold">!</span>
+            </div>
+            <div>
+                <p class="font-semibold text-sm text-[#22262A]">
+                    {{ systems_need_attention }} systems need attention
+                </p>
+                <p class="font-normal text-sm text-[#464E58] mt-1">
+                    Complete the compliance assessment for systems with "Not started" or "In progress" status
+                </p>
+            </div>
         </div>
     </div>
     {% endif %}
 
-    <!-- Action Controls & Search -->
-    <div class="flex items-center justify-between gap-4">
-        <!-- Left: Add New Button -->
-        <div class="flex items-center">
-            <button onclick="openAddSystemModal()" class="flex items-center gap-2 px-4 py-2 bg-[#F13D30] text-white text-sm font-medium rounded-lg hover:bg-[#d63529] transition-colors">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+    <!-- Action Bar -->
+    <div class="bg-white rounded-lg border border-[#F0F1F2] shadow-sm p-4 mb-6">
+        <div class="flex items-center justify-between gap-4">
+            <!-- Left: Add New Button -->
+            <button onclick="openAddSystemModal()" class="px-6 py-2.5 bg-[#F13D30] text-white rounded-lg font-bold text-sm hover:bg-[#DC180A] transition-colors flex items-center gap-2 shadow-md">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5">
                     <line x1="12" y1="5" x2="12" y2="19"></line>
                     <line x1="5" y1="12" x2="19" y2="12"></line>
                 </svg>
                 <span>Add New</span>
             </button>
-        </div>
-        <!-- Right: Search, Filter, Sort -->
-        <div class="flex items-center gap-3">
-            <div class="relative flex-1 max-w-md">
-                <input type="text" id="search-input" placeholder="Search AI systems..." 
-                    class="w-full px-4 py-2 pl-10 border border-[#D1D5DB] rounded-lg text-sm text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-[#9CA3AF]">
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <path d="m21 21-4.35-4.35"></path>
-                </svg>
+
+            <!-- Right Actions -->
+            <div class="flex items-center gap-3">
+                <!-- Search -->
+                <div class="relative">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#B5BCC4]">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="m21 21-4.35-4.35"></path>
+                    </svg>
+                    <input type="text" id="search-input" placeholder="Search AI systems..." 
+                        class="w-64 pl-10 pr-4 py-2.5 border border-[#B5BCC4] rounded-lg font-normal text-sm text-[#22262A] placeholder:text-[#B5BCC4] bg-white focus:outline-none focus:border-[#F13D30] focus:ring-2 focus:ring-[#FEEDEC] transition-colors">
+                </div>
+
+                <button onclick="openFilterModal()" class="px-4 py-2 bg-white border border-[#B5BCC4] text-[#464E58] rounded-lg font-semibold text-sm hover:bg-[#F0F1F2] transition-colors flex items-center gap-2">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                    </svg>
+                    <span>Filter</span>
+                </button>
+                <button onclick="openSortModal()" class="px-4 py-2 bg-white border border-[#B5BCC4] text-[#464E58] rounded-lg font-semibold text-sm hover:bg-[#F0F1F2] transition-colors flex items-center gap-2">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                        <path d="M3 6h18M7 12h10M11 18h2"></path>
+                    </svg>
+                    <span>Sort</span>
+                </button>
             </div>
-            <button onclick="openFilterModal()" class="flex items-center gap-2 px-4 py-2 border border-[#D1D5DB] bg-white text-[#374151] text-sm font-medium rounded-lg hover:bg-[#F9FAFB] transition-colors">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4 text-[#374151]">
-                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
-                </svg>
-                <span>Filter</span>
-            </button>
-            <button onclick="openSortModal()" class="flex items-center gap-2 px-4 py-2 border border-[#D1D5DB] bg-white text-[#374151] text-sm font-medium rounded-lg hover:bg-[#F9FAFB] transition-colors">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4 text-[#374151]">
-                    <path d="M3 6h18M7 12h10M11 18h2"></path>
-                </svg>
-                <span>Sort</span>
-            </button>
         </div>
     </div>
 
-    <!-- Tip Banner -->
-    <div class="flex items-start gap-3 p-4 bg-[#EFF6FF] border-l-4 border-[#3B82F6] rounded-lg">
-        <span class="text-sm font-semibold text-[#3B82F6]">> Tip:</span>
-        <p class="text-sm text-[#6B7280]">Click on any row to view details and update information</p>
+    <!-- Click Reminder -->
+    <div class="bg-[#EFF6FF] border border-[#BFDBFE] rounded-lg p-3 mb-4 flex items-center gap-2">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4 text-[#3B82F6]">
+            <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+        <p class="font-normal text-sm text-[#1E40AF]">
+            <span class="font-semibold">Tip:</span> Click on any row to view details and update information
+        </p>
     </div>
 
     <!-- AI Systems Table -->
-    <div class="bg-white rounded-lg border border-[#E5E7EB] shadow-sm overflow-hidden">
-        <table class="w-full">
-            <thead class="bg-[#F9FAFB] border-b border-[#E5E7EB]">
-                <tr>
-                    <th class="px-4 py-4 text-left text-xs font-semibold text-[#6B7280] uppercase tracking-wider">AI SYSTEM NAME</th>
-                    <th class="px-4 py-4 text-left text-xs font-semibold text-[#6B7280] uppercase tracking-wider">OWNER</th>
-                    <th class="px-4 py-4 text-left text-xs font-semibold text-[#6B7280] uppercase tracking-wider">STATUS</th>
-                    <th class="px-4 py-4 text-left text-xs font-semibold text-[#6B7280] uppercase tracking-wider">ROLE</th>
-                    <th class="px-4 py-4 text-left text-xs font-semibold text-[#6B7280] uppercase tracking-wider">RISK CLASSIFICATION</th>
-                    <th class="px-4 py-4 text-left text-xs font-semibold text-[#6B7280] uppercase tracking-wider">COMPLIANCE STATUS</th>
-                    <th class="px-4 py-4 text-left text-xs font-semibold text-[#6B7280] uppercase tracking-wider">LAST UPDATED</th>
-                    <th class="px-4 py-4 text-left text-xs font-semibold text-[#6B7280] uppercase tracking-wider">PROVIDER TYPE</th>
-                </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-[#E5E7EB]">
-                {% for system in ai_systems %}
-                <tr class="hover:bg-[#F9FAFB] cursor-pointer system-row" data-agent-id="{{ system.id }}">
-                    <td class="px-4 py-5">
-                        <div class="flex items-center gap-2">
-                            <span class="text-sm font-medium text-[#111827]">{{ system.name }}</span>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4 text-[#9CA3AF]">
-                                <polyline points="9 18 15 12 9 6"></polyline>
-                            </svg>
-                        </div>
-                    </td>
-                    <td class="px-4 py-5 text-sm text-[#374151]">{{ system.owner|default:"—" }}</td>
-                    <td class="px-4 py-5">
-                        <span class="px-2 py-1 text-xs font-medium rounded-full {{ system.status_badge_class }}">
-                            {{ system.status }}
-                        </span>
-                    </td>
-                    <td class="px-4 py-5 text-sm text-[#374151]">{{ system.role }}</td>
-                    <td class="px-4 py-5">
-                        <span class="px-2 py-1 text-xs font-medium rounded-full {{ system.risk_badge_class }}">
-                            {{ system.risk_classification }}
-                        </span>
-                    </td>
-                    <td class="px-4 py-5">
-                        <span class="px-2 py-1 text-xs font-medium rounded-full {{ system.compliance_badge_class }}">
-                            {{ system.compliance_status }}
-                        </span>
-                    </td>
-                    <td class="px-4 py-5 text-sm text-[#374151]">{{ system.last_updated }}</td>
-                    <td class="px-4 py-5 text-sm text-[#374151]">{{ system.provider_type }}</td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="8" class="px-4 py-8 text-center text-sm text-[#6B7280]">No AI systems found</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <div class="bg-white rounded-lg border border-[#F0F1F2] shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-[#F9FAFB] border-b border-[#F0F1F2]">
+                    <tr>
+                        <th class="px-6 py-4 w-12">
+                            <input type="checkbox" id="select-all-checkbox" 
+                                class="w-4 h-4 text-[#F13D30] border-[#B5BCC4] rounded focus:ring-[#F13D30]"
+                                onclick="event.stopPropagation()">
+                        </th>
+                        <th class="px-6 py-4 text-left font-semibold text-xs text-[#565F6C] uppercase tracking-wider">AI System Name</th>
+                        <th class="px-6 py-4 text-left font-semibold text-xs text-[#565F6C] uppercase tracking-wider">Owner</th>
+                        <th class="px-6 py-4 text-left font-semibold text-xs text-[#565F6C] uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-4 text-left font-semibold text-xs text-[#565F6C] uppercase tracking-wider">Role</th>
+                        <th class="px-6 py-4 text-left font-semibold text-xs text-[#565F6C] uppercase tracking-wider">Risk Classification</th>
+                        <th class="px-6 py-4 text-left font-semibold text-xs text-[#565F6C] uppercase tracking-wider">Compliance Status</th>
+                        <th class="px-6 py-4 text-left font-semibold text-xs text-[#565F6C] uppercase tracking-wider">Last Updated</th>
+                        <th class="px-6 py-4 text-left font-semibold text-xs text-[#565F6C] uppercase tracking-wider">Provider Type</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-[#F0F1F2]">
+                    {% for system in ai_systems %}
+                    <tr class="hover:bg-[#FEEDEC] cursor-pointer system-row group" data-agent-id="{{ system.id }}">
+                        <td class="px-6 py-4">
+                            <input type="checkbox" class="system-checkbox w-4 h-4 text-[#F13D30] border-[#B5BCC4] rounded focus:ring-[#F13D30]" 
+                                data-system-id="{{ system.id }}"
+                                onclick="event.stopPropagation()">
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-2">
+                                <span class="font-semibold text-sm text-[#22262A]">
+                                    {{ system.name }}
+                                </span>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4 text-[#B5BCC4] group-hover:text-[#F13D30] transition-colors">
+                                    <polyline points="9 18 15 12 9 6"></polyline>
+                                </svg>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="font-normal text-sm text-[#464E58]">
+                                {{ system.owner|default:"—" }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="inline-flex px-2.5 py-1 rounded-full font-medium text-xs {{ system.status_badge_class }}">
+                                {{ system.status }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="font-normal text-sm text-[#464E58]">
+                                {{ system.role }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="inline-flex px-2.5 py-1 rounded-full font-medium text-xs {{ system.risk_badge_class }}">
+                                {{ system.risk_classification }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="inline-flex px-2.5 py-1 rounded-full font-medium text-xs {{ system.compliance_badge_class }}">
+                                {{ system.compliance_status }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="font-normal text-sm text-[#464E58]">
+                                {{ system.last_updated }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="font-normal text-sm text-[#464E58]">
+                                {{ system.provider_type }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="px-6 py-12 text-center">
+                            <p class="font-medium text-base text-[#565F6C]">No AI systems found</p>
+                            <p class="font-normal text-sm text-[#B5BCC4] mt-2">Click "Add New AI System" to get started</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 
-    <!-- Pagination -->
-    <div class="flex items-center justify-between">
-        <p class="text-sm text-[#6B7280]">Showing {{ ai_systems|length }} AI systems</p>
-        <div class="flex items-center gap-2">
-            <button class="px-3 py-1.5 text-sm font-medium text-[#374151] border border-[#D1D5DB] rounded-lg hover:bg-[#F9FAFB] transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>Previous</button>
-            <button class="px-3 py-1.5 text-sm font-medium text-white bg-[#F13D30] rounded-lg">1</button>
-            <button class="px-3 py-1.5 text-sm font-medium text-[#374151] border border-[#D1D5DB] rounded-lg hover:bg-[#F9FAFB] transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>Next</button>
+    <!-- Footer Summary -->
+    <div class="mt-6 flex items-center justify-between">
+        <p class="font-normal text-sm text-[#565F6C]">
+            Showing <span id="systems-count">{{ ai_systems|length }}</span> AI system{{ ai_systems|length|pluralize:"s" }}
+            <span id="selected-count-display" class="hidden ml-2 text-[#F13D30] font-medium">
+                (<span id="selected-count">0</span> selected)
+            </span>
+        </p>
+        <div class="flex gap-2 items-center">
+            <button id="delete-selected-btn" onclick="deleteSelectedSystems()" class="hidden px-4 py-2 rounded-lg border border-[#DC180A] text-[#F13D30] font-medium bg-white flex items-center gap-2 hover:bg-[#FEE2E2] transition-colors">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+                <span>Delete selected</span>
+            </button>
+            <button id="pagination-prev" onclick="changePage(-1)" class="px-4 py-2 bg-white border border-[#B5BCC4] text-[#464E58] rounded-lg font-semibold text-sm hover:bg-[#F0F1F2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>Previous</button>
+            <div id="pagination-numbers" class="flex items-center gap-2">
+                <button class="px-4 py-2 bg-[#F13D30] text-white border border-[#F13D30] rounded-lg font-semibold text-sm">1</button>
+            </div>
+            <button id="pagination-next" onclick="changePage(1)" class="px-4 py-2 bg-white border border-[#B5BCC4] text-[#464E58] rounded-lg font-semibold text-sm hover:bg-[#F0F1F2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>Next</button>
         </div>
     </div>
 </div>
@@ -181,9 +240,9 @@
         <!-- Modal Content -->
         <div class="p-6 space-y-6">
             <!-- Need a template? Section -->
-            <div class="bg-[#EFF6FF] rounded-lg p-4 border border-[#BFDBFE]">
+            <div class="bg-[#EFF6FF] border border-[#BFDBFE] rounded-lg p-4">
                 <div class="flex items-start gap-3">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-6 h-6 text-[#3B82F6] flex-shrink-0 mt-0.5">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5 text-[#3B82F6] shrink-0 mt-0.5">
                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                         <polyline points="14 2 14 8 20 8"></polyline>
                         <line x1="16" y1="13" x2="8" y2="13"></line>
@@ -191,8 +250,9 @@
                         <polyline points="10 9 9 9 8 9"></polyline>
                     </svg>
                     <div class="flex-1">
-                        <p class="text-sm text-[#1E40AF] mb-3">Need a template? Download our CSV template to ensure your data is formatted correctly.</p>
-                        <button onclick="downloadTemplate()" class="flex items-center gap-2 px-4 py-2 bg-[#3B82F6] text-white text-sm font-medium rounded-lg hover:bg-[#2563EB] transition-colors">
+                        <p class="font-semibold text-sm text-[#1E40AF] mb-2">Need a template?</p>
+                        <p class="font-normal text-sm text-[#1E40AF] mb-3">Download our CSV template to ensure your data is formatted correctly.</p>
+                        <button onclick="downloadTemplate()" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-[#3B82F6] text-[#3B82F6] rounded-lg font-semibold text-sm hover:bg-[#EFF6FF] transition-colors">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
                                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                                 <polyline points="7 10 12 15 17 10"></polyline>
@@ -206,53 +266,44 @@
 
             <!-- Upload CSV File Section -->
             <div>
-                <h3 class="text-base font-semibold text-[#22262A] mb-3">Upload CSV File</h3>
-                <div id="csv-drop-zone" class="border-2 border-dashed border-[#D1D5DB] rounded-lg p-12 text-center transition-colors">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-12 h-12 text-[#9CA3AF] mx-auto mb-4">
+                <label class="block font-semibold text-sm text-[#22262A] mb-2">Upload CSV File</label>
+                <div id="csv-drop-zone" class="border-2 border-dashed rounded-lg p-8 text-center transition-colors border-[#B5BCC4] bg-[#F9FAFB]">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-12 h-12 mx-auto mb-4 text-[#B5BCC4]">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                         <polyline points="17 8 12 3 7 8"></polyline>
                         <line x1="12" y1="3" x2="12" y2="15"></line>
                     </svg>
-                    <p class="text-sm font-medium text-[#374151] mb-1">Drag and drop your CSV file here</p>
-                    <p class="text-sm text-[#6B7280] mb-4">or</p>
-                    <input type="file" id="csv-file-input" accept=".csv" class="hidden">
-                    <button onclick="document.getElementById('csv-file-input').click()" class="flex items-center gap-2 px-4 py-2 bg-white border border-[#D1D5DB] text-[#374151] text-sm font-medium rounded-lg hover:bg-[#F9FAFB] transition-colors mx-auto">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                            <polyline points="17 8 12 3 7 8"></polyline>
-                            <line x1="12" y1="3" x2="12" y2="15"></line>
-                        </svg>
-                        <span>Browse Files</span>
-                    </button>
-                </div>
-                <p class="text-xs text-[#6B7280] mt-3 text-center">Supported format: CSV (max 10MB)</p>
-                <div id="csv-file-info" class="hidden mt-3 p-3 bg-[#F9FAFB] rounded-lg border border-[#E5E7EB]">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5 text-[#3B82F6]">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                <polyline points="14 2 14 8 20 8"></polyline>
-                            </svg>
-                            <span id="csv-file-name" class="text-sm font-medium text-[#111827]"></span>
-                            <span id="csv-file-size" class="text-xs text-[#6B7280]"></span>
-                        </div>
-                        <button onclick="removeCsvFile()" class="text-[#6B7280] hover:text-[#111827] transition-colors">
+                    <div id="csv-drop-content">
+                        <p class="font-semibold text-sm text-[#22262A] mb-2">Drag and drop your CSV file here</p>
+                        <p class="font-normal text-sm text-[#565F6C] mb-4">or</p>
+                        <input type="file" id="csv-file-input" accept=".csv" class="hidden">
+                        <label for="csv-file-input" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-[#B5BCC4] text-[#464E58] rounded-lg font-semibold text-sm hover:bg-[#F0F1F2] transition-colors cursor-pointer">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
-                                <line x1="18" y1="6" x2="6" y2="18"></line>
-                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
                             </svg>
+                            <span>Browse Files</span>
+                        </label>
+                    </div>
+                    <div id="csv-file-info" class="hidden space-y-2">
+                        <p class="font-semibold text-sm text-[#22262A]"></p>
+                        <p class="font-normal text-xs text-[#565F6C]"></p>
+                        <button onclick="removeCsvFile()" class="text-[#F13D30] font-semibold text-sm hover:underline">
+                            Remove file
                         </button>
                     </div>
                 </div>
+                <p class="font-normal text-xs text-[#565F6C] mt-2">Supported format: CSV (max 10MB)</p>
             </div>
         </div>
 
-        <!-- Modal Footer -->
-        <div class="flex items-center justify-end gap-3 p-6 border-t border-[#E5E7EB]">
-            <button onclick="closeImportModal()" class="px-4 py-2 border border-[#D1D5DB] bg-white text-[#374151] text-sm font-medium rounded-lg hover:bg-[#F9FAFB] transition-colors">
+        <!-- Actions -->
+        <div class="flex gap-3 pt-4">
+            <button onclick="closeImportModal()" class="flex-1 px-4 py-2.5 bg-white border border-[#B5BCC4] text-[#464E58] rounded-lg font-semibold text-sm hover:bg-[#F0F1F2] transition-colors">
                 Cancel
             </button>
-            <button onclick="importCsvFile()" id="import-btn" disabled class="px-4 py-2 bg-[#F13D30] text-white text-sm font-medium rounded-lg hover:bg-[#d63529] transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+            <button onclick="importCsvFile()" id="import-btn" disabled class="flex-1 px-4 py-2.5 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A] transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                 Import
             </button>
         </div>
@@ -274,11 +325,11 @@
         </div>
 
         <!-- Modal Content -->
-        <div class="p-6">
-            <!-- Icon and Heading -->
-            <div class="text-center mb-6">
-                <div class="flex justify-center mb-4">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#F13D30" stroke-width="2" class="w-16 h-16">
+        <div class="p-6 space-y-6">
+            <!-- Icon and Message -->
+            <div class="flex flex-col items-center text-center">
+                <div class="w-16 h-16 bg-[#FEEDEC] rounded-full flex items-center justify-center mb-4">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#F13D30" stroke-width="2" class="w-8 h-8">
                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                         <polyline points="14 2 14 8 20 8"></polyline>
                         <line x1="16" y1="13" x2="8" y2="13"></line>
@@ -286,33 +337,35 @@
                         <polyline points="10 9 9 9 8 9"></polyline>
                     </svg>
                 </div>
-                <h3 class="text-lg font-semibold text-[#22262A] mb-2">Download AI System List</h3>
-                <p class="text-sm text-[#6B7280]">Export all AI systems with the information displayed on this page as a CSV file.</p>
+                <h3 class="font-semibold text-lg text-[#22262A] mb-2">Download AI System List</h3>
+                <p class="font-normal text-sm text-[#565F6C]">Export all AI systems with the information displayed on this page as a CSV file.</p>
             </div>
 
-            <!-- Export Details -->
-            <div class="space-y-3 mb-6">
-                <div class="flex items-center justify-between py-2 border-b border-[#E5E7EB]">
-                    <span class="text-sm text-[#6B7280]">Total systems:</span>
-                    <span class="text-sm font-semibold text-[#111827]" id="export-total-systems">{{ ai_systems|length }}</span>
-                </div>
-                <div class="flex items-center justify-between py-2 border-b border-[#E5E7EB]">
-                    <span class="text-sm text-[#6B7280]">Format:</span>
-                    <span class="text-sm font-semibold text-[#111827]">CSV</span>
-                </div>
-                <div class="flex items-center justify-between py-2">
-                    <span class="text-sm text-[#6B7280]">Includes:</span>
-                    <span class="text-sm font-semibold text-[#111827]">All columns</span>
+            <!-- Details -->
+            <div class="bg-[#F9FAFB] border border-[#F0F1F2] rounded-lg p-4">
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center">
+                        <span class="font-normal text-sm text-[#565F6C]">Total systems:</span>
+                        <span class="font-semibold text-sm text-[#22262A]" id="export-total-systems">{{ ai_systems|length }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="font-normal text-sm text-[#565F6C]">Format:</span>
+                        <span class="font-semibold text-sm text-[#22262A]">CSV</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="font-normal text-sm text-[#565F6C]">Includes:</span>
+                        <span class="font-semibold text-sm text-[#22262A]">All columns</span>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Modal Footer -->
-        <div class="flex items-center justify-end gap-3 p-6 border-t border-[#E5E7EB]">
-            <button onclick="closeExportModal()" class="px-4 py-2 border border-[#F13D30] bg-white text-[#F13D30] text-sm font-medium rounded-lg hover:bg-[#FEF5F4] transition-colors">
+        <!-- Actions -->
+        <div class="flex gap-3 p-6">
+            <button onclick="closeExportModal()" class="flex-1 px-4 py-2.5 bg-white border border-[#B5BCC4] text-[#464E58] rounded-lg font-semibold text-sm hover:bg-[#F0F1F2] transition-colors">
                 Cancel
             </button>
-            <button onclick="downloadExport()" class="flex items-center gap-2 px-4 py-2 bg-[#F13D30] text-white text-sm font-medium rounded-lg hover:bg-[#d63529] transition-colors">
+            <button onclick="downloadExport()" class="flex-1 px-4 py-2.5 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A] transition-colors flex items-center justify-center gap-2">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                     <polyline points="7 10 12 15 17 10"></polyline>
@@ -341,11 +394,11 @@
         <!-- Modal Content -->
         <div class="p-6">
             <!-- Filters Selected Count -->
-            <div class="flex items-center justify-between mb-6">
-                <span class="text-sm text-[#6B7280]">
-                    <span id="filter-count">0</span> filters selected
-                </span>
-                <button onclick="clearAllFilters()" class="text-sm text-[#F13D30] hover:text-[#d63529] transition-colors">
+            <div class="flex items-center justify-between">
+                <p class="font-normal text-sm text-[#565F6C]">
+                    <span id="filter-count">0</span> filter<span id="filter-count-plural">s</span> selected
+                </p>
+                <button onclick="clearAllFilters()" class="font-semibold text-sm text-[#F13D30] hover:underline">
                     Clear all
                 </button>
             </div>
@@ -356,41 +409,21 @@
                 <div>
                     <h3 class="text-sm font-semibold text-[#111827] mb-3">Status</h3>
                     <div class="grid grid-cols-2 gap-2">
-                        <label class="filter-option flex items-center gap-2 px-3 py-2 border border-[#D1D5DB] rounded-lg cursor-pointer hover:bg-[#F9FAFB] transition-colors">
-                            <input type="checkbox" class="filter-checkbox hidden" data-category="status" value="planned">
-                            <div class="filter-checkbox-display w-5 h-5 border-2 border-[#111827] rounded flex items-center justify-center flex-shrink-0">
-                                <svg class="hidden check-icon w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                </svg>
-                            </div>
-                            <span class="text-sm text-[#374151]">Planned</span>
+                        <label class="flex items-center gap-2 px-3 py-2 border border-[#F0F1F2] rounded-lg hover:bg-[#F9FAFB] cursor-pointer transition-colors">
+                            <input type="checkbox" class="filter-checkbox w-4 h-4 text-[#F13D30] border-[#B5BCC4] rounded focus:ring-[#F13D30] focus:ring-2" data-category="status" value="planned">
+                            <span class="font-normal text-sm text-[#22262A]">Planned</span>
                         </label>
-                        <label class="filter-option flex items-center gap-2 px-3 py-2 border border-[#D1D5DB] rounded-lg cursor-pointer hover:bg-[#F9FAFB] transition-colors">
-                            <input type="checkbox" class="filter-checkbox hidden" data-category="status" value="in_production">
-                            <div class="filter-checkbox-display w-5 h-5 border-2 border-[#111827] rounded flex items-center justify-center flex-shrink-0">
-                                <svg class="hidden check-icon w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                </svg>
-                            </div>
-                            <span class="text-sm text-[#374151]">In production</span>
+                        <label class="flex items-center gap-2 px-3 py-2 border border-[#F0F1F2] rounded-lg hover:bg-[#F9FAFB] cursor-pointer transition-colors">
+                            <input type="checkbox" class="filter-checkbox w-4 h-4 text-[#F13D30] border-[#B5BCC4] rounded focus:ring-[#F13D30] focus:ring-2" data-category="status" value="in_production">
+                            <span class="font-normal text-sm text-[#22262A]">In production</span>
                         </label>
-                        <label class="filter-option flex items-center gap-2 px-3 py-2 border border-[#D1D5DB] rounded-lg cursor-pointer hover:bg-[#F9FAFB] transition-colors">
-                            <input type="checkbox" class="filter-checkbox hidden" data-category="status" value="testing">
-                            <div class="filter-checkbox-display w-5 h-5 border-2 border-[#111827] rounded flex items-center justify-center flex-shrink-0">
-                                <svg class="hidden check-icon w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                </svg>
-                            </div>
-                            <span class="text-sm text-[#374151]">Testing</span>
+                        <label class="flex items-center gap-2 px-3 py-2 border border-[#F0F1F2] rounded-lg hover:bg-[#F9FAFB] cursor-pointer transition-colors">
+                            <input type="checkbox" class="filter-checkbox w-4 h-4 text-[#F13D30] border-[#B5BCC4] rounded focus:ring-[#F13D30] focus:ring-2" data-category="status" value="testing">
+                            <span class="font-normal text-sm text-[#22262A]">Testing</span>
                         </label>
-                        <label class="filter-option flex items-center gap-2 px-3 py-2 border border-[#D1D5DB] rounded-lg cursor-pointer hover:bg-[#F9FAFB] transition-colors">
-                            <input type="checkbox" class="filter-checkbox hidden" data-category="status" value="retired">
-                            <div class="filter-checkbox-display w-5 h-5 border-2 border-[#111827] rounded flex items-center justify-center flex-shrink-0">
-                                <svg class="hidden check-icon w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                </svg>
-                            </div>
-                            <span class="text-sm text-[#374151]">Retired</span>
+                        <label class="flex items-center gap-2 px-3 py-2 border border-[#F0F1F2] rounded-lg hover:bg-[#F9FAFB] cursor-pointer transition-colors">
+                            <input type="checkbox" class="filter-checkbox w-4 h-4 text-[#F13D30] border-[#B5BCC4] rounded focus:ring-[#F13D30] focus:ring-2" data-category="status" value="retired">
+                            <span class="font-normal text-sm text-[#22262A]">Retired</span>
                         </label>
                     </div>
                 </div>
@@ -399,41 +432,21 @@
                 <div>
                     <h3 class="text-sm font-semibold text-[#111827] mb-3">Role</h3>
                     <div class="grid grid-cols-2 gap-2">
-                        <label class="filter-option flex items-center gap-2 px-3 py-2 border border-[#D1D5DB] rounded-lg cursor-pointer hover:bg-[#F9FAFB] transition-colors">
-                            <input type="checkbox" class="filter-checkbox hidden" data-category="role" value="provider">
-                            <div class="filter-checkbox-display w-5 h-5 border-2 border-[#111827] rounded flex items-center justify-center flex-shrink-0">
-                                <svg class="hidden check-icon w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                </svg>
-                            </div>
-                            <span class="text-sm text-[#374151]">Provider</span>
+                        <label class="flex items-center gap-2 px-3 py-2 border border-[#F0F1F2] rounded-lg hover:bg-[#F9FAFB] cursor-pointer transition-colors">
+                            <input type="checkbox" class="filter-checkbox w-4 h-4 text-[#F13D30] border-[#B5BCC4] rounded focus:ring-[#F13D30] focus:ring-2" data-category="role" value="provider">
+                            <span class="font-normal text-sm text-[#22262A]">Provider</span>
                         </label>
-                        <label class="filter-option flex items-center gap-2 px-3 py-2 border border-[#D1D5DB] rounded-lg cursor-pointer hover:bg-[#F9FAFB] transition-colors">
-                            <input type="checkbox" class="filter-checkbox hidden" data-category="role" value="distributor">
-                            <div class="filter-checkbox-display w-5 h-5 border-2 border-[#111827] rounded flex items-center justify-center flex-shrink-0">
-                                <svg class="hidden check-icon w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                </svg>
-                            </div>
-                            <span class="text-sm text-[#374151]">Distributor</span>
+                        <label class="flex items-center gap-2 px-3 py-2 border border-[#F0F1F2] rounded-lg hover:bg-[#F9FAFB] cursor-pointer transition-colors">
+                            <input type="checkbox" class="filter-checkbox w-4 h-4 text-[#F13D30] border-[#B5BCC4] rounded focus:ring-[#F13D30] focus:ring-2" data-category="role" value="distributor">
+                            <span class="font-normal text-sm text-[#22262A]">Distributor</span>
                         </label>
-                        <label class="filter-option flex items-center gap-2 px-3 py-2 border border-[#D1D5DB] rounded-lg cursor-pointer hover:bg-[#F9FAFB] transition-colors">
-                            <input type="checkbox" class="filter-checkbox hidden" data-category="role" value="deployer">
-                            <div class="filter-checkbox-display w-5 h-5 border-2 border-[#111827] rounded flex items-center justify-center flex-shrink-0">
-                                <svg class="hidden check-icon w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                </svg>
-                            </div>
-                            <span class="text-sm text-[#374151]">Deployer</span>
+                        <label class="flex items-center gap-2 px-3 py-2 border border-[#F0F1F2] rounded-lg hover:bg-[#F9FAFB] cursor-pointer transition-colors">
+                            <input type="checkbox" class="filter-checkbox w-4 h-4 text-[#F13D30] border-[#B5BCC4] rounded focus:ring-[#F13D30] focus:ring-2" data-category="role" value="deployer">
+                            <span class="font-normal text-sm text-[#22262A]">Deployer</span>
                         </label>
-                        <label class="filter-option flex items-center gap-2 px-3 py-2 border border-[#D1D5DB] rounded-lg cursor-pointer hover:bg-[#F9FAFB] transition-colors">
-                            <input type="checkbox" class="filter-checkbox hidden" data-category="role" value="importer">
-                            <div class="filter-checkbox-display w-5 h-5 border-2 border-[#111827] rounded flex items-center justify-center flex-shrink-0">
-                                <svg class="hidden check-icon w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                </svg>
-                            </div>
-                            <span class="text-sm text-[#374151]">Importer</span>
+                        <label class="flex items-center gap-2 px-3 py-2 border border-[#F0F1F2] rounded-lg hover:bg-[#F9FAFB] cursor-pointer transition-colors">
+                            <input type="checkbox" class="filter-checkbox w-4 h-4 text-[#F13D30] border-[#B5BCC4] rounded focus:ring-[#F13D30] focus:ring-2" data-category="role" value="importer">
+                            <span class="font-normal text-sm text-[#22262A]">Importer</span>
                         </label>
                     </div>
                 </div>
@@ -442,59 +455,29 @@
                 <div>
                     <h3 class="text-sm font-semibold text-[#111827] mb-3">Risk Classification</h3>
                     <div class="grid grid-cols-2 gap-2">
-                        <label class="filter-option flex items-center gap-2 px-3 py-2 border border-[#D1D5DB] rounded-lg cursor-pointer hover:bg-[#F9FAFB] transition-colors">
-                            <input type="checkbox" class="filter-checkbox hidden" data-category="risk" value="prohibited">
-                            <div class="filter-checkbox-display w-5 h-5 border-2 border-[#111827] rounded flex items-center justify-center flex-shrink-0">
-                                <svg class="hidden check-icon w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                </svg>
-                            </div>
-                            <span class="text-sm text-[#374151]">Prohibited</span>
+                        <label class="flex items-center gap-2 px-3 py-2 border border-[#F0F1F2] rounded-lg hover:bg-[#F9FAFB] cursor-pointer transition-colors">
+                            <input type="checkbox" class="filter-checkbox w-4 h-4 text-[#F13D30] border-[#B5BCC4] rounded focus:ring-[#F13D30] focus:ring-2" data-category="risk" value="prohibited">
+                            <span class="font-normal text-sm text-[#22262A]">Prohibited</span>
                         </label>
-                        <label class="filter-option flex items-center gap-2 px-3 py-2 border border-[#D1D5DB] rounded-lg cursor-pointer hover:bg-[#F9FAFB] transition-colors">
-                            <input type="checkbox" class="filter-checkbox hidden" data-category="risk" value="limited_transparency">
-                            <div class="filter-checkbox-display w-5 h-5 border-2 border-[#111827] rounded flex items-center justify-center flex-shrink-0">
-                                <svg class="hidden check-icon w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                </svg>
-                            </div>
-                            <span class="text-sm text-[#374151]">Limited transparency</span>
+                        <label class="flex items-center gap-2 px-3 py-2 border border-[#F0F1F2] rounded-lg hover:bg-[#F9FAFB] cursor-pointer transition-colors">
+                            <input type="checkbox" class="filter-checkbox w-4 h-4 text-[#F13D30] border-[#B5BCC4] rounded focus:ring-[#F13D30] focus:ring-2" data-category="risk" value="limited_transparency">
+                            <span class="font-normal text-sm text-[#22262A]">Limited transparency</span>
                         </label>
-                        <label class="filter-option flex items-center gap-2 px-3 py-2 border border-[#D1D5DB] rounded-lg cursor-pointer hover:bg-[#F9FAFB] transition-colors">
-                            <input type="checkbox" class="filter-checkbox hidden" data-category="risk" value="not_assessed">
-                            <div class="filter-checkbox-display w-5 h-5 border-2 border-[#111827] rounded flex items-center justify-center flex-shrink-0">
-                                <svg class="hidden check-icon w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                </svg>
-                            </div>
-                            <span class="text-sm text-[#374151]">Not assessed</span>
+                        <label class="flex items-center gap-2 px-3 py-2 border border-[#F0F1F2] rounded-lg hover:bg-[#F9FAFB] cursor-pointer transition-colors">
+                            <input type="checkbox" class="filter-checkbox w-4 h-4 text-[#F13D30] border-[#B5BCC4] rounded focus:ring-[#F13D30] focus:ring-2" data-category="risk" value="not_assessed">
+                            <span class="font-normal text-sm text-[#22262A]">Not assessed</span>
                         </label>
-                        <label class="filter-option flex items-center gap-2 px-3 py-2 border border-[#D1D5DB] rounded-lg cursor-pointer hover:bg-[#F9FAFB] transition-colors">
-                            <input type="checkbox" class="filter-checkbox hidden" data-category="risk" value="high_risk">
-                            <div class="filter-checkbox-display w-5 h-5 border-2 border-[#111827] rounded flex items-center justify-center flex-shrink-0">
-                                <svg class="hidden check-icon w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                </svg>
-                            </div>
-                            <span class="text-sm text-[#374151]">High-risk</span>
+                        <label class="flex items-center gap-2 px-3 py-2 border border-[#F0F1F2] rounded-lg hover:bg-[#F9FAFB] cursor-pointer transition-colors">
+                            <input type="checkbox" class="filter-checkbox w-4 h-4 text-[#F13D30] border-[#B5BCC4] rounded focus:ring-[#F13D30] focus:ring-2" data-category="risk" value="high_risk">
+                            <span class="font-normal text-sm text-[#22262A]">High-risk</span>
                         </label>
-                        <label class="filter-option flex items-center gap-2 px-3 py-2 border border-[#D1D5DB] rounded-lg cursor-pointer hover:bg-[#F9FAFB] transition-colors">
-                            <input type="checkbox" class="filter-checkbox hidden" data-category="risk" value="minimal">
-                            <div class="filter-checkbox-display w-5 h-5 border-2 border-[#111827] rounded flex items-center justify-center flex-shrink-0">
-                                <svg class="hidden check-icon w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                </svg>
-                            </div>
-                            <span class="text-sm text-[#374151]">Minimal</span>
+                        <label class="flex items-center gap-2 px-3 py-2 border border-[#F0F1F2] rounded-lg hover:bg-[#F9FAFB] cursor-pointer transition-colors">
+                            <input type="checkbox" class="filter-checkbox w-4 h-4 text-[#F13D30] border-[#B5BCC4] rounded focus:ring-[#F13D30] focus:ring-2" data-category="risk" value="minimal">
+                            <span class="font-normal text-sm text-[#22262A]">Minimal</span>
                         </label>
-                        <label class="filter-option flex items-center gap-2 px-3 py-2 border border-[#D1D5DB] rounded-lg cursor-pointer hover:bg-[#F9FAFB] transition-colors">
-                            <input type="checkbox" class="filter-checkbox hidden" data-category="risk" value="not_in_scope">
-                            <div class="filter-checkbox-display w-5 h-5 border-2 border-[#111827] rounded flex items-center justify-center flex-shrink-0">
-                                <svg class="hidden check-icon w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                </svg>
-                            </div>
-                            <span class="text-sm text-[#374151]">Not in scope</span>
+                        <label class="flex items-center gap-2 px-3 py-2 border border-[#F0F1F2] rounded-lg hover:bg-[#F9FAFB] cursor-pointer transition-colors">
+                            <input type="checkbox" class="filter-checkbox w-4 h-4 text-[#F13D30] border-[#B5BCC4] rounded focus:ring-[#F13D30] focus:ring-2" data-category="risk" value="not_in_scope">
+                            <span class="font-normal text-sm text-[#22262A]">Not in scope</span>
                         </label>
                     </div>
                 </div>
@@ -503,50 +486,25 @@
                 <div>
                     <h3 class="text-sm font-semibold text-[#111827] mb-3">Compliance Status</h3>
                     <div class="grid grid-cols-2 gap-2">
-                        <label class="filter-option flex items-center gap-2 px-3 py-2 border border-[#D1D5DB] rounded-lg cursor-pointer hover:bg-[#F9FAFB] transition-colors">
-                            <input type="checkbox" class="filter-checkbox hidden" data-category="compliance" value="not_started">
-                            <div class="filter-checkbox-display w-5 h-5 border-2 border-[#111827] rounded flex items-center justify-center flex-shrink-0">
-                                <svg class="hidden check-icon w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                </svg>
-                            </div>
-                            <span class="text-sm text-[#374151]">Not started</span>
+                        <label class="flex items-center gap-2 px-3 py-2 border border-[#F0F1F2] rounded-lg hover:bg-[#F9FAFB] cursor-pointer transition-colors">
+                            <input type="checkbox" class="filter-checkbox w-4 h-4 text-[#F13D30] border-[#B5BCC4] rounded focus:ring-[#F13D30] focus:ring-2" data-category="compliance" value="not_started">
+                            <span class="font-normal text-sm text-[#22262A]">Not started</span>
                         </label>
-                        <label class="filter-option flex items-center gap-2 px-3 py-2 border border-[#D1D5DB] rounded-lg cursor-pointer hover:bg-[#F9FAFB] transition-colors">
-                            <input type="checkbox" class="filter-checkbox hidden" data-category="compliance" value="compliant">
-                            <div class="filter-checkbox-display w-5 h-5 border-2 border-[#111827] rounded flex items-center justify-center flex-shrink-0">
-                                <svg class="hidden check-icon w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                </svg>
-                            </div>
-                            <span class="text-sm text-[#374151]">Compliant</span>
+                        <label class="flex items-center gap-2 px-3 py-2 border border-[#F0F1F2] rounded-lg hover:bg-[#F9FAFB] cursor-pointer transition-colors">
+                            <input type="checkbox" class="filter-checkbox w-4 h-4 text-[#F13D30] border-[#B5BCC4] rounded focus:ring-[#F13D30] focus:ring-2" data-category="compliance" value="compliant">
+                            <span class="font-normal text-sm text-[#22262A]">Compliant</span>
                         </label>
-                        <label class="filter-option flex items-center gap-2 px-3 py-2 border border-[#D1D5DB] rounded-lg cursor-pointer hover:bg-[#F9FAFB] transition-colors">
-                            <input type="checkbox" class="filter-checkbox hidden" data-category="compliance" value="not_in_scope">
-                            <div class="filter-checkbox-display w-5 h-5 border-2 border-[#111827] rounded flex items-center justify-center flex-shrink-0">
-                                <svg class="hidden check-icon w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                </svg>
-                            </div>
-                            <span class="text-sm text-[#374151]">Not in scope</span>
+                        <label class="flex items-center gap-2 px-3 py-2 border border-[#F0F1F2] rounded-lg hover:bg-[#F9FAFB] cursor-pointer transition-colors">
+                            <input type="checkbox" class="filter-checkbox w-4 h-4 text-[#F13D30] border-[#B5BCC4] rounded focus:ring-[#F13D30] focus:ring-2" data-category="compliance" value="not_in_scope">
+                            <span class="font-normal text-sm text-[#22262A]">Not in scope</span>
                         </label>
-                        <label class="filter-option flex items-center gap-2 px-3 py-2 border border-[#D1D5DB] rounded-lg cursor-pointer hover:bg-[#F9FAFB] transition-colors">
-                            <input type="checkbox" class="filter-checkbox hidden" data-category="compliance" value="in_progress">
-                            <div class="filter-checkbox-display w-5 h-5 border-2 border-[#111827] rounded flex items-center justify-center flex-shrink-0">
-                                <svg class="hidden check-icon w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                </svg>
-                            </div>
-                            <span class="text-sm text-[#374151]">In progress</span>
+                        <label class="flex items-center gap-2 px-3 py-2 border border-[#F0F1F2] rounded-lg hover:bg-[#F9FAFB] cursor-pointer transition-colors">
+                            <input type="checkbox" class="filter-checkbox w-4 h-4 text-[#F13D30] border-[#B5BCC4] rounded focus:ring-[#F13D30] focus:ring-2" data-category="compliance" value="in_progress">
+                            <span class="font-normal text-sm text-[#22262A]">In progress</span>
                         </label>
-                        <label class="filter-option flex items-center gap-2 px-3 py-2 border border-[#D1D5DB] rounded-lg cursor-pointer hover:bg-[#F9FAFB] transition-colors">
-                            <input type="checkbox" class="filter-checkbox hidden" data-category="compliance" value="non_compliant">
-                            <div class="filter-checkbox-display w-5 h-5 border-2 border-[#111827] rounded flex items-center justify-center flex-shrink-0">
-                                <svg class="hidden check-icon w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                </svg>
-                            </div>
-                            <span class="text-sm text-[#374151]">Non-compliant</span>
+                        <label class="flex items-center gap-2 px-3 py-2 border border-[#F0F1F2] rounded-lg hover:bg-[#F9FAFB] cursor-pointer transition-colors">
+                            <input type="checkbox" class="filter-checkbox w-4 h-4 text-[#F13D30] border-[#B5BCC4] rounded focus:ring-[#F13D30] focus:ring-2" data-category="compliance" value="non_compliant">
+                            <span class="font-normal text-sm text-[#22262A]">Non-compliant</span>
                         </label>
                     </div>
                 </div>
@@ -555,53 +513,33 @@
                 <div>
                     <h3 class="text-sm font-semibold text-[#111827] mb-3">Provider Type</h3>
                     <div class="grid grid-cols-2 gap-2">
-                        <label class="filter-option flex items-center gap-2 px-3 py-2 border border-[#D1D5DB] rounded-lg cursor-pointer hover:bg-[#F9FAFB] transition-colors">
-                            <input type="checkbox" class="filter-checkbox hidden" data-category="provider" value="in_house">
-                            <div class="filter-checkbox-display w-5 h-5 border-2 border-[#111827] rounded flex items-center justify-center flex-shrink-0">
-                                <svg class="hidden check-icon w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                </svg>
-                            </div>
-                            <span class="text-sm text-[#374151]">In-house</span>
+                        <label class="flex items-center gap-2 px-3 py-2 border border-[#F0F1F2] rounded-lg hover:bg-[#F9FAFB] cursor-pointer transition-colors">
+                            <input type="checkbox" class="filter-checkbox w-4 h-4 text-[#F13D30] border-[#B5BCC4] rounded focus:ring-[#F13D30] focus:ring-2" data-category="provider" value="in_house">
+                            <span class="font-normal text-sm text-[#22262A]">In-house</span>
                         </label>
-                        <label class="filter-option flex items-center gap-2 px-3 py-2 border border-[#D1D5DB] rounded-lg cursor-pointer hover:bg-[#F9FAFB] transition-colors">
-                            <input type="checkbox" class="filter-checkbox hidden" data-category="provider" value="mixed">
-                            <div class="filter-checkbox-display w-5 h-5 border-2 border-[#111827] rounded flex items-center justify-center flex-shrink-0">
-                                <svg class="hidden check-icon w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                </svg>
-                            </div>
-                            <span class="text-sm text-[#374151]">Mixed</span>
+                        <label class="flex items-center gap-2 px-3 py-2 border border-[#F0F1F2] rounded-lg hover:bg-[#F9FAFB] cursor-pointer transition-colors">
+                            <input type="checkbox" class="filter-checkbox w-4 h-4 text-[#F13D30] border-[#B5BCC4] rounded focus:ring-[#F13D30] focus:ring-2" data-category="provider" value="mixed">
+                            <span class="font-normal text-sm text-[#22262A]">Mixed</span>
                         </label>
-                        <label class="filter-option flex items-center gap-2 px-3 py-2 border border-[#D1D5DB] rounded-lg cursor-pointer hover:bg-[#F9FAFB] transition-colors">
-                            <input type="checkbox" class="filter-checkbox hidden" data-category="provider" value="external">
-                            <div class="filter-checkbox-display w-5 h-5 border-2 border-[#111827] rounded flex items-center justify-center flex-shrink-0">
-                                <svg class="hidden check-icon w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                </svg>
-                            </div>
-                            <span class="text-sm text-[#374151]">External</span>
+                        <label class="flex items-center gap-2 px-3 py-2 border border-[#F0F1F2] rounded-lg hover:bg-[#F9FAFB] cursor-pointer transition-colors">
+                            <input type="checkbox" class="filter-checkbox w-4 h-4 text-[#F13D30] border-[#B5BCC4] rounded focus:ring-[#F13D30] focus:ring-2" data-category="provider" value="external">
+                            <span class="font-normal text-sm text-[#22262A]">External</span>
                         </label>
-                        <label class="filter-option flex items-center gap-2 px-3 py-2 border border-[#D1D5DB] rounded-lg cursor-pointer hover:bg-[#F9FAFB] transition-colors">
-                            <input type="checkbox" class="filter-checkbox hidden" data-category="provider" value="unknown">
-                            <div class="filter-checkbox-display w-5 h-5 border-2 border-[#111827] rounded flex items-center justify-center flex-shrink-0">
-                                <svg class="hidden check-icon w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                </svg>
-                            </div>
-                            <span class="text-sm text-[#374151]">Unknown</span>
+                        <label class="flex items-center gap-2 px-3 py-2 border border-[#F0F1F2] rounded-lg hover:bg-[#F9FAFB] cursor-pointer transition-colors">
+                            <input type="checkbox" class="filter-checkbox w-4 h-4 text-[#F13D30] border-[#B5BCC4] rounded focus:ring-[#F13D30] focus:ring-2" data-category="provider" value="unknown">
+                            <span class="font-normal text-sm text-[#22262A]">Unknown</span>
                         </label>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Modal Footer -->
-        <div class="flex items-center justify-end gap-3 p-6 border-t border-[#E5E7EB]">
-            <button onclick="closeFilterModal()" class="px-4 py-2 border border-[#D1D5DB] bg-white text-[#374151] text-sm font-medium rounded-lg hover:bg-[#F9FAFB] transition-colors">
+        <!-- Actions -->
+        <div class="flex gap-3 pt-4 border-t border-[#F0F1F2]">
+            <button onclick="closeFilterModal()" class="flex-1 px-4 py-2.5 bg-white border border-[#B5BCC4] text-[#464E58] rounded-lg font-semibold text-sm hover:bg-[#F0F1F2] transition-colors">
                 Cancel
             </button>
-            <button onclick="applyFilters()" class="px-4 py-2 bg-[#F13D30] text-white text-sm font-medium rounded-lg hover:bg-[#d63529] transition-colors">
+            <button onclick="applyFilters()" class="flex-1 px-4 py-2.5 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A] transition-colors">
                 Apply Filters
             </button>
         </div>
@@ -628,12 +566,12 @@
             <div>
                 <h3 class="text-sm font-semibold text-[#111827] mb-3">Sort by</h3>
                 <div class="space-y-2">
-                    <label class="sort-option flex items-center gap-3 px-3 py-2.5 border border-[#D1D5DB] rounded-lg cursor-pointer hover:bg-[#F9FAFB] transition-colors">
+                    <label class="sort-option flex items-center gap-3 px-4 py-3 border border-[#F0F1F2] rounded-lg cursor-pointer hover:bg-[#F9FAFB] transition-colors">
                         <input type="radio" name="sort-by" value="name" class="sort-radio hidden">
-                        <div class="sort-radio-display w-5 h-5 border-2 border-[#111827] rounded-full flex items-center justify-center flex-shrink-0">
-                            <div class="hidden radio-dot w-2.5 h-2.5 bg-[#3B82F6] rounded-full"></div>
+                        <div class="sort-radio-display w-4 h-4 border-2 border-[#B5BCC4] rounded-full flex items-center justify-center flex-shrink-0">
+                            <div class="hidden radio-dot w-2.5 h-2.5 bg-[#F13D30] rounded-full"></div>
                         </div>
-                        <span class="text-sm text-[#374151]">AI System Name</span>
+                        <span class="font-normal text-sm text-[#22262A]">AI System Name</span>
                     </label>
                     <label class="sort-option flex items-center gap-3 px-3 py-2.5 border border-[#D1D5DB] rounded-lg cursor-pointer hover:bg-[#F9FAFB] transition-colors">
                         <input type="radio" name="sort-by" value="owner" class="sort-radio hidden">
@@ -707,19 +645,23 @@
             </div>
 
             <!-- Preview -->
-            <div class="pt-4 border-t border-[#E5E7EB]">
-                <p class="text-sm text-[#6B7280]">
-                    Preview: Sorting by <span id="preview-sort-by" class="font-semibold text-[#111827]">Last Updated</span> in <span id="preview-order" class="font-semibold text-[#111827]">descending</span> order.
+            <div class="bg-[#F9FAFB] border border-[#F0F1F2] rounded-lg p-4">
+                <p class="font-normal text-sm text-[#565F6C]">
+                    <span class="font-semibold text-[#22262A]">Preview:</span> Sorting by{' '}
+                    <span class="font-semibold text-[#22262A]" id="preview-sort-by">Last Updated</span>
+                    {' '}in{' '}
+                    <span class="font-semibold text-[#22262A]" id="preview-order">descending</span>
+                    {' '}order
                 </p>
             </div>
         </div>
 
-        <!-- Modal Footer -->
-        <div class="flex items-center justify-end gap-3 p-6 border-t border-[#E5E7EB]">
-            <button onclick="closeSortModal()" class="px-4 py-2 border border-[#D1D5DB] bg-white text-[#374151] text-sm font-medium rounded-lg hover:bg-[#F9FAFB] transition-colors">
+        <!-- Actions -->
+        <div class="flex gap-3 pt-4 border-t border-[#F0F1F2]">
+            <button onclick="closeSortModal()" class="flex-1 px-4 py-2.5 bg-white border border-[#B5BCC4] text-[#464E58] rounded-lg font-semibold text-sm hover:bg-[#F0F1F2] transition-colors">
                 Cancel
             </button>
-            <button onclick="applySort()" class="px-4 py-2 bg-[#F13D30] text-white text-sm font-medium rounded-lg hover:bg-[#d63529] transition-colors">
+            <button onclick="applySort()" class="flex-1 px-4 py-2.5 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A] transition-colors">
                 Apply Sort
             </button>
         </div>
@@ -743,149 +685,127 @@
         <!-- Modal Content -->
         <div class="p-6 space-y-6">
             <!-- Tip Box -->
-            <div class="bg-[#EFF6FF] rounded-lg p-4 border border-[#BFDBFE]">
-                <p class="text-sm text-[#1E40AF]">
+            <div class="bg-[#EFF6FF] border border-[#BFDBFE] rounded-lg p-4">
+                <p class="font-normal text-sm text-[#1E40AF]">
                     <span class="font-semibold">Tip:</span> Only AI system name is mandatory to create the record. Other questions are for the assessment, which could be provided later.
                 </p>
             </div>
 
             <!-- Optional Document Upload -->
-            <div>
-                <label class="block text-sm font-medium text-[#374151] mb-2">(Optional) Upload Document for AI Auto-fill</label>
-                <div class="flex items-center gap-3">
-                    <div class="flex-1 relative">
+            <div class="border border-[#F0F1F2] rounded-lg p-4 bg-[#F9FAFB]">
+                <label class="block font-semibold text-sm text-[#22262A] mb-3">
+                    <span class="text-[#565F6C]">(Optional)</span> Upload Document for AI Auto-fill
+                </label>
+                <div class="flex gap-3">
+                    <label class="flex-1 flex items-center gap-3 px-4 py-3 bg-white border border-[#B5BCC4] rounded-lg cursor-pointer hover:bg-[#F0F1F2] transition-colors">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5 text-[#565F6C]">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                        <div class="flex-1 min-w-0">
+                            <span id="add-system-file-name" class="font-normal text-sm text-[#B5BCC4] block truncate">Choose file...</span>
+                        </div>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4 text-[#565F6C]">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
                         <input type="file" id="add-system-file-input" accept=".pdf,.doc,.docx,.txt" class="hidden">
-                        <button onclick="document.getElementById('add-system-file-input').click()" class="w-full flex items-center justify-between px-4 py-2.5 border border-[#D1D5DB] rounded-lg bg-white text-[#6B7280] text-sm hover:bg-[#F9FAFB] transition-colors">
-                            <div class="flex items-center gap-2">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5 text-[#9CA3AF]">
-                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                    <polyline points="14 2 14 8 20 8"></polyline>
-                                </svg>
-                                <span id="add-system-file-name">Choose file...</span>
-                            </div>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5 text-[#9CA3AF]">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                <polyline points="17 8 12 3 7 8"></polyline>
-                                <line x1="12" y1="3" x2="12" y2="15"></line>
-                            </svg>
-                        </button>
-                    </div>
-                    <button onclick="aiReadAndAutoFill()" class="flex items-center gap-2 px-4 py-2.5 bg-[#F13D30] text-white text-sm font-medium rounded-lg hover:bg-[#d63529] transition-colors whitespace-nowrap">
+                    </label>
+                    <button onclick="aiReadAndAutoFill()" disabled id="ai-read-btn" class="px-4 py-3 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
                         <img src="{% static 'governance/img/sparkle.svg' %}" alt="Sparkle" class="w-4 h-4" style="filter: brightness(0) invert(1);">
                         <span>AI Read & Auto-fill</span>
                     </button>
                 </div>
-                <p class="text-xs text-[#6B7280] mt-2">Supported formats: PDF, DOC, DOCX, TXT</p>
+                <p class="font-normal text-xs text-[#565F6C] mt-2">Supported formats: PDF, DOC, DOCX, TXT</p>
             </div>
 
             <!-- Form Fields -->
             <form id="add-system-form" class="space-y-4">
                 <!-- AI System Name (Mandatory) -->
                 <div>
-                    <label class="block text-sm font-medium text-[#374151] mb-1">
+                    <label class="block font-semibold text-sm text-[#22262A] mb-2">
                         AI System Name <span class="text-[#F13D30]">*</span>
                     </label>
                     <input type="text" name="system_name" required placeholder="Enter AI system name" 
-                        class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
+                        class="w-full px-4 py-2.5 border border-[#B5BCC4] rounded-lg font-normal text-sm text-[#22262A] placeholder:text-[#B5BCC4] focus:outline-none focus:border-[#F13D30] focus:ring-2 focus:ring-[#FEEDEC] transition-colors">
                 </div>
 
                 <!-- Owner and Status -->
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-[#374151] mb-1">Owner (Person / Team)</label>
+                        <label class="block font-semibold text-sm text-[#22262A] mb-2">Owner (Person / Team)</label>
                         <input type="text" name="owner" placeholder="Enter owner" 
-                            class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
+                            class="w-full px-4 py-2.5 border border-[#B5BCC4] rounded-lg font-normal text-sm text-[#22262A] placeholder:text-[#B5BCC4] focus:outline-none focus:border-[#F13D30] focus:ring-2 focus:ring-[#FEEDEC] transition-colors">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-[#374151] mb-1">Status</label>
-                        <div class="styled-select-wrapper">
-                            <select name="status" class="styled-select">
-                                <option value="planned" selected>Planned</option>
-                                <option value="in_production">In production</option>
-                                <option value="testing">Testing</option>
-                                <option value="retired">Retired</option>
-                            </select>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5 text-[#9CA3AF] absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                                <polyline points="6 9 12 15 18 9"></polyline>
-                            </svg>
-                        </div>
+                        <label class="block font-semibold text-sm text-[#22262A] mb-2">Status</label>
+                        <select name="status" class="w-full px-4 py-2.5 border border-[#B5BCC4] rounded-lg font-normal text-sm text-[#22262A] focus:outline-none focus:border-[#F13D30] focus:ring-2 focus:ring-[#FEEDEC] transition-colors">
+                            <option value="Planned" selected>Planned</option>
+                            <option value="Testing">Testing</option>
+                            <option value="In production">In production</option>
+                            <option value="Retired">Retired</option>
+                        </select>
                     </div>
                 </div>
 
                 <!-- Role and Provider Type -->
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-[#374151] mb-1">Role</label>
-                        <div class="styled-select-wrapper">
-                            <select name="role" class="styled-select">
-                                <option value="provider">Provider</option>
-                                <option value="distributor">Distributor</option>
-                                <option value="deployer" selected>Deployer</option>
-                                <option value="importer">Importer</option>
-                            </select>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5 text-[#9CA3AF] absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                                <polyline points="6 9 12 15 18 9"></polyline>
-                            </svg>
-                        </div>
+                        <label class="block font-semibold text-sm text-[#22262A] mb-2">Role</label>
+                        <select name="role" class="w-full px-4 py-2.5 border border-[#B5BCC4] rounded-lg font-normal text-sm text-[#22262A] focus:outline-none focus:border-[#F13D30] focus:ring-2 focus:ring-[#FEEDEC] transition-colors">
+                            <option value="Provider">Provider</option>
+                            <option value="Deployer" selected>Deployer</option>
+                            <option value="Distributor">Distributor</option>
+                            <option value="Importer">Importer</option>
+                        </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-[#374151] mb-1">Provider Type</label>
-                        <div class="styled-select-wrapper">
-                            <select name="provider_type" class="styled-select">
-                                <option value="in_house">In-house</option>
-                                <option value="mixed">Mixed</option>
-                                <option value="external">External</option>
-                                <option value="unknown" selected>Unknown</option>
-                            </select>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5 text-[#9CA3AF] absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                                <polyline points="6 9 12 15 18 9"></polyline>
-                            </svg>
-                        </div>
+                        <label class="block font-semibold text-sm text-[#22262A] mb-2">Provider Type</label>
+                        <select name="provider_type" class="w-full px-4 py-2.5 border border-[#B5BCC4] rounded-lg font-normal text-sm text-[#22262A] focus:outline-none focus:border-[#F13D30] focus:ring-2 focus:ring-[#FEEDEC] transition-colors">
+                            <option value="In-house">In-house</option>
+                            <option value="External">External</option>
+                            <option value="Mixed">Mixed</option>
+                            <option value="Unknown" selected>Unknown</option>
+                        </select>
                     </div>
                 </div>
 
                 <!-- Deployment Context and EU / EEA Relevance -->
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-[#374151] mb-1">Deployment Context</label>
-                        <div class="styled-select-wrapper">
-                            <select name="deployment_context" class="styled-select">
-                                <option value="workplace" selected>Workplace</option>
-                                <option value="educational">Educational institution</option>
-                                <option value="healthcare">Healthcare setting</option>
-                                <option value="law_enforcement">Law enforcement / public security</option>
-                                <option value="public_admin">Public administration / government service</option>
-                                <option value="general_public">General public / consumer-facing</option>
-                                <option value="other">Other</option>
-                            </select>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5 text-[#9CA3AF] absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                                <polyline points="6 9 12 15 18 9"></polyline>
-                            </svg>
-                        </div>
+                        <label class="block font-semibold text-sm text-[#22262A] mb-2">Deployment Context</label>
+                        <select name="deployment_context" class="w-full px-4 py-2.5 border border-[#B5BCC4] rounded-lg font-normal text-sm text-[#22262A] focus:outline-none focus:border-[#F13D30] focus:ring-2 focus:ring-[#FEEDEC] transition-colors">
+                            <option value="Workplace" selected>Workplace</option>
+                            <option value="Education">Education</option>
+                            <option value="Healthcare">Healthcare</option>
+                            <option value="Law enforcement">Law enforcement</option>
+                            <option value="Consumer">Consumer</option>
+                            <option value="Other">Other</option>
+                        </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-[#374151] mb-1">EU / EEA Relevance</label>
-                        <div class="styled-select-wrapper">
-                            <select name="eu_eea_relevance" class="styled-select">
-                                <option value="yes">Yes</option>
-                                <option value="no">No</option>
-                                <option value="unknown" selected>Unknown</option>
-                            </select>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5 text-[#9CA3AF] absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                                <polyline points="6 9 12 15 18 9"></polyline>
-                            </svg>
-                        </div>
+                        <label class="block font-semibold text-sm text-[#22262A] mb-2">EU / EEA Relevance</label>
+                        <select name="eu_eea_relevance" class="w-full px-4 py-2.5 border border-[#B5BCC4] rounded-lg font-normal text-sm text-[#22262A] focus:outline-none focus:border-[#F13D30] focus:ring-2 focus:ring-[#FEEDEC] transition-colors">
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                            <option value="Planned">Planned</option>
+                            <option value="Unknown" selected>Unknown</option>
+                        </select>
                     </div>
                 </div>
             </form>
         </div>
 
-        <!-- Modal Footer -->
-        <div class="flex items-center justify-end gap-3 p-6 border-t border-[#E5E7EB]">
-            <button onclick="closeAddSystemModal()" class="px-4 py-2 border border-[#D1D5DB] bg-white text-[#374151] text-sm font-medium rounded-lg hover:bg-[#F9FAFB] transition-colors">
+        <!-- Actions -->
+        <div class="flex gap-3 px-6 py-4 border-t border-[#F0F1F2]">
+            <button onclick="closeAddSystemModal()" class="flex-1 px-4 py-2.5 bg-white border border-[#B5BCC4] text-[#464E58] rounded-lg font-semibold text-sm hover:bg-[#F0F1F2] transition-colors">
                 Cancel
             </button>
-            <button onclick="createAISystem()" class="px-4 py-2 bg-[#F13D30] text-white text-sm font-medium rounded-lg hover:bg-[#d63529] transition-colors">
+            <button onclick="createAISystem()" class="flex-1 px-4 py-2.5 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A] transition-colors">
                 Create
             </button>
         </div>
@@ -935,10 +855,19 @@ function closeImportModal() {
 function resetImportModal() {
     selectedCsvFile = null;
     document.getElementById('csv-file-input').value = '';
+    document.getElementById('csv-drop-content').classList.remove('hidden');
     document.getElementById('csv-file-info').classList.add('hidden');
     document.getElementById('import-btn').disabled = true;
     const dropZone = document.getElementById('csv-drop-zone');
-    dropZone.classList.remove('border-[#F13D30]', 'bg-[#FFF5F4]');
+    if (dropZone) {
+        dropZone.classList.remove('border-[#F13D30]', 'bg-[#FEEDEC]');
+        dropZone.classList.add('border-[#B5BCC4]', 'bg-[#F9FAFB]');
+        const svg = dropZone.querySelector('svg');
+        if (svg) {
+            svg.classList.remove('text-[#F13D30]');
+            svg.classList.add('text-[#B5BCC4]');
+        }
+    }
 }
 
 function downloadTemplate() {
@@ -969,7 +898,7 @@ function handleFileSelect(file) {
     
     // Validate file type
     if (!file.name.toLowerCase().endsWith('.csv')) {
-        alert('Please select a CSV file');
+        alert('Please upload a CSV file');
         return;
     }
     
@@ -981,17 +910,26 @@ function handleFileSelect(file) {
     }
     
     selectedCsvFile = file;
-    document.getElementById('csv-file-name').textContent = file.name;
-    document.getElementById('csv-file-size').textContent = `(${formatFileSize(file.size)})`;
-    document.getElementById('csv-file-info').classList.remove('hidden');
+    const dropZone = document.getElementById('csv-drop-zone');
+    const dropContent = document.getElementById('csv-drop-content');
+    const fileInfo = document.getElementById('csv-file-info');
+    
+    dropContent.classList.add('hidden');
+    fileInfo.classList.remove('hidden');
+    fileInfo.querySelector('p.font-semibold').textContent = file.name;
+    fileInfo.querySelector('p.font-normal').textContent = `${(file.size / 1024).toFixed(2)} KB`;
     document.getElementById('import-btn').disabled = false;
 }
 
 function removeCsvFile() {
     selectedCsvFile = null;
     document.getElementById('csv-file-input').value = '';
+    document.getElementById('csv-drop-content').classList.remove('hidden');
     document.getElementById('csv-file-info').classList.add('hidden');
     document.getElementById('import-btn').disabled = true;
+    const dropZone = document.getElementById('csv-drop-zone');
+    dropZone.classList.remove('border-[#F13D30]', 'bg-[#FEEDEC]');
+    dropZone.classList.add('border-[#B5BCC4]', 'bg-[#F9FAFB]');
 }
 
 function importCsvFile() {
@@ -1035,29 +973,45 @@ document.getElementById('csv-file-input')?.addEventListener('change', function(e
 });
 
 // Drag and drop handlers
-const csvDropZone = document.getElementById('csv-drop-zone');
-if (csvDropZone) {
-    ['dragenter', 'dragover'].forEach(evt => {
-        csvDropZone.addEventListener(evt, (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            csvDropZone.classList.add('border-[#F13D30]', 'bg-[#FFF5F4]');
+document.addEventListener('DOMContentLoaded', function() {
+    const csvDropZone = document.getElementById('csv-drop-zone');
+    if (csvDropZone) {
+        ['dragenter', 'dragover'].forEach(evt => {
+            csvDropZone.addEventListener(evt, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                csvDropZone.classList.remove('border-[#B5BCC4]', 'bg-[#F9FAFB]');
+                csvDropZone.classList.add('border-[#F13D30]', 'bg-[#FEEDEC]');
+                const svg = csvDropZone.querySelector('svg');
+                if (svg) {
+                    svg.classList.remove('text-[#B5BCC4]');
+                    svg.classList.add('text-[#F13D30]');
+                }
+            });
         });
-    });
 
-    ['dragleave', 'drop'].forEach(evt => {
-        csvDropZone.addEventListener(evt, (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            csvDropZone.classList.remove('border-[#F13D30]', 'bg-[#FFF5F4]');
+        ['dragleave', 'drop'].forEach(evt => {
+            csvDropZone.addEventListener(evt, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (!selectedCsvFile) {
+                    csvDropZone.classList.remove('border-[#F13D30]', 'bg-[#FEEDEC]');
+                    csvDropZone.classList.add('border-[#B5BCC4]', 'bg-[#F9FAFB]');
+                    const svg = csvDropZone.querySelector('svg');
+                    if (svg) {
+                        svg.classList.remove('text-[#F13D30]');
+                        svg.classList.add('text-[#B5BCC4]');
+                    }
+                }
+            });
         });
-    });
 
-    csvDropZone.addEventListener('drop', (e) => {
-        const file = e.dataTransfer?.files[0];
-        handleFileSelect(file);
-    });
-}
+        csvDropZone.addEventListener('drop', (e) => {
+            const file = e.dataTransfer?.files[0];
+            handleFileSelect(file);
+        });
+    }
+});
 
 // Close modal when clicking outside
 document.getElementById('import-modal')?.addEventListener('click', function(e) {
@@ -1156,7 +1110,10 @@ function closeFilterModal() {
 
 function updateFilterCount() {
     const total = Object.values(activeFilters).flat().length;
-    document.getElementById('filter-count').textContent = total;
+    const countEl = document.getElementById('filter-count');
+    const pluralEl = document.getElementById('filter-count-plural');
+    if (countEl) countEl.textContent = total;
+    if (pluralEl) pluralEl.textContent = total !== 1 ? 's' : '';
 }
 
 function toggleFilter(checkbox) {
@@ -1169,20 +1126,6 @@ function toggleFilter(checkbox) {
         }
     } else {
         activeFilters[category] = activeFilters[category].filter(v => v !== value);
-    }
-    
-    // Update visual state
-    const display = checkbox.nextElementSibling;
-    const checkIcon = display.querySelector('.check-icon');
-    
-    if (checkbox.checked) {
-        display.classList.remove('border-[#111827]');
-        display.classList.add('border-[#F13D30]', 'bg-[#F13D30]');
-        checkIcon.classList.remove('hidden');
-    } else {
-        display.classList.remove('border-[#F13D30]', 'bg-[#F13D30]');
-        display.classList.add('border-[#111827]');
-        checkIcon.classList.add('hidden');
     }
     
     updateFilterCount();
@@ -1201,11 +1144,6 @@ function clearAllFilters() {
     // Uncheck all checkboxes
     document.querySelectorAll('.filter-checkbox').forEach(checkbox => {
         checkbox.checked = false;
-        const display = checkbox.nextElementSibling;
-        const checkIcon = display.querySelector('.check-icon');
-        display.classList.remove('border-[#F13D30]', 'bg-[#F13D30]');
-        display.classList.add('border-[#111827]');
-        checkIcon.classList.add('hidden');
     });
     
     updateFilterCount();
@@ -1307,8 +1245,15 @@ function applyFilters() {
     // Update pagination text
     const paginationText = document.querySelector('.flex.items-center.justify-between p');
     if (paginationText) {
-        paginationText.textContent = `Showing ${visibleCount} AI systems`;
+        paginationText.textContent = `Showing ${visibleCount} AI system${visibleCount !== 1 ? 's' : ''}`;
     }
+    
+    // Reset pagination to page 1 and re-render (based on React code)
+    currentPage = 1;
+    renderTablePage();
+    renderPageNumbers();
+    updatePaginationButtons();
+    updateSelectedCount();
     
     closeFilterModal();
 }
@@ -1364,43 +1309,19 @@ function setSortOrder(order) {
     descBtn.onmouseleave = null;
     
     if (order === 'asc') {
-        // Active button: red background, white text, red border
-        ascBtn.classList.remove('border-[#D1D5DB]', 'bg-white', 'text-[#374151]', 'hover:bg-[#F9FAFB]');
-        ascBtn.classList.add('border-[#F13D30]', 'bg-[#F13D30]', 'text-white');
-        // Add hover listeners for active button
-        ascBtn.onmouseenter = () => {
-            ascBtn.style.color = '#111827';
-            ascBtn.querySelector('svg').style.color = '#111827';
-        };
-        ascBtn.onmouseleave = () => {
-            ascBtn.style.color = '';
-            ascBtn.querySelector('svg').style.color = '';
-        };
-        
-        // Inactive button: white background, grey text, grey border
-        descBtn.classList.remove('border-[#F13D30]', 'bg-[#F13D30]', 'text-white');
-        descBtn.classList.add('border-[#D1D5DB]', 'bg-white', 'text-[#374151]', 'hover:bg-[#F9FAFB]');
-        descBtn.style.color = '';
-        descBtn.querySelector('svg').style.color = '';
+        // Active button: red border, pink background, red text
+        ascBtn.classList.remove('border-[#F0F1F2]', 'bg-white', 'text-[#464E58]', 'hover:bg-[#F9FAFB]');
+        ascBtn.classList.add('border-[#F13D30]', 'bg-[#FEEDEC]', 'text-[#F13D30]');
+        // Inactive button: grey border, white background, grey text
+        descBtn.classList.remove('border-[#F13D30]', 'bg-[#FEEDEC]', 'text-[#F13D30]');
+        descBtn.classList.add('border-[#F0F1F2]', 'bg-white', 'text-[#464E58]', 'hover:bg-[#F9FAFB]');
     } else {
-        // Active button: red background, white text, red border
-        descBtn.classList.remove('border-[#D1D5DB]', 'bg-white', 'text-[#374151]', 'hover:bg-[#F9FAFB]');
-        descBtn.classList.add('border-[#F13D30]', 'bg-[#F13D30]', 'text-white');
-        // Add hover listeners for active button
-        descBtn.onmouseenter = () => {
-            descBtn.style.color = '#111827';
-            descBtn.querySelector('svg').style.color = '#111827';
-        };
-        descBtn.onmouseleave = () => {
-            descBtn.style.color = '';
-            descBtn.querySelector('svg').style.color = '';
-        };
-        
-        // Inactive button: white background, grey text, grey border
-        ascBtn.classList.remove('border-[#F13D30]', 'bg-[#F13D30]', 'text-white');
-        ascBtn.classList.add('border-[#D1D5DB]', 'bg-white', 'text-[#374151]', 'hover:bg-[#F9FAFB]');
-        ascBtn.style.color = '';
-        ascBtn.querySelector('svg').style.color = '';
+        // Active button: red border, pink background, red text
+        descBtn.classList.remove('border-[#F0F1F2]', 'bg-white', 'text-[#464E58]', 'hover:bg-[#F9FAFB]');
+        descBtn.classList.add('border-[#F13D30]', 'bg-[#FEEDEC]', 'text-[#F13D30]');
+        // Inactive button: grey border, white background, grey text
+        ascBtn.classList.remove('border-[#F13D30]', 'bg-[#FEEDEC]', 'text-[#F13D30]');
+        ascBtn.classList.add('border-[#F0F1F2]', 'bg-white', 'text-[#464E58]', 'hover:bg-[#F9FAFB]');
     }
     
     updateSortPreview();
@@ -1438,17 +1359,17 @@ function toggleSortOption(radio) {
         
         if (optionRadio.checked) {
             option.classList.add('sort-option-selected');
-            option.classList.remove('border-[#D1D5DB]');
-            option.classList.add('border-[#F13D30]');
-            radioDisplay.classList.remove('border-[#111827]');
-            radioDisplay.classList.add('border-[#3B82F6]');
+            option.classList.remove('border-[#F0F1F2]', 'hover:bg-[#F9FAFB]');
+            option.classList.add('border-[#F13D30]', 'bg-[#FEEDEC]');
+            radioDisplay.classList.remove('border-[#B5BCC4]');
+            radioDisplay.classList.add('border-[#F13D30]');
             radioDot.classList.remove('hidden');
         } else {
-            option.classList.remove('sort-option-selected');
+            option.classList.remove('sort-option-selected', 'bg-[#FEEDEC]');
             option.classList.remove('border-[#F13D30]');
-            option.classList.add('border-[#D1D5DB]');
-            radioDisplay.classList.remove('border-[#3B82F6]');
-            radioDisplay.classList.add('border-[#111827]');
+            option.classList.add('border-[#F0F1F2]', 'hover:bg-[#F9FAFB]');
+            radioDisplay.classList.remove('border-[#F13D30]');
+            radioDisplay.classList.add('border-[#B5BCC4]');
             radioDot.classList.add('hidden');
         }
     });
@@ -1525,6 +1446,13 @@ function applySort() {
     
     // Re-append sorted rows
     rows.forEach(row => tbody.appendChild(row));
+    
+    // Reset pagination to page 1 and re-render (based on React code)
+    currentPage = 1;
+    renderTablePage();
+    renderPageNumbers();
+    updatePaginationButtons();
+    updateSelectedCount();
     
     closeSortModal();
 }
@@ -1635,10 +1563,18 @@ function createAISystem() {
 // File input change handler for Add System modal
 document.getElementById('add-system-file-input')?.addEventListener('change', function(e) {
     const file = e.target.files[0];
+    const fileNameEl = document.getElementById('add-system-file-name');
+    const aiReadBtn = document.getElementById('ai-read-btn');
     if (file) {
-        document.getElementById('add-system-file-name').textContent = file.name;
+        fileNameEl.textContent = file.name;
+        fileNameEl.classList.remove('text-[#B5BCC4]');
+        fileNameEl.classList.add('text-[#22262A]');
+        if (aiReadBtn) aiReadBtn.disabled = false;
     } else {
-        document.getElementById('add-system-file-name').textContent = 'Choose file...';
+        fileNameEl.textContent = 'Choose file...';
+        fileNameEl.classList.remove('text-[#22262A]');
+        fileNameEl.classList.add('text-[#B5BCC4]');
+        if (aiReadBtn) aiReadBtn.disabled = true;
     }
 });
 
@@ -1671,6 +1607,259 @@ document.getElementById('search-input')?.addEventListener('input', function(e) {
         const text = row.textContent.toLowerCase();
         row.style.display = text.includes(searchTerm) ? '' : 'none';
     });
+    
+    // Reset to page 1 and re-render pagination after search
+    currentPage = 1;
+    renderTablePage();
+    renderPageNumbers();
+    updatePaginationButtons();
+    updateSelectedCount();
+});
+
+// Checkbox Selection Management
+let selectedSystemIds = [];
+
+function updateSelectedCount() {
+    const count = selectedSystemIds.length;
+    const display = document.getElementById('selected-count-display');
+    const countSpan = document.getElementById('selected-count');
+    const deleteBtn = document.getElementById('delete-selected-btn');
+    
+    if (count > 0) {
+        display.classList.remove('hidden');
+        countSpan.textContent = count;
+        deleteBtn.classList.remove('hidden');
+    } else {
+        display.classList.add('hidden');
+        deleteBtn.classList.add('hidden');
+    }
+    
+    // Update select all checkbox - only check current page (based on React code)
+    const selectAll = document.getElementById('select-all-checkbox');
+    const rows = Array.from(document.querySelectorAll('tbody tr:not([style*="display: none"])'));
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const currentPageRows = rows.slice(startIndex, endIndex);
+    const currentPageCheckboxes = currentPageRows
+        .map(row => row.querySelector('.system-checkbox'))
+        .filter(cb => cb !== null);
+    const checkedCount = currentPageCheckboxes.filter(cb => {
+        const systemId = cb.dataset.systemId;
+        return cb.checked && selectedSystemIds.includes(systemId);
+    }).length;
+    
+    if (currentPageCheckboxes.length === 0) {
+        selectAll.checked = false;
+        selectAll.indeterminate = false;
+    } else if (checkedCount === currentPageCheckboxes.length) {
+        selectAll.checked = true;
+        selectAll.indeterminate = false;
+    } else if (checkedCount > 0) {
+        selectAll.checked = false;
+        selectAll.indeterminate = true;
+    } else {
+        selectAll.checked = false;
+        selectAll.indeterminate = false;
+    }
+}
+
+function toggleSelectAll(e) {
+    // Only select/deselect checkboxes on current page (based on React code)
+    const rows = Array.from(document.querySelectorAll('tbody tr:not([style*="display: none"])'));
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const currentPageRows = rows.slice(startIndex, endIndex);
+    
+    currentPageRows.forEach(row => {
+        const checkbox = row.querySelector('.system-checkbox');
+        if (checkbox) {
+            checkbox.checked = e.target.checked;
+            const systemId = checkbox.dataset.systemId;
+            if (e.target.checked) {
+                if (!selectedSystemIds.includes(systemId)) {
+                    selectedSystemIds.push(systemId);
+                }
+            } else {
+                selectedSystemIds = selectedSystemIds.filter(id => id !== systemId);
+            }
+        }
+    });
+    updateSelectedCount();
+}
+
+function toggleSystemSelect(checkbox) {
+    const systemId = checkbox.dataset.systemId;
+    if (checkbox.checked) {
+        if (!selectedSystemIds.includes(systemId)) {
+            selectedSystemIds.push(systemId);
+        }
+    } else {
+        selectedSystemIds = selectedSystemIds.filter(id => id !== systemId);
+    }
+    updateSelectedCount();
+}
+
+function deleteSelectedSystems() {
+    if (selectedSystemIds.length === 0) return;
+    
+    const confirmDelete = confirm(
+        `Are you sure you want to delete ${selectedSystemIds.length} selected system${selectedSystemIds.length > 1 ? 's' : ''}? This action cannot be undone.`
+    );
+    
+    if (confirmDelete) {
+        // TODO: Send DELETE request to backend
+        fetch('/api/ai-inventory/delete/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ system_ids: selectedSystemIds })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(`${selectedSystemIds.length} system${selectedSystemIds.length > 1 ? 's' : ''} deleted successfully!`);
+                location.reload();
+            } else {
+                alert('Error deleting systems: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error deleting systems');
+        });
+    }
+}
+
+// Initialize checkbox handlers
+document.addEventListener('DOMContentLoaded', function() {
+    // Select all checkbox
+    document.getElementById('select-all-checkbox')?.addEventListener('change', toggleSelectAll);
+    
+    // Individual checkboxes
+    document.querySelectorAll('.system-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            toggleSystemSelect(this);
+        });
+    });
+    
+    // Update initial count
+    updateSelectedCount();
+});
+
+// Pagination (based on React code)
+let currentPage = 1;
+const itemsPerPage = 10;
+
+function getTotalPages() {
+    const rows = document.querySelectorAll('tbody tr:not([style*="display: none"])');
+    return Math.ceil(rows.length / itemsPerPage);
+}
+
+function changePage(direction) {
+    const totalPages = getTotalPages();
+    const newPage = currentPage + direction;
+    
+    if (newPage < 1 || newPage > totalPages) {
+        return;
+    }
+    
+    currentPage = newPage;
+    renderTablePage();
+    renderPageNumbers();
+    updatePaginationButtons();
+    updateSelectedCount(); // Update checkbox states after page change
+}
+
+function goToPage(page) {
+    const totalPages = getTotalPages();
+    if (page < 1 || page > totalPages) {
+        return;
+    }
+    
+    currentPage = page;
+    renderTablePage();
+    renderPageNumbers();
+    updatePaginationButtons();
+    updateSelectedCount(); // Update checkbox states after page change
+}
+
+function renderTablePage() {
+    const rows = Array.from(document.querySelectorAll('tbody tr:not([style*="display: none"])'));
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    
+    rows.forEach((row, index) => {
+        if (index >= startIndex && index < endIndex) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+function updatePaginationButtons() {
+    const totalPages = getTotalPages();
+    const prevBtn = document.getElementById('pagination-prev');
+    const nextBtn = document.getElementById('pagination-next');
+    
+    if (prevBtn) {
+        prevBtn.disabled = currentPage === 1;
+    }
+    if (nextBtn) {
+        nextBtn.disabled = currentPage === totalPages;
+    }
+}
+
+function renderPageNumbers() {
+    const totalPages = getTotalPages();
+    const container = document.getElementById('pagination-numbers');
+    if (!container) return;
+    
+    const pages = [];
+    const maxVisible = 7;
+    
+    if (totalPages <= maxVisible) {
+        for (let i = 1; i <= totalPages; i++) {
+            pages.push(i);
+        }
+    } else {
+        if (currentPage <= 3) {
+            pages.push(1, 2, 3, '...', totalPages - 1, totalPages);
+        } else if (currentPage >= totalPages - 2) {
+            pages.push(1, 2, '...', totalPages - 2, totalPages - 1, totalPages);
+        } else {
+            pages.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages);
+        }
+    }
+    
+    container.innerHTML = '';
+    pages.forEach((page, index) => {
+        if (typeof page === 'number') {
+            const button = document.createElement('button');
+            button.className = `px-4 py-2 ${
+                currentPage === page 
+                    ? 'bg-[#F13D30] text-white border border-[#F13D30]' 
+                    : 'bg-white border border-[#B5BCC4] text-[#464E58] hover:bg-[#F0F1F2]'
+            } rounded-lg font-semibold text-sm transition-colors`;
+            button.textContent = page;
+            button.onclick = () => goToPage(page);
+            container.appendChild(button);
+        } else {
+            const span = document.createElement('span');
+            span.className = 'px-2 text-[#B5BCC4] font-semibold text-sm';
+            span.textContent = page;
+            container.appendChild(span);
+        }
+    });
+}
+
+// Initialize pagination on page load
+document.addEventListener('DOMContentLoaded', function() {
+    renderTablePage();
+    renderPageNumbers();
+    updatePaginationButtons();
 });
 </script>
 {% endblock %}

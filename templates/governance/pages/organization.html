@@ -78,7 +78,7 @@
 
             <!-- AI Read & Auto-fill options -->
             <div class="flex gap-3 items-center">
-                <span class="text-sm text-[#6B7280]">Al Read & Auto-fill from:</span>
+                <span class="text-sm text-[#6B7280]">AI Read & Auto-fill from:</span>
                 <button class="ai-read-toggle active px-4 py-2 rounded-lg bg-[#F13D30] text-white font-medium shadow-sm flex items-center gap-2" data-option="all">
                     <img src="{% static 'governance/img/sparkle.svg' %}" alt="Sparkle" class="w-4 h-4" style="filter: brightness(0) invert(1);">
                     <span>All files</span>
@@ -86,6 +86,13 @@
                 <button class="ai-read-toggle px-4 py-2 rounded-lg border border-[#F13D30] text-[#F13D30] font-medium bg-white flex items-center gap-2" data-option="selected">
                     <img src="{% static 'governance/img/sparkle.svg' %}" alt="Sparkle" class="w-4 h-4" style="filter: brightness(0) saturate(100%) invert(32%) sepia(98%) saturate(1500%) hue-rotate(344deg) brightness(98%) contrast(95%);">
                     <span>Selected files</span>
+                </button>
+                <button id="delete-selected-files-btn" onclick="deleteSelectedFiles()" class="hidden px-4 py-2 rounded-lg border border-[#DC180A] text-[#F13D30] font-medium bg-white flex items-center gap-2 hover:bg-[#FEE2E2] transition-colors">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                    <span>Delete selected</span>
                 </button>
             </div>
         </div>
@@ -105,73 +112,70 @@
         <div class="p-6 section-content" id="section2-content">
             <form id="org-profile-form" class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-[#374151] mb-1">Entity Name <span class="text-[#F13D30]">*</span></label>
-                    <input type="text" name="entity_name" placeholder="Enter legal entity Name" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
+                    <label class="block text-sm font-medium text-[#22262A] mb-2">Entity Name <span class="text-[#F13D30] ml-1">*</span></label>
+                    <input type="text" name="entity_name" placeholder="Enter legal entity name" class="w-full px-4 py-2.5 border border-[#B5BCC4] rounded-lg font-normal text-sm text-[#22262A] placeholder:text-[#B5BCC4] focus:outline-none focus:border-[#F13D30] focus:ring-2 focus:ring-[#FEEDEC] transition-colors">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-[#374151] mb-1">Registration Number</label>
-                    <input type="text" name="registration_number" placeholder="Enter registration number" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
+                    <label class="block text-sm font-medium text-[#22262A] mb-2">Registration Number</label>
+                    <input type="text" name="registration_number" placeholder="Enter registration number" class="w-full px-4 py-2.5 border border-[#B5BCC4] rounded-lg font-normal text-sm text-[#22262A] placeholder:text-[#B5BCC4] focus:outline-none focus:border-[#F13D30] focus:ring-2 focus:ring-[#FEEDEC] transition-colors">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-[#374151] mb-1">Headquarter Address</label>
-                    <input type="text" name="headquarter_address" placeholder="Enter full address" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
+                    <label class="block text-sm font-medium text-[#22262A] mb-2">Headquarter Address</label>
+                    <input type="text" name="headquarter_address" placeholder="Enter full address" class="w-full px-4 py-2.5 border border-[#B5BCC4] rounded-lg font-normal text-sm text-[#22262A] placeholder:text-[#B5BCC4] focus:outline-none focus:border-[#F13D30] focus:ring-2 focus:ring-[#FEEDEC] transition-colors">
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-[#374151] mb-1">Country <span class="text-[#F13D30]">*</span></label>
-                        <input type="text" name="country" placeholder="Enter country" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
+                        <label class="block text-sm font-medium text-[#22262A] mb-2">Country <span class="text-[#F13D30] ml-1">*</span></label>
+                        <input type="text" name="country" placeholder="Enter country" class="w-full px-4 py-2.5 border border-[#B5BCC4] rounded-lg font-normal text-sm text-[#22262A] placeholder:text-[#B5BCC4] focus:outline-none focus:border-[#F13D30] focus:ring-2 focus:ring-[#FEEDEC] transition-colors">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-[#374151] mb-1">Postal Code</label>
-                        <input type="text" name="postal_code" placeholder="Enter postal code" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
+                        <label class="block text-sm font-medium text-[#22262A] mb-2">Postal Code</label>
+                        <input type="text" name="postal_code" placeholder="Enter postal code" class="w-full px-4 py-2.5 border border-[#B5BCC4] rounded-lg font-normal text-sm text-[#22262A] placeholder:text-[#B5BCC4] focus:outline-none focus:border-[#F13D30] focus:ring-2 focus:ring-[#FEEDEC] transition-colors">
                     </div>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-[#374151] mb-1">Legal Representative <span class="text-[#F13D30]">*</span></label>
-                    <input type="text" name="legal_representative" placeholder="Enter representative name" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
+                    <label class="block text-sm font-medium text-[#22262A] mb-2">Legal Representative <span class="text-[#F13D30] ml-1">*</span></label>
+                    <input type="text" name="legal_representative" placeholder="Enter representative name" class="w-full px-4 py-2.5 border border-[#B5BCC4] rounded-lg font-normal text-sm text-[#22262A] placeholder:text-[#B5BCC4] focus:outline-none focus:border-[#F13D30] focus:ring-2 focus:ring-[#FEEDEC] transition-colors">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-[#374151] mb-1">Entity Contact Email <span class="text-[#F13D30]">*</span></label>
-                    <input type="email" name="contact_email" placeholder="contact@company.com" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
+                    <label class="block text-sm font-medium text-[#22262A] mb-2">Entity Contact Email <span class="text-[#F13D30] ml-1">*</span></label>
+                    <input type="email" name="contact_email" placeholder="contact@company.com" class="w-full px-4 py-2.5 border border-[#B5BCC4] rounded-lg font-normal text-sm text-[#22262A] placeholder:text-[#B5BCC4] focus:outline-none focus:border-[#F13D30] focus:ring-2 focus:ring-[#FEEDEC] transition-colors">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-[#374151] mb-1">Contact Phone</label>
-                    <input type="tel" name="contact_phone" placeholder="+1 (555) 000-0000" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
+                    <label class="block text-sm font-medium text-[#22262A] mb-2">Contact Phone</label>
+                    <input type="tel" name="contact_phone" placeholder="+1 (555) 000-0000" class="w-full px-4 py-2.5 border border-[#B5BCC4] rounded-lg font-normal text-sm text-[#22262A] placeholder:text-[#B5BCC4] focus:outline-none focus:border-[#F13D30] focus:ring-2 focus:ring-[#FEEDEC] transition-colors">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-[#374151] mb-1">Public authority/body? <span class="text-[#F13D30]">*</span></label>
-                    <div class="styled-select-wrapper">
-                        <select name="public_authority" class="styled-select">
-                            <option value="" selected>Select an option</option>
-                            <option value="yes">Yes</option>
-                            <option value="no">No</option>
-                            <option value="planned">Planned</option>
-                        </select>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5 text-[#9CA3AF] absolute right-3 top-1/2 transform -translate-y-1/2">
-                            <polyline points="6 9 12 15 18 9"></polyline>
-                        </svg>
-                    </div>
+                    <label class="block text-sm font-medium text-[#22262A] mb-2">Public authority/body? <span class="text-[#F13D30] ml-1">*</span></label>
+                    <select name="public_authority" class="w-full px-4 py-2.5 border border-[#B5BCC4] rounded-lg font-normal text-sm text-[#22262A] focus:outline-none focus:border-[#F13D30] focus:ring-2 focus:ring-[#FEEDEC] transition-colors appearance-none bg-white bg-[url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 20 20%27 fill=%27none%27%3e%3cpath d=%27M5 7.5L10 12.5L15 7.5%27 stroke=%27%23565F6C%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3e%3c/svg%3e')] bg-no-repeat bg-[center_right_0.75rem] bg-[length:1.25rem] pr-10">
+                        <option value="">Select an option</option>
+                        <option value="Yes">Yes</option>
+                        <option value="No">No</option>
+                    </select>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-[#374151] mb-1">Internal AI compliance owner? <span class="text-[#F13D30]">*</span></label>
-                    <div class="grid grid-cols-2 gap-4 mt-2">
+                <div class="space-y-3">
+                    <label class="block text-sm font-medium text-[#22262A]">
+                        Internal AI compliance owner?
+                        <span class="text-[#F13D30] ml-1">*</span>
+                    </label>
+                    <div class="grid grid-cols-1 gap-3 pl-4">
                         <div>
-                            <label class="block text-xs text-[#6B7280] mb-1">Name <span class="text-[#F13D30]">*</span></label>
-                            <input type="text" name="compliance_owner_name" placeholder="Enter compliance owner name" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
+                            <label class="block text-sm font-medium text-[#22262A] mb-2">Name <span class="text-[#F13D30] ml-1">*</span></label>
+                            <input type="text" name="compliance_owner_name" placeholder="Enter compliance owner name" class="w-full px-4 py-2.5 border border-[#B5BCC4] rounded-lg font-normal text-sm text-[#22262A] placeholder:text-[#B5BCC4] focus:outline-none focus:border-[#F13D30] focus:ring-2 focus:ring-[#FEEDEC] transition-colors">
                         </div>
                         <div>
-                            <label class="block text-xs text-[#6B7280] mb-1">Email <span class="text-[#F13D30]">*</span></label>
-                            <input type="email" name="compliance_owner_email" placeholder="compliance@company.com" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
+                            <label class="block text-sm font-medium text-[#22262A] mb-2">Email <span class="text-[#F13D30] ml-1">*</span></label>
+                            <input type="email" name="compliance_owner_email" placeholder="compliance@company.com" class="w-full px-4 py-2.5 border border-[#B5BCC4] rounded-lg font-normal text-sm text-[#22262A] placeholder:text-[#B5BCC4] focus:outline-none focus:border-[#F13D30] focus:ring-2 focus:ring-[#FEEDEC] transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-[#22262A] mb-2">Department <span class="text-[#F13D30] ml-1">*</span></label>
+                            <input type="text" name="department" placeholder="Enter department" class="w-full px-4 py-2.5 border border-[#B5BCC4] rounded-lg font-normal text-sm text-[#22262A] placeholder:text-[#B5BCC4] focus:outline-none focus:border-[#F13D30] focus:ring-2 focus:ring-[#FEEDEC] transition-colors">
                         </div>
                     </div>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-[#374151] mb-1">Department <span class="text-[#F13D30]">*</span></label>
-                    <input type="text" name="department" placeholder="Enter department" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
                 </div>
                 <div class="flex justify-end gap-3 pt-4">
-                    <button type="button" class="px-6 py-2 border border-[#F13D30] text-[#F13D30] rounded-lg font-medium hover:bg-[#F13D30] hover:text-white transition-colors">Cancel</button>
-                    <button type="submit" class="px-6 py-2 bg-[#F13D30] text-white rounded-lg font-medium hover:bg-[#d63529] transition-colors">Confirm and Save</button>
+                    <button type="button" class="px-6 py-2 border border-[#B5BCC4] text-[#464E58] rounded-lg font-semibold text-sm hover:bg-[#F0F1F2] transition-colors">Cancel</button>
+                    <button type="submit" class="px-6 py-2 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A] transition-colors shadow-sm">Confirm and Save</button>
                 </div>
             </form>
         </div>
@@ -191,80 +195,74 @@
         <div class="p-6 section-content" id="section3-content">
             <form id="scope-form" class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-[#374151] mb-1">Q1: Do you place AI systems and/or GPAI models on the EU/EEA market? <span class="text-[#F13D30]">*</span></label>
-                    <div class="flex gap-4">
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="radio" name="q1" value="yes" class="w-4 h-4">
-                            <span class="text-sm text-[#374151]">Yes</span>
+                    <label class="block text-sm font-medium text-[#22262A] mb-2">Q1: Do you place AI systems and/or GPAI models on the EU/EEA market? <span class="text-[#F13D30] ml-1">*</span></label>
+                    <select name="q1" class="w-full px-4 py-2.5 border border-[#B5BCC4] rounded-lg font-normal text-sm text-[#22262A] focus:outline-none focus:border-[#F13D30] focus:ring-2 focus:ring-[#FEEDEC] transition-colors appearance-none bg-white bg-[url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 20 20%27 fill=%27none%27%3e%3cpath d=%27M5 7.5L10 12.5L15 7.5%27 stroke=%27%23565F6C%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3e%3c/svg%3e')] bg-no-repeat bg-[center_right_0.75rem] bg-[length:1.25rem] pr-10">
+                        <option value="">Select an option</option>
+                        <option value="Yes">Yes</option>
+                        <option value="No">No</option>
+                        <option value="Planned" selected>Planned</option>
+                    </select>
+                </div>
+                <div class="space-y-3">
+                    <div class="flex items-center gap-2">
+                        <label class="block text-sm font-medium text-[#22262A]">
+                            Q2: Which roles best describe your typical activities? (Select all that apply as default role(s), editable per system)
+                            <span class="text-[#F13D30] ml-1">*</span>
                         </label>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="radio" name="q1" value="no" class="w-4 h-4">
-                            <span class="text-sm text-[#374151]">No</span>
+                        <div class="relative group">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4 text-[#B5BCC4] cursor-help">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                            </svg>
+                            <div class="hidden group-hover:block absolute right-0 top-6 z-50 w-80 p-3 bg-[#464E58] text-white rounded-lg shadow-lg text-xs whitespace-pre-line">
+                                Provider = "you develop (or commission) and place on the market / put into service under your name"
+                                Deployer = "you use it in operations (internal use or for clients)"
+                                Importer = "you bring it into EU from a non-EU provider"
+                                Distributor = "you resell/make it available without being provider/importer"
+                            </div>
+                        </div>
+                    </div>
+                    <div class="space-y-2 pl-1">
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" name="q2_roles" value="provider" class="w-4 h-4 accent-[#F13D30] cursor-pointer">
+                            <span class="text-sm text-[#464E58]">Provider</span>
                         </label>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="radio" name="q1" value="planned" checked class="w-4 h-4">
-                            <span class="text-sm text-[#374151]">Planned</span>
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" name="q2_roles" value="deployer" class="w-4 h-4 accent-[#F13D30] cursor-pointer">
+                            <span class="text-sm text-[#464E58]">Deployer</span>
+                        </label>
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" name="q2_roles" value="importer" class="w-4 h-4 accent-[#F13D30] cursor-pointer">
+                            <span class="text-sm text-[#464E58]">Importer</span>
+                        </label>
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" name="q2_roles" value="distributor" class="w-4 h-4 accent-[#F13D30] cursor-pointer">
+                            <span class="text-sm text-[#464E58]">Distributor</span>
                         </label>
                     </div>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-[#374151] mb-1">Q2: Which roles best describe your typical activities? (Select all that apply as default role(s), editable per system) <span class="text-[#6B7280]">ℹ</span></label>
-                    <div class="flex flex-wrap gap-3 mt-2">
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" name="q2_roles" value="provider" class="w-4 h-4">
-                            <span class="text-sm text-[#374151]">Provider</span>
-                        </label>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" name="q2_roles" value="deployer" class="w-4 h-4">
-                            <span class="text-sm text-[#374151]">Deployer</span>
-                        </label>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" name="q2_roles" value="importer" class="w-4 h-4">
-                            <span class="text-sm text-[#374151]">Importer</span>
-                        </label>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" name="q2_roles" value="distributor" class="w-4 h-4">
-                            <span class="text-sm text-[#374151]">Distributor</span>
-                        </label>
-                    </div>
+                    <label class="block text-sm font-medium text-[#22262A] mb-2">Q3: Is the system deployed / used in the EU / EEA? <span class="text-[#F13D30] ml-1">*</span></label>
+                    <select name="q3" class="w-full px-4 py-2.5 border border-[#B5BCC4] rounded-lg font-normal text-sm text-[#22262A] focus:outline-none focus:border-[#F13D30] focus:ring-2 focus:ring-[#FEEDEC] transition-colors appearance-none bg-white bg-[url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 20 20%27 fill=%27none%27%3e%3cpath d=%27M5 7.5L10 12.5L15 7.5%27 stroke=%27%23565F6C%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3e%3c/svg%3e')] bg-no-repeat bg-[center_right_0.75rem] bg-[length:1.25rem] pr-10">
+                        <option value="">Select an option</option>
+                        <option value="Yes">Yes</option>
+                        <option value="No">No</option>
+                        <option value="Planned" selected>Planned</option>
+                    </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-[#374151] mb-1">Q3: Is the system deployed/used in the EU/EEA? <span class="text-[#F13D30]">*</span></label>
-                    <div class="flex gap-4">
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="radio" name="q3" value="yes" class="w-4 h-4">
-                            <span class="text-sm text-[#374151]">Yes</span>
-                        </label>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="radio" name="q3" value="no" class="w-4 h-4">
-                            <span class="text-sm text-[#374151]">No</span>
-                        </label>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="radio" name="q3" value="planned" checked class="w-4 h-4">
-                            <span class="text-sm text-[#374151]">Planned</span>
-                        </label>
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-[#374151] mb-1">Q4: Does the system affect persons in the EU/EEA (outputs used in EU/EEA)? <span class="text-[#F13D30]">*</span></label>
-                    <div class="flex gap-4">
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="radio" name="q4" value="yes" class="w-4 h-4">
-                            <span class="text-sm text-[#374151]">Yes</span>
-                        </label>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="radio" name="q4" value="no" class="w-4 h-4">
-                            <span class="text-sm text-[#374151]">No</span>
-                        </label>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="radio" name="q4" value="planned" checked class="w-4 h-4">
-                            <span class="text-sm text-[#374151]">Planned</span>
-                        </label>
-                    </div>
+                    <label class="block text-sm font-medium text-[#22262A] mb-2">Q4: Does the system affect persons in the EU / EEA (outputs used in EU / EEA)? <span class="text-[#F13D30] ml-1">*</span></label>
+                    <select name="q4" class="w-full px-4 py-2.5 border border-[#B5BCC4] rounded-lg font-normal text-sm text-[#22262A] focus:outline-none focus:border-[#F13D30] focus:ring-2 focus:ring-[#FEEDEC] transition-colors appearance-none bg-white bg-[url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 20 20%27 fill=%27none%27%3e%3cpath d=%27M5 7.5L10 12.5L15 7.5%27 stroke=%27%23565F6C%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3e%3c/svg%3e')] bg-no-repeat bg-[center_right_0.75rem] bg-[length:1.25rem] pr-10">
+                        <option value="">Select an option</option>
+                        <option value="Yes">Yes</option>
+                        <option value="No">No</option>
+                        <option value="Planned" selected>Planned</option>
+                    </select>
                 </div>
                 <div class="flex justify-end gap-3 pt-4">
-                    <button type="button" class="px-6 py-2 border border-[#F13D30] text-[#F13D30] rounded-lg font-medium hover:bg-[#F13D30] hover:text-white transition-colors">Cancel</button>
-                    <button type="submit" class="px-6 py-2 bg-[#F13D30] text-white rounded-lg font-medium hover:bg-[#d63529] transition-colors">Confirm and Save</button>
+                    <button type="button" class="px-6 py-2 border border-[#B5BCC4] text-[#464E58] rounded-lg font-semibold text-sm hover:bg-[#F0F1F2] transition-colors">Cancel</button>
+                    <button type="submit" class="px-6 py-2 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A] transition-colors shadow-sm">Confirm and Save</button>
                 </div>
             </form>
         </div>
@@ -283,101 +281,157 @@
         </div>
         <div class="p-6 section-content" id="section4-content">
             <form id="governance-form" class="space-y-6">
-                <div>
-                    <label class="block text-sm font-medium text-[#374151] mb-2">Q1: Do you have organization-wide written internal AI governance policies? <span class="text-[#F13D30]">*</span></label>
-                    <div class="flex gap-4">
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="radio" name="q1" value="yes" class="w-4 h-4">
-                            <span class="text-sm text-[#374151]">Yes</span>
+                <div class="space-y-3">
+                    <label class="block text-sm font-medium text-[#22262A]">
+                        Q1: Do you have organization-wide written internal AI governance policies?
+                        <span class="text-[#F13D30] ml-1">*</span>
+                    </label>
+                    <div class="space-y-2 pl-1">
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="radio" name="q1" value="yes" class="w-4 h-4 accent-[#F13D30] cursor-pointer" onchange="toggleGovernanceLink('q1', this.value === 'yes')">
+                            <span class="text-sm text-[#464E58]">Yes</span>
                         </label>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="radio" name="q1" value="no" class="w-4 h-4">
-                            <span class="text-sm text-[#374151]">No</span>
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="radio" name="q1" value="no" class="w-4 h-4 accent-[#F13D30] cursor-pointer" onchange="toggleGovernanceLink('q1', this.value === 'yes')">
+                            <span class="text-sm text-[#464E58]">No</span>
                         </label>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="radio" name="q1" value="in_progress" checked class="w-4 h-4">
-                            <span class="text-sm text-[#374151]">In progress</span>
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="radio" name="q1" value="in_progress" checked class="w-4 h-4 accent-[#F13D30] cursor-pointer" onchange="toggleGovernanceLink('q1', this.value === 'yes')">
+                            <span class="text-sm text-[#464E58]">In progress</span>
+                        </label>
+                    </div>
+                    <!-- Conditional link input for Q1 -->
+                    <div id="q1-link-container" class="hidden space-y-3 pl-1 mt-3">
+                        <label class="block text-sm font-normal text-[#464E58]">
+                            Paste a link from Section 1 or an external link
+                        </label>
+                        <div class="flex gap-2">
+                            <input type="text" id="q1-link-input" name="q1_link" placeholder="Paste link here" class="flex-1 px-4 py-2.5 border border-[#B5BCC4] rounded-lg font-normal text-sm text-[#22262A] placeholder:text-[#B5BCC4] focus:outline-none focus:border-[#F13D30] focus:ring-2 focus:ring-[#FEEDEC] transition-colors">
+                            <button type="button" onclick="saveGovernanceLink('q1')" class="px-4 py-2 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A] transition-colors whitespace-nowrap">
+                                Save link
+                            </button>
+                        </div>
+                        <div id="q1-saved-link" class="hidden flex items-center gap-2 mt-2">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <label class="block text-sm font-medium text-[#22262A]">
+                        Q2: Do you have a compliance escalation path?
+                        <span class="text-[#F13D30] ml-1">*</span>
+                    </label>
+                    <div class="space-y-2 pl-1">
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="radio" name="q2" value="yes" checked class="w-4 h-4 accent-[#F13D30] cursor-pointer" onchange="toggleGovernanceLink('q2', this.value === 'yes')">
+                            <span class="text-sm text-[#464E58]">Yes</span>
+                        </label>
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="radio" name="q2" value="no" class="w-4 h-4 accent-[#F13D30] cursor-pointer" onchange="toggleGovernanceLink('q2', this.value === 'yes')">
+                            <span class="text-sm text-[#464E58]">No</span>
+                        </label>
+                    </div>
+                    <!-- Conditional link input for Q2 -->
+                    <div id="q2-link-container" class="space-y-3 pl-1 mt-3">
+                        <label class="block text-sm font-normal text-[#464E58]">
+                            Paste a link from Section 1 or an external link
+                        </label>
+                        <div class="flex gap-2">
+                            <input type="text" id="q2-link-input" name="q2_link" placeholder="Paste link here" class="flex-1 px-4 py-2.5 border border-[#B5BCC4] rounded-lg font-normal text-sm text-[#22262A] placeholder:text-[#B5BCC4] focus:outline-none focus:border-[#F13D30] focus:ring-2 focus:ring-[#FEEDEC] transition-colors">
+                            <button type="button" onclick="saveGovernanceLink('q2')" class="px-4 py-2 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A] transition-colors whitespace-nowrap">
+                                Save link
+                            </button>
+                        </div>
+                        <div id="q2-saved-link" class="hidden flex items-center gap-2 mt-2">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <label class="block text-sm font-medium text-[#22262A]">
+                        Q3: Do you maintain a register of AI systems used by the organisation?
+                        <span class="text-[#F13D30] ml-1">*</span>
+                    </label>
+                    <div class="space-y-2 pl-1">
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="radio" name="q3" value="yes" checked class="w-4 h-4 accent-[#F13D30] cursor-pointer" onchange="toggleGovernanceLink('q3', this.value === 'yes')">
+                            <span class="text-sm text-[#464E58]">Yes</span>
+                        </label>
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="radio" name="q3" value="no" class="w-4 h-4 accent-[#F13D30] cursor-pointer" onchange="toggleGovernanceLink('q3', this.value === 'yes')">
+                            <span class="text-sm text-[#464E58]">No</span>
+                        </label>
+                    </div>
+                    <!-- Conditional link input for Q3 -->
+                    <div id="q3-link-container" class="space-y-3 pl-1 mt-3">
+                        <label class="block text-sm font-normal text-[#464E58]">
+                            Paste a link from Section 1 or an external link
+                        </label>
+                        <div class="flex gap-2">
+                            <input type="text" id="q3-link-input" name="q3_link" placeholder="Paste link here" class="flex-1 px-4 py-2.5 border border-[#B5BCC4] rounded-lg font-normal text-sm text-[#22262A] placeholder:text-[#B5BCC4] focus:outline-none focus:border-[#F13D30] focus:ring-2 focus:ring-[#FEEDEC] transition-colors">
+                            <button type="button" onclick="saveGovernanceLink('q3')" class="px-4 py-2 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A] transition-colors whitespace-nowrap">
+                                Save link
+                            </button>
+                        </div>
+                        <div id="q3-saved-link" class="hidden flex items-center gap-2 mt-2">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <label class="block text-sm font-medium text-[#22262A]">
+                        Q4: Do you maintain version history for AI systems in production?
+                        <span class="text-[#F13D30] ml-1">*</span>
+                    </label>
+                    <div class="space-y-2 pl-1">
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="radio" name="q4" value="yes" checked class="w-4 h-4 accent-[#F13D30] cursor-pointer">
+                            <span class="text-sm text-[#464E58]">Yes (You will be asked to provide evidence per system)</span>
+                        </label>
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="radio" name="q4" value="no" class="w-4 h-4 accent-[#F13D30] cursor-pointer">
+                            <span class="text-sm text-[#464E58]">No</span>
                         </label>
                     </div>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-[#374151] mb-2">Q2: Do you have a compliance escalation path? <span class="text-[#F13D30]">*</span></label>
-                    <div class="flex gap-4">
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="radio" name="q2" value="yes" checked class="w-4 h-4">
-                            <span class="text-sm text-[#374151]">Yes</span>
+                <div class="space-y-3">
+                    <label class="block text-sm font-medium text-[#22262A]">
+                        Q5: Do you have third party / vendor assessment procedures or policy for AI suppliers?
+                        <span class="text-[#F13D30] ml-1">*</span>
+                    </label>
+                    <div class="space-y-2 pl-1">
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="radio" name="q5" value="yes" class="w-4 h-4 accent-[#F13D30] cursor-pointer" onchange="toggleGovernanceLink('q5', this.value === 'yes')">
+                            <span class="text-sm text-[#464E58]">Yes</span>
                         </label>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="radio" name="q2" value="no" class="w-4 h-4">
-                            <span class="text-sm text-[#374151]">No</span>
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="radio" name="q5" value="no" checked class="w-4 h-4 accent-[#F13D30] cursor-pointer" onchange="toggleGovernanceLink('q5', this.value === 'yes')">
+                            <span class="text-sm text-[#464E58]">No</span>
                         </label>
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-[#374151] mb-2">Q3: Do you maintain a register of AI systems used by the organisation? <span class="text-[#F13D30]">*</span></label>
-                    <div class="flex gap-4 mb-3">
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="radio" name="q3" value="yes" checked class="w-4 h-4">
-                            <span class="text-sm text-[#374151]">Yes</span>
-                        </label>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="radio" name="q3" value="no" class="w-4 h-4">
-                            <span class="text-sm text-[#374151]">No</span>
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="radio" name="q5" value="not_applicable" class="w-4 h-4 accent-[#F13D30] cursor-pointer" onchange="toggleGovernanceLink('q5', this.value === 'yes')">
+                            <span class="text-sm text-[#464E58]">Not Applicable</span>
                         </label>
                     </div>
-                    <!-- <div class="flex gap-2 mt-3">
-                        <input type="text" name="q3_link" placeholder="Paste a link from Section 1 or an external link" value="https://example.com/register" class="flex-1 px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
-                        <button type="button" onclick="saveLink('q3')" class="px-4 py-2 bg-[#F13D30] text-white rounded-lg font-medium hover:bg-[#d63529] transition-colors">Save link</button>
+                    <!-- Conditional link input for Q5 -->
+                    <div id="q5-link-container" class="hidden space-y-3 pl-1 mt-3">
+                        <label class="block text-sm font-normal text-[#464E58]">
+                            Paste a link from Section 1 or an external link
+                        </label>
+                        <div class="flex gap-2">
+                            <input type="text" id="q5-link-input" name="q5_link" placeholder="Paste link here" class="flex-1 px-4 py-2.5 border border-[#B5BCC4] rounded-lg font-normal text-sm text-[#22262A] placeholder:text-[#B5BCC4] focus:outline-none focus:border-[#F13D30] focus:ring-2 focus:ring-[#FEEDEC] transition-colors">
+                            <button type="button" onclick="saveGovernanceLink('q5')" class="px-4 py-2 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A] transition-colors whitespace-nowrap">
+                                Save link
+                            </button>
+                        </div>
+                        <div id="q5-saved-link" class="hidden flex items-center gap-2 mt-2">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
                     </div>
-                    <div class="mt-2 text-sm text-green-600 flex items-center gap-2">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            class="w-5 h-5 text-[#DC2626]">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                            <polyline points="14,2 14,8 20,8" />
-                            <line x1="16" y1="13" x2="8" y2="13" />
-                            <line x1="16" y1="17" x2="8" y2="17" />
-                            <polyline points="10,9 9,9 8,9" />
-                        </svg> 
-                        <span>Document link saved</span>
-                    </div> -->
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-[#374151] mb-2">Q4: Do you maintain version history for AI systems in production? <span class="text-[#F13D30]">*</span></label>
-                    <div class="flex gap-4">
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="radio" name="q4" value="yes" checked class="w-4 h-4">
-                            <span class="text-sm text-[#374151]">Yes (You will be asked to provide evidence per system)</span>
-                        </label>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="radio" name="q4" value="no" class="w-4 h-4">
-                            <span class="text-sm text-[#374151]">No</span>
-                        </label>
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-[#374151] mb-2">Q5: Do you have third party/vendor assessment procedures or policy for AI suppliers? <span class="text-[#F13D30]">*</span></label>
-                    <div class="flex gap-4 mb-3">
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="radio" name="q5" value="yes" class="w-4 h-4">
-                            <span class="text-sm text-[#374151]">Yes</span>
-                        </label>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="radio" name="q5" value="no" checked class="w-4 h-4">
-                            <span class="text-sm text-[#374151]">No</span>
-                        </label>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="radio" name="q5" value="not_applicable" class="w-4 h-4">
-                            <span class="text-sm text-[#374151]">Not Applicable</span>
-                        </label>
-                    </div>
-                    <!-- <div class="flex gap-2 mt-3">
-                        <input type="text" name="q5_link" placeholder="Paste a link from Section 1 or an external link" class="flex-1 px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
-                        <button type="button" onclick="saveLink('q5')" class="px-4 py-2 bg-[#F13D30] text-white rounded-lg font-medium hover:bg-[#d63529] transition-colors">Save link</button>
-                    </div> -->
                 </div>
                 <div class="flex justify-end gap-3 pt-4">
-                    <button type="button" class="px-6 py-2 border border-[#F13D30] text-[#F13D30] rounded-lg font-medium hover:bg-[#F13D30] hover:text-white transition-colors">Cancel</button>
-                    <button type="submit" class="px-6 py-2 bg-[#F13D30] text-white rounded-lg font-medium hover:bg-[#d63529] transition-colors">Confirm and Save</button>
+                    <button type="button" class="px-6 py-2 border border-[#B5BCC4] text-[#464E58] rounded-lg font-semibold text-sm hover:bg-[#F0F1F2] transition-colors">Cancel</button>
+                    <button type="submit" class="px-6 py-2 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A] transition-colors shadow-sm">Confirm and Save</button>
                 </div>
             </form>
         </div>
@@ -396,50 +450,55 @@
         </div>
         <div class="p-6 section-content" id="section5-content">
             <form id="ai-literacy-form" class="space-y-6">
-                <div>
-                    <label class="block text-sm font-medium text-[#374151] mb-2">Q1: Users: Which internal teams or external contractors use AI systems for your organisation? (Select all that apply) <span class="text-[#F13D30]">*</span></label>
-                    <div class="grid grid-cols-2 gap-3 mt-2">
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" name="q1_teams" value="product_engineering" class="w-4 h-4">
-                            <span class="text-sm text-[#374151]">Product / Engineering</span>
+                <div class="space-y-3">
+                    <label class="block text-sm font-medium text-[#22262A]">
+                        Q1. Users: Which internal teams or external contractors use AI systems for your organisation? (Select all that apply)
+                        <span class="text-[#F13D30] ml-1">*</span>
+                    </label>
+                    <div class="space-y-2 pl-1">
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" name="q1_teams" value="product_engineering" class="w-4 h-4 accent-[#F13D30] cursor-pointer">
+                            <span class="text-sm text-[#464E58]">Product / Engineering</span>
                         </label>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" name="q1_teams" value="data_ml" class="w-4 h-4">
-                            <span class="text-sm text-[#374151]">Data / ML team</span>
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" name="q1_teams" value="data_ml" class="w-4 h-4 accent-[#F13D30] cursor-pointer">
+                            <span class="text-sm text-[#464E58]">Data / ML team</span>
                         </label>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" name="q1_teams" value="operations" class="w-4 h-4">
-                            <span class="text-sm text-[#374151]">Operations / Analysts</span>
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" name="q1_teams" value="operations" class="w-4 h-4 accent-[#F13D30] cursor-pointer">
+                            <span class="text-sm text-[#464E58]">Operations / Analysts</span>
                         </label>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" name="q1_teams" value="hr" class="w-4 h-4">
-                            <span class="text-sm text-[#374151]">HR / Recruitment</span>
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" name="q1_teams" value="hr" class="w-4 h-4 accent-[#F13D30] cursor-pointer">
+                            <span class="text-sm text-[#464E58]">HR / Recruitment</span>
                         </label>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" name="q1_teams" value="compliance" class="w-4 h-4">
-                            <span class="text-sm text-[#374151]">Compliance / Legal</span>
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" name="q1_teams" value="compliance" class="w-4 h-4 accent-[#F13D30] cursor-pointer">
+                            <span class="text-sm text-[#464E58]">Compliance / Legal</span>
                         </label>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" name="q1_teams" value="customer_support" class="w-4 h-4">
-                            <span class="text-sm text-[#374151]">Customer support</span>
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" name="q1_teams" value="customer_support" class="w-4 h-4 accent-[#F13D30] cursor-pointer">
+                            <span class="text-sm text-[#464E58]">Customer support</span>
                         </label>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" name="q1_teams" value="sales" class="w-4 h-4">
-                            <span class="text-sm text-[#374151]">Sales / Marketing</span>
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" name="q1_teams" value="sales" class="w-4 h-4 accent-[#F13D30] cursor-pointer">
+                            <span class="text-sm text-[#464E58]">Sales / Marketing</span>
                         </label>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" name="q1_teams" value="management" class="w-4 h-4">
-                            <span class="text-sm text-[#374151]">Senior management</span>
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" name="q1_teams" value="management" class="w-4 h-4 accent-[#F13D30] cursor-pointer">
+                            <span class="text-sm text-[#464E58]">Senior management</span>
                         </label>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" name="q1_teams" value="external" class="w-4 h-4">
-                            <span class="text-sm text-[#374151]">External contractors / service providers</span>
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" name="q1_teams" value="external" class="w-4 h-4 accent-[#F13D30] cursor-pointer">
+                            <span class="text-sm text-[#464E58]">External contractors / service providers</span>
                         </label>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" name="q1_teams" value="other" class="w-4 h-4">
-                            <span class="text-sm text-[#374151]">Other:</span>
-                            <input type="text" name="q1_other" placeholder="Specify" class="flex-1 px-2 py-1 border border-[#D1D5DB] rounded text-sm">
-                        </label>
+                        <div class="flex items-center gap-3">
+                            <label class="flex items-center gap-3 cursor-pointer">
+                                <input type="checkbox" id="q1-other-checkbox" name="q1_teams" value="other" class="w-4 h-4 accent-[#F13D30] cursor-pointer" onchange="toggleQ1OtherInput(this)">
+                                <span class="text-sm text-[#464E58]">Other:</span>
+                            </label>
+                            <input type="text" id="q1-other-input" name="q1_other" placeholder="Specify other" class="flex-1 px-3 py-1.5 border border-[#B5BCC4] rounded-lg text-sm text-[#22262A] placeholder:text-[#B5BCC4] focus:outline-none focus:border-[#F13D30] focus:ring-2 focus:ring-[#FEEDEC] transition-colors hidden">
+                        </div>
                     </div>
                 </div>
                 <div>
@@ -496,17 +555,44 @@
                         </label>
                     </div>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-[#374151] mb-2">Q5: Evidence: Do you keep evidence that training occurred (e.g., attendance logs, completion certificates)? <span class="text-[#F13D30]">*</span></label>
-                    <div class="flex gap-4">
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="radio" name="q5" value="yes" checked class="w-4 h-4">
-                            <span class="text-sm text-[#374151]">Yes</span>
+                <div class="space-y-3">
+                    <label class="block text-sm font-medium text-[#22262A]">
+                        Q5. Evidence: Do you keep evidence that training occurred (e.g., attendance logs, completion certificates)?
+                        <span class="text-[#F13D30] ml-1">*</span>
+                    </label>
+                    <div class="space-y-2 pl-1">
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="radio" name="q5_evidence" value="yes" checked class="w-4 h-4 accent-[#F13D30] cursor-pointer" onchange="toggleQ5Evidence(this.value)">
+                            <span class="text-sm text-[#464E58]">Yes</span>
                         </label>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="radio" name="q5" value="no" class="w-4 h-4">
-                            <span class="text-sm text-[#374151]">No</span>
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="radio" name="q5_evidence" value="no" class="w-4 h-4 accent-[#F13D30] cursor-pointer" onchange="toggleQ5Evidence(this.value)">
+                            <span class="text-sm text-[#464E58]">No</span>
                         </label>
+                    </div>
+                    <!-- Conditional link input for Q5 when "Yes" is selected -->
+                    <div id="q5-evidence-link-container" class="space-y-3 pl-1 mt-3">
+                        <label class="block text-sm font-normal text-[#464E58]">
+                            Paste a link from Section 1 or an external link
+                        </label>
+                        <div class="flex gap-2">
+                            <input type="text" id="q5-evidence-link-input" name="q5_evidence_link" placeholder="Paste link here" class="flex-1 px-4 py-2.5 border border-[#B5BCC4] rounded-lg font-normal text-sm text-[#22262A] placeholder:text-[#B5BCC4] focus:outline-none focus:border-[#F13D30] focus:ring-2 focus:ring-[#FEEDEC] transition-colors">
+                            <button type="button" onclick="saveQ5EvidenceLink()" class="px-4 py-2 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A] transition-colors whitespace-nowrap">
+                                Save link
+                            </button>
+                        </div>
+                        <div id="q5-evidence-saved-link" class="hidden flex items-center gap-2 mt-2">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+                    </div>
+                    <!-- Action needed warning when "No" is selected -->
+                    <div id="q5-evidence-action-needed" class="hidden pl-1 mt-2 flex items-center gap-2">
+                        <div class="w-4 h-4 rounded-full bg-[#FFA500] flex items-center justify-center">
+                            <span class="text-white text-xs font-bold">!</span>
+                        </div>
+                        <span class="text-sm font-medium text-[#FFA500]">
+                            Action needed
+                        </span>
                     </div>
                 </div>
                 <div>
@@ -531,16 +617,18 @@
                     </div>
                 </div>
                 <div class="flex justify-end gap-3 pt-4">
-                    <button type="button" class="px-6 py-2 border border-[#F13D30] text-[#F13D30] rounded-lg font-medium hover:bg-[#F13D30] hover:text-white transition-colors">Cancel</button>
-                    <button type="submit" class="px-6 py-2 bg-[#F13D30] text-white rounded-lg font-medium hover:bg-[#d63529] transition-colors">Confirm and Save</button>
+                    <button type="button" class="px-6 py-2 border border-[#B5BCC4] text-[#464E58] rounded-lg font-semibold text-sm hover:bg-[#F0F1F2] transition-colors">Cancel</button>
+                    <button type="submit" class="px-6 py-2 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A] transition-colors shadow-sm">Confirm and Save</button>
                 </div>
             </form>
         </div>
     </div>
 
     <!-- Save Whole Page Button -->
-    <div class="flex justify-end pb-6">
-        <button onclick="saveWholePage()" class="px-8 py-3 bg-[#F13D30] text-white rounded-lg font-semibold hover:bg-[#d63529] transition-colors">Save Whole Page</button>
+    <div class="flex justify-center pt-6">
+        <button onclick="saveWholePage()" class="px-8 py-2.5 bg-[#F13D30] text-white rounded-full font-semibold text-base hover:bg-[#DC180A] transition-colors shadow-md">
+            Save Whole Page
+        </button>
     </div>
 </div>
 
@@ -651,6 +739,9 @@ function addFiles(files) {
         `;
         container.appendChild(fileItem);
     });
+    
+    // Update delete button visibility after adding new files
+    updateDeleteButtonVisibility();
 }
 
 uploadInput?.addEventListener('change', (e) => {
@@ -695,7 +786,213 @@ function toggleFileSelection(checkbox) {
         display.classList.add('border-[#111827]');
         checkIcon.classList.add('hidden');
     }
+    
+    // Update delete button visibility
+    updateDeleteButtonVisibility();
 }
+
+// Update delete button visibility based on selected files
+function updateDeleteButtonVisibility() {
+    const selectedCheckboxes = document.querySelectorAll('.file-checkbox:checked');
+    const deleteBtn = document.getElementById('delete-selected-files-btn');
+    
+    if (deleteBtn) {
+        if (selectedCheckboxes.length > 0) {
+            deleteBtn.classList.remove('hidden');
+        } else {
+            deleteBtn.classList.add('hidden');
+        }
+    }
+}
+
+// Delete selected files
+function deleteSelectedFiles() {
+    const selectedCheckboxes = document.querySelectorAll('.file-checkbox:checked');
+    
+    if (selectedCheckboxes.length === 0) {
+        return;
+    }
+    
+    const confirmDelete = confirm(
+        `Are you sure you want to delete ${selectedCheckboxes.length} selected file${selectedCheckboxes.length > 1 ? 's' : ''}? This action cannot be undone.`
+    );
+    
+    if (confirmDelete) {
+        selectedCheckboxes.forEach(checkbox => {
+            const fileItem = checkbox.closest('.flex.items-center.justify-between');
+            if (fileItem) {
+                fileItem.remove();
+            }
+        });
+        
+        // Update delete button visibility after deletion
+        updateDeleteButtonVisibility();
+    }
+}
+
+// Initialize delete button visibility on page load
+document.addEventListener('DOMContentLoaded', function() {
+    updateDeleteButtonVisibility();
+    
+    // Initialize Governance section - show link containers for pre-selected "Yes" values
+    // Check Q2 (defaults to "yes")
+    const q2Yes = document.querySelector('input[name="q2"][value="yes"]');
+    if (q2Yes && q2Yes.checked) {
+        toggleGovernanceLink('q2', true);
+    }
+    
+    // Check Q3 (defaults to "yes")
+    const q3Yes = document.querySelector('input[name="q3"][value="yes"]');
+    if (q3Yes && q3Yes.checked) {
+        toggleGovernanceLink('q3', true);
+    }
+    
+    // Initialize Q5 Evidence (defaults to "yes")
+    const q5EvidenceYes = document.querySelector('input[name="q5_evidence"][value="yes"]');
+    if (q5EvidenceYes && q5EvidenceYes.checked) {
+        toggleQ5Evidence('yes');
+    }
+});
+
+// Toggle Q1 Other input visibility
+function toggleQ1OtherInput(checkbox) {
+    const otherInput = document.getElementById('q1-other-input');
+    if (otherInput) {
+        if (checkbox.checked) {
+            otherInput.classList.remove('hidden');
+        } else {
+            otherInput.classList.add('hidden');
+            otherInput.value = ''; // Clear value when unchecked
+        }
+    }
+}
+
+// Toggle Governance link input visibility
+function toggleGovernanceLink(questionId, show) {
+    const linkContainer = document.getElementById(`${questionId}-link-container`);
+    if (linkContainer) {
+        if (show) {
+            linkContainer.classList.remove('hidden');
+        } else {
+            linkContainer.classList.add('hidden');
+            // Clear input and saved link when hidden
+            const linkInput = document.getElementById(`${questionId}-link-input`);
+            const savedLinkDiv = document.getElementById(`${questionId}-saved-link`);
+            if (linkInput) linkInput.value = '';
+            if (savedLinkDiv) {
+                savedLinkDiv.classList.add('hidden');
+                savedLinkDiv.innerHTML = '';
+            }
+        }
+    }
+}
+
+// Save Governance link
+function saveGovernanceLink(questionId) {
+    const linkInput = document.getElementById(`${questionId}-link-input`);
+    const savedLinkDiv = document.getElementById(`${questionId}-saved-link`);
+    
+    if (!linkInput || !savedLinkDiv) return;
+    
+    const link = linkInput.value.trim();
+    if (!link) {
+        alert('Please enter a link');
+        return;
+    }
+    
+    // Check if it's a Section 1 link (from uploaded documents)
+    const isSection1Link = link.includes('/api/documents/') || link.includes('/documents/');
+    
+    // Update saved link display
+    savedLinkDiv.classList.remove('hidden');
+    if (isSection1Link) {
+        // Document link saved
+        savedLinkDiv.innerHTML = `
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4 text-[#F13D30]">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14,2 14,8 20,8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+            </svg>
+            <span class="text-sm text-[#464E58]">Document link saved</span>
+        `;
+    } else {
+        // External link
+        savedLinkDiv.innerHTML = `
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4 text-[#F13D30]">
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+            </svg>
+            <a href="${link}" target="_blank" rel="noopener noreferrer" class="text-sm text-[#F13D30] hover:underline">${link}</a>
+        `;
+    }
+}
+
+// Toggle Q5 Evidence conditional display
+function toggleQ5Evidence(value) {
+    const linkContainer = document.getElementById('q5-evidence-link-container');
+    const actionNeeded = document.getElementById('q5-evidence-action-needed');
+    const linkInput = document.getElementById('q5-evidence-link-input');
+    const savedLinkDiv = document.getElementById('q5-evidence-saved-link');
+    
+    if (value === 'yes') {
+        // Show link input, hide action needed
+        if (linkContainer) linkContainer.classList.remove('hidden');
+        if (actionNeeded) actionNeeded.classList.add('hidden');
+    } else if (value === 'no') {
+        // Hide link input, show action needed
+        if (linkContainer) linkContainer.classList.add('hidden');
+        if (actionNeeded) actionNeeded.classList.remove('hidden');
+        // Clear link input and saved link
+        if (linkInput) linkInput.value = '';
+        if (savedLinkDiv) {
+            savedLinkDiv.classList.add('hidden');
+            savedLinkDiv.innerHTML = '';
+        }
+    }
+}
+
+// Save Q5 Evidence link
+function saveQ5EvidenceLink() {
+    const linkInput = document.getElementById('q5-evidence-link-input');
+    const savedLinkDiv = document.getElementById('q5-evidence-saved-link');
+    
+    if (!linkInput || !savedLinkDiv) return;
+    
+    const link = linkInput.value.trim();
+    if (!link) {
+        alert('Please enter a link');
+        return;
+    }
+    
+    // Check if it's a Section 1 link (from uploaded documents)
+    const isSection1Link = link.includes('/api/documents/') || link.includes('/documents/');
+    
+    // Update saved link display
+    savedLinkDiv.classList.remove('hidden');
+    if (isSection1Link) {
+        // Document link saved
+        savedLinkDiv.innerHTML = `
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4 text-[#F13D30]">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14,2 14,8 20,8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+            </svg>
+            <span class="text-sm text-[#464E58]">Document link saved</span>
+        `;
+    } else {
+        // External link
+        savedLinkDiv.innerHTML = `
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4 text-[#F13D30]">
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+            </svg>
+            <a href="${link}" target="_blank" rel="noopener noreferrer" class="text-sm text-[#F13D30] hover:underline">${link}</a>
+        `;
+    }
+}
+
 
 // AI Read toggle
 document.querySelectorAll('.ai-read-toggle').forEach(btn => {

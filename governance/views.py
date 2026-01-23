@@ -1601,25 +1601,29 @@ def ai_inventory(request):
         'planned': 'Planned',
     }
     
-    # Badge classes
+    # Badge classes - Match React design colors
     status_badge_classes = {
-        'In production': 'bg-green-100 text-green-700',
-        'Testing': 'bg-orange-100 text-orange-700',
-        'Planned': 'bg-gray-100 text-gray-700',
-        'In progress': 'bg-blue-100 text-blue-700',
+        'Planned': 'bg-[#E5E7EB] text-[#6B7280]',
+        'Testing': 'bg-[#FEF3C7] text-[#92400E]',
+        'In production': 'bg-[#D1FAE5] text-[#065F46]',
+        'Retired': 'bg-[#F3F4F6] text-[#4B5563]',
     }
     
     risk_badge_classes = {
-        'Minimal': 'bg-green-100 text-green-700',
-        'Limited transparency': 'bg-yellow-100 text-yellow-700',
-        'High-risk': 'bg-orange-100 text-orange-700',
-        'Not assessed': 'bg-gray-100 text-gray-700',
+        'Prohibited': 'bg-[#FEE2E2] text-[#991B1B]',
+        'High-risk': 'bg-[#FED7AA] text-[#9A3412]',
+        'Limited transparency': 'bg-[#FEF3C7] text-[#92400E]',
+        'Minimal': 'bg-[#D1FAE5] text-[#065F46]',
+        'Not assessed': 'bg-[#E5E7EB] text-[#6B7280]',
+        'Not in scope': 'bg-[#F3F4F6] text-[#4B5563]',
     }
     
     compliance_badge_classes = {
-        'Compliant': 'bg-green-100 text-green-700',
-        'In progress': 'bg-blue-100 text-blue-700',
-        'Not started': 'bg-gray-100 text-gray-700',
+        'Not started': 'bg-[#E5E7EB] text-[#6B7280]',
+        'In progress': 'bg-[#DBEAFE] text-[#1E40AF]',
+        'Compliant': 'bg-[#D1FAE5] text-[#065F46]',
+        'Non-compliant': 'bg-[#FEE2E2] text-[#991B1B]',
+        'Not in scope': 'bg-[#F3F4F6] text-[#4B5563]',
     }
     
     # Role mapping
@@ -1926,11 +1930,15 @@ def ai_system_detail(request, agent_id):
         {"name": "AI System", "url": request.build_absolute_uri()},
     ]
     
+    # Get organization default role (mock - would come from organization settings in production)
+    org_default_role = 'Deployer'  # Default role from Organization module
+    
     return render(request, 'governance/pages/ai_system_detail.html', {
         'company': company,
         'subpage': 'ai_system_detail',
         'breadcrumbs': breadcrumbs,
         'agent': agent,
+        'org_default_role': org_default_role,
         'uploaded_documents': uploaded_documents,
         'sector_options': sector_options,
         'deployment_contexts': deployment_contexts,
