@@ -1925,10 +1925,15 @@ let selectedSystemIds = [];
 
 function updateSelectedCount() {
     const count = selectedSystemIds.length;
-    const display = document.getElementById('selected-count-display');
+    const display   = document.getElementById('selected-count-display');
     const countSpan = document.getElementById('selected-count');
     const deleteBtn = document.getElementById('delete-selected-btn');
-    
+
+    // Guard: if any of these elements không tồn tại (layout đổi), tránh lỗi JS
+    if (!display || !countSpan || !deleteBtn) {
+        return;
+    }
+
     if (count > 0) {
         display.classList.remove('hidden');
         countSpan.textContent = count;
@@ -2063,20 +2068,175 @@ document.addEventListener('DOMContentLoaded', function() {
     updateSelectedCount();
 });
 
-// Pagination (based on React code)
+// Pagination + global filtering/sorting state
 let currentPage = 1;
 const itemsPerPage = 10;
 let searchTermFilter = '';
 
-function getTotalPages() {
-    // Tính tổng dựa trên các dòng data phù hợp với search (nếu có)
-    const rows = Array.from(document.querySelectorAll('tbody tr.system-row'));
-    const visibleRows = rows.filter(row => {
+// activeFilters & currentSortBy/currentSortOrder đã được khai báo ở trên
+
+// Helper: trả về tất cả rows, đã áp dụng search + filter + sort
+function getFilteredAndSortedRows() {
+    // 1) Tất cả systems
+    const allRows = Array.from(document.querySelectorAll('tbody tr.system-row'));
+
+    // 2) Áp dụng search
+    let rows = allRows.filter(row => {
         if (!searchTermFilter) return true;
         const text = row.textContent.toLowerCase();
         return text.includes(searchTermFilter);
     });
-    return Math.max(1, Math.ceil(visibleRows.length / itemsPerPage));
+
+    // 3) Áp dụng filters (dùng lại logic từ applyFilters, nhưng không đổi display ở đây)
+    rows = rows.filter(row => {
+        const cells = row.querySelectorAll('td');
+        if (cells.length < 9) return false;
+
+        const statusText = cells[3].textContent.trim().toLowerCase();
+        const roleCell = cells[4];
+        const roleBadges = roleCell.querySelectorAll('span');
+        const roleTexts = Array.from(roleBadges).map(badge => badge.textContent.trim().toLowerCase());
+        const roleText = roleTexts.length > 0 ? roleTexts.join(', ') : roleCell.textContent.trim().toLowerCase();
+        const riskText = cells[5].textContent.trim().toLowerCase();
+        const complianceText = cells[6].textContent.trim().toLowerCase();
+        const providerText = cells[8].textContent.trim().toLowerCase();
+
+        const statusMap = {
+            'planned': 'planned',
+            'in production': 'in_production',
+            'testing': 'testing',
+            'retired': 'retired'
+        };
+        const roleMap = {
+            'provider': 'provider',
+            'distributor': 'distributor',
+            'deployer': 'deployer',
+            'importer': 'importer'
+        };
+        const riskMap = {
+            'prohibited': 'prohibited',
+            'limited transparency': 'limited_transparency',
+            'not assessed': 'not_assessed',
+            'high-risk': 'high_risk',
+            'minimal': 'minimal',
+            'not in scope': 'not_in_scope'
+        };
+        const complianceMap = {
+            'not started': 'not_started',
+            'compliant': 'compliant',
+            'not in scope': 'not_in_scope',
+            'in progress': 'in_progress',
+            'non-compliant': 'non_compliant'
+        };
+        const providerMap = {
+            'in-house': 'in_house',
+            'mixed': 'mixed',
+            'external': 'external',
+            'unknown': 'unknown'
+        };
+
+        let matches = true;
+
+        if (activeFilters.status.length > 0) {
+            let normalizedStatus = statusText;
+            if (statusText === 'in production') {
+                normalizedStatus = 'in_production';
+            } else {
+                normalizedStatus = statusMap[statusText] || statusText.replace(/\s+/g, '_');
+            }
+            matches = matches && activeFilters.status.includes(normalizedStatus);
+        }
+
+        if (activeFilters.role.length > 0 && matches) {
+            const rowRoles = roleTexts.length > 0 ? roleTexts : [roleText];
+            const matchedRoles = rowRoles.filter(r => {
+                const normalized = roleMap[r.trim()] || r.trim();
+                return activeFilters.role.includes(normalized);
+            });
+            matches = matches && matchedRoles.length > 0;
+        }
+
+        if (activeFilters.risk.length > 0 && matches) {
+            let normalizedRisk = riskMap[riskText] || riskText.replace(/\s+/g, '_');
+            if (riskText === 'high-risk') {
+                normalizedRisk = 'high_risk';
+            }
+            matches = matches && activeFilters.risk.includes(normalizedRisk);
+        }
+
+        if (activeFilters.compliance.length > 0 && matches) {
+            let normalizedCompliance = complianceMap[complianceText] || complianceText.replace(/\s+/g, '_');
+            matches = matches && activeFilters.compliance.includes(normalizedCompliance);
+        }
+
+        if (activeFilters.provider.length > 0 && matches) {
+            let normalizedProvider = providerMap[providerText] || providerText.replace(/\s+/g, '_');
+            matches = matches && activeFilters.provider.includes(normalizedProvider);
+        }
+
+        return matches;
+    });
+
+    // 4) Áp dụng sort (dùng currentSortBy/currentSortOrder nếu có)
+    if (currentSortBy) {
+        const factor = currentSortOrder === 'asc' ? 1 : -1;
+        rows.sort((a, b) => {
+            const aCells = a.querySelectorAll('td');
+            const bCells = b.querySelectorAll('td');
+            if (aCells.length < 9 || bCells.length < 9) return 0;
+
+            let aValue = '', bValue = '';
+            switch (currentSortBy) {
+                case 'name':
+                    aValue = aCells[1].textContent.trim();
+                    bValue = bCells[1].textContent.trim();
+                    break;
+                case 'owner':
+                    aValue = aCells[2].textContent.trim();
+                    bValue = bCells[2].textContent.trim();
+                    break;
+                case 'status':
+                    aValue = aCells[3].textContent.trim();
+                    bValue = bCells[3].textContent.trim();
+                    break;
+                case 'role':
+                    aValue = aCells[4].textContent.trim();
+                    bValue = bCells[4].textContent.trim();
+                    break;
+                case 'risk':
+                    aValue = aCells[5].textContent.trim();
+                    bValue = bCells[5].textContent.trim();
+                    break;
+                case 'compliance':
+                    aValue = aCells[6].textContent.trim();
+                    bValue = bCells[6].textContent.trim();
+                    break;
+                case 'last_updated':
+                    aValue = aCells[7].textContent.trim();
+                    bValue = bCells[7].textContent.trim();
+                    break;
+                case 'provider':
+                    aValue = aCells[8].textContent.trim();
+                    bValue = bCells[8].textContent.trim();
+                    break;
+                default:
+                    break;
+            }
+
+            const aLower = (aValue || '').toLowerCase();
+            const bLower = (bValue || '').toLowerCase();
+            if (aLower < bLower) return -1 * factor;
+            if (aLower > bLower) return 1 * factor;
+            return 0;
+        });
+    }
+
+    return { allRows, rows };
+}
+
+function getTotalPages() {
+    const { rows } = getFilteredAndSortedRows();
+    return Math.max(1, Math.ceil(rows.length / itemsPerPage));
 }
 
 function changePage(direction) {
@@ -2108,24 +2268,16 @@ function goToPage(page) {
 }
 
 function renderTablePage() {
-    // Phân trang trên tập dòng data đã được filter bởi search (nếu có)
-    const allRows = Array.from(document.querySelectorAll('tbody tr.system-row'));
-    const filteredRows = allRows.filter(row => {
-        if (!searchTermFilter) return true;
-        const text = row.textContent.toLowerCase();
-        return text.includes(searchTermFilter);
-    });
-
+    // Phân trang trên tập rows đã áp dụng search + filter + sort
+    const { allRows, rows } = getFilteredAndSortedRows();
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
 
     // Ẩn tất cả trước
-    allRows.forEach(row => {
-        row.style.display = 'none';
-    });
+    allRows.forEach(row => { row.style.display = 'none'; });
 
-    // Chỉ hiển thị các dòng thuộc trang hiện tại trong tập đã filter
-    filteredRows.forEach((row, index) => {
+    // Hiển thị các dòng thuộc trang hiện tại trong tập đã filter + sort
+    rows.forEach((row, index) => {
         if (index >= startIndex && index < endIndex) {
             row.style.display = '';
         }
