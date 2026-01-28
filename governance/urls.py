@@ -12,10 +12,21 @@ urlpatterns = [
     # Organization
     path("organization/", views.organization, name="organization"),
     path("api/organization/save/", views.api_save_organization, name="api_save_organization"),
+    path("api/organization/get/", views.api_get_organization, name="api_get_organization"),
+    path("api/organization/delete-files/", views.api_delete_organization_files, name="api_delete_organization_files"),
     
     # AI Inventory
     path("ai-inventory/", views.ai_inventory, name="ai_inventory"),
     path("ai-inventory/<int:agent_id>/", views.ai_system_detail, name="ai_system_detail"),
+    path("api/ai-inventory/create/", views.api_create_ai_inventory_system, name="api_create_ai_inventory_system"),
+    path("api/ai-inventory/delete/", views.api_delete_ai_inventory_systems, name="api_delete_ai_inventory_systems"),
+    path("api/ai-inventory/export/", views.api_export_ai_inventory, name="api_export_ai_inventory"),
+    path("api/ai-inventory/import/", views.api_import_ai_inventory, name="api_import_ai_inventory"),
+    path("api/ai-inventory/<int:agent_id>/detail/", views.api_ai_system_detail_data, name="api_ai_system_detail_data"),
+    path("api/ai-inventory/<int:agent_id>/block1-state/", views.api_update_block1_state, name="api_update_block1_state"),
+    path("api/ai-inventory/<int:agent_id>/block2-state/", views.api_update_block2_state, name="api_update_block2_state"),
+    path("api/ai-inventory/<int:agent_id>/block3-state/", views.api_update_block3_state, name="api_update_block3_state"),
+    path("api/ai-inventory/<int:agent_id>/block4-state/", views.api_update_block4_state, name="api_update_block4_state"),
     
     # AI Systems
     path("ai-systems/", views.ai_systems, name="ai_systems"),
@@ -35,7 +46,8 @@ urlpatterns = [
     path("api/ai-systems/datasets/", views.api_create_dataset, name="api_create_dataset"),
     
     # File Upload API
-    path("api/upload/", views.api_upload, name="api_upload"),
+    path("api/upload/", views.api_upload, name="api_upload"),  # For AI Act chat (Gemini File Search Store)
+    path("api/upload-file/", views.api_upload_file, name="api_upload_file"),  # For general file uploads (static folder)
     path("api/check-store-info/", views.api_check_store_info, name="api_check_store_info"),
     
     # Use Case Details API

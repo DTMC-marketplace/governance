@@ -39,7 +39,6 @@
     <script>
         var companyId = '{{ company.id|default:1 }}';
         var platform = 'governance';
-        var csrfToken = '{{ csrf_token|default:"" }}';
         var currentUserId = ''; // No authentication in hackathon demo
         // Draft questionnaire URLs - not implemented in hackathon demo
         var upsertDraftUrl = '';
@@ -106,7 +105,7 @@
                 method: "POST",
                 body: JSON.stringify(data),
                 headers: {
-                    "X-CSRFToken": csrfToken
+                    "Content-Type": "application/json"
                 }
             })
                 .then(response => response.json())

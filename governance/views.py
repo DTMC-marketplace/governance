@@ -10,6 +10,7 @@ import tempfile
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
 import json
 
 # Try to import Clean Architecture views (will override legacy functions below)
@@ -1517,8 +1518,12 @@ def organization(request):
     Organization Information page.
     Displays form for configuring organization details and AI compliance settings.
     """
-    # For hackathon demo, use mock data
-    # In production, this would load from database
+    from pathlib import Path
+    
+    # Load organization data from JSON file
+    mock_data_dir = Path(__file__).parent.parent / 'mock_data'
+    org_file = mock_data_dir / 'organization.json'
+    
     organization_data = {
         'documents': [],
         'org_profile': {},
@@ -1527,33 +1532,162 @@ def organization(request):
         'ai_literacy': {}
     }
     
+    if org_file.exists():
+        try:
+            with open(org_file, 'r', encoding='utf-8') as f:
+                organization_data = json.load(f)
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Could not load organization data: {e}")
+    
     return render(request, 'governance/pages/organization.html', {
         'organization_data': organization_data,
         'company': MockCompany() if 'MockCompany' in globals() else None,
     })
 
 
+@csrf_exempt
+@require_http_methods(["POST"])
+def api_upload_file(request):
+    """
+    Upload files to static folder (for general file uploads, not AI Act chat).
+    
+    Expected form data:
+    - file: File(s) to upload (can be multiple)
+    - folder: Optional subfolder in static (e.g., 'governance/uploads/organization')
+    
+    Returns JSON response with success status and file URLs.
+    """
+    import logging
+    from pathlib import Path
+    from django.conf import settings
+    import uuid
+    
+    logger = logging.getLogger(__name__)
+    
+    try:
+        # Get files from request
+        files = request.FILES.getlist('file')
+        if not files:
+            return JsonResponse({
+                'success': False,
+                'error': 'No files provided'
+            }, status=400)
+        
+        # Get optional folder parameter
+        folder = request.POST.get('folder', 'governance/uploads')
+        
+        # Get static directory
+        # Calculate BASE_DIR from views.py location (governance/views.py -> project root)
+        BASE_DIR = Path(__file__).parent.parent
+        static_dir = settings.STATICFILES_DIRS[0] if settings.STATICFILES_DIRS else BASE_DIR / 'static'
+        upload_dir = static_dir / folder
+        
+        # Ensure directory exists
+        upload_dir.mkdir(parents=True, exist_ok=True)
+        
+        uploaded_files = []
+        
+        for file in files:
+            try:
+                # Generate unique filename to avoid conflicts
+                file_ext = Path(file.name).suffix
+                unique_filename = f"{uuid.uuid4().hex}{file_ext}"
+                file_path = upload_dir / unique_filename
+                
+                # Save file
+                with open(file_path, 'wb+') as destination:
+                    for chunk in file.chunks():
+                        destination.write(chunk)
+                
+                # Generate URL
+                file_url = f"{settings.STATIC_URL}{folder}/{unique_filename}"
+                
+                uploaded_files.append({
+                    'name': file.name,
+                    'size': file.size,
+                    'url': file_url,
+                    'path': str(file_path.relative_to(static_dir))
+                })
+                
+                logger.info(f"Uploaded {file.name} to {file_path}")
+                
+            except Exception as e:
+                logger.error(f"Error uploading file {file.name}: {e}")
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Error uploading {file.name}: {str(e)}'
+                }, status=500)
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Successfully uploaded {len(uploaded_files)} file(s)',
+            'files': uploaded_files
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in file upload: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'error': f'An error occurred: {str(e)}'
+        }, status=500)
+
+
+@csrf_exempt
 @require_http_methods(["POST"])
 def api_save_organization(request):
     """
     Save organization information from all sections.
-    For hackathon demo, stores in memory.
+    For hackathon demo, saves to JSON file.
     """
     import logging
+    from pathlib import Path
+    
     logger = logging.getLogger(__name__)
     
     try:
         data = json.loads(request.body)
         
-        # In a real application, this would save to database
-        # For demo, we'll just log and return success
-        logger.info(f"Organization data received: {len(data)} sections")
+        # Get path to organization.json file
+        mock_data_dir = Path(__file__).parent.parent / 'mock_data'
+        org_file = mock_data_dir / 'organization.json'
         
-        # Store in a simple in-memory dict (would be database in production)
-        if not hasattr(api_save_organization, '_storage'):
-            api_save_organization._storage = {}
+        # Ensure directory exists
+        mock_data_dir.mkdir(exist_ok=True)
         
-        api_save_organization._storage = data
+        # Load existing data if file exists
+        existing_data = {}
+        if org_file.exists():
+            try:
+                with open(org_file, 'r', encoding='utf-8') as f:
+                    existing_data = json.load(f)
+            except Exception as e:
+                logger.warning(f"Could not load existing organization data: {e}")
+        
+        # Merge new data with existing data
+        # Special handling for documents array - append instead of replace
+        if 'documents' in data and isinstance(data['documents'], list):
+            if 'documents' not in existing_data:
+                existing_data['documents'] = []
+            # Append new documents (avoid duplicates by name)
+            existing_doc_names = {doc.get('name') for doc in existing_data['documents']}
+            for doc in data['documents']:
+                if doc.get('name') not in existing_doc_names:
+                    existing_data['documents'].append(doc)
+            # Remove documents key from data to avoid overwriting
+            data_without_docs = {k: v for k, v in data.items() if k != 'documents'}
+        else:
+            data_without_docs = data
+        
+        # Merge other data
+        existing_data.update(data_without_docs)
+        
+        # Save to JSON file
+        with open(org_file, 'w', encoding='utf-8') as f:
+            json.dump(existing_data, f, indent=2, ensure_ascii=False)
+        
+        logger.info(f"Organization data saved successfully to {org_file}")
         
         return JsonResponse({
             'success': True,
@@ -1571,6 +1705,2257 @@ def api_save_organization(request):
             'success': False,
             'error': f'An error occurred: {str(e)}'
         }, status=500)
+
+
+@csrf_exempt
+def api_get_organization(request):
+    """
+    Get organization information from JSON file.
+    """
+    import logging
+    from pathlib import Path
+    
+    logger = logging.getLogger(__name__)
+    
+    try:
+        # Get path to organization.json file
+        mock_data_dir = Path(__file__).parent.parent / 'mock_data'
+        org_file = mock_data_dir / 'organization.json'
+        
+        # Load data from JSON file
+        if org_file.exists():
+            with open(org_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+        else:
+            # Return empty structure if file doesn't exist
+            data = {
+                'documents': [],
+                'org_profile': {},
+                'scope': {},
+                'governance': {},
+                'ai_literacy': {}
+            }
+        
+        return JsonResponse({
+            'success': True,
+            'data': data
+        })
+        
+    except Exception as e:
+        logger.error(f"Error loading organization data: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'error': f'An error occurred: {str(e)}'
+        }, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def api_create_ai_inventory_system(request):
+    """
+    Create new AI system in inventory.
+    
+    Expected JSON body:
+    {
+        "name": "System Name",
+        "owner": "Not provided",
+        "status": "Planned",
+        "roles": ["Provider"],
+        "provider_type": "Unknown",
+        "risk_classification": "Not assessed",
+        "compliance_status": "Not started",
+        "deployment_context": "Workplace",
+        "eu_eea_relevance": "Unknown",
+        "document": {
+            "name": "file.pdf",
+            "url": "/static/governance/uploads/uuid.pdf",
+            "path": "governance/uploads/uuid.pdf",
+            "size": 12345
+        }
+    }
+    """
+    import logging
+    from pathlib import Path
+    
+    logger = logging.getLogger(__name__)
+    
+    try:
+        data = json.loads(request.body)
+        
+        # Get path to agents.json file
+        mock_data_dir = Path(__file__).parent.parent / 'mock_data'
+        agents_file = mock_data_dir / 'agents.json'
+        
+        # Load existing agents
+        existing_agents = []
+        if agents_file.exists():
+            try:
+                with open(agents_file, 'r', encoding='utf-8') as f:
+                    existing_agents = json.load(f)
+            except Exception as e:
+                logger.warning(f"Could not load existing agents: {e}")
+        
+        # Find next ID
+        next_id = max([agent.get('id', 0) for agent in existing_agents], default=0) + 1
+        
+        # Map form data to agent structure
+        # Map roles array to ai_act_role (use first role as primary, or join if multiple)
+        roles = data.get('roles', ['Provider'])
+        ai_act_role = roles[0].lower() if roles else 'provider'
+        
+        # Map status to compliance_status format
+        status_map = {
+            'Planned': 'planned',
+            'Testing': 'assessing',
+            'In production': 'compliant',
+            'Retired': 'compliant'
+        }
+        compliance_status = status_map.get(data.get('status', 'Planned'), 'planned')
+        
+        # Map risk classification
+        risk_map = {
+            'Not assessed': 'not_assessed',
+            'Prohibited': 'prohibited',
+            'High-risk': 'high_risks',
+            'Limited transparency': 'limited_risks',
+            'Minimal': 'minimal_risks',
+            'Not in scope': 'not_in_scope'
+        }
+        risk_classification = risk_map.get(data.get('risk_classification', 'Not assessed'), 'not_assessed')
+        
+        # Map provider_type to vendor (for backward compatibility) and store provider_type separately
+        provider_type = data.get('provider_type', 'Unknown')
+        vendor_map = {
+            'In-house': '',
+            'External': 'External',
+            'Mixed': 'Mixed',
+            'Unknown': ''
+        }
+        vendor = vendor_map.get(provider_type, '')
+        
+        # Create new agent
+        new_agent = {
+            'id': next_id,
+            'name': data.get('name', ''),
+            'business_unit': data.get('owner', 'Not provided'),
+            'compliance_status': data.get('compliance_status', 'Not started').lower().replace(' ', '_'),
+            'ai_act_role': ai_act_role,
+            'roles': roles,  # Store all roles
+            'vendor': vendor,  # For backward compatibility
+            'provider_type': provider_type,  # Store original provider type
+            'risk_classification': risk_classification,
+            'investment_type': 'internal',
+            'status': data.get('status', 'Planned'),
+            'deployment_context': data.get('deployment_context', ''),
+            'eu_eea_relevance': data.get('eu_eea_relevance', 'Unknown')
+        }
+        
+        # Add document if provided
+        if data.get('document'):
+            new_agent['document'] = data['document']
+        
+        # Add to list
+        existing_agents.append(new_agent)
+        
+        # Save to JSON file
+        with open(agents_file, 'w', encoding='utf-8') as f:
+            json.dump(existing_agents, f, indent=2, ensure_ascii=False)
+        
+        logger.info(f"Created new AI system: {new_agent['name']} (ID: {next_id})")
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'AI System created successfully',
+            'system_id': next_id
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'success': False,
+            'error': 'Invalid JSON in request body'
+        }, status=400)
+    except Exception as e:
+        logger.error(f"Error creating AI system: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'error': f'An error occurred: {str(e)}'
+        }, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def api_delete_ai_inventory_systems(request):
+    """
+    Delete AI systems from inventory.
+    
+    Expected JSON body:
+    {
+        "system_ids": [1, 2, 3]
+    }
+    """
+    import logging
+    from pathlib import Path
+    
+    logger = logging.getLogger(__name__)
+    
+    try:
+        data = json.loads(request.body)
+        system_ids = data.get('system_ids', [])
+        
+        if not system_ids:
+            return JsonResponse({
+                'success': False,
+                'error': 'No system IDs provided'
+            }, status=400)
+        
+        # Get path to agents.json file
+        mock_data_dir = Path(__file__).parent.parent / 'mock_data'
+        agents_file = mock_data_dir / 'agents.json'
+        
+        # Load existing agents
+        existing_agents = []
+        if agents_file.exists():
+            try:
+                with open(agents_file, 'r', encoding='utf-8') as f:
+                    existing_agents = json.load(f)
+            except Exception as e:
+                logger.warning(f"Could not load existing agents: {e}")
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Could not load agents data'
+                }, status=500)
+        
+        # Convert system_ids to integers and ensure they match agent IDs
+        system_ids_int = [int(sid) for sid in system_ids]
+        
+        # Filter out deleted agents - compare IDs as integers
+        original_count = len(existing_agents)
+        remaining_agents = []
+        deleted_ids = []
+        
+        for agent in existing_agents:
+            agent_id = agent.get('id')
+            # Convert agent_id to int if it's not already
+            if isinstance(agent_id, str):
+                try:
+                    agent_id = int(agent_id)
+                except (ValueError, TypeError):
+                    pass
+            
+            if agent_id in system_ids_int:
+                deleted_ids.append(agent_id)
+            else:
+                remaining_agents.append(agent)
+        
+        deleted_count = original_count - len(remaining_agents)
+        
+        if deleted_count == 0:
+            logger.warning(f"No systems found to delete. Requested IDs: {system_ids_int}, Available IDs: {[a.get('id') for a in existing_agents]}")
+            return JsonResponse({
+                'success': False,
+                'error': f'No systems found to delete. Requested IDs: {system_ids_int}'
+            }, status=404)
+        
+        # Save updated list
+        with open(agents_file, 'w', encoding='utf-8') as f:
+            json.dump(remaining_agents, f, indent=2, ensure_ascii=False)
+        
+        logger.info(f"Deleted {deleted_count} AI system(s): {system_ids}")
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Successfully deleted {deleted_count} system(s)',
+            'deleted_count': deleted_count
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'success': False,
+            'error': 'Invalid JSON in request body'
+        }, status=400)
+    except Exception as e:
+        logger.error(f"Error deleting AI systems: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'error': f'An error occurred: {str(e)}'
+        }, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def api_export_ai_inventory(request):
+    """
+    Export AI systems to CSV format.
+    Returns CSV file with all AI systems data.
+    """
+    import logging
+    import csv
+    from io import StringIO
+    from django.http import HttpResponse
+    
+    logger = logging.getLogger(__name__)
+    
+    try:
+        # Get mock data
+        agents_data = get_mock_agents()
+        
+        # Create CSV content
+        output = StringIO()
+        writer = csv.writer(output)
+        
+        # Write headers - match template format (Last Updated is auto-generated, not in template)
+        headers = [
+            'AI System Name',
+            'Owner (Person / Team)',
+            'Status',
+            'Role',
+            'Risk Classification',
+            'Compliance Status',
+            'Provider Type',
+            'Deployment Context',
+            'EU / EEA Relevance'
+        ]
+        writer.writerow(headers)
+        
+        # Status mapping
+        status_map = {
+            'assessing': 'In progress',
+            'reviewing': 'In progress',
+            'compliant': 'In production',
+            'non_compliant': 'Testing',
+            'planned': 'Planned',
+        }
+        
+        # Role mapping
+        role_map = {
+            'deployer': 'Deployer',
+            'provider': 'Provider',
+            'importer': 'Importer',
+            'distributor': 'Distributor',
+        }
+        
+        # Risk classification mapping
+        risk_map = {
+            'limited_risks': 'Limited transparency',
+            'high_risks': 'High-risk',
+            'minimal_risks': 'Minimal',
+            'not_assessed': 'Not assessed',
+        }
+        
+        # Compliance status mapping
+        compliance_map = {
+            'assessing': 'In progress',
+            'reviewing': 'In progress',
+            'compliant': 'Compliant',
+            'non_compliant': 'Not started',
+            'planned': 'Not started',
+        }
+        
+        # Provider type mapping (for backward compatibility)
+        provider_type_map = {
+            '': 'In-house',
+            'DTM': 'In-house',
+            'DT Master Nature': 'In-house',
+            'Cleary': 'External',
+        }
+        
+        # Write data rows
+        for agent in agents_data:
+            compliance_status = agent.get('compliance_status', 'assessing')
+            status = status_map.get(compliance_status, 'Planned')
+            if compliance_status == 'planned':
+                status = 'Planned'
+            
+            # Get roles - support both old and new format
+            roles = agent.get('roles', [])
+            if not roles and agent.get('ai_act_role'):
+                roles = [agent.get('ai_act_role')]
+            
+            roles_display = [role_map.get(role.lower(), role.title()) for role in roles]
+            role_display = ', '.join(roles_display) if roles_display else 'Not specified'
+            
+            risk_class = agent.get('risk_classification', 'limited_risks')
+            risk_display = risk_map.get(risk_class, 'Not assessed')
+            
+            compliance_display = compliance_map.get(compliance_status, 'Not started')
+            
+            # Get provider type - use provider_type field if available, otherwise map from vendor
+            if 'provider_type' in agent:
+                provider_type = agent.get('provider_type', 'Unknown')
+            else:
+                # Backward compatibility: map from vendor
+                vendor = agent.get('vendor', '')
+                provider_type = provider_type_map.get(vendor, 'Mixed' if vendor else 'In-house')
+            
+            owner = agent.get('business_unit', '') or '—'
+            
+            # Get deployment context and EU/EEA relevance
+            deployment_context = agent.get('deployment_context', 'Workplace')
+            eu_eea_relevance = agent.get('eu_eea_relevance', 'Unknown')
+            
+            # Mock last updated (use current date for simplicity)
+            from datetime import datetime
+            last_updated = datetime.now().strftime('%b %d, %Y')
+            
+            writer.writerow([
+                agent.get('name', 'Unnamed System'),
+                owner,
+                status,
+                role_display,
+                risk_display,
+                compliance_display,
+                provider_type,
+                deployment_context,
+                eu_eea_relevance
+            ])
+        
+        # Get CSV content
+        csv_content = output.getvalue()
+        output.close()
+        
+        # Return CSV as HTTP response
+        response = HttpResponse(csv_content, content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = 'attachment; filename="ai_systems_export.csv"'
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error exporting AI inventory: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'error': f'An error occurred: {str(e)}'
+        }, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def api_import_ai_inventory(request):
+    """
+    Import AI systems from CSV file.
+    
+    Expected JSON body:
+    {
+        "file_url": "/static/governance/uploads/uuid.csv",
+        "file_path": "governance/uploads/uuid.csv",
+        "file_name": "import.csv"
+    }
+    """
+    import logging
+    import csv
+    from pathlib import Path
+    from django.conf import settings
+    
+    logger = logging.getLogger(__name__)
+    
+    try:
+        data = json.loads(request.body)
+        file_path = data.get('file_path', '')
+        file_url = data.get('file_url', '')
+        
+        if not file_path:
+            return JsonResponse({
+                'success': False,
+                'error': 'File path not provided'
+            }, status=400)
+        
+        # Get static directory
+        BASE_DIR = Path(__file__).parent.parent
+        static_dir = settings.STATICFILES_DIRS[0] if settings.STATICFILES_DIRS else BASE_DIR / 'static'
+        full_file_path = static_dir / file_path
+        
+        if not full_file_path.exists():
+            return JsonResponse({
+                'success': False,
+                'error': f'File not found: {file_path}'
+            }, status=404)
+        
+        # Read CSV file
+        imported_systems = []
+        with open(full_file_path, 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                imported_systems.append(row)
+        
+        # Get path to agents.json
+        mock_data_dir = Path(__file__).parent.parent / 'mock_data'
+        agents_file = mock_data_dir / 'agents.json'
+        
+        # Load existing agents
+        existing_agents = []
+        if agents_file.exists():
+            try:
+                with open(agents_file, 'r', encoding='utf-8') as f:
+                    existing_agents = json.load(f)
+            except Exception as e:
+                logger.warning(f"Could not load existing agents: {e}")
+        
+        # Find next ID
+        next_id = max([agent.get('id', 0) for agent in existing_agents], default=0) + 1
+        
+        # Map CSV data to agent format and add to list
+        for system_data in imported_systems:
+            # Map roles from CSV (could be comma-separated) - support both "Role" and "Role (Person / Team)" headers
+            roles_str = system_data.get('Role') or system_data.get('Role (Select all that apply)', 'Provider')
+            roles = [r.strip() for r in roles_str.split(',')] if roles_str else ['Provider']
+            
+            # Map status
+            status = system_data.get('Status', 'Planned')
+            compliance_status_map = {
+                'Planned': 'planned',
+                'In production': 'compliant',
+                'Testing': 'assessing',
+                'Retired': 'compliant'
+            }
+            compliance_status = compliance_status_map.get(status, 'planned')
+            
+            # Map risk classification
+            risk_display = system_data.get('Risk Classification', 'Not assessed')
+            risk_map = {
+                'Limited transparency': 'limited_risks',
+                'High-risk': 'high_risks',
+                'Minimal': 'minimal_risks',
+                'Not assessed': 'not_assessed',
+                'Prohibited': 'prohibited',
+                'Not in scope': 'not_in_scope'
+            }
+            risk_classification = risk_map.get(risk_display, 'not_assessed')
+            
+            # Map compliance status
+            compliance_display = system_data.get('Compliance Status', 'Not started')
+            compliance_map = {
+                'Not started': 'planned',
+                'In progress': 'assessing',
+                'Compliant': 'compliant',
+                'Non-compliant': 'non_compliant',
+            }
+            compliance_status = compliance_map.get(compliance_display, compliance_status)
+            
+            # Map provider type
+            provider_type = system_data.get('Provider Type', 'Unknown')
+            vendor_map = {
+                'In-house': '',
+                'External': 'External',
+                'Mixed': 'Mixed',
+                'Unknown': ''
+            }
+            vendor = vendor_map.get(provider_type, '')
+            
+            # Get deployment context and EU/EEA relevance (new fields)
+            deployment_context = system_data.get('Deployment Context', 'Workplace')
+            eu_eea_relevance = system_data.get('EU / EEA Relevance', 'Unknown')
+            
+            # Get owner - support both "Owner" and "Owner (Person / Team)" headers
+            owner = system_data.get('Owner (Person / Team)') or system_data.get('Owner', 'Not provided')
+            
+            new_agent = {
+                'id': next_id,
+                'name': system_data.get('AI System Name', 'Unnamed System'),
+                'business_unit': owner,
+                'compliance_status': compliance_status,
+                'ai_act_role': roles[0].lower() if roles else 'provider',
+                'roles': [r.title() for r in roles],  # Store as array
+                'vendor': vendor,  # For backward compatibility
+                'provider_type': provider_type,  # Store original provider type
+                'risk_classification': risk_classification,
+                'investment_type': 'internal',
+                'status': status,
+                'deployment_context': deployment_context,
+                'eu_eea_relevance': eu_eea_relevance
+            }
+            
+            existing_agents.append(new_agent)
+            next_id += 1
+        
+        # Save updated agents
+        with open(agents_file, 'w', encoding='utf-8') as f:
+            json.dump(existing_agents, f, indent=2, ensure_ascii=False)
+        
+        # Delete imported file after processing (no need to keep it)
+        try:
+            if full_file_path.exists():
+                full_file_path.unlink()
+                logger.info(f"Deleted imported file: {full_file_path}")
+        except Exception as e:
+            logger.warning(f"Could not delete imported file {full_file_path}: {e}")
+            # Continue even if file deletion fails
+        
+        logger.info(f"Imported {len(imported_systems)} AI system(s) from CSV")
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Successfully imported {len(imported_systems)} AI system(s)',
+            'imported_count': len(imported_systems)
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'success': False,
+            'error': 'Invalid JSON in request body'
+        }, status=400)
+    except Exception as e:
+        logger.error(f"Error importing AI inventory: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'error': f'An error occurred: {str(e)}'
+        }, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["GET", "POST"])
+def api_ai_system_detail_data(request, agent_id):
+    """
+    Get or save AI system detail data (Profile, Assessment, Result).
+    
+    GET: Returns detail data for the agent
+    POST: Saves detail data for the agent
+    
+    Expected JSON body (POST):
+    {
+        "profile": { ... },
+        "assessment": { ... },
+        "result": { ... },
+        "documents": [ ... ]
+    }
+    """
+    import logging
+    from pathlib import Path
+    
+    logger = logging.getLogger(__name__)
+    
+    try:
+        # Get path to agents.json file
+        mock_data_dir = Path(__file__).parent.parent / 'mock_data'
+        agents_file = mock_data_dir / 'agents.json'
+        
+        # Load existing agents
+        existing_agents = []
+        if agents_file.exists():
+            try:
+                with open(agents_file, 'r', encoding='utf-8') as f:
+                    existing_agents = json.load(f)
+            except Exception as e:
+                logger.warning(f"Could not load existing agents: {e}")
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Could not load agents data'
+                }, status=500)
+        
+        # Find agent by ID
+        agent = next((a for a in existing_agents if str(a.get('id')) == str(agent_id)), None)
+        
+        if not agent:
+            return JsonResponse({
+                'success': False,
+                'error': 'AI System not found'
+            }, status=404)
+        
+        if request.method == 'GET':
+            # Return detail data
+            detail_data = {
+                'profile': agent.get('profile', {}),
+                'assessment': agent.get('assessment', {}),
+                'result': agent.get('result', {}),
+                'documents': agent.get('documents', [])
+            }
+            
+            # If single document exists, convert to array
+            if agent.get('document') and not agent.get('documents'):
+                detail_data['documents'] = [agent.get('document')]
+            
+            return JsonResponse({
+                'success': True,
+                'data': detail_data
+            })
+        
+        else:  # POST
+            # Save detail data
+            data = json.loads(request.body)
+            
+            # Update agent with detail data
+            if 'profile' in data:
+                agent['profile'] = data['profile']
+                
+                # Run assessment logic when profile is saved (Block 1, 2, 3, 4 - run in parallel)
+                # This runs on BE as AI detection and assessment logic should be server-side
+                # Pass existing assessment state to preserve user confirmations
+                assessment_state = agent.get('assessment', {})
+                assessment_results = run_assessment_logic(agent['profile'], assessment_state)
+                agent['assessment'] = assessment_results
+                
+                # Preserve block1_state, block2_state, block3_state, and block4_state if exist
+                if 'block1_state' in assessment_state:
+                    agent['assessment']['block1_state'] = assessment_state['block1_state']
+                if 'block2_state' in assessment_state:
+                    agent['assessment']['block2_state'] = assessment_state['block2_state']
+                if 'block3_state' in assessment_state:
+                    agent['assessment']['block3_state'] = assessment_state['block3_state']
+                if 'block4_state' in assessment_state:
+                    agent['assessment']['block4_state'] = assessment_state['block4_state']
+                
+                logger.info(f"Ran assessment logic for AI system ID: {agent_id}")
+                
+            if 'assessment' in data:
+                agent['assessment'] = data['assessment']
+            if 'result' in data:
+                agent['result'] = data['result']
+            if 'documents' in data:
+                # Update documents array
+                agent['documents'] = data['documents']
+                # Also update single document field if only one document
+                if len(data['documents']) == 1:
+                    agent['document'] = data['documents'][0]
+                elif len(data['documents']) == 0:
+                    agent.pop('document', None)
+                    agent.pop('documents', None)
+            
+            # Update agent in list
+            for idx, a in enumerate(existing_agents):
+                if str(a.get('id')) == str(agent_id):
+                    existing_agents[idx] = agent
+                    break
+            
+            # Save updated agents
+            with open(agents_file, 'w', encoding='utf-8') as f:
+                json.dump(existing_agents, f, indent=2, ensure_ascii=False)
+            
+            logger.info(f"Saved detail data for AI system ID: {agent_id}")
+            
+            # Return assessment results if profile was updated
+            response_data = {
+                'success': True,
+                'message': 'Detail data saved successfully'
+            }
+            if 'profile' in data:
+                response_data['assessment'] = agent.get('assessment', {})
+            
+            return JsonResponse(response_data)
+        
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'success': False,
+            'error': 'Invalid JSON in request body'
+        }, status=400)
+    except Exception as e:
+        logger.error(f"Error handling AI system detail data: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'error': f'An error occurred: {str(e)}'
+        }, status=500)
+
+
+def ai_detects_prohibited_practice():
+    """
+    AI Detection Function (Random - will be updated later with actual AI logic).
+    Returns True if AI detects prohibited practice, False otherwise.
+    """
+    return False
+
+
+def run_assessment_logic(profile_data, assessment_state=None):
+    """
+    Run assessment logic for Block 1, 2, 3, 4 in parallel (based on flowchart).
+    
+    Args:
+        profile_data: Dictionary containing profile form data
+        assessment_state: Dictionary containing assessment state (block1_state, etc.)
+        
+    Returns:
+        Dictionary with assessment results for all blocks:
+        {
+            'block1': { 'status': '...', 'details': {...} },
+            'block2': { 'status': '...', 'details': {...} },
+            'block3': { 'status': '...', 'details': {...} },
+            'block4': { 'status': '...', 'details': {...} },
+            'block1_state': {...}  # Preserved state
+        }
+    """
+    if assessment_state is None:
+        assessment_state = {}
+    
+    block1_state = assessment_state.get('block1_state', {})
+    block2_state = assessment_state.get('block2_state', {})
+    
+    block1_result = get_block1_status(profile_data, block1_state)
+    block3_state = assessment_state.get('block3_state', {})
+    block4_state = assessment_state.get('block4_state', {})
+    
+    assessment_results = {
+        'block1': block1_result,
+        'block2': get_block2_status(profile_data, block1_result=block1_result, block2_state=block2_state),
+        'block3': get_block3_status(profile_data, block1_result=block1_result, block3_state=block3_state),
+        'block4': get_block4_status(profile_data, block1_result=block1_result, block4_state=block4_state)
+    }
+    
+    if block1_state:
+        assessment_results['block1_state'] = block1_state
+    if block2_state:
+        assessment_results['block2_state'] = block2_state
+    if block3_state:
+        assessment_results['block3_state'] = block3_state
+    if block4_state:
+        assessment_results['block4_state'] = block4_state
+    
+    return assessment_results
+
+
+def get_block1_status(profile_data, block1_state=None):
+    """
+    Block 1: Prohibited Practices Screening - Logic based on flowchart.
+    
+    Args:
+        profile_data: Dictionary containing profile form data
+        block1_state: Dictionary containing Block 1 state (confirmation, exception, etc.)
+    
+    Returns:
+        {
+            'status': 'PASS' | 'Triggered' | 'Needs Review' | 'Prohibited' | 'Exception claimed' | 'Not assessed',
+            'ai_detection': True/False,
+            'selected_practices': [...],
+            'details': {...}
+        }
+    """
+    if block1_state is None:
+        block1_state = {}
+    
+    # STEP 1: AI Detection (from flowchart - START point)
+    ai_detection_result = ai_detects_prohibited_practice()
+    
+    # STEP 2: Check Section 7 Capabilities, Q1 (from flowchart)
+    # Get capabilities from profile data
+    capability_practices = profile_data.get('capability_practices', [])
+    if not isinstance(capability_practices, list):
+        capability_practices = []
+    
+    # STEP 3: Check if no capabilities selected (from flowchart)
+    if len(capability_practices) == 0:
+        return {
+            'status': 'Not assessed',
+            'ai_detection': ai_detection_result,
+            'selected_practices': [],
+            'details': {'reason': 'No capabilities selected'}
+        }
+    
+    # STEP 4: Check if "None of the above" selected (from flowchart)
+    none_selected = 'None of the above' in capability_practices
+    
+    # From flowchart: "Status: Not assessed" if "'None of the above' selected + AI detection result = No"
+    if none_selected and not ai_detection_result:
+        return {
+            'status': 'Not assessed',
+            'ai_detection': ai_detection_result,
+            'selected_practices': [],
+            'details': {'reason': 'None of the above selected and AI detection = No'}
+        }
+    
+    # If "None of the above" selected but AI detected something, still return PASS
+    if none_selected:
+        return {
+            'status': 'PASS',
+            'ai_detection': ai_detection_result,
+            'selected_practices': [],
+            'details': {'reason': 'None of the above selected'}
+        }
+    
+    # STEP 5: Prohibited Practice Selected? (from flowchart)
+    # Prohibited practices mapping (from Block_1_Prohibited_Practices_Logic.md)
+    prohibited_practices_map = {
+        'Subliminal / manipulative / deceptive techniques that materially distort behaviour and are likely to cause significant harm': {
+            'label': 'Subliminal/manipulative/deceptive techniques',
+            'article': '5(1)(a)',
+            'has_exception': False,
+            'exception_condition': None
+        },
+        'Exploitation of vulnerabilities (age, disability, or social / economic situation) to distort behaviour likely causing significant harm': {
+            'label': 'Exploitation of vulnerabilities',
+            'article': '5(1)(b)',
+            'has_exception': False,
+            'exception_condition': None
+        },
+        'Social scoring leading to detrimental / unfavourable treatment (esp. unjustified / disproportionate)': {
+            'label': 'Social scoring',
+            'article': '5(1)(c)',
+            'has_exception': False,
+            'exception_condition': None
+        },
+        'Criminal offence risk assessment / prediction based solely on profiling or personality traits (individual predictive policing)': {
+            'label': 'Criminal offence risk assessment',
+            'article': '5(1)(d)',
+            'has_exception': True,
+            'exception_condition': 'AI system is used to support a human assessment based on objective and verifiable facts directly linked to criminal activity (not solely profiling). (Art.5(1)(d))'
+        },
+        'Untargeted scraping of facial images from the internet or CCTV to build / expand facial recognition databases': {
+            'label': 'Untargeted facial image scraping',
+            'article': '5(1)(e)',
+            'has_exception': False,
+            'exception_condition': None
+        },
+        'Emotion recognition in the workplace or in education settings': {
+            'label': 'Emotion recognition in workplace/education',
+            'article': '5(1)(f)',
+            'has_exception': True,
+            'exception_condition': 'AI system is for medical or safety reasons. (Art.5(1)(f))'
+        },
+        'Biometric categorisation that infers or predicts sensitive traits (e.g., race, political opinions, religion, trade union membership, sexual orientation)': {
+            'label': 'Biometric categorisation (sensitive traits)',
+            'article': '5(1)(g)',
+            'has_exception': True,
+            'exception_condition': 'AI system is for labelling or filtering of lawfully acquired biometric datasets, such as images, based on biometric data or categorizing of biometric data in the area of law enforcement. (Art.5(1)(g))'
+        },
+        'Real-time remote biometric identification (RBI) in publicly accessible spaces for law enforcement purposes': {
+            'label': 'Real-time remote biometric identification (RBI)',
+            'article': '5(1)(h)',
+            'has_exception': True,
+            'exception_condition': 'Only if strictly necessary for one of the listed objectives (victims / imminent serious threat / serious crime suspect) and with safeguards + authorisation requirements (Art. 5(2)–(7)).'
+        }
+    }
+    
+    # Get selected prohibited practices (excluding "None of the above")
+    selected_practices = [p for p in capability_practices if p != 'None of the above' and p in prohibited_practices_map]
+    
+    if len(selected_practices) == 0:
+        # No prohibited practices selected
+        return {
+            'status': 'PASS',
+            'ai_detection': ai_detection_result,
+            'selected_practices': [],
+            'details': {'reason': 'No prohibited practices selected'}
+        }
+    
+    # STEP 6: Prohibited Practice Selected = YES (from flowchart)
+    # Check if user has confirmed (from flowchart: "User Confirms")
+    prohibited_confirmed = block1_state.get('prohibited_confirmed', False)
+    
+    if not prohibited_confirmed:
+        # Status: "Triggered" (awaiting user confirmation)
+        return {
+            'status': 'Triggered',
+            'ai_detection': ai_detection_result,
+            'selected_practices': selected_practices,
+            'practices_info': {p: prohibited_practices_map[p] for p in selected_practices},
+            'details': {
+                'reason': 'Prohibited practices detected, awaiting confirmation',
+                'has_exception_available': any(prohibited_practices_map[p]['has_exception'] for p in selected_practices),
+                'has_no_exception': any(not prohibited_practices_map[p]['has_exception'] for p in selected_practices)
+            }
+        }
+    
+    # After user confirms - Check Exception Availability (from flowchart)
+    has_no_exception_practice = any(not prohibited_practices_map[p]['has_exception'] for p in selected_practices)
+    claiming_exception = block1_state.get('claiming_exception', '')
+    
+    # From flowchart: "All practices hasException: false" → "No Exception Available" → "Status: Prohibited"
+    if has_no_exception_practice or claiming_exception == 'No':
+        return {
+            'status': 'Prohibited',
+            'ai_detection': ai_detection_result,
+            'selected_practices': selected_practices,
+            'practices_info': {p: prohibited_practices_map[p] for p in selected_practices},
+            'details': {
+                'reason': 'No exception available or user declined exception',
+                'has_exception_available': False,
+                'has_no_exception': True
+            }
+        }
+    
+    # From flowchart: "At least one hasException: true" → "Exception Question"
+    if claiming_exception == '':
+        # User hasn't answered exception claim question yet
+        return {
+            'status': 'Triggered',
+            'ai_detection': ai_detection_result,
+            'selected_practices': selected_practices,
+            'practices_info': {p: prohibited_practices_map[p] for p in selected_practices},
+            'details': {
+                'reason': 'Awaiting exception claim decision',
+                'has_exception_available': True,
+                'has_no_exception': False
+            }
+        }
+    
+    # Exception Question: Does system fall under exception condition? (from flowchart)
+    exception_qualifies = block1_state.get('exception_qualifies', '')
+    
+    if exception_qualifies == 'No':
+        # From flowchart: "No" → "Status: Prohibited"
+        return {
+            'status': 'Prohibited',
+            'ai_detection': ai_detection_result,
+            'selected_practices': selected_practices,
+            'practices_info': {p: prohibited_practices_map[p] for p in selected_practices},
+            'details': {
+                'reason': 'Exception does not apply',
+                'has_exception_available': True,
+                'has_no_exception': False
+            }
+        }
+    
+    if exception_qualifies == 'Not sure':
+        # From flowchart: "Not sure" → "Status: Needs Review"
+        return {
+            'status': 'Needs Review',
+            'ai_detection': ai_detection_result,
+            'selected_practices': selected_practices,
+            'practices_info': {p: prohibited_practices_map[p] for p in selected_practices},
+            'details': {
+                'reason': 'Uncertain about exception qualification',
+                'has_exception_available': True,
+                'has_no_exception': False
+            }
+        }
+    
+    if exception_qualifies == 'Yes':
+        # From flowchart: "Yes" → "Ask for Evidence & check if Uploaded or Link Saved?"
+        exception_evidence_uploaded = block1_state.get('exception_evidence_uploaded', False)
+        exception_evidence_saved_link = block1_state.get('exception_evidence_saved_link', '')
+        
+        if exception_evidence_uploaded or exception_evidence_saved_link:
+            # From flowchart: "Yes" (evidence provided) → "Status: Exception claimed" → "Status: PASS"
+            return {
+                'status': 'Exception claimed',
+                'ai_detection': ai_detection_result,
+                'selected_practices': selected_practices,
+                'practices_info': {p: prohibited_practices_map[p] for p in selected_practices},
+                'details': {
+                    'reason': 'Exception claimed with evidence',
+                    'has_exception_available': True,
+                    'has_no_exception': False,
+                    'evidence_provided': True
+                }
+            }
+        else:
+            # From flowchart: "No" (no evidence) → "Status: Needs Review"
+            return {
+                'status': 'Needs Review',
+                'ai_detection': ai_detection_result,
+                'selected_practices': selected_practices,
+                'practices_info': {p: prohibited_practices_map[p] for p in selected_practices},
+                'details': {
+                    'reason': 'Exception qualifies but no evidence provided',
+                    'has_exception_available': True,
+                    'has_no_exception': False,
+                    'evidence_provided': False
+                }
+            }
+    
+    # Default: Still triggered if exception question not answered
+    return {
+        'status': 'Triggered',
+        'ai_detection': ai_detection_result,
+        'selected_practices': selected_practices,
+        'practices_info': {p: prohibited_practices_map[p] for p in selected_practices},
+        'details': {
+            'reason': 'Awaiting exception qualification answer',
+            'has_exception_available': True,
+            'has_no_exception': False
+        }
+    }
+
+
+def ai_detects_high_risk():
+    """
+    AI Detection for Block 2: High-Risk Classification (random placeholder).
+    Returns True if AI detects high-risk, False otherwise.
+    Image/flowchart: "AI Detects High-risk classification" → Yes = Trigger High-risk.
+    """
+    return False
+
+
+def get_block2_status(profile_data, block1_result=None, block2_state=None):
+    """
+    Block 2: High-Risk Classification - Logic theo flowchart image.
+    
+    Flowchart order:
+    1. AI Detects High-risk = Yes → Trigger High-risk (status Triggered)
+    2. AI = No → Check Block 1: Block 1 = Prohibited → Trigger High-risk; ≠ Prohibited → Section 4
+    3. Section 4 (Q3 Safety, Q2 Sector): Not all answered → Not assessed; All answered → Condition 1/2
+    4. No conditions met → De-activated; Condition 1 or 2 or both → Trigger High-risk
+    5. Triggered + User Confirms → Condition 1 ONLY → High-risk; Condition 2 or Both → Annex III
+    6. Annex III: Q1 (Material influence) → Q2 (Task type) → Q3 (Profiling) → Evidence
+    """
+    if block2_state is None:
+        block2_state = {}
+    ip = profile_data.get('intended_purpose', {}) or {}
+    sector_domain = ip.get('sector_domain') or []
+    if not isinstance(sector_domain, list):
+        sector_domain = []
+    safety_component = ip.get('safety_component', '')
+    third_party_conformity = ip.get('third_party_conformity', '')
+
+    # 1) AI Detects High-risk = Yes → Trigger High-risk (flowchart)
+    # IMPORTANT: If user already confirmed, return High-risk (prevents confirmation being
+    # overridden by the random AI-detection placeholder on subsequent re-runs).
+    if ai_detects_high_risk():
+        high_risk_confirmed = block2_state.get('high_risk_confirmed', False)
+        if high_risk_confirmed:
+            return {
+                'status': 'High-risk',
+                'details': {
+                    'reason': 'AI detected high-risk classification, user confirmed',
+                    'trigger': 'ai_detection',
+                },
+            }
+        return {
+            'status': 'Triggered',
+            'details': {
+                'reason': 'AI detected high-risk classification',
+                'trigger': 'ai_detection',
+                'condition1': False,
+                'condition2': False,
+            },
+        }
+
+    # 2) Check Block 1 Status (flowchart)
+    block1_prohibited = False
+    if block1_result is not None:
+        s = block1_result.get('status', '') if isinstance(block1_result, dict) else str(block1_result)
+        block1_prohibited = (s == 'Prohibited')
+
+    if block1_prohibited:
+        high_risk_confirmed = block2_state.get('high_risk_confirmed', False)
+        if high_risk_confirmed:
+            return {
+                'status': 'High-risk',
+                'details': {
+                    'reason': 'Block 1 Prohibited, user confirmed high-risk',
+                    'trigger': 'block1_prohibited',
+                },
+            }
+        return {
+            'status': 'Triggered',
+            'details': {
+                'reason': 'Block 1 Prohibited – high-risk trigger; confirm or edit profile',
+                'trigger': 'block1_prohibited',
+            },
+        }
+
+    # 3) Section 4: Q3 Safety Component?, Q2 Sector Selected? – “Not all answered” → Not assessed
+    has_sector = len(sector_domain) > 0
+    has_safety = safety_component != ''
+    if not has_sector and not has_safety:
+        return {
+            'status': 'Not assessed',
+            'details': {'reason': 'Section 4 not answered (Q2 Sector, Q3 Safety)'},
+        }
+    if safety_component == 'Yes' and third_party_conformity == '':
+        return {
+            'status': 'Not assessed',
+            'details': {'reason': 'Safety component Yes but third-party conformity not answered'},
+        }
+
+    # 4) Condition 1 (Safety + Third-party) / Condition 2 (Sector selected)
+    condition1 = safety_component == 'Yes' and third_party_conformity == 'Yes'
+    condition2 = any(
+        s not in ('Other / not listed', 'Other / not listed:', '')
+        for s in sector_domain
+    )
+
+    if not condition1 and not condition2:
+        return {
+            'status': 'De-activated',
+            'details': {
+                'reason': 'No high-risk conditions met',
+                'condition1': False,
+                'condition2': False,
+            },
+        }
+
+    # 5) Condition 1 or 2 or both → Trigger; nếu chưa confirm → Triggered
+    high_risk_confirmed = block2_state.get('high_risk_confirmed', False)
+    if not high_risk_confirmed:
+        return {
+            'status': 'Triggered',
+            'details': {
+                'reason': 'High-risk conditions met, awaiting confirmation',
+                'condition1': condition1,
+                'condition2': condition2,
+                'trigger': 'both' if (condition1 and condition2) else ('condition1' if condition1 else 'condition2'),
+            },
+        }
+
+    # 6) User đã confirm → Which condition triggered?
+    # Condition 1 ONLY → Status: High-risk (flowchart)
+    if condition1 and not condition2:
+        return {
+            'status': 'High-risk',
+            'details': {
+                'reason': 'Safety component + third-party conformity (Condition 1 only)',
+                'condition1': True,
+                'condition2': False,
+            },
+        }
+
+    # 7) Condition 2 or Both → Annex III Exemption Test (flowchart)
+    material_influence = block2_state.get('material_influence', '')
+    narrow_tasks = block2_state.get('narrow_tasks') or []
+    if not isinstance(narrow_tasks, list):
+        narrow_tasks = []
+    profiling = block2_state.get('profiling', '')
+    exemption_evidence = block2_state.get('exemption_evidence_uploaded', False) or bool(
+        (block2_state.get('exemption_evidence_saved_link') or '').strip()
+    )
+
+    # Q1: Material Influence or Significant Risk?
+    if material_influence == 'Not sure':
+        return {
+            'status': 'Needs Review',
+            'details': {
+                'reason': 'Annex III Q1: Not sure – needs review',
+                'condition1': condition1,
+                'condition2': condition2,
+                'step': 'q1',
+            },
+        }
+    if material_influence == 'Yes':
+        return {
+            'status': 'Not high-risk',
+            'details': {
+                'reason': 'Annex III Q1: Material influence Yes → Not high-risk (per flowchart)',
+                'condition1': condition1,
+                'condition2': condition2,
+                'step': 'q1',
+            },
+        }
+
+    if material_influence != 'No':
+        return {
+            'status': 'Triggered',
+            'details': {
+                'reason': 'Annex III: awaiting Q1 (Material influence)',
+                'condition1': condition1,
+                'condition2': condition2,
+                'step': 'q1',
+            },
+        }
+
+    # Q2: Task Type Selection
+    none_of_above = 'None of above' in narrow_tasks or 'None of above' in [str(x) for x in narrow_tasks]
+    specific_tasks = [t for t in narrow_tasks if t and str(t).strip() and str(t) != 'None of above']
+    if not specific_tasks and not none_of_above:
+        return {
+            'status': 'Triggered',
+            'details': {
+                'reason': 'Annex III: awaiting Q2 (Task type selection)',
+                'condition1': condition1,
+                'condition2': condition2,
+                'step': 'q2',
+            },
+        }
+    if none_of_above:
+        return {
+            'status': 'Needs Review',
+            'details': {
+                'reason': 'Annex III Q2: None of above → Needs review (per flowchart)',
+                'condition1': condition1,
+                'condition2': condition2,
+                'step': 'q2',
+            },
+        }
+
+    # Q3: Performs Profiling?
+    if profiling == 'Unknown':
+        return {
+            'status': 'Needs Review',
+            'details': {
+                'reason': 'Annex III Q3: Profiling Unknown → Needs review',
+                'condition1': condition1,
+                'condition2': condition2,
+                'step': 'q3',
+            },
+        }
+    if profiling == 'Yes':
+        return {
+            'status': 'High-risk',
+            'details': {
+                'reason': 'Annex III Q3: Profiling Yes → High-risk',
+                'condition1': condition1,
+                'condition2': condition2,
+                'step': 'q3',
+            },
+        }
+    if profiling != 'No':
+        return {
+            'status': 'Triggered',
+            'details': {
+                'reason': 'Annex III: awaiting Q3 (Profiling)',
+                'condition1': condition1,
+                'condition2': condition2,
+                'step': 'q3',
+            },
+        }
+
+    # Profiling = No → Evidence (flowchart: Ask for Evidence & check Uploaded or Link Saved?)
+    if exemption_evidence:
+        return {
+            'status': 'Not high-risk',
+            'details': {
+                'reason': 'Annex III: Profiling No + evidence provided → Not high-risk',
+                'condition1': condition1,
+                'condition2': condition2,
+                'step': 'evidence',
+            },
+        }
+    return {
+        'status': 'High-risk',
+        'details': {
+            'reason': 'Annex III: Profiling No but no exemption evidence yet',
+            'condition1': condition1,
+            'condition2': condition2,
+            'step': 'evidence',
+        },
+    }
+
+
+def get_block3_status(profile_data, block1_result=None, block3_state=None):
+    """
+    Block 3: Transparency Obligation - Logic theo flowchart image.
+    
+    Flowchart order:
+    1. Check Block 1 Status → Block 1 = Prohibited → De-activated
+    2. Block 1 ≠ Prohibited → Check 6 Trigger Conditions
+    3. Triggers + Unknowns và Questions not all answered → Not assessed
+    4. Triggers met → Status: Triggered
+    5. User Confirms → Exception Selection for Each Group
+    6. Valid exceptions for all groups → Evidence check
+    7. 'None of above' for any group → Applies
+    8. Incomplete selections → Needs Review
+    """
+    if block3_state is None:
+        block3_state = {}
+    
+    # 1) Check Block 1 Status (flowchart)
+    block1_prohibited = False
+    if block1_result is not None:
+        s = block1_result.get('status', '') if isinstance(block1_result, dict) else str(block1_result)
+        block1_prohibited = (s == 'Prohibited')
+    
+    if block1_prohibited:
+        return {
+            'status': 'De-activated',
+            'details': {'reason': 'Block 1 Prohibited - transparency obligation assessment not applicable'}
+        }
+    
+    # 2) Check 6 Trigger Conditions (flowchart)
+    capability_practices = profile_data.get('capability_practices', [])
+    if not isinstance(capability_practices, list):
+        capability_practices = []
+    
+    interacts_persons = profile_data.get('interacts_persons', '')
+    synthetic_content = profile_data.get('synthetic_content', [])
+    if not isinstance(synthetic_content, list):
+        synthetic_content = []
+    
+    deployment_context = profile_data.get('deployment_context', '')
+    affected_outputs = profile_data.get('affected_outputs', [])
+    if not isinstance(affected_outputs, list):
+        affected_outputs = []
+    
+    # Check if questions not all answered (flowchart: "Questions not all answered")
+    if len(capability_practices) == 0:
+        return {
+            'status': 'Not assessed',
+            'details': {'reason': 'Capabilities not answered (Section 7, Q1)'}
+        }
+    
+    # Get 6 trigger cases
+    triggers = []
+    
+    # Case 1: Biometric identification and categorisation
+    if any('Biometric identification and categorisation' in p for p in capability_practices):
+        triggers.append('case1')
+    
+    # Case 2: Emotion recognition in workplace/education
+    if any('Emotion recognition in the workplace or in education settings' in p for p in capability_practices):
+        triggers.append('case2')
+    
+    # Case 3: Biometric categorisation (sensitive traits)
+    if any('Biometric categorisation that infers or predicts sensitive traits' in p for p in capability_practices):
+        triggers.append('case3')
+    
+    # Case 4: Direct interaction with persons
+    if interacts_persons == 'Yes':
+        triggers.append('case4')
+    
+    # Case 5: Synthetic content (any choice other than No)
+    if len(synthetic_content) > 0 and 'No' not in synthetic_content:
+        triggers.append('case5')
+    
+    # Case 6: Citizens/residents OR General public facing
+    if 'Citizens / residents' in affected_outputs or deployment_context == 'General public / consumer-facing':
+        triggers.append('case6')
+    
+    # Check for unknowns (flowchart: "Triggers + Unknowns")
+    has_unknowns = (interacts_persons == 'Unknown')
+    
+    # 3) Triggers + Unknowns và Questions not all answered → Not assessed (flowchart)
+    if has_unknowns and len(triggers) > 0:
+        return {
+            'status': 'Not assessed',
+            'details': {
+                'reason': 'Triggers detected but questions not all answered (Unknown values)',
+                'triggers': triggers,
+                'has_unknowns': True
+            }
+        }
+    
+    # 4) No triggers met → Not Applicable (flowchart: implicit)
+    if len(triggers) == 0:
+        return {
+            'status': 'Not Applicable',
+            'details': {'reason': 'No transparency triggers detected'}
+        }
+    
+    # 5) Triggers met → Status: Triggered (flowchart)
+    transparency_confirmed = block3_state.get('transparency_confirmed', False)
+    
+    if not transparency_confirmed:
+        # Check if has unknowns (flowchart: "Triggers + Unknowns")
+        if has_unknowns:
+            return {
+                'status': 'Needs Review',
+                'details': {
+                    'reason': 'Triggers detected but Unknown values require review',
+                    'triggers': triggers,
+                    'has_unknowns': True
+                }
+            }
+        
+        return {
+            'status': 'Triggered',
+            'details': {
+                'reason': 'Transparency triggers detected, awaiting confirmation',
+                'triggers': triggers
+            }
+        }
+    
+    # 6) User Confirms → Exception Selection for Each Group (flowchart)
+    exception_options = block3_state.get('exception_options', [])
+    if not isinstance(exception_options, list):
+        exception_options = []
+    
+    # Map triggers to case groups
+    case_groups = []
+    if 'case1' in triggers or 'case2' in triggers or 'case3' in triggers:
+        case_groups.append('group1_2_3')  # Biometric/Emotion
+    if 'case4' in triggers:
+        case_groups.append('group4')  # Direct interaction
+    if 'case5' in triggers:
+        case_groups.append('group5')  # Synthetic content
+    if 'case6' in triggers:
+        case_groups.append('group6')  # Citizens/Public
+    
+    # Exception options by group
+    group1_2_3_options = [
+        'Permitted by law to detect, prevent or investigate criminal offences, as stated in Art. 50(3)',
+        'None of the above (no exception for biometric/emotion recognition cases)'
+    ]
+    group4_options = [
+        '"Obvious to the user" exception (no notice needed), as stated in Art. 50(1)',
+        'Authorised by law to detect, prevent, investigate or prosecute criminal offences, as stated in Art. 50(1)',
+        'None of the above (no exception for direct interaction case)'
+    ]
+    group5_options = [
+        'Deepfake labelling exception (e.g., artistic / satire / fiction), as stated in Art. 50(4)',
+        'None of the above (no exception for synthetic content case)'
+    ]
+    group6_options = [
+        'Authorised by law to detect, prevent, investigate or prosecute criminal offences, as stated in Art. 50(4)',
+        'Human review is in place or a natural or legal person holds editorial responsibility for the publication of the content, as stated in Art. 50(4)',
+        'None of the above (no exception for citizens/public-facing case)'
+    ]
+    
+    # Check if "None of above" for any group (flowchart)
+    has_no_exception = False
+    for opt in exception_options:
+        if 'None of the above' in opt:
+            has_no_exception = True
+            break
+    
+    if has_no_exception:
+        return {
+            'status': 'Applies',
+            'details': {
+                'reason': '"None of the above" selected for at least one case group - transparency obligations apply',
+                'triggers': triggers,
+                'case_groups': case_groups
+            }
+        }
+    
+    # Check if valid exceptions for all groups (flowchart)
+    has_exception_for_all = True
+    if 'group1_2_3' in case_groups:
+        has_group1_2_3 = any(opt in group1_2_3_options and 'None of the above' not in opt for opt in exception_options)
+        if not has_group1_2_3:
+            has_exception_for_all = False
+    if 'group4' in case_groups:
+        has_group4 = any(opt in group4_options and 'None of the above' not in opt for opt in exception_options)
+        if not has_group4:
+            has_exception_for_all = False
+    if 'group5' in case_groups:
+        has_group5 = any(opt in group5_options and 'None of the above' not in opt for opt in exception_options)
+        if not has_group5:
+            has_exception_for_all = False
+    if 'group6' in case_groups:
+        has_group6 = any(opt in group6_options and 'None of the above' not in opt for opt in exception_options)
+        if not has_group6:
+            has_exception_for_all = False
+    
+    # 7) Incomplete selections → Needs Review (flowchart)
+    if not has_exception_for_all:
+        return {
+            'status': 'Needs Review',
+            'details': {
+                'reason': 'Incomplete exception selections - not all case groups have valid exceptions',
+                'triggers': triggers,
+                'case_groups': case_groups
+            }
+        }
+    
+    # 8) Valid exceptions for all groups → Evidence check (flowchart)
+    evidence_uploaded = block3_state.get('transparency_evidence_uploaded', False)
+    evidence_saved_link = block3_state.get('transparency_evidence_saved_link', '')
+    evidence_provided = evidence_uploaded or bool((evidence_saved_link or '').strip())
+    
+    if evidence_provided:
+        return {
+            'status': 'Not Applicable',
+            'details': {
+                'reason': 'Valid exceptions for all groups with evidence provided - transparency obligations do not apply',
+                'triggers': triggers,
+                'case_groups': case_groups
+            }
+        }
+    else:
+        return {
+            'status': 'Needs Review',
+            'details': {
+                'reason': 'Valid exceptions for all groups but evidence not provided - needs review',
+                'triggers': triggers,
+                'case_groups': case_groups
+            }
+        }
+
+
+def get_block4_status(profile_data, block1_result=None, block4_state=None):
+    """
+    Block 4: GPAI Obligation - Logic theo flowchart image.
+    
+    Flowchart order:
+    1. Check Block 1 Status → Block 1 = Prohibited → De-activated
+    2. Block 1 ≠ Prohibited → Q2: Is this GPAI or integrates one?
+    3. Q2 Not answered → Not assessed
+    4. Q2 No → Needs Review
+    5. Q2 Unknown → Triggered → Needs Review
+    6. Q2 Yes → Show Reason Confirm or Edit?
+    7. User Confirms → Are you the provider of AI model?
+       - No → Not Applicable
+       - Yes → Applies
+       - Not sure → Needs Review
+       - No selection → Needs Review
+    """
+    if block4_state is None:
+        block4_state = {}
+    
+    # 1) Check Block 1 Status (flowchart)
+    block1_prohibited = False
+    if block1_result is not None:
+        s = block1_result.get('status', '') if isinstance(block1_result, dict) else str(block1_result)
+        block1_prohibited = (s == 'Prohibited')
+    
+    if block1_prohibited:
+        return {
+            'status': 'De-activated',
+            'details': {'reason': 'Block 1 Prohibited - GPAI obligation assessment not applicable'}
+        }
+    
+    # 2) Q2: Is this GPAI or integrates one? (flowchart)
+    gpai_integration = profile_data.get('gpai_integration', '')
+    
+    # 3) Q2 Not answered → Not assessed (flowchart)
+    if gpai_integration == '':
+        return {
+            'status': 'Not assessed',
+            'details': {'reason': 'GPAI integration question not answered (Section 8, Q2)'}
+        }
+    
+    # 4) Q2 No → Needs Review (flowchart)
+    if gpai_integration == 'No':
+        return {
+            'status': 'Needs Review',
+            'details': {'reason': 'GPAI integration = No - needs review (per flowchart)'}
+        }
+    
+    # 5) Q2 Unknown → Triggered → Needs Review (flowchart)
+    if gpai_integration == 'Unknown':
+        gpai_confirmed = block4_state.get('gpai_confirmed', False)
+        if not gpai_confirmed:
+            return {
+                'status': 'Triggered',
+                'details': {
+                    'reason': 'GPAI integration = Unknown - triggered, awaiting confirmation',
+                    'gpai_integration': 'Unknown'
+                }
+            }
+        # After confirmation, Unknown leads to Needs Review
+        return {
+            'status': 'Needs Review',
+            'details': {'reason': 'GPAI integration = Unknown - requires review'}
+        }
+    
+    # 6) Q2 Yes → Show Reason Confirm or Edit? (flowchart)
+    if gpai_integration == 'Yes':
+        gpai_confirmed = block4_state.get('gpai_confirmed', False)
+        
+        if not gpai_confirmed:
+            return {
+                'status': 'Triggered',
+                'details': {
+                    'reason': 'GPAI integration = Yes - awaiting confirmation',
+                    'gpai_integration': 'Yes'
+                }
+            }
+        
+        # 7) User Confirms → Are you the provider of AI model? (flowchart)
+        gpai_provider_answer = block4_state.get('gpai_provider_answer', '')
+        
+        # No selection → Needs Review (flowchart)
+        if gpai_provider_answer == '':
+            return {
+                'status': 'Needs Review',
+                'details': {
+                    'reason': 'GPAI integration confirmed but provider question not answered',
+                    'gpai_integration': 'Yes'
+                }
+            }
+        
+        # No → Not Applicable (flowchart)
+        if gpai_provider_answer == 'No':
+            return {
+                'status': 'Not Applicable',
+                'details': {
+                    'reason': 'GPAI integration = Yes but not a provider - Chapter V does not apply',
+                    'gpai_integration': 'Yes',
+                    'gpai_provider_answer': 'No'
+                }
+            }
+        
+        # Not sure → Needs Review (flowchart)
+        if gpai_provider_answer == 'Not sure':
+            return {
+                'status': 'Needs Review',
+                'details': {
+                    'reason': 'GPAI provider status uncertain - requires review',
+                    'gpai_integration': 'Yes',
+                    'gpai_provider_answer': 'Not sure'
+                }
+            }
+        
+        # Yes → Applies (flowchart)
+        if gpai_provider_answer == 'Yes':
+            return {
+                'status': 'Applies',
+                'details': {
+                    'reason': 'GPAI provider - Chapter V obligations apply',
+                    'gpai_integration': 'Yes',
+                    'gpai_provider_answer': 'Yes'
+                }
+            }
+    
+    # Default fallback
+    return {
+        'status': 'Not assessed',
+        'details': {'reason': 'GPAI integration status unclear'}
+    }
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def api_update_block2_state(request, agent_id):
+    """
+    Update Block 2 assessment state (confirmation, Annex III answers, evidence, etc.).
+    
+    Expected JSON body:
+    {
+        "high_risk_confirmed": true/false,
+        "material_influence": "Yes" | "No" | "Not sure" | "",
+        "narrow_tasks": ["task1", "task2", ...],
+        "profiling": "Yes" | "No" | "Unknown" | "",
+        "exemption_evidence_uploaded": true/false,
+        "exemption_evidence_saved_link": "url string"
+    }
+    """
+    import logging
+    from pathlib import Path
+    
+    logger = logging.getLogger(__name__)
+    
+    try:
+        # Get path to agents.json file
+        mock_data_dir = Path(__file__).parent.parent / 'mock_data'
+        agents_file = mock_data_dir / 'agents.json'
+        
+        # Load existing agents
+        existing_agents = []
+        if agents_file.exists():
+            try:
+                with open(agents_file, 'r', encoding='utf-8') as f:
+                    existing_agents = json.load(f)
+            except Exception as e:
+                logger.warning(f"Could not load existing agents: {e}")
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Could not load agents data'
+                }, status=500)
+        
+        # Find agent by ID
+        agent = next((a for a in existing_agents if str(a.get('id')) == str(agent_id)), None)
+        
+        if not agent:
+            return JsonResponse({
+                'success': False,
+                'error': 'AI System not found'
+            }, status=404)
+        
+        # Get state update data
+        data = json.loads(request.body)
+        
+        # Initialize assessment if not exists
+        if 'assessment' not in agent:
+            agent['assessment'] = {}
+        
+        # Initialize block2_state if not exists
+        if 'block2_state' not in agent['assessment']:
+            agent['assessment']['block2_state'] = {
+                'high_risk_confirmed': False,
+                'material_influence': '',
+                'narrow_tasks': [],
+                'profiling': '',
+                'exemption_evidence_uploaded': False,
+                'exemption_evidence_saved_link': ''
+            }
+        
+        # Update block2_state
+        block2_state = agent['assessment']['block2_state']
+        
+        if 'high_risk_confirmed' in data:
+            block2_state['high_risk_confirmed'] = bool(data['high_risk_confirmed'])
+        if 'material_influence' in data:
+            block2_state['material_influence'] = data.get('material_influence', '')
+        if 'narrow_tasks' in data:
+            block2_state['narrow_tasks'] = data.get('narrow_tasks', [])
+        if 'profiling' in data:
+            block2_state['profiling'] = data.get('profiling', '')
+        if 'exemption_evidence_uploaded' in data:
+            block2_state['exemption_evidence_uploaded'] = bool(data['exemption_evidence_uploaded'])
+        if 'exemption_evidence_saved_link' in data:
+            block2_state['exemption_evidence_saved_link'] = data.get('exemption_evidence_saved_link', '')
+        
+        # Re-run assessment logic to get updated status
+        if 'profile' in agent:
+            assessment_state = agent.get('assessment', {})
+            assessment_results = run_assessment_logic(agent['profile'], assessment_state)
+            agent['assessment'].update(assessment_results)
+        
+        # Update agent in list
+        for idx, a in enumerate(existing_agents):
+            if str(a.get('id')) == str(agent_id):
+                existing_agents[idx] = agent
+                break
+        
+        # Save updated agents
+        with open(agents_file, 'w', encoding='utf-8') as f:
+            json.dump(existing_agents, f, indent=2, ensure_ascii=False)
+        
+        logger.info(f"Updated Block 2 state for AI system ID: {agent_id}")
+        
+        # Return updated assessment results
+        return JsonResponse({
+            'success': True,
+            'message': 'Block 2 state updated successfully',
+            'assessment': agent.get('assessment', {})
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'success': False,
+            'error': 'Invalid JSON in request body'
+        }, status=400)
+    except Exception as e:
+        logger.error(f"Error updating Block 2 state: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'error': f'An error occurred: {str(e)}'
+        }, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def api_update_block3_state(request, agent_id):
+    """
+    Update Block 3 assessment state (confirmation, exception options, evidence, etc.).
+    
+    Expected JSON body:
+    {
+        "transparency_confirmed": true/false,
+        "exception_options": ["option1", "option2", ...],
+        "transparency_evidence_uploaded": true/false,
+        "transparency_evidence_saved_link": "url string"
+    }
+    """
+    import logging
+    from pathlib import Path
+    
+    logger = logging.getLogger(__name__)
+    
+    try:
+        # Get path to agents.json file
+        mock_data_dir = Path(__file__).parent.parent / 'mock_data'
+        agents_file = mock_data_dir / 'agents.json'
+        
+        # Load existing agents
+        existing_agents = []
+        if agents_file.exists():
+            try:
+                with open(agents_file, 'r', encoding='utf-8') as f:
+                    existing_agents = json.load(f)
+            except Exception as e:
+                logger.warning(f"Could not load existing agents: {e}")
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Could not load agents data'
+                }, status=500)
+        
+        # Find agent by ID
+        agent = next((a for a in existing_agents if str(a.get('id')) == str(agent_id)), None)
+        
+        if not agent:
+            return JsonResponse({
+                'success': False,
+                'error': 'AI System not found'
+            }, status=404)
+        
+        # Get state update data
+        data = json.loads(request.body)
+        
+        # Initialize assessment if not exists
+        if 'assessment' not in agent:
+            agent['assessment'] = {}
+        
+        # Initialize block3_state if not exists
+        if 'block3_state' not in agent['assessment']:
+            agent['assessment']['block3_state'] = {
+                'transparency_confirmed': False,
+                'exception_options': [],
+                'transparency_evidence_uploaded': False,
+                'transparency_evidence_saved_link': ''
+            }
+        
+        # Update block3_state
+        block3_state = agent['assessment']['block3_state']
+        
+        if 'transparency_confirmed' in data:
+            block3_state['transparency_confirmed'] = bool(data['transparency_confirmed'])
+        if 'exception_options' in data:
+            block3_state['exception_options'] = data.get('exception_options', [])
+        if 'transparency_evidence_uploaded' in data:
+            block3_state['transparency_evidence_uploaded'] = bool(data['transparency_evidence_uploaded'])
+        if 'transparency_evidence_saved_link' in data:
+            block3_state['transparency_evidence_saved_link'] = data.get('transparency_evidence_saved_link', '')
+        
+        # Re-run assessment logic to get updated status
+        if 'profile' in agent:
+            assessment_state = agent.get('assessment', {})
+            assessment_results = run_assessment_logic(agent['profile'], assessment_state)
+            agent['assessment'].update(assessment_results)
+        
+        # Update agent in list
+        for idx, a in enumerate(existing_agents):
+            if str(a.get('id')) == str(agent_id):
+                existing_agents[idx] = agent
+                break
+        
+        # Save updated agents
+        with open(agents_file, 'w', encoding='utf-8') as f:
+            json.dump(existing_agents, f, indent=2, ensure_ascii=False)
+        
+        logger.info(f"Updated Block 3 state for AI system ID: {agent_id}")
+        
+        # Return updated assessment results
+        return JsonResponse({
+            'success': True,
+            'message': 'Block 3 state updated successfully',
+            'assessment': agent.get('assessment', {})
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'success': False,
+            'error': 'Invalid JSON in request body'
+        }, status=400)
+    except Exception as e:
+        logger.error(f"Error updating Block 3 state: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'error': f'An error occurred: {str(e)}'
+        }, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def api_update_block4_state(request, agent_id):
+    """
+    Update Block 4 assessment state (confirmation, provider answer, etc.).
+    
+    Expected JSON body:
+    {
+        "gpai_confirmed": true/false,
+        "gpai_provider_answer": "Yes" | "No" | "Not sure" | ""
+    }
+    """
+    import logging
+    from pathlib import Path
+    
+    logger = logging.getLogger(__name__)
+    
+    try:
+        # Get path to agents.json file
+        mock_data_dir = Path(__file__).parent.parent / 'mock_data'
+        agents_file = mock_data_dir / 'agents.json'
+        
+        # Load existing agents
+        existing_agents = []
+        if agents_file.exists():
+            try:
+                with open(agents_file, 'r', encoding='utf-8') as f:
+                    existing_agents = json.load(f)
+            except Exception as e:
+                logger.warning(f"Could not load existing agents: {e}")
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Could not load agents data'
+                }, status=500)
+        
+        # Find agent by ID
+        agent = next((a for a in existing_agents if str(a.get('id')) == str(agent_id)), None)
+        
+        if not agent:
+            return JsonResponse({
+                'success': False,
+                'error': 'AI System not found'
+            }, status=404)
+        
+        # Get state update data
+        data = json.loads(request.body)
+        
+        # Initialize assessment if not exists
+        if 'assessment' not in agent:
+            agent['assessment'] = {}
+        
+        # Initialize block4_state if not exists
+        if 'block4_state' not in agent['assessment']:
+            agent['assessment']['block4_state'] = {
+                'gpai_confirmed': False,
+                'gpai_provider_answer': ''
+            }
+        
+        # Update block4_state
+        block4_state = agent['assessment']['block4_state']
+        
+        if 'gpai_confirmed' in data:
+            block4_state['gpai_confirmed'] = bool(data['gpai_confirmed'])
+        if 'gpai_provider_answer' in data:
+            block4_state['gpai_provider_answer'] = data.get('gpai_provider_answer', '')
+        
+        # Re-run assessment logic to get updated status
+        if 'profile' in agent:
+            assessment_state = agent.get('assessment', {})
+            assessment_results = run_assessment_logic(agent['profile'], assessment_state)
+            agent['assessment'].update(assessment_results)
+        
+        # Update agent in list
+        for idx, a in enumerate(existing_agents):
+            if str(a.get('id')) == str(agent_id):
+                existing_agents[idx] = agent
+                break
+        
+        # Save updated agents
+        with open(agents_file, 'w', encoding='utf-8') as f:
+            json.dump(existing_agents, f, indent=2, ensure_ascii=False)
+        
+        logger.info(f"Updated Block 4 state for AI system ID: {agent_id}")
+        
+        # Return updated assessment results
+        return JsonResponse({
+            'success': True,
+            'message': 'Block 4 state updated successfully',
+            'assessment': agent.get('assessment', {})
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'success': False,
+            'error': 'Invalid JSON in request body'
+        }, status=400)
+    except Exception as e:
+        logger.error(f"Error updating Block 4 state: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'error': f'An error occurred: {str(e)}'
+        }, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def api_update_block1_state(request, agent_id):
+    """
+    Update Block 1 assessment state (confirmation, exception claim, etc.).
+    
+    Expected JSON body:
+    {
+        "prohibited_confirmed": true/false,
+        "claiming_exception": "Yes" | "No" | "",
+        "exception_qualifies": "Yes" | "No" | "Not sure" | "",
+        "exception_evidence_uploaded": true/false,
+        "exception_evidence_saved_link": "url string",
+        "no_exception_confirmed": true/false
+    }
+    """
+    import logging
+    from pathlib import Path
+    
+    logger = logging.getLogger(__name__)
+    
+    try:
+        # Get path to agents.json file
+        mock_data_dir = Path(__file__).parent.parent / 'mock_data'
+        agents_file = mock_data_dir / 'agents.json'
+        
+        # Load existing agents
+        existing_agents = []
+        if agents_file.exists():
+            try:
+                with open(agents_file, 'r', encoding='utf-8') as f:
+                    existing_agents = json.load(f)
+            except Exception as e:
+                logger.warning(f"Could not load existing agents: {e}")
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Could not load agents data'
+                }, status=500)
+        
+        # Find agent by ID
+        agent = next((a for a in existing_agents if str(a.get('id')) == str(agent_id)), None)
+        
+        if not agent:
+            return JsonResponse({
+                'success': False,
+                'error': 'AI System not found'
+            }, status=404)
+        
+        # Get state update data
+        data = json.loads(request.body)
+        
+        # Initialize assessment if not exists
+        if 'assessment' not in agent:
+            agent['assessment'] = {}
+        
+        # Initialize block1_state if not exists
+        if 'block1_state' not in agent['assessment']:
+            agent['assessment']['block1_state'] = {
+                'prohibited_confirmed': False,
+                'claiming_exception': '',
+                'exception_qualifies': '',
+                'exception_evidence_uploaded': False,
+                'exception_evidence_saved_link': '',
+                'no_exception_confirmed': False
+            }
+        
+        # Update block1_state
+        block1_state = agent['assessment']['block1_state']
+        
+        if 'prohibited_confirmed' in data:
+            block1_state['prohibited_confirmed'] = bool(data['prohibited_confirmed'])
+        if 'claiming_exception' in data:
+            block1_state['claiming_exception'] = data.get('claiming_exception', '')
+        if 'exception_qualifies' in data:
+            block1_state['exception_qualifies'] = data.get('exception_qualifies', '')
+        if 'exception_evidence_uploaded' in data:
+            block1_state['exception_evidence_uploaded'] = bool(data['exception_evidence_uploaded'])
+        if 'exception_evidence_saved_link' in data:
+            block1_state['exception_evidence_saved_link'] = data.get('exception_evidence_saved_link', '')
+        if 'no_exception_confirmed' in data:
+            block1_state['no_exception_confirmed'] = bool(data['no_exception_confirmed'])
+        
+        # Re-run assessment logic to get updated status
+        if 'profile' in agent:
+            assessment_state = agent.get('assessment', {})
+            assessment_results = run_assessment_logic(agent['profile'], assessment_state)
+            agent['assessment'].update(assessment_results)
+        
+        # Update agent in list
+        for idx, a in enumerate(existing_agents):
+            if str(a.get('id')) == str(agent_id):
+                existing_agents[idx] = agent
+                break
+        
+        # Save updated agents
+        with open(agents_file, 'w', encoding='utf-8') as f:
+            json.dump(existing_agents, f, indent=2, ensure_ascii=False)
+        
+        logger.info(f"Updated Block 1 state for AI system ID: {agent_id}")
+        
+        # Return updated assessment results
+        return JsonResponse({
+            'success': True,
+            'message': 'Block 1 state updated successfully',
+            'assessment': agent.get('assessment', {})
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'success': False,
+            'error': 'Invalid JSON in request body'
+        }, status=400)
+    except Exception as e:
+        logger.error(f"Error updating Block 1 state: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'error': f'An error occurred: {str(e)}'
+        }, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def api_delete_organization_files(request):
+    """
+    Delete files from organization.json and remove files from disk.
+    
+    Expected JSON body:
+    {
+        "files": [
+            {
+                "name": "filename.pdf",
+                "url": "/static/governance/uploads/organization/uuid.pdf",
+                "path": "governance/uploads/organization/uuid.pdf"
+            },
+            ...
+        ]
+    }
+    """
+    import logging
+    from pathlib import Path
+    from django.conf import settings
+    
+    logger = logging.getLogger(__name__)
+    
+    try:
+        data = json.loads(request.body)
+        files_to_delete = data.get('files', [])
+        
+        if not files_to_delete:
+            return JsonResponse({
+                'success': False,
+                'error': 'No files provided'
+            }, status=400)
+        
+        # Get paths
+        mock_data_dir = Path(__file__).parent.parent / 'mock_data'
+        org_file = mock_data_dir / 'organization.json'
+        
+        # Get static directory
+        BASE_DIR = Path(__file__).parent.parent
+        static_dir = settings.STATICFILES_DIRS[0] if settings.STATICFILES_DIRS else BASE_DIR / 'static'
+        
+        # Load existing organization data
+        existing_data = {}
+        if org_file.exists():
+            try:
+                with open(org_file, 'r', encoding='utf-8') as f:
+                    existing_data = json.load(f)
+            except Exception as e:
+                logger.warning(f"Could not load existing organization data: {e}")
+                existing_data = {}
+        
+        # Get documents array
+        documents = existing_data.get('documents', [])
+        
+        # Track deleted files
+        deleted_files = []
+        deleted_from_disk = []
+        errors = []
+        
+        # Process each file to delete
+        for file_info in files_to_delete:
+            file_name = file_info.get('name', '')
+            file_path = file_info.get('path', '')
+            file_url = file_info.get('url', '')
+            
+            if not file_name:
+                errors.append(f"Missing file name for file: {file_info}")
+                continue
+            
+            # Remove from documents array (match by name)
+            original_count = len(documents)
+            documents = [doc for doc in documents if doc.get('name') != file_name]
+            if len(documents) < original_count:
+                deleted_files.append(file_name)
+                logger.info(f"Removed {file_name} from documents array")
+            else:
+                logger.warning(f"File {file_name} not found in documents array")
+            
+            # Delete file from disk if path is provided
+            if file_path:
+                try:
+                    # Construct full file path
+                    full_file_path = static_dir / file_path
+                    
+                    if full_file_path.exists():
+                        full_file_path.unlink()
+                        deleted_from_disk.append(file_name)
+                        logger.info(f"Deleted file from disk: {full_file_path}")
+                    else:
+                        logger.warning(f"File not found on disk: {full_file_path}")
+                except Exception as e:
+                    error_msg = f"Error deleting file {file_name} from disk: {str(e)}"
+                    errors.append(error_msg)
+                    logger.error(error_msg)
+        
+        # Update organization.json with remaining documents
+        existing_data['documents'] = documents
+        
+        try:
+            with open(org_file, 'w', encoding='utf-8') as f:
+                json.dump(existing_data, f, indent=2, ensure_ascii=False)
+            logger.info(f"Updated organization.json after deleting {len(deleted_files)} file(s)")
+        except Exception as e:
+            error_msg = f"Error saving organization.json: {str(e)}"
+            errors.append(error_msg)
+            logger.error(error_msg)
+            return JsonResponse({
+                'success': False,
+                'error': error_msg
+            }, status=500)
+        
+        # Return success response
+        return JsonResponse({
+            'success': True,
+            'message': f'Successfully deleted {len(deleted_files)} file(s)',
+            'deleted_files': deleted_files,
+            'deleted_from_disk': deleted_from_disk,
+            'errors': errors if errors else None
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'success': False,
+            'error': 'Invalid JSON in request body'
+        }, status=400)
+    except Exception as e:
+        logger.error(f"Error deleting organization files: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'error': f'An error occurred: {str(e)}'
+        }, status=500)
+
+
 
 
 def ai_inventory(request):
@@ -1682,9 +4067,13 @@ def ai_inventory(request):
         # Get owner (business unit)
         owner = agent.get('business_unit', '') or '—'
         
-        # Get provider type
-        vendor = agent.get('vendor', '')
-        provider_type = provider_type_map.get(vendor, 'Mixed' if vendor else 'In-house')
+        # Get provider type - use provider_type field if available, otherwise map from vendor
+        if 'provider_type' in agent:
+            provider_type = agent.get('provider_type', 'Unknown')
+        else:
+            # Backward compatibility: map from vendor
+            vendor = agent.get('vendor', '')
+            provider_type = provider_type_map.get(vendor, 'Mixed' if vendor else 'In-house')
         
         # Generate mock last updated date (varying dates for different systems)
         # Use system index to create varied dates
@@ -1692,13 +4081,25 @@ def ai_inventory(request):
         last_updated_date = datetime.now() - timedelta(days=days_ago)
         last_updated = last_updated_date.strftime('%b %d, %Y')
         
+        # Get roles - support both old format (ai_act_role) and new format (roles array)
+        roles = agent.get('roles', [])
+        if not roles and agent.get('ai_act_role'):
+            # Backward compatibility: convert single role to array
+            roles = [agent.get('ai_act_role')]
+        
+        # Map roles to display names
+        roles_display = [role_map.get(role.lower(), role.title()) for role in roles]
+        role_display = ', '.join(roles_display) if roles_display else 'Not specified'
+        
         ai_systems.append({
             'id': agent.get('id'),
             'name': agent.get('name', 'Unnamed System'),
             'owner': owner,
             'status': status,
             'status_badge_class': status_badge_classes.get(status, 'bg-gray-100 text-gray-700'),
-            'role': role_map.get(agent.get('ai_act_role', 'deployer'), 'Deployer'),
+            'role': role_display,
+            'roles': roles_display,  # Array for filtering
+            'roles_raw': [r.lower() for r in roles],  # Raw lowercase for filter matching
             'risk_classification': risk_display,
             'risk_badge_class': risk_badge_classes.get(risk_display, 'bg-gray-100 text-gray-700'),
             'compliance_status': compliance_display,
@@ -1725,7 +4126,7 @@ def ai_system_detail(request, agent_id):
     
     company = MockCompany()
     
-    # Get agent data
+    # Get agent data from agents.json
     agents_data = get_mock_agents()
     agent = next((a for a in agents_data if str(a.get('id')) == str(agent_id)), None)
     
@@ -1733,12 +4134,60 @@ def ai_system_detail(request, agent_id):
         from django.http import Http404
         raise Http404("AI System not found")
     
-    # Mock uploaded documents for Profile tab
-    uploaded_documents = [
-        {'name': 'Company_Registration.pdf', 'uploaded': '2 mins ago'},
-        {'name': 'AI_Policy_Document.docx', 'uploaded': '5 mins ago'},
-        {'name': 'Compliance_Report_2024.pdf', 'uploaded': '10 mins ago'},
-    ]
+    # Load uploaded documents from agent data (if document field exists)
+    uploaded_documents = []
+    if agent.get('document'):
+        # Single document
+        doc = agent.get('document')
+        from datetime import datetime
+        uploaded_at = doc.get('uploaded_at', datetime.now().isoformat())
+        try:
+            uploaded_date = datetime.fromisoformat(uploaded_at.replace('Z', '+00:00'))
+            time_ago = (datetime.now() - uploaded_date.replace(tzinfo=None)).total_seconds() / 60
+            if time_ago < 1:
+                uploaded_text = 'just now'
+            elif time_ago < 60:
+                uploaded_text = f'{int(time_ago)} mins ago'
+            elif time_ago < 1440:
+                uploaded_text = f'{int(time_ago / 60)} hours ago'
+            else:
+                uploaded_text = f'{int(time_ago / 1440)} days ago'
+        except:
+            uploaded_text = 'recently'
+        
+        uploaded_documents.append({
+            'name': doc.get('name', 'Unknown'),
+            'uploaded': uploaded_text,
+            'url': doc.get('url', ''),
+            'path': doc.get('path', ''),
+            'size': doc.get('size', 0)
+        })
+    elif agent.get('documents'):
+        # Multiple documents (if array exists)
+        for doc in agent.get('documents', []):
+            from datetime import datetime
+            uploaded_at = doc.get('uploaded_at', datetime.now().isoformat())
+            try:
+                uploaded_date = datetime.fromisoformat(uploaded_at.replace('Z', '+00:00'))
+                time_ago = (datetime.now() - uploaded_date.replace(tzinfo=None)).total_seconds() / 60
+                if time_ago < 1:
+                    uploaded_text = 'just now'
+                elif time_ago < 60:
+                    uploaded_text = f'{int(time_ago)} mins ago'
+                elif time_ago < 1440:
+                    uploaded_text = f'{int(time_ago / 60)} hours ago'
+                else:
+                    uploaded_text = f'{int(time_ago / 1440)} days ago'
+            except:
+                uploaded_text = 'recently'
+            
+            uploaded_documents.append({
+                'name': doc.get('name', 'Unknown'),
+                'uploaded': uploaded_text,
+                'url': doc.get('url', ''),
+                'path': doc.get('path', ''),
+                'size': doc.get('size', 0)
+            })
 
     sector_options = [
         "Biometric identification and categorisation",
@@ -1930,14 +4379,38 @@ def ai_system_detail(request, agent_id):
         {"name": "AI System", "url": request.build_absolute_uri()},
     ]
     
-    # Get organization default role (mock - would come from organization settings in production)
-    org_default_role = 'Deployer'  # Default role from Organization module
+    # Get organization default role from organization.json (if available)
+    from pathlib import Path
+    mock_data_dir = Path(__file__).parent.parent / 'mock_data'
+    org_file = mock_data_dir / 'organization.json'
+    org_default_role = 'Deployer'  # Default fallback
+    
+    if org_file.exists():
+        try:
+            with open(org_file, 'r', encoding='utf-8') as f:
+                org_data = json.load(f)
+                scope_data = org_data.get('scope', {})
+                roles = scope_data.get('q2_roles', [])
+                if roles and len(roles) > 0:
+                    # Use first role as default
+                    role_map = {
+                        'provider': 'Provider',
+                        'deployer': 'Deployer',
+                        'distributor': 'Distributor',
+                        'importer': 'Importer'
+                    }
+                    org_default_role = role_map.get(roles[0].lower(), roles[0].title())
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Could not load organization data for default role: {e}")
     
     return render(request, 'governance/pages/ai_system_detail.html', {
         'company': company,
         'subpage': 'ai_system_detail',
         'breadcrumbs': breadcrumbs,
         'agent': agent,
+        'agent_id': agent_id,  # Pass agent_id to template for API calls
         'org_default_role': org_default_role,
         'uploaded_documents': uploaded_documents,
         'sector_options': sector_options,

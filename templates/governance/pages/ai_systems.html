@@ -588,8 +588,7 @@
                 const response = await fetch(`{% url 'api_create_ai_agent' %}`, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': '{{ csrf_token }}'
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify(data)
                 });

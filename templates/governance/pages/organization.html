@@ -698,51 +698,114 @@ function toggleSection(sectionId) {
 const uploadInput = document.getElementById('file-upload');
 const dropZone = document.getElementById('file-drop-zone');
 
-function addFiles(files) {
+async function addFiles(files) {
     const container = document.getElementById('uploaded-documents');
     if (!container || !files?.length) return;
 
-    files.forEach(file => {
-        const fileId = 'file-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-        const fileItem = document.createElement('div');
-        fileItem.className = 'flex items-center justify-between p-3 bg-white rounded-lg border border-[#E5E7EB]';
-        fileItem.innerHTML = `
-            <div class="flex items-center gap-3">
-                <label class="cursor-pointer">
-                    <input type="checkbox" class="file-checkbox hidden" data-file-id="${fileId}" onchange="toggleFileSelection(this)">
-                    <div class="file-checkbox-display w-5 h-5 border-2 border-[#111827] rounded flex items-center justify-center">
-                        <svg class="hidden check-icon w-3 h-3 text-[#F13D30]" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                        </svg>
+    // Upload files to static folder using general upload API
+    try {
+        const formData = new FormData();
+        files.forEach(file => {
+            formData.append('file', file);
+        });
+        formData.append('folder', 'governance/uploads');
+
+        const response = await fetch('/api/upload-file/', {
+            method: 'POST',
+            body: formData,
+        });
+
+        const result = await response.json();
+        
+        if (!response.ok || !result.success) {
+            throw new Error(result.error || result.message || 'Upload failed');
+        }
+
+        // Save file info to organization.json via backend
+        const fileInfos = result.files.map(fileInfo => ({
+            name: fileInfo.name,
+            size: fileInfo.size,
+            url: fileInfo.url,
+            path: fileInfo.path,
+            uploaded_at: new Date().toISOString()
+        }));
+
+        // Update organization.json with uploaded files (merge with existing)
+        try {
+            // First get existing data
+            const getResponse = await fetch('/api/organization/get/');
+            const getResult = await getResponse.json();
+            
+            const existingDocs = (getResult.success && getResult.data && getResult.data.documents) ? getResult.data.documents : [];
+            const allDocs = [...existingDocs, ...fileInfos];
+            
+            const saveResponse = await fetch('/api/organization/save/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    documents: allDocs
+                })
+            });
+            // Don't fail if save fails, just log
+            if (!saveResponse.ok) {
+                console.warn('Could not save file info to organization.json');
+            }
+        } catch (e) {
+            console.warn('Error saving file info:', e);
+        }
+
+        // Add uploaded files to UI
+        fileInfos.forEach(fileInfo => {
+            const fileId = 'file-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+            const fileItem = document.createElement('div');
+            fileItem.className = 'flex items-center justify-between p-3 bg-white rounded-lg border border-[#E5E7EB]';
+            fileItem.setAttribute('data-file-name', fileInfo.name);
+            fileItem.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <label class="cursor-pointer">
+                        <input type="checkbox" class="file-checkbox hidden" data-file-id="${fileId}" onchange="toggleFileSelection(this)">
+                        <div class="file-checkbox-display w-5 h-5 border-2 border-[#111827] rounded flex items-center justify-center">
+                            <svg class="hidden check-icon w-3 h-3 text-[#F13D30]" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                            </svg>
+                        </div>
+                    </label>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        class="w-5 h-5 text-[#DC2626]">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <polyline points="14,2 14,8 20,8" />
+                        <line x1="16" y1="13" x2="8" y2="13" />
+                        <line x1="16" y1="17" x2="8" y2="17" />
+                        <polyline points="10,9 9,9 8,9" />
+                    </svg>
+                    <div>
+                        <p class="text-sm font-medium text-[#111827]">${fileInfo.name}</p>
+                        <p class="text-xs text-[#6B7280]">Uploaded just now</p>
                     </div>
-                </label>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    class="w-5 h-5 text-[#DC2626]">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                    <polyline points="14,2 14,8 20,8" />
-                    <line x1="16" y1="13" x2="8" y2="13" />
-                    <line x1="16" y1="17" x2="8" y2="17" />
-                    <polyline points="10,9 9,9 8,9" />
-                </svg>
-                <div>
-                    <p class="text-sm font-medium text-[#111827]">${file.name}</p>
-                    <p class="text-xs text-[#6B7280]">Uploaded just now</p>
                 </div>
-            </div>
-            <button onclick="generateLink('${file.name}')" class="flex items-center gap-2 px-4 py-1.5 bg-[#F13D30] text-white text-sm rounded-lg hover:bg-[#d63529] transition-colors">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
-                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-                </svg>
-                Generate link
-            </button>
-        `;
-        container.appendChild(fileItem);
-    });
-    
-    // Update delete button visibility after adding new files
-    updateDeleteButtonVisibility();
+                <button onclick="generateLink('${fileInfo.name}')" class="flex items-center gap-2 px-4 py-1.5 bg-[#F13D30] text-white text-sm rounded-lg hover:bg-[#d63529] transition-colors">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                    </svg>
+                    Generate link
+                </button>
+            `;
+            container.appendChild(fileItem);
+        });
+        
+        // Update delete button visibility after adding new files
+        updateDeleteButtonVisibility();
+        
+    } catch (error) {
+        console.error('Upload error:', error);
+        alert(`Error uploading files: ${error.message}`);
+    }
 }
+
+// No CSRF token needed - using @csrf_exempt decorator in backend
 
 uploadInput?.addEventListener('change', (e) => {
     addFiles(Array.from(e.target.files));
@@ -806,7 +869,7 @@ function updateDeleteButtonVisibility() {
 }
 
 // Delete selected files
-function deleteSelectedFiles() {
+async function deleteSelectedFiles() {
     const selectedCheckboxes = document.querySelectorAll('.file-checkbox:checked');
     
     if (selectedCheckboxes.length === 0) {
@@ -817,22 +880,80 @@ function deleteSelectedFiles() {
         `Are you sure you want to delete ${selectedCheckboxes.length} selected file${selectedCheckboxes.length > 1 ? 's' : ''}? This action cannot be undone.`
     );
     
-    if (confirmDelete) {
-        selectedCheckboxes.forEach(checkbox => {
-            const fileItem = checkbox.closest('.flex.items-center.justify-between');
-            if (fileItem) {
-                fileItem.remove();
+    if (!confirmDelete) {
+        return;
+    }
+    
+    // Collect file information from selected checkboxes
+    const filesToDelete = [];
+    selectedCheckboxes.forEach(checkbox => {
+        const fileItem = checkbox.closest('.flex.items-center.justify-between');
+        if (fileItem) {
+            const fileName = fileItem.getAttribute('data-file-name');
+            const fileUrl = fileItem.getAttribute('data-file-url');
+            const filePath = fileItem.getAttribute('data-file-path');
+            
+            if (fileName) {
+                filesToDelete.push({
+                    name: fileName,
+                    url: fileUrl || '',
+                    path: filePath || ''
+                });
             }
+        }
+    });
+    
+    if (filesToDelete.length === 0) {
+        alert('No file information found to delete');
+        return;
+    }
+    
+    try {
+        // Call API to delete files (from JSON and disk)
+        const response = await fetch('/api/organization/delete-files/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                files: filesToDelete
+            })
         });
         
-        // Update delete button visibility after deletion
-        updateDeleteButtonVisibility();
+        const result = await response.json();
+        
+        if (result.success) {
+            // Remove file items from DOM
+            selectedCheckboxes.forEach(checkbox => {
+                const fileItem = checkbox.closest('.flex.items-center.justify-between');
+                if (fileItem) {
+                    fileItem.remove();
+                }
+            });
+            
+            // Update delete button visibility after deletion
+            updateDeleteButtonVisibility();
+            
+            console.log(`Successfully deleted ${filesToDelete.length} file(s)`);
+        } else {
+            alert(`Error deleting files: ${result.error || 'Unknown error'}`);
+            console.error('Delete error:', result);
+        }
+    } catch (error) {
+        console.error('Error deleting files:', error);
+        alert(`Error deleting files: ${error.message}`);
     }
 }
 
 // Initialize delete button visibility on page load
 document.addEventListener('DOMContentLoaded', function() {
     updateDeleteButtonVisibility();
+    
+    // Load organization data from backend - add delay to ensure all elements are rendered
+    // Use longer delay to ensure sections are expanded and elements are accessible
+    setTimeout(() => {
+        loadOrganizationData();
+    }, 300);
     
     // Initialize Governance section - show link containers for pre-selected "Yes" values
     // Check Q2 (defaults to "yes")
@@ -888,7 +1009,7 @@ function toggleGovernanceLink(questionId, show) {
 }
 
 // Save Governance link
-function saveGovernanceLink(questionId) {
+async function saveGovernanceLink(questionId) {
     const linkInput = document.getElementById(`${questionId}-link-input`);
     const savedLinkDiv = document.getElementById(`${questionId}-saved-link`);
     
@@ -901,30 +1022,85 @@ function saveGovernanceLink(questionId) {
     }
     
     // Check if it's a Section 1 link (from uploaded documents)
-    const isSection1Link = link.includes('/api/documents/') || link.includes('/documents/');
+    const isSection1Link = link.includes('/api/documents/') || link.includes('/documents/') || link.startsWith('/static/');
     
     // Update saved link display
     savedLinkDiv.classList.remove('hidden');
     if (isSection1Link) {
         // Document link saved
         savedLinkDiv.innerHTML = `
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4 text-[#F13D30]">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                <polyline points="14,2 14,8 20,8"></polyline>
-                <line x1="16" y1="13" x2="8" y2="13"></line>
-                <line x1="16" y1="17" x2="8" y2="17"></line>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4 text-[#464E58]">
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
             </svg>
+            <a href="${link}" target="_blank" class="text-sm text-[#F13D30] hover:underline">${link}</a>
             <span class="text-sm text-[#464E58]">Document link saved</span>
         `;
     } else {
         // External link
         savedLinkDiv.innerHTML = `
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4 text-[#F13D30]">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4 text-[#464E58]">
                 <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
                 <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
             </svg>
-            <a href="${link}" target="_blank" rel="noopener noreferrer" class="text-sm text-[#F13D30] hover:underline">${link}</a>
+            <a href="${link}" target="_blank" class="text-sm text-[#F13D30] hover:underline">${link}</a>
+            <span class="text-sm text-[#464E58]">External link saved</span>
         `;
+    }
+    
+    // Save link to backend immediately
+    try {
+        // Get current governance data
+        const formData = new FormData(document.getElementById('governance-form'));
+        const governanceData = Object.fromEntries(formData);
+        
+        // Add the saved link
+        governanceData[`${questionId}_link`] = link;
+        
+        // Also add other saved links if they exist
+        ['q1', 'q2', 'q3', 'q5'].forEach(qId => {
+            if (qId !== questionId) {
+                const otherSavedLinkDiv = document.getElementById(`${qId}-saved-link`);
+                if (otherSavedLinkDiv && !otherSavedLinkDiv.classList.contains('hidden')) {
+                    const linkMatch = otherSavedLinkDiv.innerHTML.match(/href="([^"]+)"/);
+                    if (linkMatch) {
+                        governanceData[`${qId}_link`] = linkMatch[1];
+                    } else {
+                        const otherLinkInput = document.getElementById(`${qId}-link-input`);
+                        if (otherLinkInput && otherLinkInput.value) {
+                            governanceData[`${qId}_link`] = otherLinkInput.value;
+                        } else {
+                            governanceData[`${qId}_link`] = '';
+                        }
+                    }
+                } else {
+                    governanceData[`${qId}_link`] = '';
+                }
+            }
+        });
+        
+        const data = {
+            governance: governanceData
+        };
+        
+        const response = await fetch('/api/organization/save/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            console.log(`Governance link ${questionId} saved successfully`);
+        } else {
+            console.error('Error saving governance link:', result.error);
+            alert('Error saving link: ' + (result.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error saving governance link:', error);
+        alert('Error saving link: ' + error.message);
     }
 }
 
@@ -1086,73 +1262,848 @@ document.getElementById('share-link-modal')?.addEventListener('click', function(
     }
 });
 
+// Save individual section functions
+async function saveOrgProfile() {
+    const formData = new FormData(document.getElementById('org-profile-form'));
+    const data = {
+        org_profile: Object.fromEntries(formData)
+    };
+    
+    try {
+        const response = await fetch('/api/organization/save/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            alert('Organization profile saved successfully!');
+        } else {
+            alert('Error saving: ' + (result.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error saving: ' + error.message);
+    }
+}
+
+async function saveScope() {
+    const formData = new FormData(document.getElementById('scope-form'));
+    const roles = Array.from(document.querySelectorAll('input[name="q2_roles"]:checked')).map(cb => cb.value);
+    
+    const scopeData = Object.fromEntries(formData);
+    
+    // q2_roles: save as array of all checked values
+    if (roles.length > 0) {
+        scopeData.q2_roles = roles; // Save as array
+    } else {
+        scopeData.q2_roles = []; // Empty array if nothing selected
+    }
+    
+    // Ensure all fields are included (q1, q3, q4)
+    // FormData might not include empty select values, so explicitly check
+    const q1Select = document.querySelector('select[name="q1"]');
+    const q3Select = document.querySelector('select[name="q3"]');
+    const q4Select = document.querySelector('select[name="q4"]');
+    
+    if (q1Select && q1Select.value) {
+        scopeData.q1 = q1Select.value;
+    }
+    if (q3Select && q3Select.value) {
+        scopeData.q3 = q3Select.value;
+    }
+    if (q4Select && q4Select.value) {
+        scopeData.q4 = q4Select.value;
+    }
+    
+    console.log('Saving scope data:', scopeData);
+    
+    const data = {
+        scope: scopeData
+    };
+    
+    try {
+        const response = await fetch('/api/organization/save/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            alert('Scope screening saved successfully!');
+        } else {
+            alert('Error saving: ' + (result.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error saving: ' + error.message);
+    }
+}
+
+async function saveGovernance() {
+    const formData = new FormData(document.getElementById('governance-form'));
+    const governanceData = Object.fromEntries(formData);
+    
+    // Add saved governance links - ALWAYS check both savedLinkDiv and linkInput
+    // This ensures links are saved even if savedLinkDiv is hidden or link is only in input
+    ['q1', 'q2', 'q3', 'q5'].forEach(qId => {
+        let linkValue = '';
+        
+        // First, try to get from savedLinkDiv (even if hidden, check if it has content)
+        const savedLinkDiv = document.getElementById(`${qId}-saved-link`);
+        if (savedLinkDiv) {
+            // Extract link from href attribute in the saved display
+            const linkMatch = savedLinkDiv.innerHTML.match(/href="([^"]+)"/);
+            if (linkMatch && linkMatch[1]) {
+                linkValue = linkMatch[1].trim();
+                console.log(`Found link for ${qId} from savedLinkDiv: ${linkValue}`);
+            }
+        }
+        
+        // If no link from savedLinkDiv, try to get from input field
+        // This handles cases where user entered link but didn't click "Save link" button
+        if (!linkValue) {
+            const linkInput = document.getElementById(`${qId}-link-input`);
+            if (linkInput && linkInput.value && linkInput.value.trim()) {
+                linkValue = linkInput.value.trim();
+                console.log(`Found link for ${qId} from input field: ${linkValue}`);
+            }
+        }
+        
+        // Always set the link value (even if empty string)
+        governanceData[`${qId}_link`] = linkValue;
+        console.log(`Setting ${qId}_link to: "${linkValue}"`);
+    });
+    
+    console.log('Saving governance data with links:', governanceData);
+    
+    const data = {
+        governance: governanceData
+    };
+    
+    try {
+        const response = await fetch('/api/organization/save/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            alert('Governance setup saved successfully!');
+        } else {
+            alert('Error saving: ' + (result.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error saving: ' + error.message);
+    }
+}
+
+async function saveAILiteracy() {
+    const formData = new FormData(document.getElementById('ai-literacy-form'));
+    const teams = Array.from(document.querySelectorAll('input[name="q1_teams"]:checked')).map(cb => cb.value);
+    const content = Array.from(document.querySelectorAll('input[name="q4_content"]:checked')).map(cb => cb.value);
+    
+    const aiLiteracyData = Object.fromEntries(formData);
+    
+    // q1_teams: save as array of all checked values
+    if (teams.length > 0) {
+        aiLiteracyData.q1_teams = teams; // Save as array
+    } else {
+        aiLiteracyData.q1_teams = []; // Empty array if nothing selected
+    }
+    
+    // q4_content: save as array of all checked values
+    if (content.length > 0) {
+        aiLiteracyData.q4_content = content; // Save as array
+    } else {
+        aiLiteracyData.q4_content = []; // Empty array if nothing selected
+    }
+    
+    // Add Q1 Other input
+    const q1OtherInput = document.getElementById('q1-other-input');
+    if (q1OtherInput) {
+        aiLiteracyData.q1_other = q1OtherInput.value || '';
+    }
+    
+    // Add Q5 Evidence link
+    const q5EvidenceLink = document.getElementById('q5-evidence-link-input');
+    const q5EvidenceSavedLink = document.getElementById('q5-evidence-saved-link');
+    if (q5EvidenceSavedLink && !q5EvidenceSavedLink.classList.contains('hidden')) {
+        const linkMatch = q5EvidenceSavedLink.innerHTML.match(/href="([^"]+)"/);
+        if (linkMatch) {
+            aiLiteracyData.q5_evidence_link = linkMatch[1];
+        } else if (q5EvidenceLink && q5EvidenceLink.value) {
+            aiLiteracyData.q5_evidence_link = q5EvidenceLink.value;
+        } else {
+            aiLiteracyData.q5_evidence_link = '';
+        }
+    } else if (q5EvidenceLink && q5EvidenceLink.value) {
+        aiLiteracyData.q5_evidence_link = q5EvidenceLink.value;
+    } else {
+        aiLiteracyData.q5_evidence_link = '';
+    }
+    
+    const data = {
+        ai_literacy: aiLiteracyData
+    };
+    
+    try {
+        const response = await fetch('/api/organization/save/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            alert('AI Literacy information saved successfully!');
+        } else {
+            alert('Error saving: ' + (result.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error saving: ' + error.message);
+    }
+}
+
 // Form submission handlers
 document.getElementById('org-profile-form')?.addEventListener('submit', function(e) {
     e.preventDefault();
-    const formData = new FormData(this);
-    console.log('Org Profile:', Object.fromEntries(formData));
-    // Send to backend
-    alert('Organization profile saved!');
+    saveOrgProfile();
 });
 
 document.getElementById('scope-form')?.addEventListener('submit', function(e) {
     e.preventDefault();
-    const formData = new FormData(this);
-    const roles = Array.from(document.querySelectorAll('input[name="q2_roles"]:checked')).map(cb => cb.value);
-    console.log('Scope:', Object.fromEntries(formData), {roles});
-    alert('Scope screening saved!');
+    saveScope();
 });
 
 document.getElementById('governance-form')?.addEventListener('submit', function(e) {
     e.preventDefault();
-    const formData = new FormData(this);
-    console.log('Governance:', Object.fromEntries(formData));
-    alert('Governance setup saved!');
+    saveGovernance();
 });
 
 document.getElementById('ai-literacy-form')?.addEventListener('submit', function(e) {
     e.preventDefault();
-    const formData = new FormData(this);
-    const teams = Array.from(document.querySelectorAll('input[name="q1_teams"]:checked')).map(cb => cb.value);
-    const content = Array.from(document.querySelectorAll('input[name="q4_content"]:checked')).map(cb => cb.value);
-    console.log('AI Literacy:', Object.fromEntries(formData), {teams, content});
-    alert('AI Literacy information saved!');
+    saveAILiteracy();
 });
 
 // Save whole page
-function saveWholePage() {
+async function saveWholePage() {
+    // Get existing documents from saved data (don't recreate from DOM)
+    let existingDocuments = [];
+    try {
+        const getResponse = await fetch('/api/organization/get/');
+        const getResult = await getResponse.json();
+        if (getResult.success && getResult.data && getResult.data.documents) {
+            existingDocuments = getResult.data.documents;
+        }
+    } catch (e) {
+        console.warn('Could not fetch existing documents:', e);
+    }
+
+    // Collect form data with proper formatting
+    const formData = new FormData(document.getElementById('org-profile-form'));
+    const orgProfile = Object.fromEntries(formData);
+    
+    const scopeFormData = new FormData(document.getElementById('scope-form'));
+    const scopeData = Object.fromEntries(scopeFormData);
+    
+    // q2_roles: save as array of all checked values
+    const roles = Array.from(document.querySelectorAll('input[name="q2_roles"]:checked')).map(cb => cb.value);
+    if (roles.length > 0) {
+        scopeData.q2_roles = roles; // Save as array
+    } else {
+        scopeData.q2_roles = []; // Empty array if nothing selected
+    }
+    
+    // Ensure all SELECT fields are included (q1, q3, q4)
+    // FormData might not include empty select values, so explicitly check
+    const q1Select = document.querySelector('select[name="q1"]');
+    const q3Select = document.querySelector('select[name="q3"]');
+    const q4Select = document.querySelector('select[name="q4"]');
+    
+    if (q1Select && q1Select.value) {
+        scopeData.q1 = q1Select.value;
+    }
+    if (q3Select && q3Select.value) {
+        scopeData.q3 = q3Select.value;
+    }
+    if (q4Select && q4Select.value) {
+        scopeData.q4 = q4Select.value;
+    }
+    
+    console.log('Saving scope data in saveWholePage:', scopeData);
+    
+    const governanceFormData = new FormData(document.getElementById('governance-form'));
+    const governanceData = Object.fromEntries(governanceFormData);
+    
+    // Add governance links - check both savedLinkDiv and linkInput
+    ['q1', 'q2', 'q3', 'q5'].forEach(qId => {
+        let linkValue = '';
+        
+        // First, try to get from savedLinkDiv (if visible and has link)
+        const savedLinkDiv = document.getElementById(`${qId}-saved-link`);
+        if (savedLinkDiv && !savedLinkDiv.classList.contains('hidden')) {
+            // Extract link from href attribute in the saved display
+            const linkMatch = savedLinkDiv.innerHTML.match(/href="([^"]+)"/);
+            if (linkMatch) {
+                linkValue = linkMatch[1];
+                console.log(`Found link for ${qId} from savedLinkDiv: ${linkValue}`);
+            }
+        }
+        
+        // If no link from savedLinkDiv, try to get from input field
+        if (!linkValue) {
+            const linkInput = document.getElementById(`${qId}-link-input`);
+            if (linkInput && linkInput.value && linkInput.value.trim()) {
+                linkValue = linkInput.value.trim();
+                console.log(`Found link for ${qId} from input: ${linkValue}`);
+            }
+        }
+        
+        governanceData[`${qId}_link`] = linkValue;
+        console.log(`Setting ${qId}_link to: ${linkValue}`);
+    });
+    
+    console.log('Saving governance data with links in saveWholePage:', governanceData);
+    
+    const aiLiteracyFormData = new FormData(document.getElementById('ai-literacy-form'));
+    const aiLiteracyData = Object.fromEntries(aiLiteracyFormData);
+    // q1_teams: save as array of all checked values
+    const teams = Array.from(document.querySelectorAll('input[name="q1_teams"]:checked')).map(cb => cb.value);
+    if (teams.length > 0) {
+        aiLiteracyData.q1_teams = teams; // Save as array
+    } else {
+        aiLiteracyData.q1_teams = []; // Empty array if nothing selected
+    }
+    // q4_content: save as array of all checked values
+    const content = Array.from(document.querySelectorAll('input[name="q4_content"]:checked')).map(cb => cb.value);
+    if (content.length > 0) {
+        aiLiteracyData.q4_content = content; // Save as array
+    } else {
+        aiLiteracyData.q4_content = []; // Empty array if nothing selected
+    }
+    // Add Q1 Other input
+    const q1OtherInput = document.getElementById('q1-other-input');
+    if (q1OtherInput) {
+        aiLiteracyData.q1_other = q1OtherInput.value || '';
+    }
+    // Add Q5 Evidence link
+    const q5EvidenceLink = document.getElementById('q5-evidence-link-input');
+    const q5EvidenceSavedLink = document.getElementById('q5-evidence-saved-link');
+    if (q5EvidenceSavedLink && !q5EvidenceSavedLink.classList.contains('hidden')) {
+        const linkMatch = q5EvidenceSavedLink.innerHTML.match(/href="([^"]+)"/);
+        if (linkMatch) {
+            aiLiteracyData.q5_evidence_link = linkMatch[1];
+        } else if (q5EvidenceLink && q5EvidenceLink.value) {
+            aiLiteracyData.q5_evidence_link = q5EvidenceLink.value;
+        } else {
+            aiLiteracyData.q5_evidence_link = '';
+        }
+    } else if (q5EvidenceLink && q5EvidenceLink.value) {
+        aiLiteracyData.q5_evidence_link = q5EvidenceLink.value;
+    } else {
+        aiLiteracyData.q5_evidence_link = '';
+    }
+    
     const allData = {
-        documents: Array.from(document.querySelectorAll('#uploaded-documents > div')).map(div => ({
-            name: div.querySelector('p').textContent,
-            uploaded: div.querySelector('.text-xs').textContent
-        })),
-        orgProfile: Object.fromEntries(new FormData(document.getElementById('org-profile-form'))),
-        scope: Object.fromEntries(new FormData(document.getElementById('scope-form'))),
-        governance: Object.fromEntries(new FormData(document.getElementById('governance-form'))),
-        aiLiteracy: Object.fromEntries(new FormData(document.getElementById('ai-literacy-form')))
+        documents: existingDocuments, // Use existing documents from saved data
+        org_profile: orgProfile,
+        scope: scopeData,
+        governance: governanceData,
+        ai_literacy: aiLiteracyData
     };
     
-    console.log('All data:', allData);
-    // Send to backend
-    fetch('/api/organization/save/', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': '{{ csrf_token }}'
-        },
-        body: JSON.stringify(allData)
-    }).then(response => response.json())
-      .then(data => {
-          if (data.success) {
-              alert('All data saved successfully!');
-          } else {
-              alert('Error saving data: ' + (data.error || 'Unknown error'));
-          }
-      })
-      .catch(error => {
-          console.error('Error:', error);
-          alert('Error saving data');
-      });
+    console.log('Saving all data:', allData);
+    
+    try {
+        const response = await fetch('/api/organization/save/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(allData)
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('All data saved successfully!');
+        } else {
+            alert('Error saving data: ' + (data.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error saving data: ' + error.message);
+    }
+}
+
+// Load organization data on page load
+async function loadOrganizationData() {
+    try {
+        console.log('Starting to load organization data...');
+        
+        // Ensure all sections are expanded so elements are in DOM
+        ['section1', 'section2', 'section3', 'section4', 'section5'].forEach(sectionId => {
+            const sectionContent = document.getElementById(`${sectionId}-content`);
+            const sectionToggle = document.getElementById(`${sectionId}-toggle`);
+            if (sectionContent) {
+                // Remove any hidden class and ensure display is block
+                sectionContent.classList.remove('hidden');
+                sectionContent.style.display = 'block';
+                // Update toggle icon to show expanded state
+                if (sectionToggle) {
+                    sectionToggle.src = sectionToggle.src.replace('chevron-down', 'chevron-up') || 
+                                      "{% static 'governance/img/chevron-up.svg' %}";
+                }
+                console.log(`Expanded section: ${sectionId}`);
+            }
+        });
+        
+        // Wait a bit more for DOM to fully render
+        await new Promise(resolve => setTimeout(resolve, 50));
+        
+        const response = await fetch('/api/organization/get/', {
+            method: 'GET',
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        console.log('Load organization data response:', result);
+        
+        if (!result.success) {
+            console.error('API returned error:', result.error);
+            return;
+        }
+        
+        if (result.data) {
+            const data = result.data;
+            console.log('Loading data:', data);
+            
+            // Load documents
+            if (data.documents && data.documents.length > 0) {
+                const container = document.getElementById('uploaded-documents');
+                data.documents.forEach(doc => {
+                    const fileId = 'file-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'flex items-center justify-between p-3 bg-white rounded-lg border border-[#E5E7EB]';
+                    fileItem.setAttribute('data-file-name', doc.name || '');
+                    fileItem.setAttribute('data-file-url', doc.url || '');
+                    fileItem.setAttribute('data-file-path', doc.path || '');
+                    const uploadedText = doc.uploaded_at ? new Date(doc.uploaded_at).toLocaleString() : 'Uploaded';
+                    fileItem.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <label class="cursor-pointer">
+                                <input type="checkbox" class="file-checkbox hidden" data-file-id="${fileId}" onchange="toggleFileSelection(this)">
+                                <div class="file-checkbox-display w-5 h-5 border-2 border-[#111827] rounded flex items-center justify-center">
+                                    <svg class="hidden check-icon w-3 h-3 text-[#F13D30]" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                    </svg>
+                                </div>
+                            </label>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                class="w-5 h-5 text-[#DC2626]">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                <polyline points="14,2 14,8 20,8" />
+                                <line x1="16" y1="13" x2="8" y2="13" />
+                                <line x1="16" y1="17" x2="8" y2="17" />
+                                <polyline points="10,9 9,9 8,9" />
+                            </svg>
+                            <div>
+                                <p class="text-sm font-medium text-[#111827]">${doc.name}</p>
+                                <p class="text-xs text-[#6B7280]">${uploadedText}</p>
+                            </div>
+                        </div>
+                        <button onclick="generateLink('${doc.name}')" class="flex items-center gap-2 px-4 py-1.5 bg-[#F13D30] text-white text-sm rounded-lg hover:bg-[#d63529] transition-colors">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                            </svg>
+                            Generate link
+                        </button>
+                    `;
+                    container.appendChild(fileItem);
+                });
+                updateDeleteButtonVisibility();
+            }
+            
+            // Load form data
+            if (data.org_profile) {
+                console.log('Loading org_profile:', data.org_profile);
+                Object.entries(data.org_profile).forEach(([key, value]) => {
+                    const input = document.querySelector(`[name="${key}"]`);
+                    console.log(`Loading org_profile field: ${key} = ${value}, found input:`, input);
+                    if (input) {
+                        input.value = value;
+                        console.log(`Set ${key} to ${value}`);
+                    } else {
+                        console.warn(`Could not find input for org_profile.${key}`);
+                    }
+                });
+            }
+            
+            if (data.scope) {
+                console.log('Loading scope data:', data.scope);
+                
+                // Load q2_roles first (checkboxes)
+                if (data.scope.q2_roles) {
+                    const roles = data.scope.q2_roles;
+                    if (Array.isArray(roles)) {
+                        console.log('Loading q2_roles array:', roles);
+                        roles.forEach(role => {
+                            const checkbox = document.querySelector(`#scope-form input[name="q2_roles"][value="${role}"]`);
+                            if (!checkbox) {
+                                const checkbox2 = document.querySelector(`input[name="q2_roles"][value="${role}"]`);
+                                if (checkbox2) {
+                                    checkbox2.checked = true;
+                                    console.log(`Checked ${role}`);
+                                }
+                            } else {
+                                checkbox.checked = true;
+                                console.log(`Checked ${role}`);
+                            }
+                        });
+                    }
+                }
+                
+                // Load SELECT fields one by one with specific handling
+                // Q1
+                if (data.scope.q1) {
+                    const q1Select = document.querySelector(`#scope-form select[name="q1"]`) || document.querySelector(`select[name="q1"]`);
+                    console.log(`Loading Q1: select =`, q1Select, 'value =', data.scope.q1);
+                    if (q1Select && data.scope.q1) {
+                        const option = Array.from(q1Select.options).find(opt => opt.value === data.scope.q1);
+                        if (option) {
+                            q1Select.selectedIndex = Array.from(q1Select.options).indexOf(option);
+                            q1Select.value = data.scope.q1;
+                            q1Select.dispatchEvent(new Event('change', { bubbles: true }));
+                            console.log(`Successfully set Q1 to ${data.scope.q1}`);
+                        } else {
+                            console.warn(`Q1: Could not find option with value "${data.scope.q1}"`);
+                        }
+                    }
+                }
+                
+                // Q3 - Load separately with more debugging and delay
+                if (data.scope.q3 !== undefined) {
+                    console.log(`Loading Q3: value = "${data.scope.q3}"`);
+                    // Wait a bit to ensure DOM is ready
+                    setTimeout(() => {
+                        // Try multiple selectors to find Q3 select in scope form
+                        let q3Select = document.querySelector(`form#scope-form select[name="q3"]`);
+                        console.log(`Q3 select from form#scope-form:`, q3Select);
+                        if (!q3Select) {
+                            q3Select = document.querySelector(`#scope-form select[name="q3"]`);
+                            console.log(`Q3 select from #scope-form:`, q3Select);
+                        }
+                        if (!q3Select) {
+                            // Try finding by form context
+                            const scopeForm = document.getElementById('scope-form');
+                            if (scopeForm) {
+                                q3Select = scopeForm.querySelector(`select[name="q3"]`);
+                                console.log(`Q3 select from scopeForm.querySelector:`, q3Select);
+                            }
+                        }
+                        if (!q3Select) {
+                            // Last resort: find all selects with name q3 and filter
+                            const allQ3Selects = document.querySelectorAll(`select[name="q3"]`);
+                            console.log(`All selects with name="q3":`, allQ3Selects);
+                            if (allQ3Selects.length > 0) {
+                                // Find the one in scope form
+                                for (let sel of allQ3Selects) {
+                                    if (sel.closest('#scope-form') || sel.closest('form#scope-form')) {
+                                        q3Select = sel;
+                                        console.log(`Found Q3 select in scope form:`, q3Select);
+                                        break;
+                                    }
+                                }
+                                // If still not found, use first one (should be scope)
+                                if (!q3Select && allQ3Selects.length > 0) {
+                                    q3Select = allQ3Selects[0];
+                                    console.log(`Using first Q3 select:`, q3Select);
+                                }
+                            }
+                        }
+                        
+                        if (q3Select && data.scope.q3) {
+                            console.log(`Q3 select found, setting value to "${data.scope.q3}"`);
+                            const option = Array.from(q3Select.options).find(opt => opt.value === data.scope.q3);
+                            console.log(`Q3 option found:`, option);
+                            if (option) {
+                                // Remove selected attribute from all options first
+                                Array.from(q3Select.options).forEach(opt => opt.removeAttribute('selected'));
+                                // Set selected attribute on target option
+                                option.setAttribute('selected', 'selected');
+                                // Set selectedIndex
+                                q3Select.selectedIndex = Array.from(q3Select.options).indexOf(option);
+                                // Set value
+                                q3Select.value = data.scope.q3;
+                                // Force update
+                                q3Select.dispatchEvent(new Event('change', { bubbles: true }));
+                                q3Select.dispatchEvent(new Event('input', { bubbles: true }));
+                                
+                                // Verify after a small delay
+                                setTimeout(() => {
+                                    if (q3Select.value === data.scope.q3) {
+                                        console.log(`✓ Successfully set Q3 to ${data.scope.q3}`);
+                                    } else {
+                                        console.error(`✗ Q3: Value mismatch. Expected: ${data.scope.q3}, Got: ${q3Select.value}`);
+                                        // Force set one more time
+                                        q3Select.value = data.scope.q3;
+                                        q3Select.selectedIndex = Array.from(q3Select.options).indexOf(option);
+                                        console.log(`Force set Q3 again, current value: ${q3Select.value}`);
+                                    }
+                                }, 10);
+                            } else {
+                                console.error(`Q3: Could not find option with value "${data.scope.q3}"`);
+                                console.log('Q3 Available options:', Array.from(q3Select.options).map(opt => ({ value: opt.value, text: opt.text, selected: opt.selected })));
+                            }
+                        } else {
+                            console.error(`Q3: Could not find select element. q3Select:`, q3Select, 'value:', data.scope.q3);
+                        }
+                    }, 100); // Delay 100ms to ensure DOM is ready
+                }
+                
+                // Q4
+                if (data.scope.q4) {
+                    const q4Select = document.querySelector(`#scope-form select[name="q4"]`) || document.querySelector(`select[name="q4"]`);
+                    console.log(`Loading Q4: select =`, q4Select, 'value =', data.scope.q4);
+                    if (q4Select && data.scope.q4) {
+                        const option = Array.from(q4Select.options).find(opt => opt.value === data.scope.q4);
+                        if (option) {
+                            q4Select.selectedIndex = Array.from(q4Select.options).indexOf(option);
+                            q4Select.value = data.scope.q4;
+                            q4Select.dispatchEvent(new Event('change', { bubbles: true }));
+                            console.log(`Successfully set Q4 to ${data.scope.q4}`);
+                        } else {
+                            console.warn(`Q4: Could not find option with value "${data.scope.q4}"`);
+                        }
+                    }
+                }
+            }
+            
+            if (data.governance) {
+                console.log('Loading governance data:', data.governance);
+                Object.entries(data.governance).forEach(([key, value]) => {
+                    console.log(`Loading governance field: ${key} = ${value}`);
+                    if (key.endsWith('_link')) {
+                        // Handle saved links
+                        const qId = key.replace('_link', '');
+                        const linkInput = document.getElementById(`${qId}-link-input`);
+                        const savedLinkDiv = document.getElementById(`${qId}-saved-link`);
+                        if (linkInput && value) {
+                            linkInput.value = value;
+                            // Show saved link display if value exists
+                            if (savedLinkDiv && value) {
+                                savedLinkDiv.classList.remove('hidden');
+                                // Check if it's an internal document link or external
+                                if (value.startsWith('/static/') || value.startsWith('http')) {
+                                    savedLinkDiv.innerHTML = `
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4 text-[#464E58]">
+                                            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                                            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                                        </svg>
+                                        <a href="${value}" target="_blank" class="text-sm text-[#F13D30] hover:underline">${value}</a>
+                                        <span class="text-sm text-[#464E58]">Document link saved</span>
+                                    `;
+                                } else {
+                                    savedLinkDiv.innerHTML = `
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4 text-[#464E58]">
+                                            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                                            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                                        </svg>
+                                        <a href="${value}" target="_blank" class="text-sm text-[#F13D30] hover:underline">${value}</a>
+                                        <span class="text-sm text-[#464E58]">External link saved</span>
+                                    `;
+                                }
+                            }
+                        } else if (value && savedLinkDiv) {
+                            // If link input doesn't exist but we have a saved link div, just show it
+                            savedLinkDiv.classList.remove('hidden');
+                        }
+                    } else {
+                        // Handle radio buttons for q1, q2, q3, q4, q5
+                        const radio = document.querySelector(`input[name="${key}"][value="${value}"]`);
+                        console.log(`Looking for radio input[name="${key}"][value="${value}"]:`, radio);
+                        if (radio) {
+                            radio.checked = true;
+                            console.log(`Checked radio ${key} = ${value}`);
+                            // Trigger onchange for governance links
+                            if (['q1', 'q2', 'q3', 'q5'].includes(key)) {
+                                toggleGovernanceLink(key, value === 'yes');
+                            }
+                        } else {
+                            console.warn(`Could not find radio input[name="${key}"][value="${value}"]`);
+                        }
+                    }
+                });
+            }
+            
+            if (data.ai_literacy) {
+                console.log('Loading ai_literacy data:', data.ai_literacy);
+                Object.entries(data.ai_literacy).forEach(([key, value]) => {
+                    console.log(`Loading ai_literacy field: ${key} = ${JSON.stringify(value)}`);
+                    if (key === 'q1_teams') {
+                        // Handle checkboxes - value is an array
+                        if (Array.isArray(value)) {
+                            console.log('Loading q1_teams array:', value);
+                            value.forEach(team => {
+                                const checkbox = document.querySelector(`input[name="q1_teams"][value="${team}"]`);
+                                console.log(`Looking for checkbox q1_teams[value="${team}"]:`, checkbox);
+                                if (checkbox) {
+                                    checkbox.checked = true;
+                                    console.log(`Checked ${team}`);
+                                }
+                            });
+                        } else if (value) {
+                            // Backward compatibility: if it's a string, treat as single value
+                            const checkbox = document.querySelector(`input[name="q1_teams"][value="${value}"]`);
+                            if (checkbox) checkbox.checked = true;
+                        }
+                    } else if (key === 'q4_content') {
+                        // Handle checkboxes - value is an array
+                        if (Array.isArray(value)) {
+                            console.log('Loading q4_content array:', value);
+                            value.forEach(contentItem => {
+                                const checkbox = document.querySelector(`input[name="q4_content"][value="${contentItem}"]`);
+                                console.log(`Looking for checkbox q4_content[value="${contentItem}"]:`, checkbox);
+                                if (checkbox) {
+                                    checkbox.checked = true;
+                                    console.log(`Checked ${contentItem}`);
+                                }
+                            });
+                        } else if (value) {
+                            // Backward compatibility: if it's a string, treat as single value
+                            const checkbox = document.querySelector(`input[name="q4_content"][value="${value}"]`);
+                            if (checkbox) checkbox.checked = true;
+                        }
+                    } else if (key === 'q1_other') {
+                        const q1OtherInput = document.getElementById('q1-other-input');
+                        const q1OtherCheckbox = document.getElementById('q1-other-checkbox');
+                        if (q1OtherInput && value) {
+                            q1OtherInput.value = value;
+                            if (q1OtherCheckbox) {
+                                q1OtherCheckbox.checked = true;
+                                toggleQ1OtherInput(q1OtherCheckbox);
+                            }
+                        }
+                    } else if (key === 'q5_evidence_link') {
+                        const q5EvidenceLinkInput = document.getElementById('q5-evidence-link-input');
+                        const q5EvidenceSavedLink = document.getElementById('q5-evidence-saved-link');
+                        if (q5EvidenceLinkInput && value) {
+                            q5EvidenceLinkInput.value = value;
+                            if (q5EvidenceSavedLink) {
+                                q5EvidenceSavedLink.classList.remove('hidden');
+                                if (value.startsWith('/static/') || value.startsWith('http')) {
+                                    q5EvidenceSavedLink.innerHTML = `
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4 text-[#464E58]">
+                                            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                                            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                                        </svg>
+                                        <a href="${value}" target="_blank" class="text-sm text-[#F13D30] hover:underline">${value}</a>
+                                        <span class="text-sm text-[#464E58]">Document link saved</span>
+                                    `;
+                                } else {
+                                    q5EvidenceSavedLink.innerHTML = `
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4 text-[#464E58]">
+                                            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                                            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                                        </svg>
+                                        <a href="${value}" target="_blank" class="text-sm text-[#F13D30] hover:underline">${value}</a>
+                                        <span class="text-sm text-[#464E58]">External link saved</span>
+                                    `;
+                                }
+                            }
+                        }
+                    } else if (key === 'q5_evidence') {
+                        const radio = document.querySelector(`input[name="q5_evidence"][value="${value}"]`);
+                        console.log(`Looking for radio q5_evidence[value="${value}"]:`, radio);
+                        if (radio) {
+                            radio.checked = true;
+                            toggleQ5Evidence(value);
+                            console.log(`Checked q5_evidence = ${value}`);
+                        }
+                    } else if (key === 'q2') {
+                        // Q2: User number (number input) - must be in AI Literacy form
+                        const q2Input = document.querySelector(`#ai-literacy-form input[name="q2"]`);
+                        console.log(`Loading Q2 (User number): input =`, q2Input, 'value =', value);
+                        if (q2Input && value) {
+                            q2Input.value = value;
+                            console.log(`✓ Successfully set Q2 (User number) to ${value}`);
+                        } else {
+                            console.warn(`Could not find Q2 input in AI Literacy form or value is empty`);
+                        }
+                    } else if (key === 'q3') {
+                        // Q3: Training (radio buttons) - must be in AI Literacy form
+                        const q3Radio = document.querySelector(`#ai-literacy-form input[name="q3"][value="${value}"]`);
+                        console.log(`Loading Q3 (Training): looking for radio[value="${value}"] =`, q3Radio);
+                        if (q3Radio) {
+                            q3Radio.checked = true;
+                            console.log(`✓ Successfully checked Q3 (Training) = ${value}`);
+                        } else {
+                            console.warn(`Could not find Q3 radio input[name="q3"][value="${value}"] in AI Literacy form`);
+                            // Log available options for debugging
+                            const allQ3Radios = document.querySelectorAll(`#ai-literacy-form input[name="q3"]`);
+                            console.log('Q3 Available options:', Array.from(allQ3Radios).map(r => ({ value: r.value, checked: r.checked })));
+                        }
+                    } else if (key === 'q6') {
+                        // Q6: Updates (radio buttons) - must be in AI Literacy form
+                        const q6Radio = document.querySelector(`#ai-literacy-form input[name="q6"][value="${value}"]`);
+                        console.log(`Loading Q6 (Updates): looking for radio[value="${value}"] =`, q6Radio);
+                        if (q6Radio) {
+                            q6Radio.checked = true;
+                            console.log(`✓ Successfully checked Q6 (Updates) = ${value}`);
+                        } else {
+                            console.warn(`Could not find Q6 radio input[name="q6"][value="${value}"] in AI Literacy form`);
+                        }
+                    } else {
+                        // Handle any other unexpected fields
+                        const input = document.querySelector(`#ai-literacy-form [name="${key}"]`);
+                        console.log(`Loading ai_literacy field ${key}: input =`, input, 'value:', value);
+                        if (input) {
+                            if (input.type === 'radio') {
+                                const radio = document.querySelector(`#ai-literacy-form input[name="${key}"][value="${value}"]`);
+                                if (radio) {
+                                    radio.checked = true;
+                                    console.log(`Checked radio ${key} = ${value}`);
+                                } else {
+                                    console.warn(`Could not find radio input[name="${key}"][value="${value}"]`);
+                                }
+                            } else {
+                                input.value = value;
+                                console.log(`Set ${key} to ${value}`);
+                            }
+                        } else {
+                            console.warn(`Could not find input[name="${key}"] in AI Literacy form`);
+                        }
+                    }
+                });
+            }
+            
+            console.log('Finished loading organization data');
+        } else {
+            console.warn('No data returned from API');
+        }
+    } catch (error) {
+        console.error('Error loading organization data:', error);
+        console.error('Error details:', error.message, error.stack);
+        alert('Error loading organization data: ' + error.message);
+    }
 }
 </script>
 {% endblock %}

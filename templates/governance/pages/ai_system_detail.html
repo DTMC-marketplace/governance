@@ -31,7 +31,7 @@
     pointer-events: none;
 }
 </style>
-<div class="flex flex-col gap-6 mx-auto">
+<div class="flex flex-col gap-6 mx-auto" data-agent-id="{{ agent.id }}">
     <!-- Breadcrumb Navigation -->
     <div class="flex items-center gap-3">
         <button class="w-6 h-6 bg-transparent border-none cursor-pointer p-0 flex items-center justify-center" onclick="history.back()">
@@ -98,39 +98,7 @@
 
                     <!-- Uploaded Documents List -->
                     <div id="uploaded-documents" class="space-y-3 mb-6">
-                        {% for doc in uploaded_documents %}
-                        <div class="flex items-center justify-between p-3 bg-white rounded-lg border border-[#E5E7EB]">
-                            <div class="flex items-center gap-3">
-                                <label class="cursor-pointer">
-                                    <input type="checkbox" class="file-checkbox hidden" data-file-id="doc-{{ forloop.counter0 }}" onchange="toggleFileSelection(this)" {% if forloop.counter0 < 2 %}checked{% endif %}>
-                                    <div class="file-checkbox-display w-5 h-5 border-2 {% if forloop.counter0 < 2 %}border-[#F13D30]{% else %}border-[#111827]{% endif %} rounded flex items-center justify-center">
-                                        <svg class="check-icon w-3 h-3 text-[#F13D30] {% if forloop.counter0 >= 2 %}hidden{% endif %}" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                        </svg>
-                                    </div>
-                                </label>
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                    class="w-5 h-5 text-[#DC2626]">
-                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                                    <polyline points="14,2 14,8 20,8" />
-                                    <line x1="16" y1="13" x2="8" y2="13" />
-                                    <line x1="16" y1="17" x2="8" y2="17" />
-                                    <polyline points="10,9 9,9 8,9" />
-                                </svg>
-                                <div>
-                                    <p class="text-sm font-medium text-[#111827]">{{ doc.name }}</p>
-                                    <p class="text-xs text-[#6B7280]">Uploaded {{ doc.uploaded }}</p>
-                                </div>
-                            </div>
-                            <button onclick="generateLink('{{ doc.name }}')" class="flex items-center gap-2 px-4 py-1.5 bg-[#F13D30] text-white text-sm rounded-lg hover:bg-[#d63529] transition-colors">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
-                                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-                                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-                                </svg>
-                                Generate link
-                            </button>
-                        </div>
-                        {% endfor %}
+                        <!-- Documents will be loaded dynamically from API -->
                     </div>
 
                     <!-- AI Read & Auto-fill options -->
@@ -292,7 +260,7 @@
                         </div>
                         <div class="flex justify-end gap-3 pt-4">
                             <button type="button" class="px-6 py-2 border border-[#F13D30] text-[#F13D30] rounded-lg font-medium hover:bg-[#F13D30] hover:text-white transition-colors">Cancel</button>
-                            <button type="submit" class="px-6 py-2 bg-[#F13D30] text-white rounded-lg font-medium hover:bg-[#d63529] transition-colors">Confirm and Save</button>
+                            <button type="button" onclick="saveSection('system-identity-form')" class="px-6 py-2 bg-[#F13D30] text-white rounded-lg font-medium hover:bg-[#d63529] transition-colors">Confirm and Save</button>
                         </div>
                     </form>
                 </div>
@@ -534,7 +502,7 @@
                         <!-- Action Buttons -->
                         <div class="flex justify-end gap-3 pt-4">
                             <button type="button" class="px-6 py-2 border border-[#F13D30] text-[#F13D30] rounded-lg font-medium hover:bg-[#F13D30] hover:text-white transition-colors">Cancel</button>
-                            <button type="button" class="px-6 py-2 bg-[#F13D30] text-white rounded-lg font-medium hover:bg-[#d63529] transition-colors">Confirm and Save</button>
+                            <button type="button" onclick="saveSection()" class="px-6 py-2 bg-[#F13D30] text-white rounded-lg font-medium hover:bg-[#d63529] transition-colors">Confirm and Save</button>
                         </div>
                     </div>
                 </div>
@@ -624,7 +592,7 @@
                         <!-- Action Buttons -->
                         <div class="flex justify-end gap-3 pt-4">
                             <button type="button" class="px-6 py-2 border border-[#F13D30] text-[#F13D30] rounded-lg font-medium hover:bg-[#F13D30] hover:text-white transition-colors">Cancel</button>
-                            <button type="button" class="px-6 py-2 bg-[#F13D30] text-white rounded-lg font-medium hover:bg-[#d63529] transition-colors">Confirm and Save</button>
+                            <button type="button" onclick="saveSection()" class="px-6 py-2 bg-[#F13D30] text-white rounded-lg font-medium hover:bg-[#d63529] transition-colors">Confirm and Save</button>
                         </div>
                     </div>
                 </div>
@@ -745,7 +713,7 @@
                         <!-- Action Buttons -->
                         <div class="flex justify-end gap-3 pt-4">
                             <button type="button" class="px-6 py-2 border border-[#F13D30] text-[#F13D30] rounded-lg font-medium hover:bg-[#F13D30] hover:text-white transition-colors">Cancel</button>
-                            <button type="button" class="px-6 py-2 bg-[#F13D30] text-white rounded-lg font-medium hover:bg-[#d63529] transition-colors">Confirm and Save</button>
+                            <button type="button" onclick="saveSection()" class="px-6 py-2 bg-[#F13D30] text-white rounded-lg font-medium hover:bg-[#d63529] transition-colors">Confirm and Save</button>
                         </div>
                     </div>
                 </div>
@@ -834,7 +802,7 @@
                         <!-- Action Buttons -->
                         <div class="flex justify-end gap-3 pt-4">
                             <button type="button" class="px-6 py-2 border border-[#F13D30] text-[#F13D30] rounded-lg font-medium hover:bg-[#F13D30] hover:text-white transition-colors">Cancel</button>
-                            <button type="button" class="px-6 py-2 bg-[#F13D30] text-white rounded-lg font-medium hover:bg-[#d63529] transition-colors">Confirm and Save</button>
+                            <button type="button" onclick="saveSection()" class="px-6 py-2 bg-[#F13D30] text-white rounded-lg font-medium hover:bg-[#d63529] transition-colors">Confirm and Save</button>
                         </div>
                     </div>
                 </div>
@@ -901,7 +869,7 @@
                         <!-- Action Buttons -->
                         <div class="flex justify-end gap-3 pt-4">
                             <button type="button" class="px-6 py-2 border border-[#F13D30] text-[#F13D30] rounded-lg font-medium hover:bg-[#F13D30] hover:text-white transition-colors">Cancel</button>
-                            <button type="button" class="px-6 py-2 bg-[#F13D30] text-white rounded-lg font-medium hover:bg-[#d63529] transition-colors">Confirm and Save</button>
+                            <button type="button" onclick="saveSection()" class="px-6 py-2 bg-[#F13D30] text-white rounded-lg font-medium hover:bg-[#d63529] transition-colors">Confirm and Save</button>
                         </div>
                     </div>
                 </div>
@@ -1000,7 +968,7 @@
                         <!-- Action Buttons -->
                         <div class="flex justify-end gap-3 pt-4">
                             <button type="button" class="px-6 py-2 border border-[#F13D30] text-[#F13D30] rounded-lg font-medium hover:bg-[#F13D30] hover:text-white transition-colors">Cancel</button>
-                            <button type="button" class="px-6 py-2 bg-[#F13D30] text-white rounded-lg font-medium hover:bg-[#d63529] transition-colors">Confirm and Save</button>
+                            <button type="button" onclick="saveSection()" class="px-6 py-2 bg-[#F13D30] text-white rounded-lg font-medium hover:bg-[#d63529] transition-colors">Confirm and Save</button>
                         </div>
                     </div>
                 </div>
@@ -1218,12 +1186,44 @@ function switchTab(tabName) {
     }
 }
 
+// Save section data (saves all profile data)
+async function saveSection() {
+    // Ensure vendor link is saved to the saved div if it exists in input but not in saved div
+    const linkInput = document.getElementById('vendor-evidence-link');
+    const savedLinkDiv = document.getElementById('vendor-link-saved');
+    const linkText = document.getElementById('vendor-link-text');
+    
+    if (linkInput && linkInput.value && linkInput.value.trim()) {
+        // If input has value but saved div is hidden, update saved div
+        if (savedLinkDiv && savedLinkDiv.classList.contains('hidden')) {
+            if (linkText) {
+                linkText.innerHTML = `<a href="${linkInput.value.trim()}" target="_blank" class="text-[#F13D30] hover:underline">${linkInput.value.trim()}</a>`;
+                savedLinkDiv.classList.remove('hidden');
+            }
+        }
+    }
+    
+    // Save all profile data (sections are part of profile)
+    const success = await saveProfileData();
+    if (success) {
+        alert('Section saved successfully!');
+    } else {
+        alert('Error saving section. Please try again.');
+    }
+}
+
 // Save all and proceed to Assessment
-function saveAllAndProceedToAssessment() {
-    // Switch to Assessment tab first
-    switchTab('assessment');
-    // Then recheck and update all assessment blocks
-    // This is done in switchTab function when tabName === 'assessment'
+async function saveAllAndProceedToAssessment() {
+    // Save all profile data first
+    const success = await saveProfileData();
+    if (success) {
+        // Switch to Assessment tab
+        switchTab('assessment');
+        // Run assessment for all blocks in parallel (Block 1, 2, 3, 4)
+        updateAllAssessmentBlocks();
+    } else {
+        alert('Error saving data. Please try again.');
+    }
 }
 
 // Proceed to Result
@@ -1254,15 +1254,120 @@ function toggleSection(sectionId) {
     }
 }
 
-// File upload handling
-document.getElementById('file-upload')?.addEventListener('change', function(e) {
-    const files = Array.from(e.target.files);
-    const container = document.getElementById('uploaded-documents');
+// Load AI System detail data from API
+async function loadAISystemDetailData() {
+    // Get agent_id from data attribute
+    const mainContainer = document.querySelector('[data-agent-id]');
+    const agentId = mainContainer ? parseInt(mainContainer.getAttribute('data-agent-id')) : 0;
+    if (!agentId) {
+        console.warn('No agent ID available');
+        return;
+    }
     
-    files.forEach(file => {
-        const fileId = 'file-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    try {
+        const response = await fetch(`/api/ai-inventory/${agentId}/detail/`, {
+            method: 'GET',
+        });
+        
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+            // Load documents
+            if (result.data.documents && result.data.documents.length > 0) {
+                loadDocuments(result.data.documents);
+            }
+            
+            // Load profile data if exists
+            if (result.data.profile) {
+                loadProfileData(result.data.profile);
+            }
+            
+            // Load assessment data if exists
+            if (result.data.assessment) {
+                loadAssessmentData(result.data.assessment);
+                
+                // Load Block 1 state from BE
+                if (result.data.assessment.block1_state) {
+                    block1State.prohibitedConfirmed = result.data.assessment.block1_state.prohibited_confirmed || false;
+                    block1State.claimingException = result.data.assessment.block1_state.claiming_exception || '';
+                    block1State.exceptionQualifies = result.data.assessment.block1_state.exception_qualifies || '';
+                    block1State.exceptionEvidenceUploaded = result.data.assessment.block1_state.exception_evidence_uploaded || false;
+                    block1State.exceptionEvidenceSavedLink = result.data.assessment.block1_state.exception_evidence_saved_link || '';
+                    block1State.noExceptionConfirmed = result.data.assessment.block1_state.no_exception_confirmed || false;
+                }
+                
+                // Load Block 2 state from BE
+                if (result.data.assessment.block2_state) {
+                    block2State.highRiskConfirmed = result.data.assessment.block2_state.high_risk_confirmed || false;
+                    block2State.materialInfluence = result.data.assessment.block2_state.material_influence || '';
+                    block2State.narrowTasks = result.data.assessment.block2_state.narrow_tasks || [];
+                    block2State.profiling = result.data.assessment.block2_state.profiling || '';
+                    block2State.exemptionEvidenceUploaded = result.data.assessment.block2_state.exemption_evidence_uploaded || false;
+                    block2State.exemptionEvidenceSavedLink = result.data.assessment.block2_state.exemption_evidence_saved_link || '';
+                }
+                
+                // Load Block 3 state from BE
+                if (result.data.assessment.block3_state) {
+                    block3State.transparencyConfirmed = result.data.assessment.block3_state.transparency_confirmed || false;
+                    block3State.exceptionOptions = result.data.assessment.block3_state.exception_options || [];
+                    block3State.transparencyEvidenceUploaded = result.data.assessment.block3_state.transparency_evidence_uploaded || false;
+                    block3State.transparencyEvidenceSavedLink = result.data.assessment.block3_state.transparency_evidence_saved_link || '';
+                }
+                
+                // Load Block 4 state from BE
+                if (result.data.assessment.block4_state) {
+                    block4State.gpaiConfirmed = result.data.assessment.block4_state.gpai_confirmed || false;
+                    block4State.gpaiProviderAnswer = result.data.assessment.block4_state.gpai_provider_answer || '';
+                }
+            }
+            
+            console.log('AI System detail data loaded successfully');
+        } else {
+            console.log('No saved detail data found, starting fresh');
+        }
+    } catch (error) {
+        console.error('Error loading AI System detail data:', error);
+    }
+}
+
+// Load documents into UI
+function loadDocuments(documents) {
+    const container = document.getElementById('uploaded-documents');
+    if (!container) return;
+    
+    container.innerHTML = ''; // Clear existing
+    
+    documents.forEach((doc, index) => {
+        const fileId = 'file-' + Date.now() + '-' + index;
         const fileItem = document.createElement('div');
         fileItem.className = 'flex items-center justify-between p-3 bg-white rounded-lg border border-[#E5E7EB]';
+        fileItem.setAttribute('data-file-name', doc.name || '');
+        fileItem.setAttribute('data-file-url', doc.url || '');
+        fileItem.setAttribute('data-file-path', doc.path || '');
+        
+        // Calculate time ago
+        let uploadedText = 'recently';
+        if (doc.uploaded_at) {
+            try {
+                const uploadedDate = new Date(doc.uploaded_at);
+                const now = new Date();
+                const diffMs = now - uploadedDate;
+                const diffMins = Math.floor(diffMs / 60000);
+                
+                if (diffMins < 1) {
+                    uploadedText = 'just now';
+                } else if (diffMins < 60) {
+                    uploadedText = `${diffMins} mins ago`;
+                } else if (diffMins < 1440) {
+                    uploadedText = `${Math.floor(diffMins / 60)} hours ago`;
+                } else {
+                    uploadedText = `${Math.floor(diffMins / 1440)} days ago`;
+                }
+            } catch (e) {
+                uploadedText = 'recently';
+            }
+        }
+        
         fileItem.innerHTML = `
             <div class="flex items-center gap-3">
                 <label class="cursor-pointer">
@@ -1282,11 +1387,11 @@ document.getElementById('file-upload')?.addEventListener('change', function(e) {
                     <polyline points="10,9 9,9 8,9" />
                 </svg>
                 <div>
-                    <p class="text-sm font-medium text-[#111827]">${file.name}</p>
-                    <p class="text-xs text-[#6B7280]">Uploaded just now</p>
+                    <p class="text-sm font-medium text-[#111827]">${doc.name || 'Unknown'}</p>
+                    <p class="text-xs text-[#6B7280]">Uploaded ${uploadedText}</p>
                 </div>
             </div>
-            <button onclick="generateLink('${file.name}')" class="flex items-center gap-2 px-4 py-1.5 bg-[#F13D30] text-white text-sm rounded-lg hover:bg-[#d63529] transition-colors">
+            <button onclick="generateLink('${doc.name || ''}')" class="flex items-center gap-2 px-4 py-1.5 bg-[#F13D30] text-white text-sm rounded-lg hover:bg-[#d63529] transition-colors">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
                     <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
                     <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
@@ -1297,10 +1402,517 @@ document.getElementById('file-upload')?.addEventListener('change', function(e) {
         container.appendChild(fileItem);
     });
     
-    e.target.value = '';
-    
-    // Update delete button visibility after adding new files
     updateDeleteButtonVisibility();
+}
+
+// Load profile data into form fields
+function loadProfileData(profileData) {
+    if (!profileData) return;
+    
+    console.log('Loading profile data:', profileData);
+    
+    // Section 2: System Identity
+    if (profileData.system_identity) {
+        const si = profileData.system_identity;
+        setValue('ai_system_name', si.ai_system_name);
+        setValue('internal_system_id', si.internal_system_id);
+        setValue('commercial_name', si.commercial_name);
+        setValue('owner_name', si.owner_name);
+        setValue('owner_email', si.owner_email);
+        setValue('owner_department', si.owner_department);
+        setChecked('same_as_compliance_owner', si.same_as_compliance_owner);
+        setValue('system_status', si.system_status);
+        setValue('go_live_date', si.go_live_date);
+        setRadio('part_of_product', si.part_of_product);
+        setValue('product_service_name', si.product_service_name);
+    }
+    
+    // Section 3: Source & Operator Role
+    if (profileData.source_operator_role) {
+        const sor = profileData.source_operator_role;
+        setRadio('default_role_apply', sor.default_role_apply);
+        setCheckboxes('roles[]', sor.roles);  // Fix: field name is roles[]
+        setRadio('system_source', sor.system_source);
+        setValue('vendor_name', sor.vendor_name);
+        setVendorEvidenceLink(sor.vendor_evidence_link);  // Set link to saved div
+        setRadio('modify_customize', sor.modify_customize);
+        setRadio('eu_usage', sor.eu_usage);
+        setRadio('eu_effect', sor.eu_effect);
+    }
+    
+    // Section 4: Intended Purpose
+    if (profileData.intended_purpose) {
+        const ip = profileData.intended_purpose;
+        setValue('intended_purpose', ip.intended_purpose);
+        setCheckboxes('sector_domain', ip.sector_domain);
+        setValue('sector_other', ip.sector_other);
+        setRadio('safety_component', ip.safety_component);
+        setRadio('third_party_conformity', ip.third_party_conformity);
+    }
+    
+    // Section 5-9: Other sections
+    if (profileData.deployment_context) {
+        setRadio('deployment_context', profileData.deployment_context);  // Fix: deployment_context is radio
+        // Show Other input if value is "Other"
+        if (profileData.deployment_context === 'Other' && profileData.deployment_other) {
+            setTimeout(() => {
+                const otherInput = document.getElementById('deployment-other-input');
+                if (otherInput) {
+                    otherInput.classList.remove('hidden');
+                    otherInput.value = profileData.deployment_other;
+                }
+            }, 100);
+        }
+    }
+    if (profileData.system_users) {
+        setCheckboxes('system_users', profileData.system_users);
+        // Show Other input if "Other" is selected
+        if (profileData.system_users.includes('Other') && profileData.system_users_other) {
+            setTimeout(() => {
+                const otherInput = document.getElementById('system-users-other-input');
+                if (otherInput) {
+                    otherInput.classList.remove('hidden');
+                    otherInput.value = profileData.system_users_other;
+                }
+            }, 100);
+        }
+    }
+    if (profileData.affected_outputs) {
+        setCheckboxes('affected_outputs', profileData.affected_outputs);
+        // Show Other input if "Other" is selected
+        if (profileData.affected_outputs.includes('Other') && profileData.affected_outputs_other) {
+            setTimeout(() => {
+                const otherInput = document.getElementById('affected-outputs-other-input');
+                if (otherInput) {
+                    otherInput.classList.remove('hidden');
+                    otherInput.value = profileData.affected_outputs_other;
+                }
+            }, 100);
+        }
+    }
+    if (profileData.vulnerable_groups) setCheckboxes('vulnerable_groups', profileData.vulnerable_groups);
+    if (profileData.workflow_role) setRadio('workflow_role', profileData.workflow_role);
+    if (profileData.output_types) setCheckboxes('output_types', profileData.output_types);
+    if (profileData.decision_influence) setRadio('decision_influence', profileData.decision_influence);
+    if (profileData.auto_execute) setRadio('auto_execute', profileData.auto_execute);
+    if (profileData.capability_practices) setCheckboxes('capability_practices', profileData.capability_practices);
+    if (profileData.interacts_persons) setRadio('interacts_persons', profileData.interacts_persons);
+    if (profileData.synthetic_content) setCheckboxes('synthetic_content', profileData.synthetic_content);
+    if (profileData.ai_kind) setCheckboxes('ai_kind', profileData.ai_kind);
+    if (profileData.gpai_integration) setRadio('gpai_integration', profileData.gpai_integration);
+    if (profileData.gpai_provider) setValue('gpai_provider', profileData.gpai_provider);
+    if (profileData.training_source) setRadio('training_source', profileData.training_source);
+    if (profileData.update_frequency) setRadio('update_frequency', profileData.update_frequency);
+    if (profileData.data_types) setCheckboxes('data_types', profileData.data_types);
+}
+
+// Helper functions to set form values
+function setValue(name, value) {
+    if (!value) return;
+    const field = document.querySelector(`[name="${name}"]`);
+    if (field) {
+        if (field.type === 'checkbox') {
+            field.checked = value;
+        } else {
+            field.value = value;
+        }
+    }
+}
+
+function setRadio(name, value) {
+    if (!value) return;
+    const radio = document.querySelector(`[name="${name}"][value="${value}"]`);
+    if (radio) {
+        radio.checked = true;
+        // Trigger change event for conditional logic (important for system_source to show vendor fields, safety_component to show third_party_conformity)
+        radio.dispatchEvent(new Event('change', { bubbles: true }));
+        
+        // Special handling for system_source to ensure vendor fields are shown
+        if (name === 'system_source' && (value === 'Vendor / Third-party' || value === 'Mixed')) {
+            setTimeout(() => {
+                const vendorFields = document.getElementById('vendor-fields');
+                if (vendorFields) {
+                    vendorFields.classList.remove('hidden');
+                }
+            }, 100);
+        }
+        
+        // Special handling for safety_component to ensure third_party_conformity field is shown
+        if (name === 'safety_component' && value === 'Yes') {
+            setTimeout(() => {
+                const thirdPartyField = document.getElementById('third-party-conformity-field');
+                if (thirdPartyField) {
+                    thirdPartyField.classList.remove('hidden');
+                }
+            }, 100);
+        }
+    }
+}
+
+function setCheckboxes(name, values) {
+    if (!values || !Array.isArray(values)) {
+        // If no values, uncheck all checkboxes with this name
+        const allCheckboxes = document.querySelectorAll(`[name="${name}"], [name="${name}[]"]`);
+        allCheckboxes.forEach(cb => cb.checked = false);
+        return;
+    }
+    
+    // First, uncheck all checkboxes with this name
+    const allCheckboxes = document.querySelectorAll(`[name="${name}"], [name="${name}[]"]`);
+    allCheckboxes.forEach(cb => cb.checked = false);
+    
+    // Then, check only the ones in the values array
+    values.forEach(value => {
+        // Support both "roles" and "roles[]" format
+        const checkbox = document.querySelector(`[name="${name}"][value="${value}"], [name="${name}[]"][value="${value}"]`);
+        if (checkbox) {
+            checkbox.checked = true;
+        }
+    });
+}
+
+// Set vendor evidence link to saved div
+function setVendorEvidenceLink(link) {
+    if (!link) return;
+    
+    const savedLinkDiv = document.getElementById('vendor-link-saved');
+    const linkText = document.getElementById('vendor-link-text');
+    const linkInput = document.getElementById('vendor-evidence-link');
+    
+    if (savedLinkDiv && linkText) {
+        // Create clickable link
+        linkText.innerHTML = `<a href="${link}" target="_blank" class="text-[#F13D30] hover:underline">${link}</a>`;
+        savedLinkDiv.classList.remove('hidden');
+        
+        // Also set input value for reference
+        if (linkInput) {
+            linkInput.value = link;
+        }
+    } else if (linkInput) {
+        // Fallback to input field
+        linkInput.value = link;
+    }
+}
+
+function setChecked(name, checked) {
+    if (checked === undefined || checked === null) return;
+    const checkbox = document.getElementById(name) || document.querySelector(`[name="${name}"]`);
+    if (checkbox) {
+        checkbox.checked = checked;
+        checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+}
+
+// Collect all profile form data
+function collectProfileData() {
+    // Debug: Check vendor evidence link before collecting
+    const vendorLink = getVendorEvidenceLink();
+    console.log('Collecting profile data - vendor_evidence_link:', vendorLink);
+    
+    const profile = {
+        system_identity: {
+            ai_system_name: getValue('ai_system_name'),
+            internal_system_id: getValue('internal_system_id'),
+            commercial_name: getValue('commercial_name'),
+            owner_name: getValue('owner_name'),
+            owner_email: getValue('owner_email'),
+            owner_department: getValue('owner_department'),
+            same_as_compliance_owner: getChecked('same_as_compliance_owner'),
+            system_status: getValue('system_status'),
+            go_live_date: getValue('go_live_date'),
+            part_of_product: getRadio('part_of_product'),
+            product_service_name: getValue('product_service_name')
+        },
+        source_operator_role: {
+            default_role_apply: getRadio('default_role_apply'),
+            roles: getCheckboxes('roles[]'),  // Fix: field name is roles[]
+            system_source: getRadio('system_source'),
+            vendor_name: getValue('vendor_name'),
+            vendor_evidence_link: getVendorEvidenceLink(),  // Get link from saved div or input
+            modify_customize: getRadio('modify_customize'),
+            eu_usage: getRadio('eu_usage'),
+            eu_effect: getRadio('eu_effect')
+        },
+        intended_purpose: {
+            intended_purpose: getValue('intended_purpose'),
+            sector_domain: getCheckboxes('sector_domain'),
+            sector_other: getValue('sector_other'),
+            safety_component: getRadio('safety_component'),
+            third_party_conformity: getRadio('third_party_conformity')
+        },
+        deployment_context: getRadio('deployment_context'),  // Fix: deployment_context is radio, not checkbox
+        deployment_other: getValue('deployment_other'),  // Add Other field
+        system_users: getCheckboxes('system_users'),
+        system_users_other: getValue('system_users_other'),  // Add Other field
+        affected_outputs: getCheckboxes('affected_outputs'),
+        affected_outputs_other: getValue('affected_outputs_other'),  // Add Other field
+        vulnerable_groups: getCheckboxes('vulnerable_groups'),
+        workflow_role: getRadio('workflow_role'),
+        output_types: getCheckboxes('output_types'),
+        decision_influence: getRadio('decision_influence'),
+        auto_execute: getRadio('auto_execute'),
+        capability_practices: getCheckboxes('capability_practices'),
+        interacts_persons: getRadio('interacts_persons'),
+        synthetic_content: getCheckboxes('synthetic_content'),
+        ai_kind: getCheckboxes('ai_kind'),
+        gpai_integration: getRadio('gpai_integration'),
+        gpai_provider: getValue('gpai_provider'),
+        training_source: getRadio('training_source'),
+        update_frequency: getRadio('update_frequency'),
+        data_types: getCheckboxes('data_types')
+    };
+    
+    return profile;
+}
+
+// Helper functions to get form values
+function getValue(name) {
+    const field = document.querySelector(`[name="${name}"]`);
+    return field ? field.value : '';
+}
+
+function getRadio(name) {
+    const radio = document.querySelector(`[name="${name}"]:checked`);
+    return radio ? radio.value : '';
+}
+
+function getCheckboxes(name) {
+    // Support both "roles" and "roles[]" format
+    // IMPORTANT: Only get checked checkboxes, not all checkboxes
+    const checkboxes = Array.from(document.querySelectorAll(`[name="${name}"]:checked, [name="${name}[]"]:checked`));
+    return checkboxes.map(cb => cb.value);
+}
+
+// Get vendor evidence link from saved div or input field
+function getVendorEvidenceLink() {
+    const savedLinkDiv = document.getElementById('vendor-link-saved');
+    const linkText = document.getElementById('vendor-link-text');
+    const linkInput = document.getElementById('vendor-evidence-link');
+    
+    // Debug
+    console.log('getVendorEvidenceLink - savedLinkDiv:', savedLinkDiv);
+    console.log('getVendorEvidenceLink - linkText:', linkText);
+    console.log('getVendorEvidenceLink - linkInput:', linkInput);
+    console.log('getVendorEvidenceLink - linkInput.value:', linkInput?.value);
+    
+    // Priority: Check input field first (most up-to-date)
+    // Then check saved div
+    if (linkInput && linkInput.value && linkInput.value.trim()) {
+        const linkValue = linkInput.value.trim();
+        console.log('getVendorEvidenceLink - returning from input:', linkValue);
+        return linkValue;
+    }
+    
+    // Fallback to saved div if input is empty
+    if (savedLinkDiv && !savedLinkDiv.classList.contains('hidden') && linkText) {
+        // Extract link from text or href if it's a link element
+        const linkMatch = linkText.innerHTML.match(/href="([^"]+)"/);
+        if (linkMatch) {
+            console.log('getVendorEvidenceLink - returning from saved div (href):', linkMatch[1]);
+            return linkMatch[1];
+        }
+        // Or get text content if it's just text
+        const text = linkText.textContent || linkText.innerText;
+        if (text && text.trim()) {
+            console.log('getVendorEvidenceLink - returning from saved div (text):', text.trim());
+            return text.trim();
+        }
+    }
+    
+    console.log('getVendorEvidenceLink - returning empty string');
+    return '';
+}
+
+function getChecked(name) {
+    const checkbox = document.getElementById(name) || document.querySelector(`[name="${name}"]`);
+    return checkbox ? checkbox.checked : false;
+}
+
+// Save profile data to API
+async function saveProfileData() {
+    const mainContainer = document.querySelector('[data-agent-id]');
+    const agentId = mainContainer ? parseInt(mainContainer.getAttribute('data-agent-id')) : 0;
+    if (!agentId) {
+        console.error('No agent ID available');
+        return false;
+    }
+    
+    try {
+        // Ensure vendor link is captured from input field if user hasn't clicked "Save link"
+        const linkInput = document.getElementById('vendor-evidence-link');
+        if (linkInput && linkInput.value && linkInput.value.trim()) {
+            // Update saved div to reflect current input value
+            const savedLinkDiv = document.getElementById('vendor-link-saved');
+            const linkText = document.getElementById('vendor-link-text');
+            if (savedLinkDiv && linkText) {
+                linkText.innerHTML = `<a href="${linkInput.value.trim()}" target="_blank" class="text-[#F13D30] hover:underline">${linkInput.value.trim()}</a>`;
+                savedLinkDiv.classList.remove('hidden');
+            }
+        }
+        
+        const profileData = collectProfileData();
+        console.log('Saving profile data:', profileData);
+        console.log('Vendor evidence link in profile:', profileData.source_operator_role?.vendor_evidence_link);
+        
+        const response = await fetch(`/api/ai-inventory/${agentId}/detail/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                profile: profileData
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            console.log('Profile data saved successfully');
+            
+            // If assessment results are returned from BE, update assessment blocks
+            if (result.assessment) {
+                console.log('Assessment results from BE:', result.assessment);
+                updateAssessmentBlocksFromBE(result.assessment);
+            }
+            
+            return true;
+        } else {
+            console.error('Error saving profile data:', result.error);
+            return false;
+        }
+    } catch (error) {
+        console.error('Error saving profile data:', error);
+        return false;
+    }
+}
+
+// Load assessment data (placeholder - to be implemented based on form structure)
+function loadAssessmentData(assessmentData) {
+    if (!assessmentData) return;
+    console.log('Loading assessment data:', assessmentData);
+    // TODO: Implement loading assessment form fields when needed
+}
+
+// File upload handling
+document.getElementById('file-upload')?.addEventListener('change', async function(e) {
+    const files = Array.from(e.target.files);
+    const container = document.getElementById('uploaded-documents');
+    if (!container || !files?.length) return;
+    
+    // Get agent_id from data attribute
+    const mainContainer = document.querySelector('[data-agent-id]');
+    const agentId = mainContainer ? parseInt(mainContainer.getAttribute('data-agent-id')) : 0;
+    
+    // Upload files to static folder using general upload API
+    try {
+        const formData = new FormData();
+        files.forEach(file => {
+            formData.append('file', file);
+        });
+        formData.append('folder', 'governance/uploads');
+        
+        const uploadResponse = await fetch('/api/upload-file/', {
+            method: 'POST',
+            body: formData,
+        });
+        
+        const uploadResult = await uploadResponse.json();
+        
+        if (!uploadResponse.ok || !uploadResult.success) {
+            throw new Error(uploadResult.error || uploadResult.message || 'Upload failed');
+        }
+        
+        // Prepare file info
+        const fileInfos = uploadResult.files.map(fileInfo => ({
+            name: fileInfo.name,
+            size: fileInfo.size,
+            url: fileInfo.url,
+            path: fileInfo.path,
+            uploaded_at: new Date().toISOString()
+        }));
+        
+        // Get existing documents
+        let existingDocuments = [];
+        try {
+            const getResponse = await fetch(`/api/ai-inventory/${agentId}/detail/`);
+            const getResult = await getResponse.json();
+            if (getResult.success && getResult.data && getResult.data.documents) {
+                existingDocuments = getResult.data.documents;
+            }
+        } catch (e) {
+            console.warn('Could not load existing documents:', e);
+        }
+        
+        // Merge new files with existing
+        const allDocuments = [...existingDocuments, ...fileInfos];
+        
+        // Save documents to detail API
+        try {
+            const saveResponse = await fetch(`/api/ai-inventory/${agentId}/detail/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    documents: allDocuments
+                })
+            });
+            
+            if (!saveResponse.ok) {
+                console.warn('Could not save file info to detail data');
+            }
+        } catch (e) {
+            console.warn('Error saving file info:', e);
+        }
+        
+        // Add uploaded files to UI
+        fileInfos.forEach(fileInfo => {
+            const fileId = 'file-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+            const fileItem = document.createElement('div');
+            fileItem.className = 'flex items-center justify-between p-3 bg-white rounded-lg border border-[#E5E7EB]';
+            fileItem.setAttribute('data-file-name', fileInfo.name);
+            fileItem.setAttribute('data-file-url', fileInfo.url);
+            fileItem.setAttribute('data-file-path', fileInfo.path);
+            fileItem.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <label class="cursor-pointer">
+                        <input type="checkbox" class="file-checkbox hidden" data-file-id="${fileId}" onchange="toggleFileSelection(this)">
+                        <div class="file-checkbox-display w-5 h-5 border-2 border-[#111827] rounded flex items-center justify-center">
+                            <svg class="hidden check-icon w-3 h-3 text-[#F13D30]" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                            </svg>
+                        </div>
+                    </label>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        class="w-5 h-5 text-[#DC2626]">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <polyline points="14,2 14,8 20,8" />
+                        <line x1="16" y1="13" x2="8" y2="13" />
+                        <line x1="16" y1="17" x2="8" y2="17" />
+                        <polyline points="10,9 9,9 8,9" />
+                    </svg>
+                    <div>
+                        <p class="text-sm font-medium text-[#111827]">${fileInfo.name}</p>
+                        <p class="text-xs text-[#6B7280]">Uploaded just now</p>
+                    </div>
+                </div>
+                <button onclick="generateLink('${fileInfo.name}')" class="flex items-center gap-2 px-4 py-1.5 bg-[#F13D30] text-white text-sm rounded-lg hover:bg-[#d63529] transition-colors">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                    </svg>
+                    Generate link
+                </button>
+            `;
+            container.appendChild(fileItem);
+        });
+        
+        e.target.value = '';
+        updateDeleteButtonVisibility();
+    } catch (error) {
+        console.error('Upload error:', error);
+        alert(`Error uploading files: ${error.message}`);
+    }
 });
 
 // Toggle file selection
@@ -1337,7 +1949,7 @@ function updateDeleteButtonVisibility() {
 }
 
 // Delete selected files
-function deleteSelectedFiles() {
+async function deleteSelectedFiles() {
     const selectedCheckboxes = document.querySelectorAll('.file-checkbox:checked');
     
     if (selectedCheckboxes.length === 0) {
@@ -1348,7 +1960,72 @@ function deleteSelectedFiles() {
         `Are you sure you want to delete ${selectedCheckboxes.length} selected file${selectedCheckboxes.length > 1 ? 's' : ''}? This action cannot be undone.`
     );
     
-    if (confirmDelete) {
+    if (!confirmDelete) {
+        return;
+    }
+    
+    // Get agent_id
+    const mainContainer = document.querySelector('[data-agent-id]');
+    const agentId = mainContainer ? parseInt(mainContainer.getAttribute('data-agent-id')) : 0;
+    
+    // Collect file information from selected checkboxes
+    const filesToDelete = [];
+    selectedCheckboxes.forEach(checkbox => {
+        const fileItem = checkbox.closest('.flex.items-center.justify-between');
+        if (fileItem) {
+            const fileName = fileItem.getAttribute('data-file-name');
+            const fileUrl = fileItem.getAttribute('data-file-url');
+            const filePath = fileItem.getAttribute('data-file-path');
+            
+            if (fileName) {
+                filesToDelete.push({
+                    name: fileName,
+                    url: fileUrl || '',
+                    path: filePath || ''
+                });
+            }
+        }
+    });
+    
+    if (filesToDelete.length === 0) {
+        alert('No file information found to delete');
+        return;
+    }
+    
+    try {
+        // Get current documents
+        let currentDocuments = [];
+        try {
+            const getResponse = await fetch(`/api/ai-inventory/${agentId}/detail/`);
+            const getResult = await getResponse.json();
+            if (getResult.success && getResult.data && getResult.data.documents) {
+                currentDocuments = getResult.data.documents;
+            }
+        } catch (e) {
+            console.warn('Could not load current documents:', e);
+        }
+        
+        // Remove deleted files from documents array
+        const remainingDocuments = currentDocuments.filter(doc => {
+            return !filesToDelete.some(fileToDelete => fileToDelete.name === doc.name);
+        });
+        
+        // Update detail data
+        const saveResponse = await fetch(`/api/ai-inventory/${agentId}/detail/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                documents: remainingDocuments
+            })
+        });
+        
+        if (!saveResponse.ok) {
+            throw new Error('Failed to update documents');
+        }
+        
+        // Remove file items from DOM
         selectedCheckboxes.forEach(checkbox => {
             const fileItem = checkbox.closest('.flex.items-center.justify-between');
             if (fileItem) {
@@ -1358,6 +2035,11 @@ function deleteSelectedFiles() {
         
         // Update delete button visibility after deletion
         updateDeleteButtonVisibility();
+        
+        console.log(`Successfully deleted ${filesToDelete.length} file(s)`);
+    } catch (error) {
+        console.error('Error deleting files:', error);
+        alert(`Error deleting files: ${error.message}`);
     }
 }
 
@@ -1470,49 +2152,223 @@ function toggleAssessmentBlock(blockNum) {
     }
 }
 
+// Block 1 State Variables (for confirmation and exception flow)
+// This will be synced with BE state when loading assessment
+let block1State = {
+    prohibitedConfirmed: false,
+    claimingException: '', // 'Yes' | 'No' | ''
+    exceptionQualifies: '', // 'Yes' | 'No' | 'Not sure' | ''
+    exceptionEvidenceUploaded: false,
+    exceptionEvidenceSavedLink: '',
+    noExceptionConfirmed: false,
+    be_assessment: null // Store BE assessment results for reference
+};
+
+// Block 2 State Variables (for confirmation and Annex III flow)
+// This will be synced with BE state when loading assessment
+let block2State = {
+    highRiskConfirmed: false,
+    materialInfluence: '', // 'Yes' | 'No' | 'Not sure' | ''
+    narrowTasks: [], // Array of task strings
+    profiling: '', // 'Yes' | 'No' | 'Unknown' | ''
+    exemptionEvidenceUploaded: false,
+    exemptionEvidenceSavedLink: '',
+    be_assessment: null // Store BE assessment results for reference
+};
+
+// Block 3 State Variables (for confirmation and exception flow)
+// This will be synced with BE state when loading assessment
+let block3State = {
+    transparencyConfirmed: false,
+    exceptionOptions: [], // Array of selected exception options
+    transparencyEvidenceUploaded: false,
+    transparencyEvidenceSavedLink: '',
+    be_assessment: null // Store BE assessment results for reference
+};
+
+// Block 4 State Variables (for confirmation and provider determination)
+// This will be synced with BE state when loading assessment
+let block4State = {
+    gpaiConfirmed: false,
+    gpaiProviderAnswer: '', // 'Yes' | 'No' | 'Not sure' | ''
+    be_assessment: null // Store BE assessment results for reference
+};
+
 // Helper function to determine if Block 1 resulted in Prohibited
-// (Based on React code - checks if status is 'Prohibited' after confirmation)
+// (Based on flowchart - checks if status is 'Prohibited' after confirmation)
 function isBlock1Prohibited() {
-    // In a full implementation, this would check confirmation states
-    // For now, we check if status is 'Triggered' (which means prohibited practices detected)
-    // and assume it's confirmed as Prohibited if no exception is claimed
     const status = getProhibitedStatus();
-    // Note: In React, this checks if status === 'Prohibited' after confirmation flow
-    // Since we don't have confirmation states yet, we'll use 'Triggered' as a proxy
-    // This will be updated when confirmation UI is added
-    return status === 'Triggered';
+    
+    // If status is 'Prohibited', return true
+    if (status === 'Prohibited') {
+        return true;
+    }
+    
+    // If status is 'Triggered' and user confirmed but no exception available or declined
+    if (status === 'Triggered' && block1State.prohibitedConfirmed) {
+        // Check if any selected practice has no exception
+        const capabilities = Array.from(document.querySelectorAll('input[name="capability_practices"]:checked'))
+            .map(cb => cb.value)
+            .filter(c => c !== 'None of the above');
+        
+        const hasNoExceptionPractice = capabilities.some(practice => {
+            const practiceInfo = prohibitedPracticesMap[practice];
+            return practiceInfo && !practiceInfo.hasException;
+        });
+        
+        if (hasNoExceptionPractice || block1State.claimingException === 'No') {
+            return true;
+        }
+    }
+    
+    return false;
 }
 
-// Assessment Status Calculation Functions
+// AI Detection Function (Random - will be updated later with actual AI logic)
+// Note: This is now handled on BE, but kept here for client-side fallback
+function aiDetectsProhibitedPractice() {
+    // Random yes/no for now - will be updated with actual AI logic later
+    // Returns true if AI detects prohibited practice, false otherwise
+    return Math.random() > 0.5; // 50% chance of detection
+}
+
+// Prohibited Practices Mapping (from Block_1_Prohibited_Practices_Logic.md)
+const prohibitedPracticesMap = {
+    'Subliminal / manipulative / deceptive techniques that materially distort behaviour and are likely to cause significant harm': {
+        label: 'Subliminal/manipulative/deceptive techniques',
+        article: '5(1)(a)',
+        hasException: false,
+        exceptionCondition: null
+    },
+    'Exploitation of vulnerabilities (age, disability, or social / economic situation) to distort behaviour likely causing significant harm': {
+        label: 'Exploitation of vulnerabilities',
+        article: '5(1)(b)',
+        hasException: false,
+        exceptionCondition: null
+    },
+    'Social scoring leading to detrimental / unfavourable treatment (esp. unjustified / disproportionate)': {
+        label: 'Social scoring',
+        article: '5(1)(c)',
+        hasException: false,
+        exceptionCondition: null
+    },
+    'Criminal offence risk assessment / prediction based solely on profiling or personality traits (individual predictive policing)': {
+        label: 'Criminal offence risk assessment',
+        article: '5(1)(d)',
+        hasException: true,
+        exceptionCondition: 'AI system is used to support a human assessment based on objective and verifiable facts directly linked to criminal activity (not solely profiling). (Art.5(1)(d))'
+    },
+    'Untargeted scraping of facial images from the internet or CCTV to build / expand facial recognition databases': {
+        label: 'Untargeted facial image scraping',
+        article: '5(1)(e)',
+        hasException: false,
+        exceptionCondition: null
+    },
+    'Emotion recognition in the workplace or in education settings': {
+        label: 'Emotion recognition in workplace/education',
+        article: '5(1)(f)',
+        hasException: true,
+        exceptionCondition: 'AI system is for medical or safety reasons. (Art.5(1)(f))'
+    },
+    'Biometric categorisation that infers or predicts sensitive traits (e.g., race, political opinions, religion, trade union membership, sexual orientation)': {
+        label: 'Biometric categorisation (sensitive traits)',
+        article: '5(1)(g)',
+        hasException: true,
+        exceptionCondition: 'AI system is for labelling or filtering of lawfully acquired biometric datasets, such as images, based on biometric data or categorizing of biometric data in the area of law enforcement. (Art.5(1)(g))'
+    },
+    'Real-time remote biometric identification (RBI) in publicly accessible spaces for law enforcement purposes': {
+        label: 'Real-time remote biometric identification (RBI)',
+        article: '5(1)(h)',
+        hasException: true,
+        exceptionCondition: 'Only if strictly necessary for one of the listed objectives (victims / imminent serious threat / serious crime suspect) and with safeguards + authorisation requirements (Art. 5(2)–(7)).'
+    }
+};
+
+// Assessment Status Calculation Functions - Updated to sync with flowchart
 function getProhibitedStatus() {
-    // Read from Profile inputs - Section 7, Q1: Capabilities
+    // STEP 1: AI Detection (from flowchart - START point)
+    const aiDetectionResult = aiDetectsProhibitedPractice();
+    
+    // STEP 2: Check Section 7 Capabilities, Q1 (from flowchart)
     const capabilities = Array.from(document.querySelectorAll('input[name="capability_practices"]:checked')).map(cb => cb.value);
     
+    // STEP 3: Check if no capabilities selected (from flowchart)
+    // "Status: Not assessed" if "capabilities.length === 0"
     if (capabilities.length === 0) {
         return 'Not assessed';
     }
     
+    // STEP 4: Check if "None of the above" selected (from flowchart)
     const noneSelected = capabilities.includes('None of the above');
+    
+    // From flowchart: "Status: Not assessed" if "'None of the above' selected + AI detection result = No"
+    if (noneSelected && !aiDetectionResult) {
+        return 'Not assessed';
+    }
+    
+    // If "None of the above" selected but AI detected something, still return PASS (user explicitly said none)
     if (noneSelected) {
         return 'PASS';
     }
     
-    // Check if any prohibited practices are selected
-    const prohibitedPractices = [
-        'Biometric identification and categorisation',
-        'Emotion recognition in the workplace or in education settings',
-        'Biometric categorisation that infers or predicts sensitive traits',
-        'Social scoring',
-        'Manipulation through subliminal techniques',
-        'Exploitation of vulnerabilities of specific groups'
-    ];
+    // STEP 5: Prohibited Practice Selected? (from flowchart)
+    // Get selected practices (excluding "None of the above")
+    const selectedPractices = capabilities.filter(c => c !== 'None of the above');
     
-    const hasProhibited = capabilities.some(cap => prohibitedPractices.includes(cap));
-    if (hasProhibited) {
-        return 'Triggered';
+    if (selectedPractices.length === 0) {
+        // No prohibited practices selected
+        return 'PASS';
     }
     
-    return 'PASS';
+    // Check if any of the selected practices are actually prohibited practices
+    const hasProhibitedPractice = selectedPractices.some(practice => {
+        return Object.keys(prohibitedPracticesMap).includes(practice);
+    });
+    
+    if (!hasProhibitedPractice) {
+        // Selected practices but none are in prohibited list
+        return 'PASS';
+    }
+    
+    // STEP 6: Prohibited Practice Selected = YES (from flowchart)
+    // After user confirms, check exception flow
+    if (block1State.prohibitedConfirmed) {
+        // Check if ANY selected practice has NO exception available (from flowchart)
+        const hasNoExceptionPractice = selectedPractices.some(practice => {
+            const practiceInfo = prohibitedPracticesMap[practice];
+            return practiceInfo && !practiceInfo.hasException;
+        });
+        
+        // If no exception available OR user declined exception → Status: Prohibited (from flowchart)
+        if (hasNoExceptionPractice || block1State.claimingException === 'No') {
+            return 'Prohibited';
+        }
+        
+        // If user is claiming exception
+        if (block1State.claimingException === 'Yes') {
+            // Exception Question: Does system fall under exception condition? (from flowchart)
+            if (block1State.exceptionQualifies === 'Yes') {
+                // Check if evidence uploaded/linked (from flowchart)
+                if (block1State.exceptionEvidenceUploaded || block1State.exceptionEvidenceSavedLink) {
+                    return 'Exception claimed'; // Status: Exception claimed → Status: PASS (from flowchart)
+                } else {
+                    return 'Needs Review'; // No evidence → Status: Needs Review (from flowchart)
+                }
+            } else if (block1State.exceptionQualifies === 'No') {
+                return 'Prohibited'; // Status: Prohibited (from flowchart)
+            } else if (block1State.exceptionQualifies === 'Not sure') {
+                return 'Needs Review'; // Status: Needs Review (from flowchart)
+            }
+        }
+        
+        // If claimingException is empty, still triggered
+        if (block1State.claimingException === '') {
+            return 'Triggered';
+        }
+    }
+    
+    // Status: "Triggered" (awaiting user confirmation)
+    return 'Triggered';
 }
 
 function getHighRiskStatus() {
@@ -1678,6 +2534,7 @@ function getStatusColorClass(status) {
 function updateAssessmentBlock(blockNum) {
     let status = '';
     let content = '';
+    let details = null;
     
     switch(blockNum) {
         case 1:
@@ -1685,16 +2542,34 @@ function updateAssessmentBlock(blockNum) {
             content = renderBlock1Content(status);
             break;
         case 2:
-            status = getHighRiskStatus();
-            content = renderBlock2Content(status);
+            // Try to get status from BE assessment first
+            if (block2State.be_assessment) {
+                status = block2State.be_assessment.status || getHighRiskStatus();
+                details = block2State.be_assessment.details || null;
+            } else {
+                status = getHighRiskStatus();
+            }
+            content = renderBlock2Content(status, details);
             break;
         case 3:
-            status = getTransparencyStatus();
-            content = renderBlock3Content(status);
+            // Try to get status from BE assessment first
+            if (block3State.be_assessment) {
+                status = block3State.be_assessment.status || getTransparencyStatus();
+                details = block3State.be_assessment.details || null;
+            } else {
+                status = getTransparencyStatus();
+            }
+            content = renderBlock3Content(status, details);
             break;
         case 4:
-            status = getGPAIStatus();
-            content = renderBlock4Content(status);
+            // Try to get status from BE assessment first
+            if (block4State.be_assessment) {
+                status = block4State.be_assessment.status || getGPAIStatus();
+                details = block4State.be_assessment.details || null;
+            } else {
+                status = getGPAIStatus();
+            }
+            content = renderBlock4Content(status, details);
             break;
     }
     
@@ -1729,35 +2604,472 @@ function renderBlock1Content(status) {
     }
     
     if (status === 'Triggered') {
-        const selectedPractices = Array.from(document.querySelectorAll('input[name="capability_practices"]:checked'))
-            .map(cb => cb.value)
-            .filter(v => v !== 'None of the above');
+        // Get selected prohibited practices from BE assessment if available, otherwise from form
+        let selectedPractices = [];
+        let practicesInfo = {};
         
+        if (block1State.be_assessment && block1State.be_assessment.selected_practices) {
+            selectedPractices = block1State.be_assessment.selected_practices;
+            practicesInfo = block1State.be_assessment.practices_info || {};
+        } else {
+            selectedPractices = Array.from(document.querySelectorAll('input[name="capability_practices"]:checked'))
+                .map(cb => cb.value)
+                .filter(v => v !== 'None of the above')
+                .filter(p => Object.keys(prohibitedPracticesMap).includes(p));
+            practicesInfo = {};
+            selectedPractices.forEach(p => {
+                if (prohibitedPracticesMap[p]) {
+                    practicesInfo[p] = prohibitedPracticesMap[p];
+                }
+            });
+        }
+        
+        if (!block1State.prohibitedConfirmed) {
+            // Show Reason & Ask Confirm or Edit (from flowchart)
+            const practicesList = selectedPractices.map(practice => {
+                const practiceInfo = practicesInfo[practice] || prohibitedPracticesMap[practice];
+                if (!practiceInfo) return '';
+                return `<li class="font-medium text-sm text-[#464E58] ml-2">
+                    <strong>${practiceInfo.label || practice}</strong> (Article ${practiceInfo.article || 'N/A'})
+                </li>`;
+            }).filter(html => html).join('');
+            
+            return `
+                <div class="space-y-4">
+                    <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-4">
+                        <p class="font-semibold text-sm text-[#22262A] mb-2">⚠️ Prohibited Practices Detected</p>
+                        <p class="font-normal text-sm text-[#464E58] mb-2">
+                            Based on your Profile inputs, the following prohibited practices have been identified:
+                        </p>
+                        <ul class="list-disc list-inside space-y-1 mb-3">
+                            ${practicesList}
+                        </ul>
+                        <p class="font-semibold text-sm text-[#22262A] mt-4">Do you confirm this assessment?</p>
+                    </div>
+                    <div class="flex justify-end gap-3">
+                        <button onclick="confirmProhibited(false)" class="px-6 py-2.5 bg-white border border-[#B5BCC4] text-[#464E58] rounded-lg font-semibold text-sm hover:bg-[#F0F1F2] transition-colors">
+                            Edit Profile Info
+                        </button>
+                        <button onclick="confirmProhibited(true)" class="px-6 py-2.5 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A] transition-colors">
+                            Confirm
+                        </button>
+                    </div>
+                </div>
+            `;
+        } else {
+            // After confirmation - check exception availability (from flowchart)
+            return renderBlock1ExceptionFlow(selectedPractices, practicesInfo);
+        }
+    }
+    
+    if (status === 'Prohibited') {
+        return `
+            <div class="bg-[#FFEBEE] border border-[#EF5350] rounded-lg p-4">
+                <p class="font-semibold text-sm text-[#C62828] mb-2">🚫 System is Prohibited</p>
+                <p class="font-normal text-sm text-[#464E58] mt-2">
+                    This AI system is prohibited under Article 5 of the EU AI Act. Blocks 2, 3, and 4 have been de-activated.
+                </p>
+            </div>
+        `;
+    }
+    
+    if (status === 'Exception claimed') {
+        return `
+            <div class="bg-[#E8F5E9] border border-[#81C784] rounded-lg p-4">
+                <p class="font-semibold text-sm text-[#2E7D32] mb-2">✓ Exception Claimed</p>
+                <p class="font-normal text-sm text-[#464E58] mt-2">
+                    An exception has been successfully claimed with evidence. The system may proceed to further compliance assessment.
+                </p>
+            </div>
+        `;
+    }
+    
+    if (status === 'Needs Review') {
+        return `
+            <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-4">
+                <p class="font-semibold text-sm text-[#F57C00] mb-2">⚠️ Needs Review</p>
+                <p class="font-normal text-sm text-[#464E58] mt-2">
+                    This assessment requires manual review by the compliance team.
+                </p>
+            </div>
+        `;
+    }
+    
+    return '<p class="text-sm text-[#464E58]">Status: ' + status + '</p>';
+}
+
+// Render exception flow content (from flowchart)
+function renderBlock1ExceptionFlow(selectedPractices, practicesInfo = {}) {
+    // Check if ANY practice has NO exception available (from flowchart)
+    const practicesWithNoException = selectedPractices.filter(practice => {
+        const practiceInfo = practicesInfo[practice] || prohibitedPracticesMap[practice];
+        return practiceInfo && !practiceInfo.has_exception;
+    });
+    
+    if (practicesWithNoException.length > 0) {
+        // All practices hasException: false → No Exception Available → Status: Prohibited (from flowchart)
         return `
             <div class="space-y-4">
-                <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-4">
-                    <p class="font-semibold text-sm text-[#22262A] mb-2">Confirm Profile input:</p>
+                <div class="bg-[#FFEBEE] border border-[#EF5350] rounded-lg p-4">
+                    <p class="font-semibold text-sm text-[#C62828] mb-2">No Exception Available</p>
                     <p class="font-normal text-sm text-[#464E58] mb-2">
-                        You indicated the system uses the following capabilities or practices:
+                        The following prohibited practices do not have exceptions available:
                     </p>
                     <ul class="list-disc list-inside space-y-1 mb-3">
-                        ${selectedPractices.map(p => `<li class="font-medium text-sm text-[#464E58] ml-2">${p}</li>`).join('')}
+                        ${practicesWithNoException.map(p => {
+                            const info = practicesInfo[p] || prohibitedPracticesMap[p];
+                            if (!info) return '';
+                            return `<li class="font-medium text-sm text-[#464E58] ml-2">${info.label || p} (Article ${info.article || 'N/A'})</li>`;
+                        }).filter(html => html).join('')}
                     </ul>
-                    <p class="font-semibold text-sm text-[#22262A]">Do you confirm?</p>
+                    <p class="font-normal text-sm text-[#464E58] mt-2">
+                        This AI system is prohibited under Article 5 of the EU AI Act.
+                    </p>
                 </div>
-                <div class="flex justify-end gap-3">
-                    <button onclick="confirmProhibited(false)" class="px-6 py-2.5 bg-white border border-[#B5BCC4] text-[#464E58] rounded-lg font-semibold text-sm hover:bg-[#F0F1F2] transition-colors">
-                        No, Update Profile
-                    </button>
-                    <button onclick="confirmProhibited(true)" class="px-6 py-2.5 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A] transition-colors">
-                        Yes, Confirm
+                <div class="flex justify-end">
+                    <button onclick="acknowledgeNoException()" class="px-6 py-2.5 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A] transition-colors">
+                        Acknowledge
                     </button>
                 </div>
             </div>
         `;
     }
     
-    return '<p class="text-sm text-[#464E58]">Status: ' + status + '</p>';
+    // At least one hasException: true → Exception Question (from flowchart)
+    const practicesWithException = selectedPractices.filter(practice => {
+        const practiceInfo = practicesInfo[practice] || prohibitedPracticesMap[practice];
+        return practiceInfo && practiceInfo.has_exception;
+    });
+    
+    if (block1State.claimingException === '') {
+        // Ask: "Are you claiming an exception?" (from flowchart)
+        return `
+            <div class="space-y-4">
+                <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-4">
+                    <p class="font-semibold text-sm text-[#22262A] mb-2">Exception Available</p>
+                    <p class="font-normal text-sm text-[#464E58] mb-2">
+                        The following prohibited practices have exceptions available:
+                    </p>
+                    <ul class="list-disc list-inside space-y-1 mb-4">
+                        ${practicesWithException.map(p => {
+                            const info = practicesInfo[p] || prohibitedPracticesMap[p];
+                            if (!info) return '';
+                            return `<li class="font-medium text-sm text-[#464E58] ml-2">${info.label || p} (Article ${info.article || 'N/A'})</li>`;
+                        }).filter(html => html).join('')}
+                    </ul>
+                    <p class="font-semibold text-sm text-[#22262A] mt-4">Are you claiming an exception?</p>
+                </div>
+                <div class="flex justify-end gap-3">
+                    <button onclick="setClaimingException('No')" class="px-6 py-2.5 bg-white border border-[#B5BCC4] text-[#464E58] rounded-lg font-semibold text-sm hover:bg-[#F0F1F2] transition-colors">
+                        No
+                    </button>
+                    <button onclick="setClaimingException('Yes')" class="px-6 py-2.5 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A] transition-colors">
+                        Yes
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+    
+    if (block1State.claimingException === 'No') {
+        // User declined exception → Status: Prohibited (from flowchart)
+        block1State.prohibitedConfirmed = true; // Ensure state is set
+        updateAssessmentBlock(1);
+        return renderBlock1Content('Prohibited');
+    }
+    
+    if (block1State.claimingException === 'Yes') {
+        // Show exception condition and ask qualification question (from flowchart)
+        if (block1State.exceptionQualifies === '') {
+            const exceptionConditions = practicesWithException.map(p => {
+                const info = practicesInfo[p] || prohibitedPracticesMap[p];
+                if (!info) return '';
+                return `<li class="font-medium text-sm text-[#464E58] ml-2"><strong>${info.label || p}:</strong> ${info.exception_condition || info.exceptionCondition || 'N/A'}</li>`;
+            }).filter(html => html).join('');
+            
+            return `
+                <div class="space-y-4">
+                    <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-4">
+                        <p class="font-semibold text-sm text-[#22262A] mb-2">Exception Conditions</p>
+                        <p class="font-normal text-sm text-[#464E58] mb-2">
+                            The following exception conditions apply:
+                        </p>
+                        <ul class="list-disc list-inside space-y-2 mb-4">
+                            ${exceptionConditions}
+                        </ul>
+                        <p class="font-semibold text-sm text-[#22262A] mt-4">Does this exception apply to your AI system?</p>
+                    </div>
+                    <div class="flex justify-end gap-3">
+                        <button onclick="setExceptionQualifies('No')" class="px-6 py-2.5 bg-white border border-[#B5BCC4] text-[#464E58] rounded-lg font-semibold text-sm hover:bg-[#F0F1F2] transition-colors">
+                            No
+                        </button>
+                        <button onclick="setExceptionQualifies('Not sure')" class="px-6 py-2.5 bg-white border border-[#B5BCC4] text-[#464E58] rounded-lg font-semibold text-sm hover:bg-[#F0F1F2] transition-colors">
+                            Not sure
+                        </button>
+                        <button onclick="setExceptionQualifies('Yes')" class="px-6 py-2.5 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A] transition-colors">
+                            Yes
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Check exception qualification answer (from flowchart)
+        if (block1State.exceptionQualifies === 'No') {
+            // Status: Prohibited (from flowchart)
+            updateAssessmentBlock(1);
+            return renderBlock1Content('Prohibited');
+        }
+        
+        if (block1State.exceptionQualifies === 'Not sure') {
+            // Status: Needs Review (from flowchart)
+            updateAssessmentBlock(1);
+            return renderBlock1Content('Needs Review');
+        }
+        
+        if (block1State.exceptionQualifies === 'Yes') {
+            // Ask for Evidence & check if Uploaded or Link Saved (from flowchart)
+            if (!block1State.exceptionEvidenceUploaded && !block1State.exceptionEvidenceSavedLink) {
+                // No evidence → Status: Needs Review (from flowchart)
+                return `
+                    <div class="space-y-4">
+                        <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-4">
+                            <p class="font-semibold text-sm text-[#22262A] mb-2">Evidence Required</p>
+                            <p class="font-normal text-sm text-[#464E58] mb-2">
+                                To claim this exception, please provide evidence (upload document or paste link from Section 1).
+                            </p>
+                            <div class="mt-4 space-y-3">
+                                <div>
+                                    <label class="block text-sm font-medium text-[#374151] mb-2">Upload Evidence Document</label>
+                                    <input type="file" id="exception-evidence-upload" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-[#374151] mb-2">Or Paste Link</label>
+                                    <input type="text" id="exception-evidence-link" placeholder="Paste link here" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex justify-end">
+                            <button onclick="confirmExceptionEvidence()" class="px-6 py-2.5 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A] transition-colors">
+                                Confirm Evidence
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Evidence uploaded/linked → Status: Exception claimed → Status: PASS (from flowchart)
+                updateAssessmentBlock(1);
+                return renderBlock1Content('Exception claimed');
+            }
+        }
+    }
+    
+    return '<p class="text-sm text-[#464E58]">Processing exception flow...</p>';
+}
+
+// Helper functions for Block 1 exception flow - Update BE state
+async function confirmProhibited(confirmed) {
+    const mainContainer = document.querySelector('[data-agent-id]');
+    const agentId = mainContainer ? parseInt(mainContainer.getAttribute('data-agent-id')) : 0;
+    
+    if (!confirmed) {
+        // Send to Profile Screen (from flowchart)
+        switchTab('profile');
+        return;
+    }
+    
+    try {
+        // Update BE state
+        const response = await fetch(`/api/ai-inventory/${agentId}/block1-state/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                prohibited_confirmed: true
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            block1State.prohibitedConfirmed = true;
+            // Update UI with new assessment results from BE
+            if (result.assessment && result.assessment.block1) {
+                updateAssessmentBlocksFromBE(result.assessment);
+            } else {
+                updateAssessmentBlock(1);
+            }
+        } else {
+            alert('Error confirming assessment: ' + (result.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error confirming prohibited:', error);
+        alert('Error confirming assessment. Please try again.');
+    }
+}
+
+async function acknowledgeNoException() {
+    const mainContainer = document.querySelector('[data-agent-id]');
+    const agentId = mainContainer ? parseInt(mainContainer.getAttribute('data-agent-id')) : 0;
+    
+    try {
+        const response = await fetch(`/api/ai-inventory/${agentId}/block1-state/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                no_exception_confirmed: true
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            block1State.noExceptionConfirmed = true;
+            if (result.assessment && result.assessment.block1) {
+                updateAssessmentBlocksFromBE(result.assessment);
+            } else {
+                updateAssessmentBlock(1);
+            }
+        }
+    } catch (error) {
+        console.error('Error acknowledging no exception:', error);
+    }
+}
+
+async function setClaimingException(value) {
+    const mainContainer = document.querySelector('[data-agent-id]');
+    const agentId = mainContainer ? parseInt(mainContainer.getAttribute('data-agent-id')) : 0;
+    
+    try {
+        const response = await fetch(`/api/ai-inventory/${agentId}/block1-state/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                claiming_exception: value
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            block1State.claimingException = value;
+            if (result.assessment && result.assessment.block1) {
+                updateAssessmentBlocksFromBE(result.assessment);
+            } else {
+                updateAssessmentBlock(1);
+            }
+        }
+    } catch (error) {
+        console.error('Error setting claiming exception:', error);
+    }
+}
+
+async function setExceptionQualifies(value) {
+    const mainContainer = document.querySelector('[data-agent-id]');
+    const agentId = mainContainer ? parseInt(mainContainer.getAttribute('data-agent-id')) : 0;
+    
+    try {
+        const response = await fetch(`/api/ai-inventory/${agentId}/block1-state/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                exception_qualifies: value
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            block1State.exceptionQualifies = value;
+            if (result.assessment && result.assessment.block1) {
+                updateAssessmentBlocksFromBE(result.assessment);
+            } else {
+                updateAssessmentBlock(1);
+            }
+        }
+    } catch (error) {
+        console.error('Error setting exception qualifies:', error);
+    }
+}
+
+async function confirmExceptionEvidence() {
+    const mainContainer = document.querySelector('[data-agent-id]');
+    const agentId = mainContainer ? parseInt(mainContainer.getAttribute('data-agent-id')) : 0;
+    
+    const fileInput = document.getElementById('exception-evidence-upload');
+    const linkInput = document.getElementById('exception-evidence-link');
+    
+    let evidenceUploaded = false;
+    let evidenceLink = '';
+    
+    // Check file upload
+    if (fileInput && fileInput.files && fileInput.files.length > 0) {
+        // Upload file first
+        try {
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            formData.append('folder', 'governance/uploads');
+            
+            const uploadResponse = await fetch('/api/upload-file/', {
+                method: 'POST',
+                body: formData,
+            });
+            
+            const uploadResult = await uploadResponse.json();
+            if (uploadResult.success) {
+                evidenceUploaded = true;
+            }
+        } catch (error) {
+            console.error('Error uploading evidence file:', error);
+        }
+    }
+    
+    // Check link
+    if (linkInput && linkInput.value && linkInput.value.trim()) {
+        evidenceLink = linkInput.value.trim();
+    }
+    
+    if (!evidenceUploaded && !evidenceLink) {
+        alert('Please upload a document or provide a link.');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/ai-inventory/${agentId}/block1-state/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                exception_evidence_uploaded: evidenceUploaded,
+                exception_evidence_saved_link: evidenceLink
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            block1State.exceptionEvidenceUploaded = evidenceUploaded;
+            block1State.exceptionEvidenceSavedLink = evidenceLink;
+            if (result.assessment && result.assessment.block1) {
+                updateAssessmentBlocksFromBE(result.assessment);
+            } else {
+                updateAssessmentBlock(1);
+            }
+        } else {
+            alert('Error saving evidence: ' + (result.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error confirming exception evidence:', error);
+        alert('Error saving evidence. Please try again.');
+    }
 }
 
 // Helper functions for Block 2 (based on React code)
@@ -1782,9 +3094,10 @@ function getHighRiskTrigger() {
     return 'none';
 }
 
-function renderBlock2Content(status) {
+function renderBlock2Content(status, block2Details = null) {
     if (status === 'Not assessed') {
-        return '<p class="font-normal text-sm text-[#464E58]">Please complete Section 4 (Intended Purpose) in Profile to assess high-risk classification.</p>';
+        const reason = block2Details?.reason || 'Please complete Section 4 (Intended Purpose) in Profile to assess high-risk classification.';
+        return `<p class="font-normal text-sm text-[#464E58]">${reason}</p>`;
     }
     
     if (status === 'De-activated') {
@@ -1792,92 +3105,1114 @@ function renderBlock2Content(status) {
             <div class="bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg p-4">
                 <p class="font-semibold text-sm text-[#B5BCC4]">This block is de-activated</p>
                 <p class="font-normal text-sm text-[#B5BCC4] mt-2">
-                    Because your AI system is prohibited under Block 1, high-risk classification assessment is not applicable.
+                    ${block2Details?.reason || 'No high-risk conditions met.'}
                 </p>
             </div>
         `;
     }
     
-    const trigger = getHighRiskTrigger();
-    
-    // If no condition met, show "Not High-Risk" message
-    if (trigger === 'none') {
+    if (status === 'Not high-risk') {
         return `
             <div class="bg-[#E8F5E9] border border-[#81C784] rounded-lg p-4">
                 <p class="font-semibold text-sm text-[#2E7D32]">✓ Not High-Risk</p>
                 <p class="font-normal text-sm text-[#464E58] mt-2">
-                    Based on your Profile inputs, this AI system does not appear to be classified as high-risk under the EU AI Act.
+                    ${block2Details?.reason || 'This AI system is not classified as high-risk under the EU AI Act.'}
                 </p>
             </div>
         `;
     }
     
-    // If conditions met, show confirmation card with logic rules (based on React code)
-    const condition1Text = isCondition1Met() ? 
-        '<li class="font-medium text-sm text-[#464E58] ml-2">It is a safety component requiring third-party conformity assessment (Section 8, Q3)</li>' : '';
-    
-    let condition2Text = '';
-    if (isCondition2Met()) {
-        const sectorDomains = Array.from(document.querySelectorAll('input[name="sector_domain"]:checked'))
-            .map(cb => cb.value)
-            .filter(s => s !== 'Other / not listed' && s !== 'Other / not listed:');
-        const sectorsList = sectorDomains.join(', ');
-        condition2Text = `<li class="font-medium text-sm text-[#464E58] ml-2">It is used in high-risk sectors: ${sectorsList} (Section 4, Q2)</li>`;
+    if (status === 'Needs review') {
+        return `
+            <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-4">
+                <p class="font-semibold text-sm text-[#F57C00]">⚠️ Needs Review</p>
+                <p class="font-normal text-sm text-[#464E58] mt-2">
+                    ${block2Details?.reason || 'This assessment requires manual review by the compliance team.'}
+                </p>
+            </div>
+        `;
     }
+    
+    if (status === 'High-risk') {
+        // Check if this is Condition 1 only (no Annex III needed) or after Annex III
+        const step = block2Details?.step;
+        if (!step || step === 'condition1_only') {
+            return `
+                <div class="bg-[#FFEBEE] border border-[#EF5350] rounded-lg p-4">
+                    <p class="font-semibold text-sm text-[#C62828]">🚨 High-Risk Classification</p>
+                    <p class="font-normal text-sm text-[#464E58] mt-2">
+                        ${block2Details?.reason || 'This AI system is classified as high-risk under the EU AI Act.'}
+                    </p>
+                </div>
+            `;
+        }
+        // High-risk after Annex III (Q3 Profiling = Yes, or no evidence)
+        return `
+            <div class="bg-[#FFEBEE] border border-[#EF5350] rounded-lg p-4">
+                <p class="font-semibold text-sm text-[#C62828]">🚨 High-Risk Classification</p>
+                <p class="font-normal text-sm text-[#464E58] mt-2">
+                    ${block2Details?.reason || 'This AI system is classified as high-risk under the EU AI Act.'}
+                </p>
+            </div>
+        `;
+    }
+    
+    // Status = 'Triggered' - Show confirmation or Annex III flow
+    if (status === 'Triggered') {
+        const trigger = block2Details?.trigger || getHighRiskTrigger();
+        const step = block2Details?.step;
+        
+        // If not confirmed yet, show confirmation card
+        if (!block2State.highRiskConfirmed) {
+            const condition1Text = (block2Details?.condition1 || isCondition1Met()) ? 
+                '<li class="font-medium text-sm text-[#464E58] ml-2">It is a safety component requiring third-party conformity assessment (Section 4, Q3)</li>' : '';
+            
+            let condition2Text = '';
+            if (block2Details?.condition2 || isCondition2Met()) {
+                const sectorDomains = Array.from(document.querySelectorAll('input[name="sector_domain"]:checked'))
+                    .map(cb => cb.value)
+                    .filter(s => s !== 'Other / not listed' && s !== 'Other / not listed:');
+                const sectorsList = sectorDomains.length > 0 ? sectorDomains.join(', ') : 'Selected sectors';
+                condition2Text = `<li class="font-medium text-sm text-[#464E58] ml-2">It is used in high-risk sectors: ${sectorsList} (Section 4, Q2)</li>`;
+            }
+            
+            // Special case: Block 1 Prohibited trigger
+            if (trigger === 'block1_prohibited' || block2Details?.trigger === 'block1_prohibited') {
+                return `
+                    <div class="space-y-4">
+                        <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-4">
+                            <p class="font-semibold text-sm text-[#22262A] mb-2">⚠️ High-Risk Classification Triggered</p>
+                            <p class="font-normal text-sm text-[#464E58] mb-2">
+                                ${block2Details?.reason || 'Block 1 Prohibited – high-risk trigger. Please confirm or edit profile.'}
+                            </p>
+                            <p class="font-semibold text-sm text-[#22262A] mt-4">Do you confirm?</p>
+                        </div>
+                        <div class="flex justify-end gap-3">
+                            <button onclick="switchTab('profile')" class="px-6 py-2.5 bg-white border border-[#B5BCC4] text-[#464E58] rounded-lg font-semibold text-sm hover:bg-[#F0F1F2] transition-colors">
+                                Edit Profile Info
+                            </button>
+                            <button onclick="confirmHighRisk()" class="px-6 py-2.5 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A] transition-colors">
+                                Confirm
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            return `
+                <div class="space-y-4">
+                    <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-4">
+                        <p class="font-semibold text-sm text-[#22262A] mb-2">Confirm Profile input:</p>
+                        <p class="font-normal text-sm text-[#464E58] mb-2">
+                            Based on your Profile inputs, this AI system may be classified as high-risk because:
+                        </p>
+                        <ul class="list-disc list-inside space-y-1 mb-4">
+                            ${condition1Text}
+                            ${condition2Text}
+                        </ul>
+                        <p class="font-semibold text-sm text-[#22262A]">Do you confirm?</p>
+                    </div>
+                    <div class="flex justify-end gap-3">
+                        <button onclick="switchTab('profile')" class="px-6 py-2.5 bg-white border border-[#B5BCC4] text-[#464E58] rounded-lg font-semibold text-sm hover:bg-[#F0F1F2] transition-colors">
+                            Edit Profile Info
+                        </button>
+                        <button onclick="confirmHighRisk()" class="px-6 py-2.5 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A] transition-colors">
+                            Confirm
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // After confirmation - show Annex III flow (only if Condition 2 or Both)
+        if (trigger === 'condition2' || trigger === 'both') {
+            return renderBlock2AnnexIII(step, block2Details);
+        }
+    }
+    
+    return '<p class="text-sm text-[#464E58]">Status: ' + status + '</p>';
+}
+
+// Render Annex III Exemption Test flow
+function renderBlock2AnnexIII(step, block2Details) {
+    const condition1 = block2Details?.condition1 || false;
+    const condition2 = block2Details?.condition2 || false;
+    
+    // Q1: Material Influence
+    if (!step || step === 'q1') {
+        return `
+            <div class="space-y-4">
+                <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-4">
+                    <p class="font-semibold text-sm text-[#22262A] mb-2">Annex III Exemption Test</p>
+                    <p class="font-normal text-sm text-[#464E58] mb-4">
+                        Q1: Does the AI system have material influence on the outcome of the decision or action?
+                    </p>
+                </div>
+                <div class="flex justify-end gap-3">
+                    <button onclick="setMaterialInfluence('Not sure')" class="px-6 py-2.5 bg-white border border-[#B5BCC4] text-[#464E58] rounded-lg font-semibold text-sm hover:bg-[#F0F1F2] transition-colors">
+                        Not sure
+                    </button>
+                    <button onclick="setMaterialInfluence('No')" class="px-6 py-2.5 bg-white border border-[#B5BCC4] text-[#464E58] rounded-lg font-semibold text-sm hover:bg-[#F0F1F2] transition-colors">
+                        No
+                    </button>
+                    <button onclick="setMaterialInfluence('Yes')" class="px-6 py-2.5 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A] transition-colors">
+                        Yes
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Q2: Task Type Selection
+    if (step === 'q2') {
+        const narrowTaskOptions = [
+            'Narrow procedural task',
+            'Improves a previously completed human activity',
+            'Detects patterns / deviations from past decisions (without influencing decisions)',
+            'Preparatory task to an assessment relevant for the purposes of the use cases listed in Annex III (e.g., indexing, sorting, summarising)',
+            'None of above'
+        ];
+        
+        const tasksList = narrowTaskOptions.map(task => {
+            const checked = block2State.narrowTasks.includes(task) ? 'checked' : '';
+            return `
+                <label class="flex items-center space-x-2 cursor-pointer">
+                    <input type="checkbox" name="narrow_tasks" value="${task}" ${checked} 
+                           onchange="updateNarrowTasks()" 
+                           class="w-4 h-4 text-[#F13D30] border-[#B5BCC4] rounded focus:ring-[#F13D30]">
+                    <span class="font-normal text-sm text-[#464E58]">${task}</span>
+                </label>
+            `;
+        }).join('');
+        
+        return `
+            <div class="space-y-4">
+                <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-4">
+                    <p class="font-semibold text-sm text-[#22262A] mb-2">Annex III Exemption Test</p>
+                    <p class="font-normal text-sm text-[#464E58] mb-4">
+                        Q2: What narrow procedural tasks does the AI system perform?
+                    </p>
+                    <div class="space-y-2">
+                        ${tasksList}
+                    </div>
+                </div>
+                <div class="flex justify-end">
+                    <button onclick="confirmNarrowTasks()" class="px-6 py-2.5 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A] transition-colors">
+                        Continue
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Q3: Profiling
+    if (step === 'q3') {
+        return `
+            <div class="space-y-4">
+                <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-4">
+                    <p class="font-semibold text-sm text-[#22262A] mb-2">Annex III Exemption Test</p>
+                    <p class="font-normal text-sm text-[#464E58] mb-4">
+                        Q3: Does the AI system involve profiling of natural persons?
+                    </p>
+                </div>
+                <div class="flex justify-end gap-3">
+                    <button onclick="setProfiling('Unknown')" class="px-6 py-2.5 bg-white border border-[#B5BCC4] text-[#464E58] rounded-lg font-semibold text-sm hover:bg-[#F0F1F2] transition-colors">
+                        Unknown
+                    </button>
+                    <button onclick="setProfiling('No')" class="px-6 py-2.5 bg-white border border-[#B5BCC4] text-[#464E58] rounded-lg font-semibold text-sm hover:bg-[#F0F1F2] transition-colors">
+                        No
+                    </button>
+                    <button onclick="setProfiling('Yes')" class="px-6 py-2.5 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A] transition-colors">
+                        Yes
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Evidence (when Q3 = No)
+    if (step === 'evidence') {
+        return `
+            <div class="space-y-4">
+                <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-4">
+                    <p class="font-semibold text-sm text-[#22262A] mb-2">Evidence Required</p>
+                    <p class="font-normal text-sm text-[#464E58] mb-2">
+                        To claim exemption (Not high-risk), please provide evidence (upload document or paste link).
+                    </p>
+                    <div class="mt-4 space-y-3">
+                        <div>
+                            <label class="block text-sm font-medium text-[#374151] mb-2">Upload Evidence Document</label>
+                            <input type="file" id="exemption-evidence-upload" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-[#374151] mb-2">Or Paste Link</label>
+                            <input type="text" id="exemption-evidence-link" placeholder="Paste link here" 
+                                   value="${block2State.exemptionEvidenceSavedLink || ''}"
+                                   class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg">
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-end">
+                    <button onclick="confirmExemptionEvidence()" class="px-6 py-2.5 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A] transition-colors">
+                        Confirm Evidence
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+    
+    return '<p class="text-sm text-[#464E58]">Annex III flow</p>';
+}
+
+// Block 2 API functions
+async function confirmHighRisk() {
+    const mainContainer = document.querySelector('[data-agent-id]');
+    const agentId = mainContainer ? parseInt(mainContainer.getAttribute('data-agent-id')) : 0;
+    
+    try {
+        const response = await fetch(`/api/ai-inventory/${agentId}/block2-state/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                high_risk_confirmed: true
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            block2State.highRiskConfirmed = true;
+            if (result.assessment && result.assessment.block2) {
+                updateAssessmentBlocksFromBE(result.assessment);
+            } else {
+                updateAssessmentBlock(2);
+            }
+        } else {
+            alert('Error confirming assessment: ' + (result.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error confirming high-risk:', error);
+        alert('Error confirming assessment. Please try again.');
+    }
+}
+
+async function setMaterialInfluence(value) {
+    const mainContainer = document.querySelector('[data-agent-id]');
+    const agentId = mainContainer ? parseInt(mainContainer.getAttribute('data-agent-id')) : 0;
+    
+    try {
+        const response = await fetch(`/api/ai-inventory/${agentId}/block2-state/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                material_influence: value
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            block2State.materialInfluence = value;
+            if (result.assessment && result.assessment.block2) {
+                updateAssessmentBlocksFromBE(result.assessment);
+            } else {
+                updateAssessmentBlock(2);
+            }
+        }
+    } catch (error) {
+        console.error('Error setting material influence:', error);
+    }
+}
+
+function updateNarrowTasks() {
+    const checkboxes = Array.from(document.querySelectorAll('input[name="narrow_tasks"]:checked'));
+    block2State.narrowTasks = checkboxes.map(cb => cb.value);
+}
+
+async function confirmNarrowTasks() {
+    const mainContainer = document.querySelector('[data-agent-id]');
+    const agentId = mainContainer ? parseInt(mainContainer.getAttribute('data-agent-id')) : 0;
+    
+    try {
+        const response = await fetch(`/api/ai-inventory/${agentId}/block2-state/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                narrow_tasks: block2State.narrowTasks
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            if (result.assessment && result.assessment.block2) {
+                updateAssessmentBlocksFromBE(result.assessment);
+            } else {
+                updateAssessmentBlock(2);
+            }
+        }
+    } catch (error) {
+        console.error('Error confirming narrow tasks:', error);
+    }
+}
+
+async function setProfiling(value) {
+    const mainContainer = document.querySelector('[data-agent-id]');
+    const agentId = mainContainer ? parseInt(mainContainer.getAttribute('data-agent-id')) : 0;
+    
+    try {
+        const response = await fetch(`/api/ai-inventory/${agentId}/block2-state/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                profiling: value
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            block2State.profiling = value;
+            if (result.assessment && result.assessment.block2) {
+                updateAssessmentBlocksFromBE(result.assessment);
+            } else {
+                updateAssessmentBlock(2);
+            }
+        }
+    } catch (error) {
+        console.error('Error setting profiling:', error);
+    }
+}
+
+async function confirmExemptionEvidence() {
+    const mainContainer = document.querySelector('[data-agent-id]');
+    const agentId = mainContainer ? parseInt(mainContainer.getAttribute('data-agent-id')) : 0;
+    
+    const fileInput = document.getElementById('exemption-evidence-upload');
+    const linkInput = document.getElementById('exemption-evidence-link');
+    
+    let evidenceUploaded = false;
+    let evidenceLink = '';
+    
+    // Check file upload
+    if (fileInput && fileInput.files && fileInput.files.length > 0) {
+        try {
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            formData.append('folder', 'governance/uploads');
+            
+            const uploadResponse = await fetch('/api/upload-file/', {
+                method: 'POST',
+                body: formData,
+            });
+            
+            const uploadResult = await uploadResponse.json();
+            if (uploadResult.success) {
+                evidenceUploaded = true;
+            }
+        } catch (error) {
+            console.error('Error uploading evidence file:', error);
+        }
+    }
+    
+    // Check link
+    if (linkInput && linkInput.value && linkInput.value.trim()) {
+        evidenceLink = linkInput.value.trim();
+    }
+    
+    if (!evidenceUploaded && !evidenceLink) {
+        alert('Please upload a document or provide a link.');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/ai-inventory/${agentId}/block2-state/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                exemption_evidence_uploaded: evidenceUploaded,
+                exemption_evidence_saved_link: evidenceLink
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            block2State.exemptionEvidenceUploaded = evidenceUploaded;
+            block2State.exemptionEvidenceSavedLink = evidenceLink;
+            if (result.assessment && result.assessment.block2) {
+                updateAssessmentBlocksFromBE(result.assessment);
+            } else {
+                updateAssessmentBlock(2);
+            }
+        } else {
+            alert('Error saving evidence: ' + (result.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error confirming exemption evidence:', error);
+        alert('Error saving evidence. Please try again.');
+    }
+}
+
+function renderBlock3Content(status, block3Details = null) {
+    if (status === 'Not assessed') {
+        const reason = block3Details?.reason || 'Please complete Section 7 (Capabilities) in Profile to assess transparency obligations.';
+        return `<p class="font-normal text-sm text-[#464E58]">${reason}</p>`;
+    }
+    
+    if (status === 'De-activated') {
+        return `
+            <div class="bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg p-4">
+                <p class="font-semibold text-sm text-[#B5BCC4]">This block is de-activated</p>
+                <p class="font-normal text-sm text-[#B5BCC4] mt-2">
+                    ${block3Details?.reason || 'Block 1 Prohibited - transparency obligation assessment not applicable.'}
+                </p>
+            </div>
+        `;
+    }
+    
+    if (status === 'Not Applicable') {
+        return `
+            <div class="bg-[#E8F5E9] border border-[#81C784] rounded-lg p-4">
+                <p class="font-semibold text-sm text-[#2E7D32]">✓ Not Applicable</p>
+                <p class="font-normal text-sm text-[#464E58] mt-2">
+                    ${block3Details?.reason || 'Transparency obligations do not apply (valid exceptions claimed with evidence).'}
+                </p>
+            </div>
+        `;
+    }
+    
+    if (status === 'Needs Review') {
+        return `
+            <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-4">
+                <p class="font-semibold text-sm text-[#F57C00]">⚠️ Needs Review</p>
+                <p class="font-normal text-sm text-[#464E58] mt-2">
+                    ${block3Details?.reason || 'This assessment requires manual review by the compliance team.'}
+                </p>
+            </div>
+        `;
+    }
+    
+    if (status === 'Applies') {
+        return `
+            <div class="bg-[#FFEBEE] border border-[#EF5350] rounded-lg p-4">
+                <p class="font-semibold text-sm text-[#C62828]">📋 Transparency Obligations Apply</p>
+                <p class="font-normal text-sm text-[#464E58] mt-2">
+                    ${block3Details?.reason || 'This AI system must comply with transparency obligations under EU AI Act Article 50.'}
+                </p>
+            </div>
+        `;
+    }
+    
+    // Status = 'Triggered' - Show confirmation or exception flow
+    if (status === 'Triggered') {
+        const triggers = block3Details?.triggers || [];
+        
+        // If not confirmed yet, show confirmation card
+        if (!block3State.transparencyConfirmed) {
+            const triggerReasons = getTransparencyTriggerReasons(triggers);
+            const reasonsList = triggerReasons.map(reason => 
+                `<li class="font-medium text-sm text-[#464E58] ml-2">${reason}</li>`
+            ).join('');
+            
+            return `
+                <div class="space-y-4">
+                    <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-4">
+                        <p class="font-semibold text-sm text-[#22262A] mb-2">Confirm Profile input:</p>
+                        <p class="font-normal text-sm text-[#464E58] mb-2">
+                            Based on your Profile inputs, transparency obligations may apply because:
+                        </p>
+                        <ul class="list-disc list-inside space-y-1 mb-4">
+                            ${reasonsList}
+                        </ul>
+                        <p class="font-semibold text-sm text-[#22262A]">Do you confirm?</p>
+                    </div>
+                    <div class="flex justify-end gap-3">
+                        <button onclick="switchTab('profile')" class="px-6 py-2.5 bg-white border border-[#B5BCC4] text-[#464E58] rounded-lg font-semibold text-sm hover:bg-[#F0F1F2] transition-colors">
+                            Edit Profile Info
+                        </button>
+                        <button onclick="confirmTransparency()" class="px-6 py-2.5 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A] transition-colors">
+                            Confirm
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // After confirmation - show exception selection flow
+        return renderBlock3ExceptionFlow(triggers, block3Details);
+    }
+    
+    return '<p class="text-sm text-[#464E58]">Status: ' + status + '</p>';
+}
+
+// Get transparency trigger reasons for display
+function getTransparencyTriggerReasons(triggers) {
+    const reasons = [];
+    const capabilityPractices = Array.from(document.querySelectorAll('input[name="capability_practices"]:checked')).map(cb => cb.value);
+    const interactsPersons = document.querySelector('input[name="interacts_persons"]:checked')?.value || '';
+    const syntheticContent = Array.from(document.querySelectorAll('input[name="synthetic_content"]:checked')).map(cb => cb.value);
+    const deploymentContext = document.querySelector('input[name="deployment_context"]:checked')?.value || '';
+    const affectedOutputs = Array.from(document.querySelectorAll('input[name="affected_outputs"]:checked')).map(cb => cb.value);
+    
+    if (triggers.includes('case1')) {
+        reasons.push('Uses biometric identification and categorisation (Section 4, Q2)');
+    }
+    if (triggers.includes('case2')) {
+        reasons.push('Emotion recognition in the workplace or in education settings (Section 7, Q1)');
+    }
+    if (triggers.includes('case3')) {
+        reasons.push('Biometric categorisation that infers or predicts sensitive traits (Section 7, Q1)');
+    }
+    if (triggers.includes('case4')) {
+        reasons.push('Interacts directly with natural persons (Section 7, Q2)');
+    }
+    if (triggers.includes('case5')) {
+        reasons.push('Generates or manipulates synthetic content (Section 7, Q3)');
+    }
+    if (triggers.includes('case6')) {
+        if (affectedOutputs.includes('Citizens / residents') && deploymentContext === 'General public / consumer-facing') {
+            reasons.push('Affects citizens / residents and is general public / consumer-facing (Section 5, Q1 & Q3)');
+        } else if (affectedOutputs.includes('Citizens / residents')) {
+            reasons.push('Affects citizens / residents (Section 5, Q3)');
+        } else {
+            reasons.push('General public / consumer-facing deployment (Section 5, Q1)');
+        }
+    }
+    
+    return reasons;
+}
+
+// Render exception selection flow (flowchart: Exception Selection for Each Group)
+function renderBlock3ExceptionFlow(triggers, block3Details) {
+    const caseGroups = block3Details?.case_groups || [];
+    
+    // Map triggers to groups
+    const groups = [];
+    if (triggers.includes('case1') || triggers.includes('case2') || triggers.includes('case3')) {
+        groups.push({
+            key: 'group1_2_3',
+            label: 'For Biometric identification, Emotion recognition, Biometric categorisation:',
+            options: [
+                'Permitted by law to detect, prevent or investigate criminal offences, as stated in Art. 50(3)',
+                'None of the above (no exception for biometric/emotion recognition cases)'
+            ]
+        });
+    }
+    if (triggers.includes('case4')) {
+        groups.push({
+            key: 'group4',
+            label: 'For Direct interaction with persons:',
+            options: [
+                '"Obvious to the user" exception (no notice needed), as stated in Art. 50(1)',
+                'Authorised by law to detect, prevent, investigate or prosecute criminal offences, as stated in Art. 50(1)',
+                'None of the above (no exception for direct interaction case)'
+            ]
+        });
+    }
+    if (triggers.includes('case5')) {
+        groups.push({
+            key: 'group5',
+            label: 'For Synthetic content generation / manipulation:',
+            options: [
+                'Deepfake labelling exception (e.g., artistic / satire / fiction), as stated in Art. 50(4)',
+                'None of the above (no exception for synthetic content case)'
+            ]
+        });
+    }
+    if (triggers.includes('case6')) {
+        groups.push({
+            key: 'group6',
+            label: 'For Citizens / residents or General public facing:',
+            options: [
+                'Authorised by law to detect, prevent, investigate or prosecute criminal offences, as stated in Art. 50(4)',
+                'Human review is in place or a natural or legal person holds editorial responsibility for the publication of the content, as stated in Art. 50(4)',
+                'None of the above (no exception for citizens/public-facing case)'
+            ]
+        });
+    }
+    
+    // Check if all groups have exceptions selected
+    const allGroupsHaveException = groups.every(group => {
+        return block3State.exceptionOptions.some(opt => group.options.includes(opt));
+    });
+    
+    // Check if evidence is needed (all groups have valid exceptions, not "None of above")
+    const hasValidExceptionsForAll = groups.every(group => {
+        return block3State.exceptionOptions.some(opt => 
+            group.options.includes(opt) && !opt.includes('None of the above')
+        );
+    });
+    
+    const evidenceProvided = block3State.transparencyEvidenceUploaded || 
+                            (block3State.transparencyEvidenceSavedLink && block3State.transparencyEvidenceSavedLink.trim());
+    
+    // If all groups have valid exceptions and evidence provided, show success
+    if (hasValidExceptionsForAll && evidenceProvided) {
+        return `
+            <div class="bg-[#E8F5E9] border border-[#81C784] rounded-lg p-4">
+                <p class="font-semibold text-sm text-[#2E7D32]">✓ Not Applicable</p>
+                <p class="font-normal text-sm text-[#464E58] mt-2">
+                    Valid exceptions for all groups with evidence provided - transparency obligations do not apply.
+                </p>
+            </div>
+        `;
+    }
+    
+    // If all groups have valid exceptions but no evidence, show evidence section
+    if (hasValidExceptionsForAll && !evidenceProvided) {
+        return `
+            <div class="space-y-4">
+                <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-4">
+                    <p class="font-semibold text-sm text-[#22262A] mb-2">Evidence Required</p>
+                    <p class="font-normal text-sm text-[#464E58] mb-2">
+                        To claim exceptions, please provide evidence (upload document or paste link).
+                    </p>
+                    <div class="mt-4 space-y-3">
+                        <div>
+                            <label class="block text-sm font-medium text-[#374151] mb-2">Upload Evidence Document</label>
+                            <input type="file" id="transparency-evidence-upload" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-[#374151] mb-2">Or Paste Link</label>
+                            <input type="text" id="transparency-evidence-link" placeholder="Paste link here" 
+                                   value="${block3State.transparencyEvidenceSavedLink || ''}"
+                                   class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg">
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-end">
+                    <button onclick="confirmTransparencyEvidence()" class="px-6 py-2.5 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A] transition-colors">
+                        Confirm Evidence
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Show exception selection for each group
+    const groupsHTML = groups.map(group => {
+        const optionsHTML = group.options.map(option => {
+            const checked = block3State.exceptionOptions.includes(option) ? 'checked' : '';
+            return `
+                <label class="flex items-center space-x-2 cursor-pointer">
+                    <input type="radio" name="exception_${group.key}" value="${option}" ${checked} 
+                           onchange="updateExceptionOption('${group.key}', '${option}')" 
+                           class="w-4 h-4 text-[#F13D30] border-[#B5BCC4] focus:ring-[#F13D30]">
+                    <span class="font-normal text-sm text-[#464E58]">${option}</span>
+                </label>
+            `;
+        }).join('');
+        
+        return `
+            <div class="border-b border-[#E5E7EB] pb-4 mb-4">
+                <p class="font-semibold text-sm text-[#22262A] mb-3">${group.label}</p>
+                <div class="space-y-2">
+                    ${optionsHTML}
+                </div>
+            </div>
+        `;
+    }).join('');
     
     return `
         <div class="space-y-4">
             <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-4">
-                <p class="font-semibold text-sm text-[#22262A] mb-2">Confirm Profile input:</p>
-                <p class="font-normal text-sm text-[#464E58] mb-2">
-                    Based on your Profile inputs, this AI system may be classified as high-risk because:
+                <p class="font-semibold text-sm text-[#22262A] mb-2">Exception Selection for Each Group</p>
+                <p class="font-normal text-sm text-[#464E58] mb-4">
+                    Select exception options for each triggered case group:
                 </p>
-                <ul class="list-disc list-inside space-y-1 mb-4">
-                    ${condition1Text}
-                    ${condition2Text}
-                </ul>
-                <p class="font-semibold text-sm text-[#22262A]">Do you confirm?</p>
+                <div class="space-y-4">
+                    ${groupsHTML}
+                </div>
             </div>
-            <div class="flex justify-end gap-3">
-                <button onclick="switchTab('profile')" class="px-6 py-2.5 bg-white border border-[#B5BCC4] text-[#464E58] rounded-lg font-semibold text-sm hover:bg-[#F0F1F2] transition-colors">
-                    Edit Profile Info
-                </button>
-                <button onclick="confirmHighRisk()" class="px-6 py-2.5 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A] transition-colors">
-                    Confirm
+            <div class="flex justify-end">
+                <button onclick="confirmExceptionOptions()" class="px-6 py-2.5 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A] transition-colors">
+                    Confirm Selections
                 </button>
             </div>
         </div>
     `;
 }
 
-function confirmHighRisk() {
-    // TODO: In a full implementation, this would set highRiskConfirmed state
-    // For now, just update the block to show confirmed state
-    updateAssessmentBlock(2);
+// Block 3 API functions
+async function confirmTransparency() {
+    const mainContainer = document.querySelector('[data-agent-id]');
+    const agentId = mainContainer ? parseInt(mainContainer.getAttribute('data-agent-id')) : 0;
+    
+    try {
+        const response = await fetch(`/api/ai-inventory/${agentId}/block3-state/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                transparency_confirmed: true
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            block3State.transparencyConfirmed = true;
+            if (result.assessment && result.assessment.block3) {
+                updateAssessmentBlocksFromBE(result.assessment);
+            } else {
+                updateAssessmentBlock(3);
+            }
+        } else {
+            alert('Error confirming assessment: ' + (result.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error confirming transparency:', error);
+        alert('Error confirming assessment. Please try again.');
+    }
 }
 
-function renderBlock3Content(status) {
+function updateExceptionOption(groupKey, option) {
+    // Remove any existing option for this group
+    const groupOptions = getGroupOptions(groupKey);
+    block3State.exceptionOptions = block3State.exceptionOptions.filter(opt => !groupOptions.includes(opt));
+    
+    // Add new option
+    if (!block3State.exceptionOptions.includes(option)) {
+        block3State.exceptionOptions.push(option);
+    }
+    
+    // Auto-save to BE when option changes
+    confirmExceptionOptions();
+}
+
+function getGroupOptions(groupKey) {
+    const allOptions = {
+        'group1_2_3': [
+            'Permitted by law to detect, prevent or investigate criminal offences, as stated in Art. 50(3)',
+            'None of the above (no exception for biometric/emotion recognition cases)'
+        ],
+        'group4': [
+            '"Obvious to the user" exception (no notice needed), as stated in Art. 50(1)',
+            'Authorised by law to detect, prevent, investigate or prosecute criminal offences, as stated in Art. 50(1)',
+            'None of the above (no exception for direct interaction case)'
+        ],
+        'group5': [
+            'Deepfake labelling exception (e.g., artistic / satire / fiction), as stated in Art. 50(4)',
+            'None of the above (no exception for synthetic content case)'
+        ],
+        'group6': [
+            'Authorised by law to detect, prevent, investigate or prosecute criminal offences, as stated in Art. 50(4)',
+            'Human review is in place or a natural or legal person holds editorial responsibility for the publication of the content, as stated in Art. 50(4)',
+            'None of the above (no exception for citizens/public-facing case)'
+        ]
+    };
+    return allOptions[groupKey] || [];
+}
+
+async function confirmExceptionOptions() {
+    const mainContainer = document.querySelector('[data-agent-id]');
+    const agentId = mainContainer ? parseInt(mainContainer.getAttribute('data-agent-id')) : 0;
+    
+    try {
+        const response = await fetch(`/api/ai-inventory/${agentId}/block3-state/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                exception_options: block3State.exceptionOptions
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            if (result.assessment && result.assessment.block3) {
+                updateAssessmentBlocksFromBE(result.assessment);
+            } else {
+                updateAssessmentBlock(3);
+            }
+        }
+    } catch (error) {
+        console.error('Error confirming exception options:', error);
+    }
+}
+
+async function confirmTransparencyEvidence() {
+    const mainContainer = document.querySelector('[data-agent-id]');
+    const agentId = mainContainer ? parseInt(mainContainer.getAttribute('data-agent-id')) : 0;
+    
+    const fileInput = document.getElementById('transparency-evidence-upload');
+    const linkInput = document.getElementById('transparency-evidence-link');
+    
+    let evidenceUploaded = false;
+    let evidenceLink = '';
+    
+    // Check file upload
+    if (fileInput && fileInput.files && fileInput.files.length > 0) {
+        try {
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            formData.append('folder', 'governance/uploads');
+            
+            const uploadResponse = await fetch('/api/upload-file/', {
+                method: 'POST',
+                body: formData,
+            });
+            
+            const uploadResult = await uploadResponse.json();
+            if (uploadResult.success) {
+                evidenceUploaded = true;
+            }
+        } catch (error) {
+            console.error('Error uploading evidence file:', error);
+        }
+    }
+    
+    // Check link
+    if (linkInput && linkInput.value && linkInput.value.trim()) {
+        evidenceLink = linkInput.value.trim();
+    }
+    
+    if (!evidenceUploaded && !evidenceLink) {
+        alert('Please upload a document or provide a link.');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/ai-inventory/${agentId}/block3-state/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                transparency_evidence_uploaded: evidenceUploaded,
+                transparency_evidence_saved_link: evidenceLink
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            block3State.transparencyEvidenceUploaded = evidenceUploaded;
+            block3State.transparencyEvidenceSavedLink = evidenceLink;
+            if (result.assessment && result.assessment.block3) {
+                updateAssessmentBlocksFromBE(result.assessment);
+            } else {
+                updateAssessmentBlock(3);
+            }
+        } else {
+            alert('Error saving evidence: ' + (result.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error confirming transparency evidence:', error);
+        alert('Error saving evidence. Please try again.');
+    }
+}
+
+function renderBlock4Content(status, block4Details = null) {
     if (status === 'Not assessed') {
-        return '<p class="font-normal text-sm text-[#464E58]">Please complete Section 7 (Capabilities) in Profile to assess transparency obligations.</p>';
+        const reason = block4Details?.reason || 'Please complete Section 8 (Technical Profile) Q2 in Profile to assess GPAI applicability.';
+        return `<p class="font-normal text-sm text-[#464E58]">${reason}</p>`;
     }
     
     if (status === 'De-activated') {
-        return '<p class="font-normal text-sm text-[#464E58]">This block is de-activated because the system is classified as Prohibited.</p>';
+        return `
+            <div class="bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg p-4">
+                <p class="font-semibold text-sm text-[#B5BCC4]">This block is de-activated</p>
+                <p class="font-normal text-sm text-[#B5BCC4] mt-2">
+                    ${block4Details?.reason || 'Block 1 Prohibited - GPAI obligation assessment not applicable.'}
+                </p>
+            </div>
+        `;
+    }
+    
+    if (status === 'Not Applicable') {
+        return `
+            <div class="bg-[#E8F5E9] border border-[#81C784] rounded-lg p-4">
+                <p class="font-semibold text-sm text-[#2E7D32]">✓ Not Applicable</p>
+                <p class="font-normal text-sm text-[#464E58] mt-2">
+                    ${block4Details?.reason || 'GPAI obligations do not apply. You are a GPAI user, not a provider. Chapter V does not apply.'}
+                </p>
+            </div>
+        `;
+    }
+    
+    if (status === 'Needs Review') {
+        return `
+            <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-4">
+                <p class="font-semibold text-sm text-[#F57C00]">⚠️ Needs Review</p>
+                <p class="font-normal text-sm text-[#464E58] mt-2">
+                    ${block4Details?.reason || 'This assessment requires manual review by the compliance team.'}
+                </p>
+            </div>
+        `;
+    }
+    
+    if (status === 'Applies') {
+        return `
+            <div class="bg-[#FFEBEE] border border-[#EF5350] rounded-lg p-4">
+                <p class="font-semibold text-sm text-[#C62828]">📋 GPAI Obligations Apply</p>
+                <p class="font-normal text-sm text-[#464E58] mt-2">
+                    ${block4Details?.reason || 'GPAI provider - Chapter V obligations apply.'}
+                </p>
+            </div>
+        `;
+    }
+    
+    // Status = 'Triggered' - Show confirmation or provider question
+    if (status === 'Triggered') {
+        const gpaiIntegration = block4Details?.gpai_integration || 
+                               document.querySelector('input[name="gpai_integration"]:checked')?.value || '';
+        
+        // If not confirmed yet, show confirmation card
+        if (!block4State.gpaiConfirmed) {
+            let reasonText = '';
+            if (gpaiIntegration === 'Yes') {
+                reasonText = 'This AI system integrates or uses a General Purpose AI (GPAI) model (Section 8, Q2).';
+            } else if (gpaiIntegration === 'Unknown') {
+                reasonText = 'GPAI integration status is Unknown - requires confirmation (Section 8, Q2).';
+            }
+            
+            return `
+                <div class="space-y-4">
+                    <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-4">
+                        <p class="font-semibold text-sm text-[#22262A] mb-2">Confirm Profile input:</p>
+                        <p class="font-normal text-sm text-[#464E58] mb-2">
+                            Based on your Profile inputs, GPAI obligations may apply because:
+                        </p>
+                        <ul class="list-disc list-inside space-y-1 mb-4">
+                            <li class="font-medium text-sm text-[#464E58] ml-2">${reasonText}</li>
+                        </ul>
+                        <p class="font-semibold text-sm text-[#22262A]">Do you confirm?</p>
+                    </div>
+                    <div class="flex justify-end gap-3">
+                        <button onclick="switchTab('profile')" class="px-6 py-2.5 bg-white border border-[#B5BCC4] text-[#464E58] rounded-lg font-semibold text-sm hover:bg-[#F0F1F2] transition-colors">
+                            Edit Profile Info
+                        </button>
+                        <button onclick="confirmGPAI()" class="px-6 py-2.5 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A] transition-colors">
+                            Confirm
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // After confirmation - show provider question (flowchart: Are you the provider of AI model?)
+        return renderBlock4ProviderQuestion(block4Details);
     }
     
     return '<p class="text-sm text-[#464E58]">Status: ' + status + '</p>';
 }
 
-function renderBlock4Content(status) {
-    if (status === 'Not assessed') {
-        return '<p class="font-normal text-sm text-[#464E58]">Please complete Section 8 (Technical Profile) Q2 in Profile to assess GPAI applicability.</p>';
-    }
+// Render provider question (flowchart: Are you the provider of AI model?)
+function renderBlock4ProviderQuestion(block4Details) {
+    const gpaiIntegration = block4Details?.gpai_integration || 'Yes';
     
-    if (status === 'De-activated') {
-        return '<p class="font-normal text-sm text-[#464E58]">This block is de-activated because the system is classified as Prohibited.</p>';
-    }
+    return `
+        <div class="space-y-4">
+            <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-4">
+                <p class="font-semibold text-sm text-[#22262A] mb-2">Provider Determination</p>
+                <p class="font-normal text-sm text-[#464E58] mb-4">
+                    Are you the provider of the AI model?
+                </p>
+                <div class="space-y-2">
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="radio" name="gpai_provider_answer" value="Yes" 
+                               ${block4State.gpaiProviderAnswer === 'Yes' ? 'checked' : ''}
+                               onchange="setGPAIProviderAnswer('Yes')" 
+                               class="w-4 h-4 text-[#F13D30] border-[#B5BCC4] focus:ring-[#F13D30]">
+                        <span class="font-normal text-sm text-[#464E58]">Yes - We are a GPAI provider</span>
+                    </label>
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="radio" name="gpai_provider_answer" value="No" 
+                               ${block4State.gpaiProviderAnswer === 'No' ? 'checked' : ''}
+                               onchange="setGPAIProviderAnswer('No')" 
+                               class="w-4 h-4 text-[#F13D30] border-[#B5BCC4] focus:ring-[#F13D30]">
+                        <span class="font-normal text-sm text-[#464E58]">No - We only use/integrate GPAI from third parties</span>
+                    </label>
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="radio" name="gpai_provider_answer" value="Not sure" 
+                               ${block4State.gpaiProviderAnswer === 'Not sure' ? 'checked' : ''}
+                               onchange="setGPAIProviderAnswer('Not sure')" 
+                               class="w-4 h-4 text-[#F13D30] border-[#B5BCC4] focus:ring-[#F13D30]">
+                        <span class="font-normal text-sm text-[#464E58]">Not sure - Requires legal review</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// Block 4 API functions
+async function confirmGPAI() {
+    const mainContainer = document.querySelector('[data-agent-id]');
+    const agentId = mainContainer ? parseInt(mainContainer.getAttribute('data-agent-id')) : 0;
     
-    return '<p class="text-sm text-[#464E58]">Status: ' + status + '</p>';
+    try {
+        const response = await fetch(`/api/ai-inventory/${agentId}/block4-state/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                gpai_confirmed: true
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            block4State.gpaiConfirmed = true;
+            if (result.assessment && result.assessment.block4) {
+                updateAssessmentBlocksFromBE(result.assessment);
+            } else {
+                updateAssessmentBlock(4);
+            }
+        } else {
+            alert('Error confirming assessment: ' + (result.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error confirming GPAI:', error);
+        alert('Error confirming assessment. Please try again.');
+    }
+}
+
+async function setGPAIProviderAnswer(value) {
+    const mainContainer = document.querySelector('[data-agent-id]');
+    const agentId = mainContainer ? parseInt(mainContainer.getAttribute('data-agent-id')) : 0;
+    
+    try {
+        const response = await fetch(`/api/ai-inventory/${agentId}/block4-state/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                gpai_provider_answer: value
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            block4State.gpaiProviderAnswer = value;
+            if (result.assessment && result.assessment.block4) {
+                updateAssessmentBlocksFromBE(result.assessment);
+            } else {
+                updateAssessmentBlock(4);
+            }
+        }
+    } catch (error) {
+        console.error('Error setting GPAI provider answer:', error);
+    }
 }
 
 function confirmProhibited(confirmed) {
@@ -1892,9 +4227,103 @@ function confirmProhibited(confirmed) {
 
 // Update all assessment blocks when switching to Assessment tab
 function updateAllAssessmentBlocks() {
-    [1, 2, 3, 4].forEach(blockNum => {
-        updateAssessmentBlock(blockNum);
-    });
+    // Try to get assessment results from BE first
+    const mainContainer = document.querySelector('[data-agent-id]');
+    const agentId = mainContainer ? parseInt(mainContainer.getAttribute('data-agent-id')) : 0;
+    
+    if (agentId) {
+        // Load assessment from BE
+        fetch(`/api/ai-inventory/${agentId}/detail/`)
+            .then(response => response.json())
+            .then(result => {
+                if (result.success && result.data && result.data.assessment) {
+                    console.log('Loading assessment from BE:', result.data.assessment);
+                    updateAssessmentBlocksFromBE(result.data.assessment);
+                } else {
+                    // Fallback to client-side calculation if no BE data
+                    [1, 2, 3, 4].forEach(blockNum => {
+                        updateAssessmentBlock(blockNum);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error loading assessment from BE:', error);
+                // Fallback to client-side calculation
+                [1, 2, 3, 4].forEach(blockNum => {
+                    updateAssessmentBlock(blockNum);
+                });
+            });
+    } else {
+        // Fallback to client-side calculation
+        [1, 2, 3, 4].forEach(blockNum => {
+            updateAssessmentBlock(blockNum);
+        });
+    }
+}
+
+// Update assessment blocks from BE results
+function updateAssessmentBlocksFromBE(assessmentResults) {
+    // Update Block 1
+    if (assessmentResults.block1) {
+        const block1Status = assessmentResults.block1.status;
+        
+        // Store BE assessment data for reference (needed for renderBlock1Content)
+        block1State.be_assessment = assessmentResults.block1;
+        
+        const block1Content = renderBlock1Content(block1Status);
+        updateBlockStatus(1, block1Status, block1Content);
+    }
+    
+    // Update Block 2
+    if (assessmentResults.block2) {
+        const block2Status = assessmentResults.block2.status;
+        const block2Details = assessmentResults.block2.details || {};
+        
+        // Store BE assessment data for reference
+        block2State.be_assessment = assessmentResults.block2;
+        
+        const block2Content = renderBlock2Content(block2Status, block2Details);
+        updateBlockStatus(2, block2Status, block2Content);
+    }
+    
+    // Update Block 3
+    if (assessmentResults.block3) {
+        const block3Status = assessmentResults.block3.status;
+        const block3Details = assessmentResults.block3.details || {};
+        
+        // Store BE assessment data for reference
+        block3State.be_assessment = assessmentResults.block3;
+        
+        const block3Content = renderBlock3Content(block3Status, block3Details);
+        updateBlockStatus(3, block3Status, block3Content);
+    }
+    
+    // Update Block 4
+    if (assessmentResults.block4) {
+        const block4Status = assessmentResults.block4.status;
+        const block4Details = assessmentResults.block4.details || {};
+        
+        // Store BE assessment data for reference
+        block4State.be_assessment = assessmentResults.block4;
+        
+        const block4Content = renderBlock4Content(block4Status, block4Details);
+        updateBlockStatus(4, block4Status, block4Content);
+    }
+}
+
+// Helper function to update block status and content
+function updateBlockStatus(blockNum, status, content) {
+    const statusEl = document.getElementById(`block-${blockNum}-status`);
+    const contentEl = document.getElementById(`block-${blockNum}-content-inner`);
+    
+    if (statusEl) {
+        statusEl.textContent = status;
+        statusEl.className = `px-4 py-1.5 rounded-full font-semibold text-sm ${getStatusColorClass(status)}`;
+    }
+    
+    if (contentEl) {
+        contentEl.innerHTML = content;
+    }
 }
 
 // Wrapper functions for Result screen (based on React code)
@@ -2080,7 +4509,11 @@ function updateResultBlock(blockNum, status, description, statusClass) {
 
 
 // Update assessment when Profile inputs change
+// Load detail data when page loads
 document.addEventListener('DOMContentLoaded', function() {
+    // Load AI System detail data from API
+    loadAISystemDetailData();
+    
     // Monitor Profile form changes
     const profileInputs = document.querySelectorAll('input[name="capability_practices"], input[name="sector_domain"], input[name="safety_component"], input[name="third_party_conformity"], input[name="interacts_persons"], input[name="synthetic_content"], input[name="affected_outputs"], input[name="deployment_context"], input[name="gpai_integration"]');
     profileInputs.forEach(input => {
@@ -2542,12 +4975,16 @@ function initSystemSourceLogic() {
         saveVendorLinkBtn.addEventListener('click', function() {
             const link = vendorEvidenceLink.value.trim();
             if (link) {
-                vendorLinkText.textContent = link;
+                // Create clickable link element
+                vendorLinkText.innerHTML = `<a href="${link}" target="_blank" class="text-[#F13D30] hover:underline">${link}</a>`;
                 vendorLinkSaved.classList.remove('hidden');
-                // In production, would save to backend here
+                // Note: Link will be saved when user clicks "Confirm and Save" or "Save all"
             }
         });
     }
+    
+    // Trigger initial change to show/hide vendor fields based on saved data
+    handleSystemSourceChange();
     
     // Initialize
     handleSystemSourceChange();

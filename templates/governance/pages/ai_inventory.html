@@ -160,9 +160,19 @@
                             </span>
                         </td>
                         <td class="px-6 py-4">
-                            <span class="font-normal text-sm text-[#464E58]">
-                                {{ system.role }}
-                            </span>
+                            <div class="flex flex-wrap gap-1">
+                                {% if system.roles %}
+                                    {% for role in system.roles %}
+                                        <span class="inline-flex px-2 py-0.5 rounded font-medium text-xs bg-[#E5E7EB] text-[#464E58]">
+                                            {{ role }}
+                                        </span>
+                                    {% endfor %}
+                                {% else %}
+                                    <span class="font-normal text-sm text-[#464E58]">
+                                        {{ system.role|default:"—" }}
+                                    </span>
+                                {% endif %}
+                            </div>
                         </td>
                         <td class="px-6 py-4">
                             <span class="inline-flex px-2.5 py-1 rounded-full font-medium text-xs {{ system.risk_badge_class }}">
@@ -701,8 +711,8 @@
                             <line x1="16" y1="17" x2="8" y2="17"></line>
                             <polyline points="10 9 9 9 8 9"></polyline>
                         </svg>
-                        <div class="flex-1 min-w-0">
-                            <span id="add-system-file-name" class="font-normal text-sm text-[#B5BCC4] block truncate">Choose file...</span>
+                        <div class="flex-1 min-w-0 overflow-hidden">
+                            <span id="add-system-file-name" class="font-normal text-sm text-[#B5BCC4] block truncate max-w-full" title="">Choose file...</span>
                         </div>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4 text-[#565F6C]">
                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -734,7 +744,7 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block font-semibold text-sm text-[#22262A] mb-2">Owner (Person / Team)</label>
-                        <input type="text" name="owner" placeholder="Enter owner" 
+                        <input type="text" name="owner" placeholder="Not provided" value="Not provided"
                             class="w-full px-4 py-2.5 border border-[#B5BCC4] rounded-lg font-normal text-sm text-[#22262A] placeholder:text-[#B5BCC4] focus:outline-none focus:border-[#F13D30] focus:ring-2 focus:ring-[#FEEDEC] transition-colors">
                     </div>
                     <div>
@@ -748,16 +758,28 @@
                     </div>
                 </div>
 
-                <!-- Role and Provider Type -->
+                <!-- Role (Multi-select) and Provider Type -->
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block font-semibold text-sm text-[#22262A] mb-2">Role</label>
-                        <select name="role" class="w-full px-4 py-2.5 border border-[#B5BCC4] rounded-lg font-normal text-sm text-[#22262A] focus:outline-none focus:border-[#F13D30] focus:ring-2 focus:ring-[#FEEDEC] transition-colors">
-                            <option value="Provider">Provider</option>
-                            <option value="Deployer" selected>Deployer</option>
-                            <option value="Distributor">Distributor</option>
-                            <option value="Importer">Importer</option>
-                        </select>
+                        <label class="block font-semibold text-sm text-[#22262A] mb-2">Role (Select all that apply)</label>
+                        <div class="space-y-2 border border-[#B5BCC4] rounded-lg p-3 bg-white">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" name="role" value="Provider" checked class="w-4 h-4 accent-[#F13D30] cursor-pointer">
+                                <span class="text-sm text-[#22262A]">Provider</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" name="role" value="Deployer" class="w-4 h-4 accent-[#F13D30] cursor-pointer">
+                                <span class="text-sm text-[#22262A]">Deployer</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" name="role" value="Distributor" class="w-4 h-4 accent-[#F13D30] cursor-pointer">
+                                <span class="text-sm text-[#22262A]">Distributor</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" name="role" value="Importer" class="w-4 h-4 accent-[#F13D30] cursor-pointer">
+                                <span class="text-sm text-[#22262A]">Importer</span>
+                            </label>
+                        </div>
                     </div>
                     <div>
                         <label class="block font-semibold text-sm text-[#22262A] mb-2">Provider Type</label>
@@ -766,6 +788,30 @@
                             <option value="External">External</option>
                             <option value="Mixed">Mixed</option>
                             <option value="Unknown" selected>Unknown</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Risk Classification and Compliance Status -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block font-semibold text-sm text-[#22262A] mb-2">Risk Classification</label>
+                        <select name="risk_classification" class="w-full px-4 py-2.5 border border-[#B5BCC4] rounded-lg font-normal text-sm text-[#22262A] focus:outline-none focus:border-[#F13D30] focus:ring-2 focus:ring-[#FEEDEC] transition-colors">
+                            <option value="Not assessed" selected>Not assessed</option>
+                            <option value="Prohibited">Prohibited</option>
+                            <option value="High-risk">High-risk</option>
+                            <option value="Limited transparency">Limited transparency</option>
+                            <option value="Minimal">Minimal</option>
+                            <option value="Not in scope">Not in scope</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-sm text-[#22262A] mb-2">Compliance Status</label>
+                        <select name="compliance_status" class="w-full px-4 py-2.5 border border-[#B5BCC4] rounded-lg font-normal text-sm text-[#22262A] focus:outline-none focus:border-[#F13D30] focus:ring-2 focus:ring-[#FEEDEC] transition-colors">
+                            <option value="Not started" selected>Not started</option>
+                            <option value="In progress">In progress</option>
+                            <option value="Compliant">Compliant</option>
+                            <option value="Non-compliant">Non-compliant</option>
                         </select>
                     </div>
                 </div>
@@ -867,9 +913,70 @@ function resetImportModal() {
 }
 
 function downloadTemplate() {
-    // Create CSV template
-    const headers = ['AI System Name', 'Owner', 'Status', 'Role', 'Risk Classification', 'Compliance Status', 'Provider Type'];
-    const csvContent = headers.join(',') + '\n';
+    // Create CSV template matching "Add New AI System" form fields
+    // Note: "Last Updated" is auto-generated, not needed in template
+    const headers = [
+        'AI System Name',           // Required
+        'Owner (Person / Team)',    // Default: "Not provided"
+        'Status',                   // Planned, Testing, In production, Retired
+        'Role',                     // Provider, Deployer, Distributor, Importer (comma-separated for multiple, e.g., "Provider, Deployer")
+        'Risk Classification',       // Not assessed, Prohibited, High-risk, Limited transparency, Minimal, Not in scope
+        'Compliance Status',        // Not started, In progress, Compliant, Non-compliant
+        'Provider Type',            // In-house, External, Mixed, Unknown
+        'Deployment Context',       // Workplace, Education, Healthcare, Law enforcement, Consumer, Other
+        'EU / EEA Relevance'        // Yes, No, Planned, Unknown
+    ];
+    
+    // Add example rows with different scenarios
+    const exampleRow1 = [
+        'Example AI System 1',       // AI System Name
+        'Not provided',              // Owner
+        'Planned',                   // Status
+        'Provider',                  // Role (single role)
+        'Not assessed',              // Risk Classification
+        'Not started',               // Compliance Status
+        'Unknown',                   // Provider Type
+        'Workplace',                 // Deployment Context
+        'Unknown'                    // EU / EEA Relevance
+    ];
+    
+    const exampleRow2 = [
+        'Example AI System 2',       // AI System Name
+        'Product Team',              // Owner
+        'In production',             // Status
+        'Provider, Deployer',        // Role (multiple roles - comma-separated)
+        'High-risk',                 // Risk Classification
+        'Compliant',                 // Compliance Status
+        'Mixed',                     // Provider Type
+        'Healthcare',                // Deployment Context
+        'Yes'                        // EU / EEA Relevance
+    ];
+    
+    // Add third example with 3 roles to show more possibilities
+    const exampleRow3 = [
+        'Example AI System 3',       // AI System Name
+        'Operations Team',           // Owner
+        'Testing',                   // Status
+        'Provider, Distributor, Importer',  // Role (3 roles - comma-separated)
+        'Limited transparency',      // Risk Classification
+        'In progress',               // Compliance Status
+        'External',                  // Provider Type
+        'Education',                 // Deployment Context
+        'No'                         // EU / EEA Relevance
+    ];
+    
+    // Create CSV with proper escaping for values containing commas
+    const escapeCsvValue = (value) => {
+        if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+            return `"${value.replace(/"/g, '""')}"`;
+        }
+        return value;
+    };
+    
+    const csvContent = headers.map(escapeCsvValue).join(',') + '\n' + 
+                       exampleRow1.map(escapeCsvValue).join(',') + '\n' + 
+                       exampleRow2.map(escapeCsvValue).join(',') + '\n' +
+                       exampleRow3.map(escapeCsvValue).join(',') + '\n';
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
@@ -928,38 +1035,58 @@ function removeCsvFile() {
     dropZone.classList.add('border-[#B5BCC4]', 'bg-[#F9FAFB]');
 }
 
-function importCsvFile() {
+async function importCsvFile() {
     if (!selectedCsvFile) {
         alert('Please select a CSV file first');
         return;
     }
     
-    // TODO: Implement actual import logic
-    const formData = new FormData();
-    formData.append('csv_file', selectedCsvFile);
-    
-    // Example: Send to backend
-    fetch('/api/ai-inventory/import/', {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-CSRFToken': '{{ csrf_token }}'
+    try {
+        // Upload file using shared API (like Organization page)
+        const uploadFormData = new FormData();
+        uploadFormData.append('file', selectedCsvFile);
+        uploadFormData.append('folder', 'governance/uploads');
+        
+        const uploadResponse = await fetch('/api/upload-file/', {
+            method: 'POST',
+            body: uploadFormData
+        });
+        
+        const uploadResult = await uploadResponse.json();
+        
+        if (!uploadResult.success || !uploadResult.files || uploadResult.files.length === 0) {
+            alert('Error uploading CSV file: ' + (uploadResult.error || 'Unknown error'));
+            return;
         }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
+        
+        const uploadedFile = uploadResult.files[0];
+        
+        // Send file info to import API
+        const importResponse = await fetch('/api/ai-inventory/import/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                file_url: uploadedFile.url,
+                file_path: uploadedFile.path,
+                file_name: uploadedFile.name
+            })
+        });
+        
+        const importResult = await importResponse.json();
+        
+        if (importResult.success) {
             alert('AI Systems imported successfully!');
             closeImportModal();
             location.reload(); // Reload page to show new data
         } else {
-            alert('Error importing: ' + (data.error || 'Unknown error'));
+            alert('Error importing: ' + (importResult.error || 'Unknown error'));
         }
-    })
-    .catch(error => {
+    } catch (error) {
         console.error('Error:', error);
-        alert('Error importing CSV file');
-    });
+        alert('Error importing CSV file: ' + error.message);
+    }
 }
 
 // File input change handler
@@ -1025,58 +1152,37 @@ function closeExportModal() {
     document.getElementById('export-modal').classList.add('hidden');
 }
 
-function downloadExport() {
-    // Get all AI systems data from the table
-    const systems = [];
-    const rows = document.querySelectorAll('tbody tr.system-row');
-    
-    rows.forEach(row => {
-        const cells = row.querySelectorAll('td');
-        if (cells.length >= 8) {
-            systems.push({
-                name: cells[0].textContent.trim(),
-                owner: cells[1].textContent.trim(),
-                status: cells[2].textContent.trim(),
-                role: cells[3].textContent.trim(),
-                riskClassification: cells[4].textContent.trim(),
-                complianceStatus: cells[5].textContent.trim(),
-                lastUpdated: cells[6].textContent.trim(),
-                providerType: cells[7].textContent.trim()
-            });
+async function downloadExport() {
+    try {
+        // Call API to export
+        const response = await fetch('/api/ai-inventory/export/', {
+            method: 'GET',
+        });
+        
+        if (!response.ok) {
+            throw new Error('Export failed');
         }
-    });
-    
-    // Create CSV content
-    const headers = ['AI System Name', 'Owner', 'Status', 'Role', 'Risk Classification', 'Compliance Status', 'Last Updated', 'Provider Type'];
-    let csvContent = headers.join(',') + '\n';
-    
-    systems.forEach(system => {
-        const row = [
-            `"${system.name}"`,
-            `"${system.owner}"`,
-            `"${system.status}"`,
-            `"${system.role}"`,
-            `"${system.riskClassification}"`,
-            `"${system.complianceStatus}"`,
-            `"${system.lastUpdated}"`,
-            `"${system.providerType}"`
-        ];
-        csvContent += row.join(',') + '\n';
-    });
-    
-    // Create and download file
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `ai_systems_export_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    // Close modal after download
-    closeExportModal();
+        
+        // Get CSV content from response
+        const csvContent = await response.text();
+        
+        // Download CSV
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `ai_systems_export_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Close modal after download
+        closeExportModal();
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error exporting AI systems: ' + error.message);
+    }
 }
 
 // Close export modal when clicking outside
@@ -1151,17 +1257,31 @@ function applyFilters() {
     
     rows.forEach(row => {
         const cells = row.querySelectorAll('td');
-        if (cells.length < 8) {
+        if (cells.length < 9) {
             row.style.display = 'none';
             return;
         }
         
-        // Get row data
-        const statusText = cells[2].textContent.trim().toLowerCase();
-        const roleText = cells[3].textContent.trim().toLowerCase();
-        const riskText = cells[4].textContent.trim().toLowerCase();
-        const complianceText = cells[5].textContent.trim().toLowerCase();
-        const providerText = cells[7].textContent.trim().toLowerCase();
+        // Get row data - correct cell indices:
+        // cells[0] = checkbox
+        // cells[1] = AI System Name
+        // cells[2] = Owner
+        // cells[3] = Status
+        // cells[4] = Role
+        // cells[5] = Risk Classification
+        // cells[6] = Compliance Status
+        // cells[7] = Last Updated
+        // cells[8] = Provider Type
+        
+        const statusText = cells[3].textContent.trim().toLowerCase();
+        // Handle multiple roles - get all role badges
+        const roleCell = cells[4];
+        const roleBadges = roleCell.querySelectorAll('span');
+        const roleTexts = Array.from(roleBadges).map(badge => badge.textContent.trim().toLowerCase());
+        const roleText = roleTexts.length > 0 ? roleTexts.join(', ') : roleCell.textContent.trim().toLowerCase();
+        const riskText = cells[5].textContent.trim().toLowerCase();
+        const complianceText = cells[6].textContent.trim().toLowerCase();
+        const providerText = cells[8].textContent.trim().toLowerCase();
         
         // Normalize values for matching
         const statusMap = {
@@ -1206,28 +1326,51 @@ function applyFilters() {
         let matches = true;
         
         if (activeFilters.status.length > 0) {
-            const rowStatus = statusMap[statusText] || statusText.replace(/\s+/g, '_');
-            matches = matches && activeFilters.status.includes(rowStatus);
+            // Normalize status text
+            let normalizedStatus = statusText;
+            if (statusText === 'in production') {
+                normalizedStatus = 'in_production';
+            } else {
+                normalizedStatus = statusMap[statusText] || statusText.replace(/\s+/g, '_');
+            }
+            matches = matches && activeFilters.status.includes(normalizedStatus);
+            console.log(`Status filter: row="${statusText}" -> normalized="${normalizedStatus}", filter=${activeFilters.status}, match=${matches}`);
         }
         
         if (activeFilters.role.length > 0 && matches) {
-            const rowRole = roleMap[roleText] || roleText;
-            matches = matches && activeFilters.role.includes(rowRole);
+            // Check if any of the row's roles match any of the selected filters
+            const rowRoles = roleTexts.length > 0 ? roleTexts : [roleText];
+            const matchedRoles = rowRoles.filter(r => {
+                const normalized = roleMap[r.trim()] || r.trim();
+                return activeFilters.role.includes(normalized);
+            });
+            matches = matches && matchedRoles.length > 0;
+            console.log(`Role filter: rowRoles=${rowRoles}, filter=${activeFilters.role}, matched=${matchedRoles}, match=${matches}`);
         }
         
         if (activeFilters.risk.length > 0 && matches) {
-            const rowRisk = riskMap[riskText] || riskText.replace(/\s+/g, '_');
-            matches = matches && activeFilters.risk.includes(rowRisk);
+            // Normalize risk text
+            let normalizedRisk = riskMap[riskText] || riskText.replace(/\s+/g, '_');
+            // Handle "high-risk" -> "high_risk"
+            if (riskText === 'high-risk') {
+                normalizedRisk = 'high_risk';
+            }
+            matches = matches && activeFilters.risk.includes(normalizedRisk);
+            console.log(`Risk filter: row="${riskText}" -> normalized="${normalizedRisk}", filter=${activeFilters.risk}, match=${matches}`);
         }
         
         if (activeFilters.compliance.length > 0 && matches) {
-            const rowCompliance = complianceMap[complianceText] || complianceText.replace(/\s+/g, '_');
-            matches = matches && activeFilters.compliance.includes(rowCompliance);
+            // Normalize compliance text
+            let normalizedCompliance = complianceMap[complianceText] || complianceText.replace(/\s+/g, '_');
+            matches = matches && activeFilters.compliance.includes(normalizedCompliance);
+            console.log(`Compliance filter: row="${complianceText}" -> normalized="${normalizedCompliance}", filter=${activeFilters.compliance}, match=${matches}`);
         }
         
         if (activeFilters.provider.length > 0 && matches) {
-            const rowProvider = providerMap[providerText] || providerText;
-            matches = matches && activeFilters.provider.includes(rowProvider);
+            // Normalize provider text
+            let normalizedProvider = providerMap[providerText] || providerText.replace(/\s+/g, '_');
+            matches = matches && activeFilters.provider.includes(normalizedProvider);
+            console.log(`Provider filter: row="${providerText}" -> normalized="${normalizedProvider}", filter=${activeFilters.provider}, match=${matches}`);
         }
         
         if (matches) {
@@ -1622,7 +1765,7 @@ function aiReadAndAutoFill() {
     alert('AI Read & Auto-fill functionality coming soon');
 }
 
-function createAISystem() {
+async function createAISystem() {
     const form = document.getElementById('add-system-form');
     const formData = new FormData(form);
     
@@ -1633,22 +1776,75 @@ function createAISystem() {
         return;
     }
     
-    // Get file if selected
+    // Collect role values (multi-select checkboxes)
+    const roleCheckboxes = form.querySelectorAll('input[name="role"]:checked');
+    const roles = Array.from(roleCheckboxes).map(cb => cb.value);
+    
+    // Get file if selected - upload first if file exists
     const fileInput = document.getElementById('add-system-file-input');
+    let uploadedFileInfo = null;
+    
     if (fileInput.files[0]) {
-        formData.append('document', fileInput.files[0]);
+        try {
+            // Upload file using shared API
+            const uploadFormData = new FormData();
+            uploadFormData.append('file', fileInput.files[0]);
+            uploadFormData.append('folder', 'governance/uploads');
+            
+            const uploadResponse = await fetch('/api/upload-file/', {
+                method: 'POST',
+                body: uploadFormData
+            });
+            
+            const uploadResult = await uploadResponse.json();
+            
+            if (uploadResult.success && uploadResult.files && uploadResult.files.length > 0) {
+                uploadedFileInfo = uploadResult.files[0];
+                console.log('File uploaded successfully:', uploadedFileInfo);
+            } else {
+                console.warn('File upload failed or no files returned');
+            }
+        } catch (error) {
+            console.error('Error uploading file:', error);
+            // Continue with creation even if file upload fails
+        }
     }
     
-    // TODO: Send to backend API
-    fetch('/api/ai-inventory/create/', {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-CSRFToken': '{{ csrf_token }}'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
+    // Prepare data for API
+    const systemData = {
+        name: systemName.trim(),
+        owner: formData.get('owner') || 'Not provided',
+        status: formData.get('status') || 'Planned',
+        roles: roles.length > 0 ? roles : ['Provider'], // Default to Provider if none selected
+        provider_type: formData.get('provider_type') || 'Unknown',
+        risk_classification: formData.get('risk_classification') || 'Not assessed',
+        compliance_status: formData.get('compliance_status') || 'Not started',
+        deployment_context: formData.get('deployment_context') || '',
+        eu_eea_relevance: formData.get('eu_eea_relevance') || ''
+    };
+    
+    // Add file info if uploaded
+    if (uploadedFileInfo) {
+        systemData.document = {
+            name: uploadedFileInfo.name,
+            url: uploadedFileInfo.url,
+            path: uploadedFileInfo.path,
+            size: uploadedFileInfo.size
+        };
+    }
+    
+    // Send to backend API
+    try {
+        const response = await fetch('/api/ai-inventory/create/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(systemData)
+        });
+        
+        const data = await response.json();
+        
         if (data.success) {
             alert('AI System created successfully!');
             closeAddSystemModal();
@@ -1656,11 +1852,10 @@ function createAISystem() {
         } else {
             alert('Error creating AI System: ' + (data.error || 'Unknown error'));
         }
-    })
-    .catch(error => {
+    } catch (error) {
         console.error('Error:', error);
         alert('Error creating AI System');
-    });
+    }
 }
 
 // File input change handler for Add System modal
@@ -1669,12 +1864,23 @@ document.getElementById('add-system-file-input')?.addEventListener('change', fun
     const fileNameEl = document.getElementById('add-system-file-name');
     const aiReadBtn = document.getElementById('ai-read-btn');
     if (file) {
-        fileNameEl.textContent = file.name;
+        // Truncate long file names (max 40 characters)
+        const maxLength = 40;
+        let displayName = file.name;
+        if (file.name.length > maxLength) {
+            const extension = file.name.substring(file.name.lastIndexOf('.'));
+            const nameWithoutExt = file.name.substring(0, file.name.lastIndexOf('.'));
+            const truncatedName = nameWithoutExt.substring(0, maxLength - extension.length - 3) + '...';
+            displayName = truncatedName + extension;
+        }
+        fileNameEl.textContent = displayName;
+        fileNameEl.setAttribute('title', file.name); // Show full name on hover
         fileNameEl.classList.remove('text-[#B5BCC4]');
         fileNameEl.classList.add('text-[#22262A]');
         if (aiReadBtn) aiReadBtn.disabled = false;
     } else {
         fileNameEl.textContent = 'Choose file...';
+        fileNameEl.removeAttribute('title');
         fileNameEl.classList.remove('text-[#22262A]');
         fileNameEl.classList.add('text-[#B5BCC4]');
         if (aiReadBtn) aiReadBtn.disabled = true;
@@ -1802,36 +2008,47 @@ function toggleSystemSelect(checkbox) {
     updateSelectedCount();
 }
 
-function deleteSelectedSystems() {
+async function deleteSelectedSystems() {
     if (selectedSystemIds.length === 0) return;
     
     const confirmDelete = confirm(
         `Are you sure you want to delete ${selectedSystemIds.length} selected system${selectedSystemIds.length > 1 ? 's' : ''}? This action cannot be undone.`
     );
     
-    if (confirmDelete) {
-        // TODO: Send DELETE request to backend
-        fetch('/api/ai-inventory/delete/', {
+    if (!confirmDelete) {
+        return;
+    }
+    
+    // Convert system IDs to integers to match backend data format
+    const systemIdsInt = selectedSystemIds.map(id => parseInt(id, 10)).filter(id => !isNaN(id));
+    
+    if (systemIdsInt.length === 0) {
+        alert('No valid system IDs found');
+        return;
+    }
+    
+    console.log('Deleting systems with IDs:', systemIdsInt);
+    
+    try {
+        const response = await fetch('/api/ai-inventory/delete/', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': '{{ csrf_token }}'
+                'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ system_ids: selectedSystemIds })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert(`${selectedSystemIds.length} system${selectedSystemIds.length > 1 ? 's' : ''} deleted successfully!`);
-                location.reload();
-            } else {
-                alert('Error deleting systems: ' + (data.error || 'Unknown error'));
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Error deleting systems');
+            body: JSON.stringify({ system_ids: systemIdsInt })
         });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert(`${data.deleted_count || systemIdsInt.length} system${(data.deleted_count || systemIdsInt.length) > 1 ? 's' : ''} deleted successfully!`);
+            location.reload();
+        } else {
+            alert('Error deleting systems: ' + (data.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error deleting systems: ' + error.message);
     }
 }
 

@@ -1022,7 +1022,6 @@
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
-                                'X-CSRFToken': '{{ csrf_token }}'
                             },
                             body: JSON.stringify(data)
                         });
@@ -1110,13 +1109,8 @@
                         }
                         return cookieValue;
                     }
-                    const csrftoken = getCookie('csrftoken') || '{{ csrf_token }}';
-                    
                     const response = await fetch(`/api/use-cases/${currentUseCaseId}/evidences/`, {
                         method: 'POST',
-                        headers: {
-                            'X-CSRFToken': csrftoken
-                        },
                         body: formData
                     });
                     
@@ -1162,13 +1156,8 @@
                     }
                     return cookieValue;
                 }
-                const csrftoken = getCookie('csrftoken') || '{{ csrf_token }}';
-                
                 const response = await fetch(`/api/use-cases/${currentUseCaseId}/evidences/${evidenceId}/`, {
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRFToken': csrftoken
-                    }
+                    method: 'DELETE'
                 });
                 
                 const result = await response.json();
@@ -1224,7 +1213,6 @@
                 return;
             }
             
-            const csrftoken = getCookie('csrftoken') || '{{ csrf_token }}';
             const url = `/api/use-cases/${currentUseCaseIdForReports}/evaluation-reports/`;
             console.log('Uploading to:', url);
             
@@ -1237,9 +1225,6 @@
                 console.log('Sending request...');
                 const response = await fetch(url, {
                     method: 'POST',
-                    headers: {
-                        'X-CSRFToken': csrftoken
-                    },
                     body: formData
                 });
                 
@@ -1380,14 +1365,11 @@
                 return;
             }
             
-            const csrftoken = getCookie('csrftoken') || '{{ csrf_token }}';
-            
             try {
                 const response = await fetch(`/api/use-cases/${currentUseCaseIdForComments}/review-comments/`, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': csrftoken
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
                         content: content
@@ -1446,14 +1428,11 @@
                 return;
             }
             
-            const csrftoken = getCookie('csrftoken') || '{{ csrf_token }}';
-            
             try {
                 const response = await fetch(`/api/use-cases/${currentUseCaseIdForComments}/review-comments/`, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': csrftoken
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
                         content: content,
@@ -1510,13 +1489,8 @@
                     }
                     return cookieValue;
                 }
-                const csrftoken = getCookie('csrftoken') || '{{ csrf_token }}';
-                
                 const response = await fetch(`/api/use-cases/${useCaseId}/evaluation-reports/${reportId}/`, {
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRFToken': csrftoken
-                    }
+                    method: 'DELETE'
                 });
                 
                 const result = await response.json();

@@ -1,0 +1,63 @@
+{
+  "documents": [
+    {
+      "name": "CCBP Debugs v2026.pdf",
+      "size": 213410,
+      "url": "/static/governance/uploads/1560f6d1b1fe47389e0fe9fd3e105bb0.pdf",
+      "path": "governance/uploads/1560f6d1b1fe47389e0fe9fd3e105bb0.pdf",
+      "uploaded_at": "2026-01-27T05:31:36.098Z"
+    }
+  ],
+  "org_profile": {
+    "entity_name": "test",
+    "registration_number": "test",
+    "headquarter_address": "test",
+    "country": "test",
+    "postal_code": "test",
+    "legal_representative": "test",
+    "contact_email": "test@gmail.com",
+    "contact_phone": "test",
+    "public_authority": "Yes",
+    "compliance_owner_name": "test",
+    "compliance_owner_email": "test@gmail.com",
+    "department": "test"
+  },
+  "scope": {
+    "q1": "Yes",
+    "q2_roles": [
+      "provider",
+      "deployer"
+    ],
+    "q3": "No",
+    "q4": "Planned"
+  },
+  "governance": {
+    "q1": "yes",
+    "q1_link": "https://www.google.com/?hl=vi",
+    "q2": "no",
+    "q2_link": "",
+    "q3": "yes",
+    "q3_link": "asdasd",
+    "q4": "no",
+    "q5": "not_applicable",
+    "q5_link": ""
+  },
+  "ai_literacy": {
+    "q1_teams": [
+      "product_engineering",
+      "data_ml",
+      "operations",
+      "other"
+    ],
+    "q1_other": "asdasd",
+    "q2": "333333",
+    "q3": "yes_implemented",
+    "q4_content": [
+      "bias",
+      "role_specific"
+    ],
+    "q5_evidence": "no",
+    "q5_evidence_link": "",
+    "q6": "planned"
+  }
+}
