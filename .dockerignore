@@ -1,0 +1,41 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.venv
+venv
+env
+.pdm-python
+
+# Env and secrets (use -e or Azure App Settings in production)
+.env
+.env.*
+!.env.example
+
+# IDE / OS
+.idea
+.vscode
+.cursor
+.DS_Store
+
+# Docs / optional (uncomment to include ai_act_articles in image)
+# *.md
+# AI_ACT_SETUP.md
+# DEPLOY_AZURE.md
+
+# Test / dev
+*.log
+.coverage
+htmlcov
+.pytest_cache
+.ruff_cache
+test_*.sh
+test_*.json
+
+# Local store info (can be overridden by env)
+# ai_act_store_info.txt

@@ -134,7 +134,7 @@
                 </form>
             </div>
         </div>
-        <div class="flex items-center space-x-4 text-gray-700">
+            <div class="flex items-center space-x-4 text-gray-700">
             <span class="text-sm whitespace-nowrap">Rows per page:</span>
             <select id="rowsPerPage" class="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-blue-300 w-20">
                 <option value="10" {% if limit == 10 %}selected{% endif %}>10</option>
@@ -395,6 +395,28 @@
                 </table>
             </div>
         </div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const rowsSelect = document.getElementById('rowsPerPage');
+    if (!rowsSelect) return;
+
+    rowsSelect.addEventListener('change', function () {
+        const url = new URL(window.location.href);
+        // reset to first page when page size changes
+        url.searchParams.set('page', '1');
+        url.searchParams.set('limit', this.value);
+
+        // keep current search keyword if có
+        const searchInput = document.getElementById('default-search');
+        if (searchInput && searchInput.value) {
+            url.searchParams.set('search', searchInput.value);
+        }
+
+        window.location.href = url.toString();
+    });
+});
+</script>
+
 {% endblock %}
 
 {% block scripts %}

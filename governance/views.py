@@ -3977,7 +3977,7 @@ def ai_inventory(request):
     ai_systems = []
     systems_need_attention = 0
     
-    # Status mapping
+    # Status mapping (fallback when explicit agent['status'] is missing)
     status_map = {
         'assessing': 'In progress',
         'reviewing': 'In progress',
@@ -4019,12 +4019,14 @@ def ai_inventory(request):
         'distributor': 'Distributor',
     }
     
-    # Risk classification mapping
+    # Risk classification mapping (internal codes -> display labels)
     risk_map = {
         'limited_risks': 'Limited transparency',
         'high_risks': 'High-risk',
         'minimal_risks': 'Minimal',
         'not_assessed': 'Not assessed',
+        'prohibited': 'Prohibited',
+        'not_in_scope': 'Not in scope',
     }
     
     # Provider type mapping (mock data based on vendor)
@@ -4040,25 +4042,31 @@ def ai_inventory(request):
     from datetime import datetime, timedelta
     
     for idx, agent in enumerate(agents_data):
-        compliance_status = agent.get('compliance_status', 'assessing')
-        status = status_map.get(compliance_status, 'Planned')
-        
-        # Handle 'planned' status specially
-        if compliance_status == 'planned':
-            status = 'Planned'
+        # Normalize compliance status (handle 'non-compliant' vs 'non_compliant', etc.)
+        compliance_status = (agent.get('compliance_status', 'assessing') or '').lower().replace('-', '_')
+        # Prefer explicit status field if present; fallback to mapping from compliance_status
+        status = agent.get('status')
+        if not status:
+            status = status_map.get(compliance_status, 'Planned')
+            # Handle 'planned' status specially
+            if compliance_status == 'planned':
+                status = 'Planned'
         
         # Check if needs attention
         if compliance_status in ['assessing', 'reviewing']:
             systems_need_attention += 1
         
         # Map compliance status for display
-        compliance_display = {
+        compliance_display_map = {
             'assessing': 'In progress',
             'reviewing': 'In progress',
             'compliant': 'Compliant',
-            'non_compliant': 'Not started',
+            'non_compliant': 'Non-compliant',
+            'not_started': 'Not started',
             'planned': 'Not started',
-        }.get(compliance_status, 'Not started')
+            'not_in_scope': 'Not in scope',
+        }
+        compliance_display = compliance_display_map.get(compliance_status, 'Not started')
         
         # Get risk classification
         risk_class = agent.get('risk_classification', 'limited_risks')
@@ -4107,6 +4115,13 @@ def ai_inventory(request):
             'last_updated': last_updated,
             'provider_type': provider_type,
         })
+    
+    # Default sort: newest systems (highest id) first
+    try:
+        ai_systems.sort(key=lambda s: int(s.get('id') or 0), reverse=True)
+    except Exception:
+        # Fallback: keep original order if ids are not sortable
+        pass
     
     return render(request, 'governance/pages/ai_inventory.html', {
         'company': company,

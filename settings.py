@@ -13,12 +13,16 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "hackathon-demo-only-not-for-production"
+# In production (e.g. Azure), set SECRET_KEY in Application Settings / environment variables.
+SECRET_KEY = os.environ.get("SECRET_KEY", "hackathon-demo-only-not-for-production")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Set DEBUG=False in Azure Application Settings for production.
+DEBUG = os.environ.get("DEBUG", "True").lower() in ("true", "1", "yes")
 
-ALLOWED_HOSTS = ['*']
+# In production, set ALLOWED_HOSTS as comma-separated list in env, e.g. your-app.azurewebsites.net
+_allowed = os.environ.get("ALLOWED_HOSTS", "*")
+ALLOWED_HOSTS = [h.strip() for h in _allowed.split(",")] if _allowed else ["*"]
 
 # Application definition
 INSTALLED_APPS = [
@@ -81,6 +85,8 @@ AI_ACT_STORE_NAME = os.environ.get('AI_ACT_STORE_NAME', '')
 AI_ACT_MODEL_NAME = os.environ.get('AI_ACT_MODEL_NAME', 'gemini-2.5-flash')
 # Use File Search (slower but more accurate) or manual context (faster)
 # Set to False to skip File Search and use manual context directly for faster responses
+# Used in: governance/infrastructure/services/gemini_ai_act_service.py (self.use_file_search)
+#          governance/views.py api_check_store_info (for debug display)
 AI_ACT_USE_FILE_SEARCH = os.environ.get('AI_ACT_USE_FILE_SEARCH', 'False').lower() == 'true'
 # API timeout in seconds
 AI_ACT_API_TIMEOUT = int(os.environ.get('AI_ACT_API_TIMEOUT', '30'))
