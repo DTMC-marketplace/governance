@@ -15,5 +15,124 @@
     "status": "Testing",
     "deployment_context": "Education",
     "eu_eea_relevance": "Planned"
+  },
+  {
+    "id": 2,
+    "name": "test agent 2",
+    "business_unit": "test business unit 2",
+    "compliance_status": "compliant",
+    "ai_act_role": "distributor",
+    "roles": [
+      "Distributor"
+    ],
+    "vendor": "Mixed",
+    "provider_type": "Mixed",
+    "risk_classification": "high_risks",
+    "investment_type": "internal",
+    "status": "Testing",
+    "deployment_context": "Education",
+    "eu_eea_relevance": "Planned"
+  },
+  {
+    "id": 3,
+    "name": "test agent 3",
+    "business_unit": "test business unit 3",
+    "compliance_status": "compliant",
+    "ai_act_role": "distributor",
+    "roles": [
+      "Distributor"
+    ],
+    "vendor": "Mixed",
+    "provider_type": "Mixed",
+    "risk_classification": "high_risks",
+    "investment_type": "internal",
+    "status": "Testing",
+    "deployment_context": "Education",
+    "eu_eea_relevance": "Planned"
+  },
+  {
+    "id": 4,
+    "name": "test agent 4",
+    "business_unit": "test business unit 4",
+    "compliance_status": "compliant",
+    "ai_act_role": "distributor",
+    "roles": [
+      "Distributor"
+    ],
+    "vendor": "Mixed",
+    "provider_type": "Mixed",
+    "risk_classification": "high_risks",
+    "investment_type": "internal",
+    "status": "Testing",
+    "deployment_context": "Education",
+    "eu_eea_relevance": "Planned"
+  },
+  {
+    "id": 5,
+    "name": "test agent 5",
+    "business_unit": "test business unit 5",
+    "compliance_status": "compliant",
+    "ai_act_role": "distributor",
+    "roles": [
+      "Distributor"
+    ],
+    "vendor": "Mixed",
+    "provider_type": "Mixed",
+    "risk_classification": "high_risks",
+    "investment_type": "internal",
+    "status": "Testing",
+    "deployment_context": "Education",
+    "eu_eea_relevance": "Planned"
+  },
+  {
+    "id": 6,
+    "name": "test agent 7",
+    "business_unit": "test business unit 7",
+    "compliance_status": "compliant",
+    "ai_act_role": "distributor",
+    "roles": [
+      "Distributor"
+    ],
+    "vendor": "Mixed",
+    "provider_type": "Mixed",
+    "risk_classification": "high_risks",
+    "investment_type": "internal",
+    "status": "Testing",
+    "deployment_context": "Education",
+    "eu_eea_relevance": "Planned"
+  },
+  {
+    "id": 7,
+    "name": "test agent 8",
+    "business_unit": "test business unit 8",
+    "compliance_status": "compliant",
+    "ai_act_role": "distributor",
+    "roles": [
+      "Distributor"
+    ],
+    "vendor": "Mixed",
+    "provider_type": "Mixed",
+    "risk_classification": "high_risks",
+    "investment_type": "internal",
+    "status": "Testing",
+    "deployment_context": "Education",
+    "eu_eea_relevance": "Planned"
+  },
+  {
+    "id": 8,
+    "name": "test agent 9",
+    "business_unit": "test business unit 9",
+    "compliance_status": "compliant",
+    "ai_act_role": "distributor",
+    "roles": [
+      "Distributor"
+    ],
+    "vendor": "Mixed",
+    "provider_type": "Mixed",
+    "risk_classification": "high_risks",
+    "investment_type": "internal",
+    "status": "Testing",
+    "deployment_context": "Education",
+    "eu_eea_relevance": "Planned"
   }
 ]

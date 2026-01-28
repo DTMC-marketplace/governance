@@ -1,0 +1,859 @@
+{% extends "governance/base.html" %}
+{% load static %}
+
+{% block title %}Compliance - Active Projects{% endblock %}
+
+{% block dashboard_content %}
+<div class="flex flex-col gap-5">
+    <!-- Breadcrumb Navigation -->
+    <div class="flex items-center gap-3">
+        <button class="w-6 h-6 bg-transparent border-none cursor-pointer p-0 flex items-center justify-center" onclick="history.back()">
+            <img src="{% static 'governance/img/arrow-left.svg' %}" alt="Back" class="w-3.5 h-3.5">
+        </button>
+        <button class="w-6 h-6 bg-transparent border-none cursor-pointer p-0 flex items-center justify-center" onclick="history.forward()">
+            <img src="{% static 'governance/img/arrow-right-gray.svg' %}" alt="Forward" class="w-3.5 h-3.5">
+        </button>
+        <span class="text-sm font-semibold text-[#F13D30]">Compliance</span>
+    </div>
+
+    <!-- Page Header -->
+    <div class="flex justify-between items-start">
+        <div>
+            <h1 class="text-2xl font-bold text-[#22262A] mb-1">Active Projects</h1>
+            <p class="text-sm text-[#6B7280]">Monitor and manage compliance assessments for your AI systems</p>
+        </div>
+        <button type="button" id="new-compliance-project-btn" class="flex items-center gap-2 px-4 py-2 rounded-full bg-[#F13D30] text-white text-sm font-semibold shadow hover:bg-[#DC180A] transition-colors">
+            <span class="text-lg leading-none">+</span>
+            <span>New Compliance Project</span>
+        </button>
+    </div>
+
+    <!-- Alert Banner (darker) -->
+    {% if not_compliant_count and not_compliant_count > 0 %}
+    <div class="flex items-center justify-between p-4 bg-[#FECACA] border border-[#EF4444] rounded-lg">
+        <div class="flex items-center gap-3">
+            <div class="w-6 h-6 rounded-full bg-[#EF4444] flex items-center justify-center text-white text-sm font-bold">!</div>
+            <span class="text-sm font-semibold text-[#991B1B]">
+                {{ not_compliant_count }} project{{ not_compliant_count|pluralize }} are not compliant
+            </span>
+        </div>
+    </div>
+    {% endif %}
+
+   
+
+    <!-- Summary Row + Toolbar (CSS like ai-inventory: rounded-lg, icons inline SVG) -->
+    <div class="flex items-center justify-between bg-white rounded-lg border border-[#E5E7EB] p-4">
+        <div class="flex gap-6 text-sm">
+            <div>
+                <div class="font-semibold text-lg text-[#111827]">{{ total_projects }}</div>
+                <span class="text-[#6B7280]">Total Projects</span>
+            </div>
+            <div>
+                <div class="font-semibold text-lg text-[#EF4444]">{{ active_projects }}</div>
+                <span class="text-[#6B7280]">Active</span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <div class="relative">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#B5BCC4]">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                </svg>
+                <input type="text" id="compliance-search-input" placeholder="Search projects..."
+                    class="w-64 pl-10 pr-4 py-2.5 border border-[#B5BCC4] rounded-lg text-sm text-[#111827] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#FEEDEC] focus:border-[#F13D30] bg-white">
+            </div>
+            <button type="button" onclick="openComplianceFilterModal()" class="px-4 py-2 bg-white border border-[#B5BCC4] text-[#464E58] rounded-lg font-semibold text-sm hover:bg-[#F0F1F2] flex items-center gap-2">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                </svg>
+                <span>Filter</span>
+            </button>
+            <button type="button" id="compliance-sort-trigger" class="px-4 py-2 bg-white border border-[#B5BCC4] text-[#464E58] rounded-lg font-semibold text-sm hover:bg-[#F0F1F2] flex items-center gap-2">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                    <path d="M3 6h18M7 12h10M11 18h2"></path>
+                </svg>
+                <span>Sort</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Selection bar: X project(s) selected + Archive + Delete (darker) -->
+    <div id="compliance-selection-bar" class="hidden flex items-center justify-between p-4 bg-[#FECACA] border border-[#EF4444] rounded-lg">
+        <span id="compliance-selected-text" class="text-sm font-bold text-[#991B1B]">1 project selected</span>
+        <div class="flex items-center gap-3">
+            <button type="button" onclick="archiveSelectedProjects()" class="px-4 py-2 bg-white border border-[#B5BCC4] text-[#374151] rounded-lg font-semibold text-sm hover:bg-[#F3F4F6] flex items-center gap-2">
+                <img src="{% static 'governance/img/selected_ai_systems.svg' %}" alt="Archive" class="w-4 h-4">
+                <span>Archive</span>
+            </button>
+            <button type="button" onclick="deleteSelectedProjects()" class="px-4 py-2 bg-[#EF4444] text-white rounded-lg font-semibold text-sm hover:bg-[#DC2626] flex items-center gap-2">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+                <span>Delete</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Projects Table -->
+    <div class="bg-white rounded-lg border border-[#E5E7EB] overflow-hidden">
+        <table class="w-full">
+            <thead class="bg-[#F9FAFB] border-b border-[#E5E7EB]">
+                <tr>
+                    <th class="px-4 py-3 w-12">
+                        <input type="checkbox" id="compliance-select-all"
+                            class="w-4 h-4 text-[#F13D30] border-[#B5BCC4] rounded focus:ring-[#F13D30]"
+                            onclick="event.stopPropagation()">
+                    </th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase tracking-wider">Project name</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase tracking-wider">Source system</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase tracking-wider">Risk classification</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase tracking-wider">Progress</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase tracking-wider">Blockers</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-[#E5E7EB]">
+                {% for p in projects %}
+                <tr class="hover:bg-[#FEF5F4] cursor-pointer compliance-row" data-project-id="{{ p.id }}">
+                    <td class="px-4 py-4" onclick="event.stopPropagation()">
+                        <input type="checkbox" class="compliance-project-checkbox w-4 h-4 text-[#F13D30] border-[#B5BCC4] rounded focus:ring-[#F13D30]"
+                            data-project-id="{{ p.id }}">
+                    </td>
+                    <td class="px-4 py-4">
+                        <div class="flex flex-col">
+                            <span class="font-semibold text-sm text-[#111827]">{{ p.name }}</span>
+                            <span class="text-xs text-[#9CA3AF] mt-0.5">{{ p.updated }}</span>
+                        </div>
+                    </td>
+                    <td class="px-4 py-4 text-sm text-[#374151]">{{ p.source_system }}</td>
+                    <td class="px-4 py-4">
+                        <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium {{ p.risk_class }}">{{ p.risk_label }}</span>
+                    </td>
+                    <td class="px-4 py-4">
+                        <div class="flex items-center gap-2">
+                            <div class="flex-1 h-2 rounded-full bg-[#F3F4F6] overflow-hidden">
+                                <div class="h-2 rounded-full bg-[#F97316]" style="width: {{ p.progress }}%;"></div>
+                            </div>
+                            <span class="text-xs font-medium text-[#374151] whitespace-nowrap">{{ p.progress_label }}</span>
+                        </div>
+                    </td>
+                    <td class="px-4 py-4 text-sm font-semibold {{ p.blockers_class }}">{{ p.blockers_label }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="px-4 py-12 text-center text-sm text-[#6B7280]">
+                        No compliance projects yet. Click "New Compliance Project" to get started.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Footer pagination -->
+    <div class="flex items-center justify-between text-sm text-[#6B7280] mt-4">
+        <p>Showing <span id="compliance-count">{{ projects|length }}</span> project<span id="compliance-count-plural">{{ projects|length|pluralize }}</span></p>
+        <div class="flex items-center gap-2">
+            <button id="compliance-pagination-prev" onclick="complianceChangePage(-1)" class="px-4 py-2 bg-white border border-[#B5BCC4] text-[#464E58] rounded-lg font-semibold text-sm hover:bg-[#F0F1F2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>Previous</button>
+            <div id="compliance-pagination-numbers" class="flex items-center gap-2"></div>
+            <button id="compliance-pagination-next" onclick="complianceChangePage(1)" class="px-4 py-2 bg-white border border-[#B5BCC4] text-[#464E58] rounded-lg font-semibold text-sm hover:bg-[#F0F1F2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>Next</button>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Modal (match design: risk + progress + blockers + archived) -->
+<div id="compliance-filter-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+        <!-- Header -->
+        <div class="flex items-center justify-between p-6 border-b border-[#E5E7EB]">
+            <h2 class="text-xl font-bold text-[#22262A]">Filter Projects</h2>
+            <button type="button" onclick="closeComplianceFilterModal()" class="w-6 h-6 flex items-center justify-center text-[#6B7280] hover:text-[#111827]">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Body -->
+        <div class="p-6 space-y-6">
+            <!-- Risk Classification -->
+            <div>
+                <h3 class="text-sm font-semibold text-[#111827] mb-3">Risk Classification</h3>
+                <div class="space-y-2">
+                    <label class="flex items-center gap-2 px-3 py-2 border border-[#F0F1F2] rounded-lg hover:bg-[#F9FAFB] cursor-pointer">
+                        <input type="checkbox" class="compliance-filter-checkbox w-4 h-4 text-[#F13D30] border-[#B5BCC4] rounded" data-category="risk" value="prohibited">
+                        <span class="text-sm text-[#22262A]">Prohibited</span>
+                    </label>
+                    <label class="flex items-center gap-2 px-3 py-2 border border-[#F0F1F2] rounded-lg hover:bg-[#F9FAFB] cursor-pointer">
+                        <input type="checkbox" class="compliance-filter-checkbox w-4 h-4 text-[#F13D30] border-[#B5BCC4] rounded" data-category="risk" value="high_risk">
+                        <span class="text-sm text-[#22262A]">High-Risk</span>
+                    </label>
+                    <label class="flex items-center gap-2 px-3 py-2 border border-[#F0F1F2] rounded-lg hover:bg-[#F9FAFB] cursor-pointer">
+                        <input type="checkbox" class="compliance-filter-checkbox w-4 h-4 text-[#F13D30] border-[#B5BCC4] rounded" data-category="risk" value="limited_transparency">
+                        <span class="text-sm text-[#22262A]">Limited transparency</span>
+                    </label>
+                    <label class="flex items-center gap-2 px-3 py-2 border border-[#F0F1F2] rounded-lg hover:bg-[#F9FAFB] cursor-pointer">
+                        <input type="checkbox" class="compliance-filter-checkbox w-4 h-4 text-[#F13D30] border-[#B5BCC4] rounded" data-category="risk" value="minimal">
+                        <span class="text-sm text-[#22262A]">Minimal</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Progress Range -->
+            <div>
+                <h3 class="text-sm font-semibold text-[#111827] mb-3">Progress Range</h3>
+                <div class="flex items-center gap-2">
+                    <input id="compliance-progress-min" type="number" min="0" max="100" value="0"
+                        class="w-20 px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#FEEDEC] focus:border-[#F13D30]">
+                    <span class="text-sm text-[#6B7280]">to</span>
+                    <input id="compliance-progress-max" type="number" min="0" max="100" value="100"
+                        class="w-20 px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#FEEDEC] focus:border-[#F13D30]">
+                    <span class="text-sm text-[#6B7280]">% </span>
+                </div>
+            </div>
+
+            <!-- Blocker Status -->
+            <div>
+                <h3 class="text-sm font-semibold text-[#111827] mb-3">Blocker Status</h3>
+                <div class="space-y-2">
+                    <button type="button" id="compliance-blocker-all" onclick="setComplianceBlockerStatus('all')"
+                        class="w-full text-left px-3 py-2 border border-[#F13D30] bg-[#FEEDEC] text-[#22262A] rounded-lg text-sm font-medium">
+                        All Projects
+                    </button>
+                    <button type="button" id="compliance-blocker-with" onclick="setComplianceBlockerStatus('with_blockers')"
+                        class="w-full text-left px-3 py-2 border border-[#F0F1F2] bg-white text-[#22262A] rounded-lg text-sm hover:bg-[#F9FAFB]">
+                        With Blockers
+                    </button>
+                    <button type="button" id="compliance-blocker-none" onclick="setComplianceBlockerStatus('no_blockers')"
+                        class="w-full text-left px-3 py-2 border border-[#F0F1F2] bg-white text-[#22262A] rounded-lg text-sm hover:bg-[#F9FAFB]">
+                        No Blockers
+                    </button>
+                </div>
+            </div>
+
+            <!-- Archived (UI only for now) -->
+            <div>
+                <h3 class="text-sm font-semibold text-[#111827] mb-3">If show archived project(s)</h3>
+                <div class="flex items-center gap-4">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="compliance-archived-yes" class="w-4 h-4 text-[#F13D30] border-[#B5BCC4] rounded">
+                        <span class="text-sm text-[#22262A]">Yes</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="compliance-archived-no" class="w-4 h-4 text-[#F13D30] border-[#B5BCC4] rounded" checked>
+                        <span class="text-sm text-[#22262A]">No (Default)</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer actions -->
+        <div class="flex gap-3 p-6 border-t border-[#F0F1F2]">
+            <button type="button" onclick="resetComplianceFilters()" class="px-4 py-2.5 bg-white border border-[#D1D5DB] text-[#4B5563] rounded-lg font-semibold text-sm hover:bg-[#F3F4F6]">
+                Reset
+            </button>
+            <button type="button" onclick="closeComplianceFilterModal()" class="flex-1 px-4 py-2.5 bg-white border border-[#B5BCC4] text-[#464E58] rounded-lg font-semibold text-sm hover:bg-[#F0F1F2]">
+                Cancel
+            </button>
+            <button type="button" onclick="applyComplianceFilters()" class="flex-1 px-4 py-2.5 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A]">
+                Apply Filters
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Sort Modal (match design: Sort By + Direction) -->
+<div id="compliance-sort-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+        <div class="flex items-center justify-between p-6 border-b border-[#E5E7EB]">
+            <h2 class="text-xl font-bold text-[#22262A]">Sort Projects</h2>
+            <button type="button" onclick="closeComplianceSortModal()" class="w-6 h-6 flex items-center justify-center text-[#6B7280] hover:text-[#111827]">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+        <div class="p-6 space-y-6">
+            <!-- Sort By -->
+            <div>
+                <h3 class="text-sm font-semibold text-[#22262A] mb-3">Sort By</h3>
+                <div class="space-y-2">
+                    <label class="compliance-sort-option flex items-center gap-3 px-4 py-3 border border-[#F13D30] rounded-lg cursor-pointer bg-[#FEEDEC] compliance-sort-option-selected">
+                        <input type="radio" name="compliance-sort-by" value="name" checked class="compliance-sort-radio hidden">
+                        <div class="sort-radio-display w-4 h-4 border-2 border-[#F13D30] rounded-full flex items-center justify-center flex-shrink-0"><div class="radio-dot w-2.5 h-2.5 bg-[#F13D30] rounded-full"></div></div>
+                        <span class="text-sm text-[#22262A]">Project Name</span>
+                    </label>
+                    <label class="compliance-sort-option flex items-center gap-3 px-4 py-3 border border-[#F0F1F2] rounded-lg cursor-pointer hover:bg-[#F9FAFB]">
+                        <input type="radio" name="compliance-sort-by" value="updated" class="compliance-sort-radio hidden">
+                        <div class="sort-radio-display w-4 h-4 border-2 border-[#B5BCC4] rounded-full flex items-center justify-center flex-shrink-0"><div class="hidden radio-dot w-2.5 h-2.5 bg-[#F13D30] rounded-full"></div></div>
+                        <span class="text-sm text-[#22262A]">Last Updated</span>
+                    </label>
+                    <label class="compliance-sort-option flex items-center gap-3 px-4 py-3 border border-[#F0F1F2] rounded-lg cursor-pointer hover:bg-[#F9FAFB]">
+                        <input type="radio" name="compliance-sort-by" value="progress" class="compliance-sort-radio hidden">
+                        <div class="sort-radio-display w-4 h-4 border-2 border-[#B5BCC4] rounded-full flex items-center justify-center flex-shrink-0"><div class="hidden radio-dot w-2.5 h-2.5 bg-[#F13D30] rounded-full"></div></div>
+                        <span class="text-sm text-[#22262A]">Progress</span>
+                    </label>
+                    <label class="compliance-sort-option flex items-center gap-3 px-4 py-3 border border-[#F0F1F2] rounded-lg cursor-pointer hover:bg-[#F9FAFB]">
+                        <input type="radio" name="compliance-sort-by" value="risk" class="compliance-sort-radio hidden">
+                        <div class="sort-radio-display w-4 h-4 border-2 border-[#B5BCC4] rounded-full flex items-center justify-center flex-shrink-0"><div class="hidden radio-dot w-2.5 h-2.5 bg-[#F13D30] rounded-full"></div></div>
+                        <span class="text-sm text-[#22262A]">Risk Classification</span>
+                    </label>
+                    <label class="compliance-sort-option flex items-center gap-3 px-4 py-3 border border-[#F0F1F2] rounded-lg cursor-pointer hover:bg-[#F9FAFB]">
+                        <input type="radio" name="compliance-sort-by" value="blockers" class="compliance-sort-radio hidden">
+                        <div class="sort-radio-display w-4 h-4 border-2 border-[#B5BCC4] rounded-full flex items-center justify-center flex-shrink-0"><div class="hidden radio-dot w-2.5 h-2.5 bg-[#F13D30] rounded-full"></div></div>
+                        <span class="text-sm text-[#22262A]">Blockers</span>
+                    </label>
+                </div>
+            </div>
+            <!-- Direction -->
+            <div>
+                <h3 class="text-sm font-semibold text-[#22262A] mb-3">Direction</h3>
+                <div class="space-y-2">
+                    <label class="compliance-direction-option flex items-center gap-3 px-4 py-3 border border-[#F13D30] rounded-lg cursor-pointer bg-[#FEEDEC]">
+                        <input type="radio" name="compliance-sort-direction" value="asc" checked class="compliance-direction-radio hidden">
+                        <div class="direction-radio-display w-4 h-4 border-2 border-[#F13D30] rounded-full flex items-center justify-center flex-shrink-0"><div class="radio-dot w-2.5 h-2.5 bg-[#F13D30] rounded-full"></div></div>
+                        <span class="text-sm text-[#22262A]">Ascending (A-Z, 0-100, Old-New)</span>
+                    </label>
+                    <label class="compliance-direction-option flex items-center gap-3 px-4 py-3 border border-[#F0F1F2] rounded-lg cursor-pointer hover:bg-[#F9FAFB]">
+                        <input type="radio" name="compliance-sort-direction" value="desc" class="compliance-direction-radio hidden">
+                        <div class="direction-radio-display w-4 h-4 border-2 border-[#B5BCC4] rounded-full flex items-center justify-center flex-shrink-0"><div class="hidden radio-dot w-2.5 h-2.5 bg-[#F13D30] rounded-full"></div></div>
+                        <span class="text-sm text-[#22262A]">Descending (Z-A, 100-0, New-Old)</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        <div class="flex gap-3 p-6 border-t border-[#F0F1F2]">
+            <button type="button" onclick="closeComplianceSortModal()" class="flex-1 px-4 py-2.5 bg-white border border-[#B5BCC4] text-[#464E58] rounded-lg font-semibold text-sm hover:bg-[#F0F1F2]">Cancel</button>
+            <button type="button" onclick="applyComplianceSort()" class="flex-1 px-4 py-2.5 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A]">Apply Sort</button>
+        </div>
+    </div>
+</div>
+
+<!-- New Compliance Project Modal -->
+<div id="new-compliance-project-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col">
+        <div class="flex items-center justify-between p-6 border-b border-[#E5E7EB]">
+            <h2 class="text-xl font-bold text-[#22262A]">New Compliance Project</h2>
+            <button type="button" id="new-compliance-project-close" class="w-8 h-8 flex items-center justify-center text-[#6B7280] hover:text-[#111827] rounded-lg hover:bg-[#F3F4F6]">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+        <p class="px-6 pt-2 text-sm text-[#6B7280]">Select one or more AI systems to create a compliance assessment project.</p>
+
+        <!-- Selected count banner (show when at least one AI system selected) -->
+        <div id="new-compliance-selected-banner" class="hidden mx-6 mt-3 px-4 py-2.5 rounded-lg bg-[#FEEBEB] border border-[#FECACA]">
+            <span id="new-compliance-selected-text" class="text-sm font-semibold text-[#D32F2F]">0 systems selected</span>
+        </div>
+
+        <div class="p-6 space-y-4 overflow-y-auto flex-1 min-h-0">
+            <!-- Project Name (optional) -->
+            <div>
+                <label class="block text-sm font-semibold text-[#22262A] mb-1">Project Name (Optional)</label>
+                <input type="text" id="new-compliance-project-name" placeholder="e.g., Q1 2026 Compliance Review"
+                    class="w-full px-4 py-2.5 border border-[#B5BCC4] rounded-lg text-sm text-[#111827] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#FEEDEC] focus:border-[#F13D30]">
+                <p class="mt-1.5 text-xs text-[#6B7280]">Note: The Project Name is a custom label for this compliance assessment (e.g., &quot;Q1 2026 Compliance Review&quot;). The AI System Name refers to the actual AI system being assessed from your inventory.</p>
+            </div>
+
+            <!-- Select AI System(s) -->
+            <div>
+                <label class="block text-sm font-semibold text-[#22262A] mb-2">Select AI System(s)</label>
+                <div class="relative mb-3">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#B5BCC4]">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="m21 21-4.35-4.35"></path>
+                    </svg>
+                    <input type="text" id="new-compliance-search-ai-systems" placeholder="Search AI systems..."
+                        class="w-full pl-10 pr-4 py-2.5 border border-[#B5BCC4] rounded-lg text-sm text-[#111827] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#FEEDEC] focus:border-[#F13D30]">
+                </div>
+                <div class="border border-[#E5E7EB] rounded-lg overflow-hidden max-h-56 overflow-y-auto">
+                    {% for sys in ai_systems_for_modal %}
+                    <label class="new-compliance-ai-row flex items-center gap-3 px-4 py-3 border-b border-[#E5E7EB] last:border-b-0 hover:bg-[#F9FAFB] cursor-pointer" data-name="{{ sys.name|lower }}" data-status="{{ sys.status|lower }}" data-risk="{{ sys.risk_classification|lower }}">
+                        <input type="checkbox" name="new-compliance-ai-system" value="{{ sys.id }}" class="w-4 h-4 text-[#F13D30] border-[#B5BCC4] rounded focus:ring-[#F13D30]">
+                        <span class="font-medium text-sm text-[#22262A] flex-1">{{ sys.name }}</span>
+                        <span class="inline-flex px-2 py-0.5 rounded text-xs font-medium {{ sys.status_badge_class }}">{{ sys.status }}</span>
+                        <span class="inline-flex px-2 py-0.5 rounded text-xs font-medium {{ sys.risk_badge_class }}">{{ sys.risk_classification }}</span>
+                    </label>
+                    {% empty %}
+                    <div class="px-4 py-8 text-center text-sm text-[#6B7280]">No AI systems in inventory. Add systems from AI Inventory first.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="flex gap-3 p-6 border-t border-[#F0F1F2]">
+            <button type="button" id="new-compliance-project-cancel" class="flex-1 px-4 py-2.5 bg-white border border-[#B5BCC4] text-[#464E58] rounded-lg font-semibold text-sm hover:bg-[#F0F1F2]">Cancel</button>
+            <button type="button" id="new-compliance-project-create" class="flex-1 px-4 py-2.5 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A]">Create Project</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script>
+(function() {
+    // State
+    let selectedProjectIds = [];
+    let complianceSearchTerm = '';
+    let complianceActiveFilters = { risk: [], blockerStatus: 'all' };
+    let complianceProgressMin = 0;
+    let complianceProgressMax = 100;
+    let complianceSortBy = 'name';
+    let complianceSortOrder = 'asc';
+    let complianceCurrentPage = 1;
+    const complianceItemsPerPage = 10;
+
+    function getComplianceFilteredAndSortedRows() {
+        const allRows = Array.from(document.querySelectorAll('tbody tr.compliance-row'));
+        let rows = allRows.filter(row => {
+            if (!complianceSearchTerm) return true;
+            return row.textContent.toLowerCase().includes(complianceSearchTerm);
+        });
+        // Risk filter
+        rows = rows.filter(row => {
+            const cells = row.querySelectorAll('td');
+            if (cells.length < 6) return false;
+
+            // Risk
+            if (complianceActiveFilters.risk.length > 0) {
+                const riskText = (cells[3].textContent || '').trim().toLowerCase();
+                const riskMap = {
+                    'prohibited': 'prohibited',
+                    'high-risk': 'high_risk',
+                    'limited transparency': 'limited_transparency',
+                    'minimal': 'minimal'
+                };
+                const normRisk = riskMap[riskText] || riskText.replace(/\s+/g, '_');
+                if (!complianceActiveFilters.risk.includes(normRisk)) {
+                    return false;
+                }
+            }
+
+            // Progress range (0-100%)
+            const progressText = (cells[4].textContent || '').replace(/\D/g, '');
+            const progressVal = parseInt(progressText || '0', 10);
+            if (progressVal < complianceProgressMin || progressVal > complianceProgressMax) {
+                return false;
+            }
+
+            // Blocker status
+            if (complianceActiveFilters.blockerStatus !== 'all') {
+                const blockerText = (cells[5].textContent || '').trim().toLowerCase();
+                const hasNoBlocker = blockerText.includes('no blocker');
+                if (complianceActiveFilters.blockerStatus === 'with_blockers' && hasNoBlocker) {
+                    return false;
+                }
+                if (complianceActiveFilters.blockerStatus === 'no_blockers' && !hasNoBlocker) {
+                    return false;
+                }
+            }
+
+            return true;
+        });
+        if (complianceSortBy) {
+            const factor = complianceSortOrder === 'asc' ? 1 : -1;
+            rows.sort((a, b) => {
+                const aCells = a.querySelectorAll('td');
+                const bCells = b.querySelectorAll('td');
+                if (aCells.length < 6 || bCells.length < 6) return 0;
+                let aVal = '', bVal = '';
+                const idx = { name: 1, updated: 1, progress: 4, risk: 3, blockers: 5 }[complianceSortBy];
+                if (complianceSortBy === 'progress') {
+                    const aNum = parseInt((aCells[4].textContent || '').replace(/\D/g, ''), 10) || 0;
+                    const bNum = parseInt((bCells[4].textContent || '').replace(/\D/g, ''), 10) || 0;
+                    return (aNum - bNum) * factor;
+                }
+                aVal = (aCells[idx] || {}).textContent?.trim() || '';
+                bVal = (bCells[idx] || {}).textContent?.trim() || '';
+                return (aVal.toLowerCase() < bVal.toLowerCase() ? -1 : aVal.toLowerCase() > bVal.toLowerCase() ? 1 : 0) * factor;
+            });
+            // Reorder DOM so visible rows appear in sorted order (sorted rows first)
+            const tbody = rows.length && rows[0].parentNode ? rows[0].parentNode : null;
+            if (tbody && tbody.tagName === 'TBODY') {
+                const rowsSet = new Set(rows);
+                const rest = allRows.filter(r => !rowsSet.has(r));
+                for (let i = rows.length - 1; i >= 0; i--) tbody.insertBefore(rows[i], tbody.firstChild);
+                rest.forEach(row => tbody.appendChild(row));
+            }
+        }
+        return { allRows, rows };
+    }
+
+    function complianceTotalPages() {
+        const { rows } = getComplianceFilteredAndSortedRows();
+        return Math.max(1, Math.ceil(rows.length / complianceItemsPerPage));
+    }
+
+    function complianceRenderPage() {
+        const { allRows, rows } = getComplianceFilteredAndSortedRows();
+        const start = (complianceCurrentPage - 1) * complianceItemsPerPage;
+        const end = start + complianceItemsPerPage;
+        allRows.forEach(r => { r.style.display = 'none'; });
+        rows.forEach((row, i) => {
+            row.style.display = (i >= start && i < end) ? '' : 'none';
+        });
+        const countEl = document.getElementById('compliance-count');
+        const pluralEl = document.getElementById('compliance-count-plural');
+        if (countEl) countEl.textContent = rows.length;
+        if (pluralEl) pluralEl.textContent = rows.length !== 1 ? 's' : '';
+    }
+
+    function complianceRenderPageNumbers() {
+        const total = complianceTotalPages();
+        const container = document.getElementById('compliance-pagination-numbers');
+        if (!container) return;
+        container.innerHTML = '';
+        const pages = total <= 7 ? Array.from({ length: total }, (_, i) => i + 1) : (complianceCurrentPage <= 3 ? [1, 2, 3, '...', total - 1, total] : complianceCurrentPage >= total - 2 ? [1, 2, '...', total - 2, total - 1, total] : [1, '...', complianceCurrentPage - 1, complianceCurrentPage, complianceCurrentPage + 1, '...', total]);
+        pages.forEach(p => {
+            if (typeof p === 'number') {
+                const btn = document.createElement('button');
+                btn.className = complianceCurrentPage === p ? 'px-4 py-2 bg-[#F13D30] text-white border border-[#F13D30] rounded-lg font-semibold text-sm' : 'px-4 py-2 bg-white border border-[#B5BCC4] text-[#464E58] rounded-lg font-semibold text-sm hover:bg-[#F0F1F2]';
+                btn.textContent = p;
+                btn.onclick = () => { complianceCurrentPage = p; complianceRenderPage(); complianceRenderPageNumbers(); complianceUpdatePaginationButtons(); complianceUpdateSelectedCount(); };
+                container.appendChild(btn);
+            } else {
+                const span = document.createElement('span');
+                span.className = 'px-2 text-[#B5BCC4] font-semibold text-sm';
+                span.textContent = p;
+                container.appendChild(span);
+            }
+        });
+    }
+
+    function complianceUpdatePaginationButtons() {
+        const total = complianceTotalPages();
+        const prev = document.getElementById('compliance-pagination-prev');
+        const next = document.getElementById('compliance-pagination-next');
+        if (prev) prev.disabled = complianceCurrentPage === 1;
+        if (next) next.disabled = complianceCurrentPage === total;
+    }
+
+    function complianceUpdateSelectedCount() {
+        const count = selectedProjectIds.length;
+        const bar = document.getElementById('compliance-selection-bar');
+        const text = document.getElementById('compliance-selected-text');
+        if (bar && text) {
+            if (count > 0) {
+                bar.classList.remove('hidden');
+                bar.classList.add('flex');
+                text.textContent = count + ' project' + (count !== 1 ? 's' : '') + ' selected';
+            } else {
+                bar.classList.add('hidden');
+                bar.classList.remove('flex');
+            }
+        }
+        const selectAll = document.getElementById('compliance-select-all');
+        if (selectAll) {
+            const visibles = Array.from(document.querySelectorAll('tbody tr.compliance-row')).filter(r => r.style.display !== 'none');
+            const cbs = visibles.map(r => r.querySelector('.compliance-project-checkbox')).filter(Boolean);
+            const checked = cbs.filter(cb => selectedProjectIds.includes(cb.dataset.projectId)).length;
+            selectAll.checked = cbs.length > 0 && checked === cbs.length;
+            selectAll.indeterminate = checked > 0 && checked < cbs.length;
+        }
+    }
+
+    function complianceToggleSelectAll() {
+        const { rows } = getComplianceFilteredAndSortedRows();
+        const start = (complianceCurrentPage - 1) * complianceItemsPerPage;
+        const pageRows = rows.slice(start, start + complianceItemsPerPage);
+        const selectAll = document.getElementById('compliance-select-all');
+        const checked = selectAll && selectAll.checked;
+        pageRows.forEach(row => {
+            const cb = row.querySelector('.compliance-project-checkbox');
+            const id = cb && cb.dataset.projectId;
+            if (!id) return;
+            cb.checked = checked;
+            if (checked && !selectedProjectIds.includes(id)) selectedProjectIds.push(id);
+            if (!checked) selectedProjectIds = selectedProjectIds.filter(x => x !== id);
+        });
+        complianceUpdateSelectedCount();
+    }
+
+    function complianceToggleProject(cb) {
+        const id = cb.dataset.projectId;
+        if (cb.checked) { if (!selectedProjectIds.includes(id)) selectedProjectIds.push(id); }
+        else selectedProjectIds = selectedProjectIds.filter(x => x !== id);
+        complianceUpdateSelectedCount();
+    }
+
+    window.complianceChangePage = function(delta) {
+        const total = complianceTotalPages();
+        const next = complianceCurrentPage + delta;
+        if (next < 1 || next > total) return;
+        complianceCurrentPage = next;
+        complianceRenderPage();
+        complianceRenderPageNumbers();
+        complianceUpdatePaginationButtons();
+        complianceUpdateSelectedCount();
+    };
+
+    function openComplianceFilterModal() { document.getElementById('compliance-filter-modal').classList.remove('hidden'); }
+    function closeComplianceFilterModal() { document.getElementById('compliance-filter-modal').classList.add('hidden'); }
+    window.openComplianceFilterModal = openComplianceFilterModal;
+    window.closeComplianceFilterModal = closeComplianceFilterModal;
+    document.getElementById('compliance-filter-modal')?.addEventListener('click', function(e) { if (e.target === this) closeComplianceFilterModal(); });
+
+    function resetComplianceFilters() {
+        // Risk
+        complianceActiveFilters.risk = [];
+        document.querySelectorAll('.compliance-filter-checkbox').forEach(cb => { cb.checked = false; });
+        // Progress
+        complianceProgressMin = 0;
+        complianceProgressMax = 100;
+        const minInput = document.getElementById('compliance-progress-min');
+        const maxInput = document.getElementById('compliance-progress-max');
+        if (minInput) minInput.value = 0;
+        if (maxInput) maxInput.value = 100;
+        // Blocker status
+        setComplianceBlockerStatus('all');
+        // Archived (UI only)
+        const archivedYes = document.getElementById('compliance-archived-yes');
+        const archivedNo = document.getElementById('compliance-archived-no');
+        if (archivedYes) archivedYes.checked = false;
+        if (archivedNo) archivedNo.checked = true;
+    }
+
+    function applyComplianceFilters() {
+        // Risk
+        complianceActiveFilters.risk = [];
+        document.querySelectorAll('.compliance-filter-checkbox:checked').forEach(cb => {
+            if (cb.dataset.category === 'risk') complianceActiveFilters.risk.push(cb.value);
+        });
+        // Progress
+        const minInput = document.getElementById('compliance-progress-min');
+        const maxInput = document.getElementById('compliance-progress-max');
+        let minVal = minInput ? parseInt(minInput.value || '0', 10) : 0;
+        let maxVal = maxInput ? parseInt(maxInput.value || '100', 10) : 100;
+        if (isNaN(minVal)) minVal = 0;
+        if (isNaN(maxVal)) maxVal = 100;
+        minVal = Math.max(0, Math.min(100, minVal));
+        maxVal = Math.max(0, Math.min(100, maxVal));
+        if (minVal > maxVal) [minVal, maxVal] = [maxVal, minVal];
+        complianceProgressMin = minVal;
+        complianceProgressMax = maxVal;
+
+        complianceCurrentPage = 1;
+        complianceRenderPage();
+        complianceRenderPageNumbers();
+        complianceUpdatePaginationButtons();
+        complianceUpdateSelectedCount();
+        closeComplianceFilterModal();
+    }
+
+    // Blocker status (All / With Blockers / No Blockers)
+    function setComplianceBlockerStatus(status) {
+        complianceActiveFilters.blockerStatus = status;
+        const allBtn = document.getElementById('compliance-blocker-all');
+        const withBtn = document.getElementById('compliance-blocker-with');
+        const noneBtn = document.getElementById('compliance-blocker-none');
+        const buttons = [allBtn, withBtn, noneBtn];
+        buttons.forEach(btn => {
+            if (!btn) return;
+            btn.classList.remove('border-[#F13D30]', 'bg-[#FEEDEC]');
+            btn.classList.add('border-[#F0F1F2]', 'bg-white');
+        });
+        if (status === 'all' && allBtn) {
+            allBtn.classList.add('border-[#F13D30]', 'bg-[#FEEDEC]');
+            allBtn.classList.remove('border-[#F0F1F2]', 'bg-white');
+        }
+        if (status === 'with_blockers' && withBtn) {
+            withBtn.classList.add('border-[#F13D30]', 'bg-[#FEEDEC]');
+            withBtn.classList.remove('border-[#F0F1F2]', 'bg-white');
+        }
+        if (status === 'no_blockers' && noneBtn) {
+            noneBtn.classList.add('border-[#F13D30]', 'bg-[#FEEDEC]');
+            noneBtn.classList.remove('border-[#F0F1F2]', 'bg-white');
+        }
+    }
+    window.resetComplianceFilters = resetComplianceFilters;
+    window.applyComplianceFilters = applyComplianceFilters;
+    window.setComplianceBlockerStatus = setComplianceBlockerStatus;
+
+    function openComplianceSortModal() { document.getElementById('compliance-sort-modal').classList.remove('hidden'); }
+    function closeComplianceSortModal() { document.getElementById('compliance-sort-modal').classList.add('hidden'); }
+    window.openComplianceSortModal = openComplianceSortModal;
+    window.closeComplianceSortModal = closeComplianceSortModal;
+    document.getElementById('compliance-sort-modal')?.addEventListener('click', function(e) { if (e.target === this) closeComplianceSortModal(); });
+
+    function updateComplianceDirectionUI() {
+        document.querySelectorAll('.compliance-direction-option').forEach(opt => {
+            const radio = opt.querySelector('.compliance-direction-radio');
+            const display = opt.querySelector('.direction-radio-display');
+            const dot = display && display.querySelector('.radio-dot');
+            const selected = radio && radio.value === complianceSortOrder;
+            opt.classList.toggle('border-[#F13D30]', selected);
+            opt.classList.toggle('bg-[#FEEDEC]', selected);
+            opt.classList.toggle('border-[#F0F1F2]', !selected);
+            if (display) { display.classList.toggle('border-[#F13D30]', selected); display.classList.toggle('border-[#B5BCC4]', !selected); }
+            if (dot) dot.classList.toggle('hidden', !selected);
+        });
+    }
+
+    document.querySelectorAll('.compliance-sort-option').forEach(opt => {
+        const radio = opt.querySelector('.compliance-sort-radio');
+        if (!radio) return;
+        opt.addEventListener('click', function(e) {
+            if (e.target === radio) return;
+            e.preventDefault();
+            document.querySelectorAll('.compliance-sort-radio').forEach(r => { r.checked = false; });
+            document.querySelectorAll('.compliance-sort-option').forEach(o => {
+                o.classList.remove('border-[#F13D30]', 'bg-[#FEEDEC]', 'compliance-sort-option-selected');
+                o.classList.add('border-[#F0F1F2]');
+                const d = o.querySelector('.sort-radio-display'); const dot = d && d.querySelector('.radio-dot');
+                if (d) { d.classList.remove('border-[#F13D30]'); d.classList.add('border-[#B5BCC4]'); }
+                if (dot) dot.classList.add('hidden');
+            });
+            radio.checked = true;
+            complianceSortBy = radio.value;
+            opt.classList.add('border-[#F13D30]', 'bg-[#FEEDEC]', 'compliance-sort-option-selected');
+            opt.classList.remove('border-[#F0F1F2]');
+            const d = opt.querySelector('.sort-radio-display'); const dot = d && d.querySelector('.radio-dot');
+            if (d) { d.classList.add('border-[#F13D30]'); d.classList.remove('border-[#B5BCC4]'); }
+            if (dot) dot.classList.remove('hidden');
+        });
+        radio.addEventListener('change', function() { complianceSortBy = this.value; });
+    });
+
+    document.querySelectorAll('.compliance-direction-option').forEach(opt => {
+        const radio = opt.querySelector('.compliance-direction-radio');
+        if (!radio) return;
+        opt.addEventListener('click', function(e) {
+            if (e.target === radio) return;
+            e.preventDefault();
+            radio.checked = true;
+            complianceSortOrder = radio.value;
+            updateComplianceDirectionUI();
+        });
+        radio.addEventListener('change', function() {
+            complianceSortOrder = this.value;
+            updateComplianceDirectionUI();
+        });
+    });
+
+    function applyComplianceSort() {
+        // Sync state from modal (Sort By + Direction)
+        const sortByRadio = document.querySelector('input[name="compliance-sort-by"]:checked');
+        const directionRadio = document.querySelector('input[name="compliance-sort-direction"]:checked');
+        if (sortByRadio) complianceSortBy = sortByRadio.value;
+        if (directionRadio) complianceSortOrder = directionRadio.value;
+
+        complianceCurrentPage = 1;
+        complianceRenderPage();
+        complianceRenderPageNumbers();
+        complianceUpdatePaginationButtons();
+        complianceUpdateSelectedCount();
+        closeComplianceSortModal();
+    }
+    window.applyComplianceSort = applyComplianceSort;
+
+    window.archiveSelectedProjects = function() {
+        if (selectedProjectIds.length === 0) return;
+        alert('Archive functionality: ' + selectedProjectIds.length + ' project(s) selected. (Demo)');
+    };
+
+    window.deleteSelectedProjects = function() {
+        if (selectedProjectIds.length === 0) return;
+        if (!confirm('Delete ' + selectedProjectIds.length + ' selected project(s)? This cannot be undone.')) return;
+        alert('Delete functionality is demo only. Selected: ' + selectedProjectIds.join(', '));
+    };
+
+    // New Compliance Project modal
+    function updateNewComplianceSelectedBanner() {
+        const count = document.querySelectorAll('input[name="new-compliance-ai-system"]:checked').length;
+        const banner = document.getElementById('new-compliance-selected-banner');
+        const textEl = document.getElementById('new-compliance-selected-text');
+        if (!banner || !textEl) return;
+        if (count > 0) {
+            textEl.textContent = count + ' system' + (count !== 1 ? 's' : '') + ' selected';
+            banner.classList.remove('hidden');
+        } else {
+            banner.classList.add('hidden');
+        }
+    }
+
+    function openNewComplianceProjectModal() {
+        document.getElementById('new-compliance-project-modal').classList.remove('hidden');
+        document.getElementById('new-compliance-project-modal').classList.add('flex');
+        document.getElementById('new-compliance-project-name').value = '';
+        document.getElementById('new-compliance-search-ai-systems').value = '';
+        document.querySelectorAll('input[name="new-compliance-ai-system"]').forEach(cb => { cb.checked = false; });
+        document.querySelectorAll('.new-compliance-ai-row').forEach(row => { row.style.display = ''; });
+        updateNewComplianceSelectedBanner();
+    }
+    function closeNewComplianceProjectModal() {
+        document.getElementById('new-compliance-project-modal').classList.add('hidden');
+        document.getElementById('new-compliance-project-modal').classList.remove('flex');
+    }
+    function filterNewComplianceAiRows() {
+        const term = (document.getElementById('new-compliance-search-ai-systems').value || '').toLowerCase().trim();
+        document.querySelectorAll('.new-compliance-ai-row').forEach(row => {
+            const name = (row.dataset.name || '').toLowerCase();
+            const status = (row.dataset.status || '').toLowerCase();
+            const risk = (row.dataset.risk || '').toLowerCase();
+            const text = name + ' ' + status + ' ' + risk;
+            row.style.display = !term || text.includes(term) ? '' : 'none';
+        });
+    }
+    function submitNewComplianceProject() {
+        const nameInput = document.getElementById('new-compliance-project-name');
+        const name = (nameInput && nameInput.value || '').trim() || 'Compliance Project';
+        const selected = Array.from(document.querySelectorAll('input[name="new-compliance-ai-system"]:checked')).map(cb => cb.value);
+        if (selected.length === 0) {
+            alert('Please select at least one AI system.');
+            return;
+        }
+        closeNewComplianceProjectModal();
+        alert('Project "' + name + '" created with ' + selected.length + ' AI system(s). (Demo – backend integration pending.)');
+        window.location.reload();
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('compliance-search-input');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                complianceSearchTerm = this.value.toLowerCase().trim();
+                complianceCurrentPage = 1;
+                complianceRenderPage();
+                complianceRenderPageNumbers();
+                complianceUpdatePaginationButtons();
+                complianceUpdateSelectedCount();
+            });
+        }
+        document.getElementById('compliance-select-all')?.addEventListener('change', complianceToggleSelectAll);
+        document.querySelectorAll('.compliance-project-checkbox').forEach(cb => {
+            cb.addEventListener('change', function() { complianceToggleProject(this); });
+        });
+        // Sort button trigger (no inline onclick)
+        const sortTrigger = document.getElementById('compliance-sort-trigger');
+        if (sortTrigger) {
+            sortTrigger.addEventListener('click', function() {
+                openComplianceSortModal();
+            });
+        }
+        // New Compliance Project modal
+        document.getElementById('new-compliance-project-btn')?.addEventListener('click', openNewComplianceProjectModal);
+        document.getElementById('new-compliance-project-close')?.addEventListener('click', closeNewComplianceProjectModal);
+        document.getElementById('new-compliance-project-cancel')?.addEventListener('click', closeNewComplianceProjectModal);
+        document.getElementById('new-compliance-project-create')?.addEventListener('click', submitNewComplianceProject);
+        document.getElementById('new-compliance-search-ai-systems')?.addEventListener('input', filterNewComplianceAiRows);
+        document.getElementById('new-compliance-project-modal')?.addEventListener('click', function(e) {
+            if (e.target === this) closeNewComplianceProjectModal();
+        });
+        document.getElementById('new-compliance-project-name')?.addEventListener('input', function() {
+            this.classList.remove('border-[#EF4444]');
+        });
+        // Show "X systems selected" when user checks/unchecks AI systems
+        document.querySelectorAll('input[name="new-compliance-ai-system"]').forEach(function(cb) {
+            cb.addEventListener('change', updateNewComplianceSelectedBanner);
+        });
+        updateComplianceDirectionUI();
+        complianceRenderPage();
+        complianceRenderPageNumbers();
+        complianceUpdatePaginationButtons();
+        complianceUpdateSelectedCount();
+    });
+})();
+</script>
+{% endblock %}

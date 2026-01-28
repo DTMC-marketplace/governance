@@ -52,6 +52,14 @@ def get_mock_review_comments():
     return load_mock_data('review_comments.json')
 
 
+def get_compliance_projects():
+    """Get mock compliance projects (Active Projects list)."""
+    data = load_mock_data('compliance_projects.json')
+    if not data or not isinstance(data, list):
+        return []
+    return data
+
+
 # Helper class to simulate Django model objects
 class MockObject:
     """Simple mock object that behaves like a Django model"""

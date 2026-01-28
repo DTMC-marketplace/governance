@@ -28,6 +28,9 @@ urlpatterns = [
     path("api/ai-inventory/<int:agent_id>/block3-state/", views.api_update_block3_state, name="api_update_block3_state"),
     path("api/ai-inventory/<int:agent_id>/block4-state/", views.api_update_block4_state, name="api_update_block4_state"),
     
+    # Compliance Projects
+    path("compliance/", views.compliance, name="compliance"),
+    
     # AI Systems
     path("ai-systems/", views.ai_systems, name="ai_systems"),
     path("ai-models/", views.ai_models, name="ai_models"),

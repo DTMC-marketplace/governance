@@ -33,6 +33,7 @@ from .presentation.views.ai_act_chat_view import ai_act_chat_api
 from .mock_data import (
     get_mock_agents, get_mock_use_cases, get_mock_models, get_mock_datasets,
     get_mock_evidences, get_mock_evaluation_reports, get_mock_review_comments,
+    get_compliance_projects,
     create_mock_agent, create_mock_use_case, calculate_compliance_mock, calculate_risks_mock,
     MockObject, convert_evidences_to_objects, convert_reports_to_objects, convert_comments_to_objects
 )
@@ -4131,6 +4132,65 @@ def ai_inventory(request):
         'systems_need_attention': systems_need_attention,
     })
 
+
+def _ai_systems_for_compliance_modal():
+    """Build minimal AI systems list for New Compliance Project modal (id, name, status, risk)."""
+    agents_data = get_mock_agents()
+    status_map = {'assessing': 'In progress', 'reviewing': 'In progress', 'compliant': 'In production',
+                  'non_compliant': 'Testing', 'planned': 'Planned'}
+    risk_map = {'limited_risks': 'Limited transparency', 'high_risks': 'High-risk', 'minimal_risks': 'Minimal',
+                'not_assessed': 'Not assessed', 'prohibited': 'Prohibited', 'not_in_scope': 'Not in scope'}
+    status_badge_classes = {'Planned': 'bg-[#E5E7EB] text-[#6B7280]', 'Testing': 'bg-[#FEF3C7] text-[#92400E]',
+                            'In production': 'bg-[#D1FAE5] text-[#065F46]', 'Retired': 'bg-[#F3F4F6] text-[#4B5563]'}
+    risk_badge_classes = {'Prohibited': 'bg-[#FEE2E2] text-[#991B1B]', 'High-risk': 'bg-[#FED7AA] text-[#9A3412]',
+                          'Limited transparency': 'bg-[#FEF3C7] text-[#92400E]', 'Minimal': 'bg-[#D1FAE5] text-[#065F46]',
+                          'Not assessed': 'bg-[#E5E7EB] text-[#6B7280]', 'Not in scope': 'bg-[#F3F4F6] text-[#4B5563]'}
+    out = []
+    for agent in agents_data:
+        compliance_status = (agent.get('compliance_status', 'assessing') or '').lower().replace('-', '_')
+        status = agent.get('status') or status_map.get(compliance_status, 'Planned')
+        risk_class = agent.get('risk_classification', 'limited_risks')
+        risk_display = risk_map.get(risk_class, 'Not assessed')
+        out.append({
+            'id': agent.get('id'),
+            'name': agent.get('name', 'Unnamed System'),
+            'status': status,
+            'status_badge_class': status_badge_classes.get(status, 'bg-[#E5E7EB] text-[#6B7280]'),
+            'risk_classification': risk_display,
+            'risk_badge_class': risk_badge_classes.get(risk_display, 'bg-[#E5E7EB] text-[#6B7280]'),
+        })
+    out.sort(key=lambda s: int(s.get('id') or 0), reverse=True)
+    return out
+
+
+def compliance(request):
+    """
+    Compliance page - Active projects overview (UI based on design).
+    Data loaded from mock_data/compliance_projects.json.
+    """
+    ensure_governance_platform(request)
+
+    company = MockCompany()
+    breadcrumbs = [
+        {"name": "Compliance", "url": request.build_absolute_uri()},
+    ]
+
+    projects = get_compliance_projects()
+    total_projects = len(projects)
+    active_projects = total_projects  # demo: all active
+    not_compliant_count = 3  # demo for alert banner
+    ai_systems_for_modal = _ai_systems_for_compliance_modal()
+
+    return render(request, 'governance/pages/compliance.html', {
+        'company': company,
+        'subpage': 'compliance',
+        'breadcrumbs': breadcrumbs,
+        'projects': projects,
+        'total_projects': total_projects,
+        'active_projects': active_projects,
+        'not_compliant_count': not_compliant_count,
+        'ai_systems_for_modal': ai_systems_for_modal,
+    })
 
 def ai_system_detail(request, agent_id):
     """
