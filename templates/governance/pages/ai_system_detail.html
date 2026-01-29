@@ -4394,64 +4394,27 @@ function updateBlockStatus(blockNum, status, content) {
 // Wrapper functions for Result screen (based on React code)
 function getBlock1ResultStatus() {
     const status = getProhibitedStatus();
-    
-    // Based on React code getBlock1Status():
-    // - If status === 'Triggered' && prohibitedConfirmed && claimingException === 'No' → 'Prohibited'
-    // - If status === 'Needs Review' || (status === 'Triggered' && !prohibitedConfirmed) → 'Needs Review'
-    // - Otherwise → 'Not Prohibited'
-    
-    // Note: Since we don't have confirmation states yet, we'll use simplified logic:
-    // - If 'Triggered' (prohibited practices detected but not confirmed) → 'Needs Review'
-    // - If 'PASS' → 'Not Prohibited'
-    // - If 'Needs Review' → 'Needs Review'
-    // This will be enhanced when confirmation UI is added
-    
-    if (status === 'Triggered') {
-        // If triggered but not confirmed, needs review (based on React code)
-        return 'Needs Review';
-    }
-    
-    if (status === 'Needs Review') {
-        return 'Needs Review';
-    }
-    
-    if (status === 'PASS') {
-        return 'Not Prohibited';
-    }
-    
-    // Default to 'Needs Review' for 'Not assessed' or other statuses
-    return 'Needs Review';
+    if (status === 'PASS') return 'Not Prohibited';
+    if (status === 'Triggered') return 'Needs Review';
+    return status; // Returns 'Prohibited', 'Exception claimed', 'Needs Review', etc.
 }
 
 function getBlock2ResultStatus() {
     const status = getHighRiskStatus();
-    
-    if (status === 'De-activated') return 'De-activated';
-    if (status === 'High-risk') return 'High-Risk';
-    if (status === 'Not high-risk') return 'Not High-Risk';
-    return 'Needs Review';
+    if (status === 'Triggered') return 'Needs Review';
+    return status; 
 }
 
 function getBlock3ResultStatus() {
     const status = getTransparencyStatus();
-    
-    if (status === 'De-activated') return 'De-activated';
-    if (status === 'Applies') return 'Applies';
-    if (status === 'Not Applicable') return 'Not Applicable';
-    if (status === 'Needs Review') return 'Needs Review';
-    if (status === 'Pending') return 'Needs Review';
-    return 'Not assessed';
+    if (status === 'Triggered') return 'Needs Review';
+    return status;
 }
 
 function getBlock4ResultStatus() {
     const status = getGPAIStatus();
-    
-    if (status === 'De-activated') return 'De-activated';
-    if (status === 'Applies') return 'Applies';
-    if (status === 'Not Applicable') return 'Not Applicable';
-    if (status === 'Needs Review') return 'Needs Review';
-    if (status === 'Pending') return 'Needs Review';
-    return 'Not assessed';
+    if (status === 'Triggered') return 'Needs Review';
+    return status;
 }
 
 // Update all result blocks when switching to Result tab
@@ -4489,8 +4452,11 @@ function mapResultStatusToDisplay(resultStatus, blockNum) {
             if (resultStatus === 'Prohibited') {
                 description = 'This AI system is classified as prohibited under Article 5 of the EU AI Act. It cannot be deployed or used within the EU.';
                 statusClass = 'bg-[#FEEDEC] text-[#DC180A]';
-            } else if (resultStatus === 'Not Prohibited') {
+            } else if (resultStatus === 'Not Prohibited' || resultStatus === 'PASS') {
                 description = 'This AI system does not fall under prohibited practices. It may proceed to further compliance assessment.';
+                statusClass = 'bg-[#E8F5E9] text-[#2E7D32]';
+            } else if (resultStatus === 'Exception claimed' || resultStatus === 'Exception Claimed') {
+                description = 'Your exception claim has been recorded with supporting evidence. This will be subject to regulatory review.';
                 statusClass = 'bg-[#E8F5E9] text-[#2E7D32]';
             } else {
                 description = 'This AI system requires further review to determine if it constitutes a prohibited practice. Consult with your legal team.';

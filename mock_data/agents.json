@@ -293,7 +293,7 @@
     },
     "assessment": {
       "block1": {
-        "status": "Triggered",
+        "status": "Prohibited",
         "selected_practices": [
           "Biometric categorisation that infers or predicts sensitive traits (e.g., race, political opinions, religion, trade union membership, sexual orientation)"
         ],
@@ -306,33 +306,40 @@
           }
         },
         "details": {
-          "reason": "Prohibited practices detected, awaiting confirmation",
+          "reason": "Exception does not apply",
           "has_exception_available": true,
           "has_no_exception": false
         }
       },
       "block2": {
-        "status": "De-activated",
+        "status": "Triggered",
         "details": {
-          "reason": "No high-risk conditions met",
-          "condition1": false,
-          "condition2": false
+          "reason": "Block 1 Prohibited – high-risk trigger; confirm or edit profile",
+          "trigger": "block1_prohibited"
         }
       },
       "block3": {
-        "status": "Triggered",
+        "status": "De-activated",
         "details": {
-          "reason": "Transparency triggers detected, awaiting confirmation",
-          "triggers": [
-            "case3"
-          ]
+          "reason": "Block 1 Prohibited - transparency obligation assessment not applicable"
         }
       },
       "block4": {
-        "status": "Not assessed",
+        "status": "De-activated",
         "details": {
-          "reason": "GPAI integration question not answered (Section 8, Q2)"
+          "reason": "Block 1 Prohibited - GPAI obligation assessment not applicable"
         }
+      },
+      "block1_state": {
+        "prohibited_confirmed": true,
+        "claiming_exception": "Yes",
+        "exception_qualifies": "No",
+        "exception_evidence_uploaded": false,
+        "exception_evidence_saved_link": "",
+        "no_exception_confirmed": false,
+        "exception_conditions": [
+          "AI system is for labelling or filtering of lawfully acquired biometric datasets, such as images, based on biometric data or categorizing of biometric data in the area of law enforcement. (Art.5(1)(g))"
+        ]
       }
     }
   }
