@@ -282,7 +282,7 @@
                         <!-- Q1 -->
                         <div class="space-y-2">
                             <label class="block font-semibold text-sm text-[#22262A]">
-                                Q1: In Organization module, your default role is set to be: <span class="text-[#F13D30]">"{{ org_default_role|default:'Deployer' }}"</span>. Does your organisation's default role apply to this AI system? <span class="text-[#F13D30]">*</span>
+                                Q1: In Organization module, your default role is set to be: <span class="text-[#F13D30]">"{{ org_default_roles_display|default:'Deployer' }}"</span>. Does your organisation's default role apply to this AI system? <span class="text-[#F13D30]">*</span>
                             </label>
                             <div class="flex gap-4">
                                 <label class="flex items-center gap-2 cursor-pointer">
@@ -487,14 +487,17 @@
                             </div>
                         </div>
 
-                        <!-- Notice when both Q5 and Q6 are "No" -->
-                        <div id="eu-act-notice" class="bg-[#E0F2FE] border border-[#7DD3FC] rounded-lg p-4 flex items-start gap-3 hidden">
-                            <svg class="w-5 h-5 text-[#0C4A6E] shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <!-- Notice when BOTH Q5 and Q6 are "No" -->
+                        <div id="eu-act-notice" class="rounded-xl p-4 flex items-start gap-3 hidden" style="background-color: #FFF2D6; border: 1px solid #FFD58C;">
+                            <svg class="w-5 h-5 text-[#92400E] shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
-                            <div>
-                                <p class="font-semibold text-sm text-[#0C4A6E]">
-                                    Your AI System is not regulated by the EU AI Act.
+                            <div class="min-w-0">
+                                <p class="font-semibold text-[#8B4513] text-base leading-tight">
+                                    Out of Scope
+                                </p>
+                                <p class="font-normal text-[#8B4513] text-sm mt-1 leading-snug">
+                                    Based on your selection in Q5 and Q6, this AI system appears to be out of scope for the EU AI Act.
                                 </p>
                             </div>
                         </div>
@@ -1137,7 +1140,8 @@
 
 <script>
 // Tab switching
-function switchTab(tabName) {
+// Tab switching
+function switchTab(tabName, skipUpdate = false) {
     // Hide all tab contents
     document.querySelectorAll('.tab-content').forEach(content => {
         content.classList.add('hidden');
@@ -1154,11 +1158,13 @@ function switchTab(tabName) {
     
     // Add active class to selected tab
     const activeTab = document.getElementById('tab-' + tabName);
-    activeTab.classList.add('active', 'text-[#F13D30]', 'border-[#F13D30]');
-    activeTab.classList.remove('text-[#6B7280]', 'border-transparent');
+    if (activeTab) {
+        activeTab.classList.add('active', 'text-[#F13D30]', 'border-[#F13D30]');
+        activeTab.classList.remove('text-[#6B7280]', 'border-transparent');
+    }
     
     // Update assessment blocks when switching to Assessment tab
-    if (tabName === 'assessment') {
+    if (tabName === 'assessment' && !skipUpdate) {
         // Use setTimeout to ensure tab switch happens first, then update blocks
         setTimeout(function() {
             try {
@@ -1217,10 +1223,9 @@ async function saveAllAndProceedToAssessment() {
     // Save all profile data first
     const success = await saveProfileData();
     if (success) {
-        // Switch to Assessment tab
-        switchTab('assessment');
-        // Run assessment for all blocks in parallel (Block 1, 2, 3, 4)
-        updateAllAssessmentBlocks();
+        // Switch to Assessment tab, but SKIP triggering updateAllAssessmentBlocks 
+        // because saveProfileData already called updateAssessmentBlocksFromBE with fresh data.
+        switchTab('assessment', true);
     } else {
         alert('Error saving data. Please try again.');
     }
@@ -1438,6 +1443,7 @@ function loadProfileData(profileData) {
         setRadio('modify_customize', sor.modify_customize);
         setRadio('eu_usage', sor.eu_usage);
         setRadio('eu_effect', sor.eu_effect);
+        if (window.refreshEuActNotice) window.refreshEuActNotice();
     }
     
     // Section 4: Intended Purpose
@@ -2160,6 +2166,7 @@ let block1State = {
     exceptionQualifies: '', // 'Yes' | 'No' | 'Not sure' | ''
     exceptionEvidenceUploaded: false,
     exceptionEvidenceSavedLink: '',
+    exceptionEvidenceFiles: [], // Array of {name, url, path, size}
     noExceptionConfirmed: false,
     be_assessment: null // Store BE assessment results for reference
 };
@@ -2194,322 +2201,109 @@ let block4State = {
     be_assessment: null // Store BE assessment results for reference
 };
 
-// Helper function to determine if Block 1 resulted in Prohibited
-// (Based on flowchart - checks if status is 'Prohibited' after confirmation)
-function isBlock1Prohibited() {
-    const status = getProhibitedStatus();
-    
-    // If status is 'Prohibited', return true
-    if (status === 'Prohibited') {
-        return true;
-    }
-    
-    // If status is 'Triggered' and user confirmed but no exception available or declined
-    if (status === 'Triggered' && block1State.prohibitedConfirmed) {
-        // Check if any selected practice has no exception
-        const capabilities = Array.from(document.querySelectorAll('input[name="capability_practices"]:checked'))
-            .map(cb => cb.value)
-            .filter(c => c !== 'None of the above');
-        
-        const hasNoExceptionPractice = capabilities.some(practice => {
-            const practiceInfo = prohibitedPracticesMap[practice];
-            return practiceInfo && !practiceInfo.hasException;
-        });
-        
-        if (hasNoExceptionPractice || block1State.claimingException === 'No') {
-            return true;
-        }
-    }
-    
-    return false;
-}
-
-// AI Detection Function (Random - will be updated later with actual AI logic)
-// Note: This is now handled on BE, but kept here for client-side fallback
-function aiDetectsProhibitedPractice() {
-    // Random yes/no for now - will be updated with actual AI logic later
-    // Returns true if AI detects prohibited practice, false otherwise
-    return Math.random() > 0.5; // 50% chance of detection
-}
-
 // Prohibited Practices Mapping (from Block_1_Prohibited_Practices_Logic.md)
 const prohibitedPracticesMap = {
     'Subliminal / manipulative / deceptive techniques that materially distort behaviour and are likely to cause significant harm': {
-        label: 'Subliminal/manipulative/deceptive techniques',
-        article: '5(1)(a)',
-        hasException: false,
-        exceptionCondition: null
+        'label': 'Subliminal/manipulative/deceptive techniques',
+        'article': '5(1)(a)',
+        'has_exception': false,
+        'exception_condition': null
     },
     'Exploitation of vulnerabilities (age, disability, or social / economic situation) to distort behaviour likely causing significant harm': {
-        label: 'Exploitation of vulnerabilities',
-        article: '5(1)(b)',
-        hasException: false,
-        exceptionCondition: null
+        'label': 'Exploitation of vulnerabilities',
+        'article': '5(1)(b)',
+        'has_exception': false,
+        'exception_condition': null
     },
     'Social scoring leading to detrimental / unfavourable treatment (esp. unjustified / disproportionate)': {
-        label: 'Social scoring',
-        article: '5(1)(c)',
-        hasException: false,
-        exceptionCondition: null
+        'label': 'Social scoring',
+        'article': '5(1)(c)',
+        'has_exception': false,
+        'exception_condition': null
     },
     'Criminal offence risk assessment / prediction based solely on profiling or personality traits (individual predictive policing)': {
-        label: 'Criminal offence risk assessment',
-        article: '5(1)(d)',
-        hasException: true,
-        exceptionCondition: 'AI system is used to support a human assessment based on objective and verifiable facts directly linked to criminal activity (not solely profiling). (Art.5(1)(d))'
+        'label': 'Criminal offence risk assessment',
+        'article': '5(1)(d)',
+        'has_exception': true,
+        'exception_condition': 'AI system is used to support a human assessment based on objective and verifiable facts directly linked to criminal activity (not solely profiling). (Art.5(1)(d))'
     },
     'Untargeted scraping of facial images from the internet or CCTV to build / expand facial recognition databases': {
-        label: 'Untargeted facial image scraping',
-        article: '5(1)(e)',
-        hasException: false,
-        exceptionCondition: null
+        'label': 'Untargeted facial image scraping',
+        'article': '5(1)(e)',
+        'has_exception': false,
+        'exception_condition': null
     },
     'Emotion recognition in the workplace or in education settings': {
-        label: 'Emotion recognition in workplace/education',
-        article: '5(1)(f)',
-        hasException: true,
-        exceptionCondition: 'AI system is for medical or safety reasons. (Art.5(1)(f))'
+        'label': 'Emotion recognition in workplace/education',
+        'article': '5(1)(f)',
+        'has_exception': true,
+        'exception_condition': 'AI system is for medical or safety reasons. (Art.5(1)(f))'
     },
     'Biometric categorisation that infers or predicts sensitive traits (e.g., race, political opinions, religion, trade union membership, sexual orientation)': {
-        label: 'Biometric categorisation (sensitive traits)',
-        article: '5(1)(g)',
-        hasException: true,
-        exceptionCondition: 'AI system is for labelling or filtering of lawfully acquired biometric datasets, such as images, based on biometric data or categorizing of biometric data in the area of law enforcement. (Art.5(1)(g))'
+        'label': 'Biometric categorisation (sensitive traits)',
+        'article': '5(1)(g)',
+        'has_exception': true,
+        'exception_condition': 'AI system is for labelling or filtering of lawfully acquired biometric datasets, such as images, based on biometric data or categorizing of biometric data in the area of law enforcement. (Art.5(1)(g))'
     },
     'Real-time remote biometric identification (RBI) in publicly accessible spaces for law enforcement purposes': {
-        label: 'Real-time remote biometric identification (RBI)',
-        article: '5(1)(h)',
-        hasException: true,
-        exceptionCondition: 'Only if strictly necessary for one of the listed objectives (victims / imminent serious threat / serious crime suspect) and with safeguards + authorisation requirements (Art. 5(2)–(7)).'
+        'label': 'Real-time remote biometric identification (RBI)',
+        'article': '5(1)(h)',
+        'has_exception': true,
+        'exception_condition': 'Only if strictly necessary for one of the listed objectives (victims / imminent serious threat / serious crime suspect) and with safeguards + authorisation requirements (Art. 5(2)–(7)).'
     }
 };
 
-// Assessment Status Calculation Functions - Updated to sync with flowchart
+// Helper function to determine if Block 1 resulted in Prohibited
+function isBlock1Prohibited() {
+    const status = getProhibitedStatus();
+    return status === 'Prohibited';
+}
+
+// Assessment Status Calculation Functions - Now pure getters from BE state
 function getProhibitedStatus() {
-    // STEP 1: AI Detection (from flowchart - START point)
-    const aiDetectionResult = aiDetectsProhibitedPractice();
-    
-    // STEP 2: Check Section 7 Capabilities, Q1 (from flowchart)
-    const capabilities = Array.from(document.querySelectorAll('input[name="capability_practices"]:checked')).map(cb => cb.value);
-    
-    // STEP 3: Check if no capabilities selected (from flowchart)
-    // "Status: Not assessed" if "capabilities.length === 0"
-    if (capabilities.length === 0) {
-        return 'Not assessed';
+    if (block1State.be_assessment && block1State.be_assessment.status) {
+        return block1State.be_assessment.status;
     }
-    
-    // STEP 4: Check if "None of the above" selected (from flowchart)
-    const noneSelected = capabilities.includes('None of the above');
-    
-    // From flowchart: "Status: Not assessed" if "'None of the above' selected + AI detection result = No"
-    if (noneSelected && !aiDetectionResult) {
-        return 'Not assessed';
-    }
-    
-    // If "None of the above" selected but AI detected something, still return PASS (user explicitly said none)
-    if (noneSelected) {
-        return 'PASS';
-    }
-    
-    // STEP 5: Prohibited Practice Selected? (from flowchart)
-    // Get selected practices (excluding "None of the above")
-    const selectedPractices = capabilities.filter(c => c !== 'None of the above');
-    
-    if (selectedPractices.length === 0) {
-        // No prohibited practices selected
-        return 'PASS';
-    }
-    
-    // Check if any of the selected practices are actually prohibited practices
-    const hasProhibitedPractice = selectedPractices.some(practice => {
-        return Object.keys(prohibitedPracticesMap).includes(practice);
-    });
-    
-    if (!hasProhibitedPractice) {
-        // Selected practices but none are in prohibited list
-        return 'PASS';
-    }
-    
-    // STEP 6: Prohibited Practice Selected = YES (from flowchart)
-    // After user confirms, check exception flow
-    if (block1State.prohibitedConfirmed) {
-        // Check if ANY selected practice has NO exception available (from flowchart)
-        const hasNoExceptionPractice = selectedPractices.some(practice => {
-            const practiceInfo = prohibitedPracticesMap[practice];
-            return practiceInfo && !practiceInfo.hasException;
-        });
-        
-        // If no exception available OR user declined exception → Status: Prohibited (from flowchart)
-        if (hasNoExceptionPractice || block1State.claimingException === 'No') {
-            return 'Prohibited';
-        }
-        
-        // If user is claiming exception
-        if (block1State.claimingException === 'Yes') {
-            // Exception Question: Does system fall under exception condition? (from flowchart)
-            if (block1State.exceptionQualifies === 'Yes') {
-                // Check if evidence uploaded/linked (from flowchart)
-                if (block1State.exceptionEvidenceUploaded || block1State.exceptionEvidenceSavedLink) {
-                    return 'Exception claimed'; // Status: Exception claimed → Status: PASS (from flowchart)
-                } else {
-                    return 'Needs Review'; // No evidence → Status: Needs Review (from flowchart)
-                }
-            } else if (block1State.exceptionQualifies === 'No') {
-                return 'Prohibited'; // Status: Prohibited (from flowchart)
-            } else if (block1State.exceptionQualifies === 'Not sure') {
-                return 'Needs Review'; // Status: Needs Review (from flowchart)
-            }
-        }
-        
-        // If claimingException is empty, still triggered
-        if (block1State.claimingException === '') {
-            return 'Triggered';
-        }
-    }
-    
-    // Status: "Triggered" (awaiting user confirmation)
-    return 'Triggered';
+    return 'Not assessed';
 }
 
 function getHighRiskStatus() {
-    // If Block 1 is Prohibited, Block 2 is de-activated (based on React code)
+    // If Block 1 is Prohibited, Block 2 is de-activated
     if (isBlock1Prohibited()) {
         return 'De-activated';
     }
     
-    // Read from Profile inputs - Section 4, Q2: Sector domains
-    const sectorDomains = Array.from(document.querySelectorAll('input[name="sector_domain"]:checked')).map(cb => cb.value);
-    // Read from Profile inputs - Section 8, Q3: Safety component
-    const safetyComponent = document.querySelector('input[name="safety_component"]:checked')?.value || '';
-    
-    // Check if the relevant questions have been answered (based on React code)
-    const hasSectorAnswer = sectorDomains.length > 0;
-    const hasSafetyAnswer = safetyComponent !== '';
-    
-    // If neither question is answered, return 'Not assessed'
-    if (!hasSectorAnswer && !hasSafetyAnswer) {
-        return 'Not assessed';
+    if (block2State.be_assessment && block2State.be_assessment.status) {
+        return block2State.be_assessment.status;
     }
     
-    // If safety component is 'Yes' but third-party conformity is not answered, return 'Not assessed'
-    const thirdPartyConformity = document.querySelector('input[name="third_party_conformity"]:checked')?.value || '';
-    if (safetyComponent === 'Yes' && thirdPartyConformity === '') {
-        return 'Not assessed';
-    }
-    
-    // Check Condition 1: Safety component (Section 8, Q3)
-    const condition1 = safetyComponent === 'Yes' && thirdPartyConformity === 'Yes';
-    
-    // Check Condition 2: Sector domains (Section 4, Q2) - excluding "Other / not listed"
-    const condition2 = sectorDomains.some(sector => sector !== 'Other / not listed' && sector !== 'Other / not listed:');
-    
-    // Determine trigger (based on React code logic)
-    let trigger = 'none';
-    if (condition1 && condition2) {
-        trigger = 'both';
-    } else if (condition1) {
-        trigger = 'condition1';
-    } else if (condition2) {
-        trigger = 'condition2';
-    }
-    
-    // If no condition met
-    if (trigger === 'none') {
-        return 'Not high-risk';
-    }
-    
-    // Note: In React code, there's additional logic for confirmation states and Annex III exemption test
-    // For now, if conditions are met, return 'High-risk' (simplified version)
-    // This will be enhanced when confirmation UI is added
-    if (trigger !== 'none') {
-        return 'High-risk';
-    }
-    
-    return 'Not high-risk';
+    return 'Not assessed';
 }
 
 function getTransparencyStatus() {
-    // If Block 1 is Prohibited, Block 3 is de-activated (based on React code)
+    // If Block 1 is Prohibited, Block 3 is de-activated
     if (isBlock1Prohibited()) {
         return 'De-activated';
     }
     
-    // Read from Profile inputs - Section 7, Q1: Capabilities
-    const capabilities = Array.from(document.querySelectorAll('input[name="capability_practices"]:checked')).map(cb => cb.value);
-    
-    // Check if capabilities have been answered (which drives transparency triggers) - based on React code
-    if (capabilities.length === 0) {
-        return 'Not assessed';
+    if (block3State.be_assessment && block3State.be_assessment.status) {
+        return block3State.be_assessment.status;
     }
-    
-    // Check transparency triggers from Profile inputs (based on React code getTransparencyTriggers())
-    // Case 1: Section 7, Q1 - Biometric identification and categorisation capability
-    const hasBiometricId = capabilities.includes('Biometric identification and categorisation');
-    
-    // Case 2: Section 7, Q1 - Emotion recognition
-    const hasEmotionRecognition = capabilities.includes('Emotion recognition in the workplace or in education settings');
-    
-    // Case 3: Section 7, Q1 - Biometric categorisation
-    const hasBiometricCategorisation = capabilities.includes('Biometric categorisation that infers or predicts sensitive traits (e.g., race, political opinions, religion, trade union membership, sexual orientation)');
-    
-    // Case 4: Section 7, Q2 - Direct interaction with persons
-    const interactsPersons = document.querySelector('input[name="interacts_persons"]:checked')?.value || '';
-    
-    // Case 5: Section 7, Q3 - Synthetic content (any choice other than No)
-    const syntheticContentCheckboxes = Array.from(document.querySelectorAll('input[name="synthetic_content"]:checked')).map(cb => cb.value);
-    const hasSyntheticContent = syntheticContentCheckboxes.length > 0 && !syntheticContentCheckboxes.includes('No');
-    
-    // Case 6: Section 5, Q3 - Citizens / residents affected OR Section 5, Q1 - General public / consumer-facing
-    const affectedPersons = Array.from(document.querySelectorAll('input[name="affected_outputs"]:checked')).map(cb => cb.value);
-    const deploymentContext = document.querySelector('input[name="deployment_context"]:checked')?.value || '';
-    const hasCitizensResidents = affectedPersons.includes('Citizens / residents');
-    const isPublicFacing = deploymentContext === 'General public / consumer-facing';
-    
-    // Get triggers array (based on React code)
-    const triggers = [];
-    if (hasBiometricId) triggers.push('case1');
-    if (hasEmotionRecognition) triggers.push('case2');
-    if (hasBiometricCategorisation) triggers.push('case3');
-    if (interactsPersons === 'Yes') triggers.push('case4');
-    if (hasSyntheticContent) triggers.push('case5');
-    if (hasCitizensResidents || isPublicFacing) triggers.push('case6');
-    
-    // Note: In React code, there's additional logic for confirmation states and exception handling
-    // For now, if any trigger is met, return 'Applies' (simplified version)
-    // This will be enhanced when confirmation UI is added
-    if (triggers.length > 0) {
-        // Check if any unknowns exist (based on React code hasTransparencyUnknowns())
-        if (interactsPersons === 'Unknown') {
-            return 'Needs Review';
-        }
-        return 'Applies';
-    }
-    
-    return 'Not Applicable';
+
+    return 'Not assessed';
 }
 
 function getGPAIStatus() {
-    // If Block 1 is Prohibited, Block 4 is de-activated (based on React code)
+    // If Block 1 is Prohibited, Block 4 is de-activated
     if (isBlock1Prohibited()) {
         return 'De-activated';
     }
     
-    // Read from Profile inputs - Section 9, Q2: GPAI Integration
-    const gpaiIntegration = document.querySelector('input[name="gpai_integration"]:checked')?.value || '';
-    
-    // Check if the GPAI integration question has been answered (based on React code)
-    if (gpaiIntegration === '') {
-        return 'Not assessed';
+    if (block4State.be_assessment && block4State.be_assessment.status) {
+        return block4State.be_assessment.status;
     }
-    
-    // Note: In React code, there's additional logic for confirmation states and provider question
-    // For now, if gpaiIntegration === 'Yes', return 'Applies' (simplified version)
-    // This will be enhanced when confirmation UI is added
-    if (gpaiIntegration === 'Yes') {
-        return 'Applies';
-    }
-    
-    return 'Not Applicable';
+
+    return 'Not assessed';
 }
 
 function getStatusColorClass(status) {
@@ -2587,6 +2381,56 @@ function updateAssessmentBlock(blockNum) {
     }
 }
 
+function renderConfirmProfileInput(selectedPractices, practicesInfo, showButtons = true) {
+    // Generate Article Summary
+    const articles = selectedPractices.map(p => {
+        const info = practicesInfo[p] || prohibitedPracticesMap[p] || {article: null};
+        return info.article ? `Art. ${info.article}` : null;
+    }).filter(a => a);
+    
+    let articleSummary = '';
+    if (articles.length > 0) {
+        const uniqueArticles = [...new Set(articles)];
+        articleSummary = `This is a prohibited practice under ${uniqueArticles.map(a => `${a} of the EU AI Act`).join(', ')}`;
+    } else {
+        articleSummary = 'This is a prohibited practice under the EU AI Act.';
+    }
+
+    // Render content
+    let html = `
+        <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-4 mb-4">
+            <div class="mb-4">
+                <p class="font-bold text-sm text-[#22262A] mb-2">Confirm Profile input:</p>
+                <p class="font-normal text-sm text-[#464E58] mb-1">
+                    You indicated the system uses the following capabilities or practices:
+                </p>
+                <ul class="list-disc list-outside ml-5 space-y-1 mb-3">
+                    ${selectedPractices.map(p => `<li class="font-normal text-sm text-[#464E58] pl-1">${p}</li>`).join('')}
+                </ul>
+                <p class="font-normal text-sm text-[#464E58]">
+                    ${articleSummary}
+                </p>
+            </div>
+    `;
+    
+    if (showButtons) {
+        html += `<p class="font-bold text-sm text-[#22262A] mb-4">Do you confirm?</p>
+                </div> <!-- End of content div -->
+                <div class="flex justify-end gap-3">
+                    <button onclick="confirmProhibited(false)" class="px-6 py-2.5 bg-white border border-[#B5BCC4] text-[#464E58] rounded-lg font-semibold text-sm hover:bg-[#F0F1F2] transition-colors">
+                        Edit Profile Info
+                    </button>
+                    <button onclick="confirmProhibited(true)" class="px-6 py-2.5 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A] transition-colors">
+                        Confirm
+                    </button>
+                </div>`;
+    } else {
+        html += `</div>`;
+    }
+    
+    return html;
+}
+
 function renderBlock1Content(status) {
     if (status === 'Not assessed') {
         return '<p class="font-normal text-sm text-[#464E58]">Please complete Section 7 (Capabilities) in Profile to assess prohibited practices.</p>';
@@ -2603,88 +2447,129 @@ function renderBlock1Content(status) {
         `;
     }
     
-    if (status === 'Triggered') {
-        // Get selected prohibited practices from BE assessment if available, otherwise from form
-        let selectedPractices = [];
-        let practicesInfo = {};
-        
-        if (block1State.be_assessment && block1State.be_assessment.selected_practices) {
-            selectedPractices = block1State.be_assessment.selected_practices;
-            practicesInfo = block1State.be_assessment.practices_info || {};
-        } else {
-            selectedPractices = Array.from(document.querySelectorAll('input[name="capability_practices"]:checked'))
+    // Shared logic for getting selected practices (needed for Triggered and Prohibited)
+    let selectedPractices = [];
+    let practicesInfo = {};
+    if (block1State.be_assessment && block1State.be_assessment.selected_practices) {
+        selectedPractices = block1State.be_assessment.selected_practices;
+        practicesInfo = block1State.be_assessment.practices_info || {};
+    } else {
+         // Fallback from DOM
+         selectedPractices = Array.from(document.querySelectorAll('input[name="capability_practices"]:checked'))
                 .map(cb => cb.value)
-                .filter(v => v !== 'None of the above')
-                .filter(p => Object.keys(prohibitedPracticesMap).includes(p));
-            practicesInfo = {};
-            selectedPractices.forEach(p => {
-                if (prohibitedPracticesMap[p]) {
-                    practicesInfo[p] = prohibitedPracticesMap[p];
-                }
-            });
-        }
-        
+                .filter(v => v !== 'None of the above');
+         
+         selectedPractices.forEach(p => {
+             if (prohibitedPracticesMap[p]) {
+                 practicesInfo[p] = prohibitedPracticesMap[p];
+             }
+         });
+    }
+    
+    // For Triggered or Prohibited, we often use the detailed view components
+    
+    if (status === 'Triggered') {
         if (!block1State.prohibitedConfirmed) {
-            // Show Reason & Ask Confirm or Edit (from flowchart)
-            const practicesList = selectedPractices.map(practice => {
-                const practiceInfo = practicesInfo[practice] || prohibitedPracticesMap[practice];
-                if (!practiceInfo) return '';
-                return `<li class="font-medium text-sm text-[#464E58] ml-2">
-                    <strong>${practiceInfo.label || practice}</strong> (Article ${practiceInfo.article || 'N/A'})
-                </li>`;
-            }).filter(html => html).join('');
-            
-            return `
-                <div class="space-y-4">
-                    <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-4">
-                        <p class="font-semibold text-sm text-[#22262A] mb-2">⚠️ Prohibited Practices Detected</p>
-                        <p class="font-normal text-sm text-[#464E58] mb-2">
-                            Based on your Profile inputs, the following prohibited practices have been identified:
-                        </p>
-                        <ul class="list-disc list-inside space-y-1 mb-3">
-                            ${practicesList}
-                        </ul>
-                        <p class="font-semibold text-sm text-[#22262A] mt-4">Do you confirm this assessment?</p>
-                    </div>
-                    <div class="flex justify-end gap-3">
-                        <button onclick="confirmProhibited(false)" class="px-6 py-2.5 bg-white border border-[#B5BCC4] text-[#464E58] rounded-lg font-semibold text-sm hover:bg-[#F0F1F2] transition-colors">
-                            Edit Profile Info
-                        </button>
-                        <button onclick="confirmProhibited(true)" class="px-6 py-2.5 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A] transition-colors">
-                            Confirm
-                        </button>
-                    </div>
-                </div>
-            `;
+            // Not confirmed yet: Show Confirm UI with buttons
+            return `<div class="space-y-4">` + renderConfirmProfileInput(selectedPractices, practicesInfo, true) + `</div>`;
         } else {
-            // After confirmation - check exception availability (from flowchart)
-            return renderBlock1ExceptionFlow(selectedPractices, practicesInfo);
+            // Confirmed but still Triggered (likely waiting for Exception Claim answer)
+            // Show Read-only Input + Exception Flow
+            return `<div class="space-y-4">` + 
+                   renderConfirmProfileInput(selectedPractices, practicesInfo, false) + 
+                   renderBlock1ExceptionFlow(selectedPractices, practicesInfo) + 
+                   `</div>`;
         }
     }
     
     if (status === 'Prohibited') {
-        return `
-            <div class="bg-[#FFEBEE] border border-[#EF5350] rounded-lg p-4">
-                <p class="font-semibold text-sm text-[#C62828] mb-2">🚫 System is Prohibited</p>
-                <p class="font-normal text-sm text-[#464E58] mt-2">
-                    This AI system is prohibited under Article 5 of the EU AI Act. Blocks 2, 3, and 4 have been de-activated.
+        const confirmedBanner = `
+            <div class="w-full bg-[#E8F5E9] border border-[#81C784] rounded-lg p-3 mb-4">
+                <p class="font-semibold text-sm text-[#2E7D32]">✓ Confirmed</p>
+            </div>
+        `;
+        
+        const prohibitedBox = `
+            <div class="bg-[#FFF5F5] border border-[#F13D30] rounded-lg p-4">
+                <p class="font-bold text-sm text-[#F13D30] mb-2">Result: Prohibited</p>
+                <p class="font-normal text-sm text-[#464E58]">
+                    Your AI System is Prohibited under Art.5. You need to redesign or remove certain features to make it comply to EU AI Act.
                 </p>
             </div>
         `;
+
+        if (selectedPractices.length > 0) {
+            return `<div class="space-y-4">` + 
+                   renderConfirmProfileInput(selectedPractices, practicesInfo, false) + 
+                   confirmedBanner + 
+                   prohibitedBox + 
+                   `</div>`;
+        }
+        
+        return prohibitedBox;
     }
     
+    
     if (status === 'Exception claimed') {
-        return `
+        const confirmedBanner = `
+            <div class="w-full bg-[#E8F5E9] border border-[#81C784] rounded-lg p-3 mb-4">
+                <p class="font-semibold text-sm text-[#2E7D32]">✓ Confirmed</p>
+            </div>
+        `;
+        
+        const exceptionClaimedBox = `
             <div class="bg-[#E8F5E9] border border-[#81C784] rounded-lg p-4">
-                <p class="font-semibold text-sm text-[#2E7D32] mb-2">✓ Exception Claimed</p>
-                <p class="font-normal text-sm text-[#464E58] mt-2">
-                    An exception has been successfully claimed with evidence. The system may proceed to further compliance assessment.
+                <p class="font-bold text-sm text-[#2E7D32] mb-2">✓ Exception Claimed</p>
+                <p class="font-normal text-sm text-[#464E58]">
+                    Your exception claim has been recorded with supporting evidence. This will be subject to regulatory review.
                 </p>
             </div>
         `;
+
+        return `<div class="space-y-4">` + 
+               renderConfirmProfileInput(selectedPractices, practicesInfo, false) + 
+               confirmedBanner + 
+               exceptionClaimedBox + 
+               `</div>`;
     }
     
     if (status === 'Needs Review') {
+        if (selectedPractices.length > 0 && block1State.be_assessment) {
+            const details = block1State.be_assessment.details || {};
+            
+            // If user said "Yes" to exception - SHOW EVIDENCE FORM
+            // Note: We check block1State.exceptionQualifies which should be synced from BE or set on interaction
+            if (block1State.exceptionQualifies === 'Yes') {
+                return `<div class="space-y-4">` + 
+                       renderConfirmProfileInput(selectedPractices, practicesInfo, false) + 
+                       renderBlock1ExceptionEvidenceForm(selectedPractices, practicesInfo) + 
+                       `</div>`;
+            }
+
+            // Otherwise, this is the "Not sure" case - SHOW RESULT BOX
+            const confirmedBanner = `
+                <div class="w-full bg-[#E8F5E9] border border-[#81C784] rounded-lg p-3 mb-4">
+                    <p class="font-semibold text-sm text-[#2E7D32]">✓ Confirmed</p>
+                </div>
+            `;
+            
+            const needsReviewBox = `
+                <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-4">
+                    <p class="font-bold text-sm text-[#F57C00] mb-2">Result: Needs Review</p>
+                    <p class="font-normal text-sm text-[#464E58]">
+                        This system requires legal review to determine if the exception applies. Please consult with your legal team or compliance officer.
+                    </p>
+                </div>
+            `;
+            
+            return `<div class="space-y-4">` + 
+                   renderConfirmProfileInput(selectedPractices, practicesInfo, false) + 
+                   confirmedBanner + 
+                   needsReviewBox + 
+                   `</div>`;
+        }
+        
+        // Default Needs Review (simple view)
         return `
             <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-4">
                 <p class="font-semibold text-sm text-[#F57C00] mb-2">⚠️ Needs Review</p>
@@ -2700,171 +2585,333 @@ function renderBlock1Content(status) {
 
 // Render exception flow content (from flowchart)
 function renderBlock1ExceptionFlow(selectedPractices, practicesInfo = {}) {
-    // Check if ANY practice has NO exception available (from flowchart)
+    // Banner for Confirmed state
+    const confirmedBanner = `
+        <div class="w-full bg-[#E8F5E9] border border-[#81C784] rounded-lg p-3 mb-4">
+            <p class="font-semibold text-sm text-[#2E7D32]">✓ Confirmed</p>
+        </div>
+    `;
+
+    // 1. Check if ANY practice has NO exception available (from flowchart)
+    // If any selected practice has has_exception: false, then NO exception is available for the system as a whole (conservative approach)
     const practicesWithNoException = selectedPractices.filter(practice => {
-        const practiceInfo = practicesInfo[practice] || prohibitedPracticesMap[practice];
-        return practiceInfo && !practiceInfo.has_exception;
+        const info = practicesInfo[practice] || prohibitedPracticesMap[practice];
+        return info && !info.has_exception;
     });
     
     if (practicesWithNoException.length > 0) {
         // All practices hasException: false → No Exception Available → Status: Prohibited (from flowchart)
         return `
-            <div class="space-y-4">
-                <div class="bg-[#FFEBEE] border border-[#EF5350] rounded-lg p-4">
-                    <p class="font-semibold text-sm text-[#C62828] mb-2">No Exception Available</p>
-                    <p class="font-normal text-sm text-[#464E58] mb-2">
-                        The following prohibited practices do not have exceptions available:
-                    </p>
-                    <ul class="list-disc list-inside space-y-1 mb-3">
-                        ${practicesWithNoException.map(p => {
-                            const info = practicesInfo[p] || prohibitedPracticesMap[p];
-                            if (!info) return '';
-                            return `<li class="font-medium text-sm text-[#464E58] ml-2">${info.label || p} (Article ${info.article || 'N/A'})</li>`;
-                        }).filter(html => html).join('')}
-                    </ul>
-                    <p class="font-normal text-sm text-[#464E58] mt-2">
-                        This AI system is prohibited under Article 5 of the EU AI Act.
-                    </p>
-                </div>
+            ${confirmedBanner}
+            <div class="bg-[#FFEBEE] border border-[#EF5350] rounded-lg p-4">
+                <p class="font-bold text-sm text-[#C62828] mb-2">No exception available</p>
+                <p class="font-normal text-sm text-[#464E58] mb-4">
+                    This prohibited practice does not allow exceptions under the EU AI Act.
+                </p>
                 <div class="flex justify-end">
                     <button onclick="acknowledgeNoException()" class="px-6 py-2.5 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A] transition-colors">
-                        Acknowledge
+                        Confirm
                     </button>
                 </div>
             </div>
         `;
     }
     
-    // At least one hasException: true → Exception Question (from flowchart)
+    // 2. Exception Available → Exception Claim UI
     const practicesWithException = selectedPractices.filter(practice => {
-        const practiceInfo = practicesInfo[practice] || prohibitedPracticesMap[practice];
-        return practiceInfo && practiceInfo.has_exception;
+        const info = practicesInfo[practice] || prohibitedPracticesMap[practice];
+        return info && info.has_exception;
     });
     
-    if (block1State.claimingException === '') {
-        // Ask: "Are you claiming an exception?" (from flowchart)
+    if (practicesWithException.length > 0) {
+        // Show exception condition and ask qualification question
+        // Combine conditions if multiple
+        const conditionsItems = practicesWithException.map((p, index) => {
+             const info = practicesInfo[p] || prohibitedPracticesMap[p];
+             // Ensure we display the condition text correctly
+             const conditionText = info.exception_condition || info.exceptionCondition || 'Exception available';
+             return `<div class="mb-2">
+                <input type="text" id="exception-condition-${index}" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-[#464E58] bg-white text-sm" value="${conditionText}">
+             </div>`;
+        }).join('');
+        
+        const currentQualifies = block1State.exceptionQualifies; // 'Yes', 'No', 'Not sure', ''
+        
+        const practiceLabels = practicesWithException.map(p => {
+            // Find the full version (key) if p is just a label
+            let fullText = p;
+            for (const key in prohibitedPracticesMap) {
+                if (prohibitedPracticesMap[key].label === p) {
+                    fullText = key;
+                    break;
+                }
+            }
+            return `“${fullText}”`;
+        }).join(' and ');
+
         return `
-            <div class="space-y-4">
-                <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-4">
-                    <p class="font-semibold text-sm text-[#22262A] mb-2">Exception Available</p>
-                    <p class="font-normal text-sm text-[#464E58] mb-2">
-                        The following prohibited practices have exceptions available:
-                    </p>
-                    <ul class="list-disc list-inside space-y-1 mb-4">
-                        ${practicesWithException.map(p => {
-                            const info = practicesInfo[p] || prohibitedPracticesMap[p];
-                            if (!info) return '';
-                            return `<li class="font-medium text-sm text-[#464E58] ml-2">${info.label || p} (Article ${info.article || 'N/A'})</li>`;
-                        }).filter(html => html).join('')}
-                    </ul>
-                    <p class="font-semibold text-sm text-[#22262A] mt-4">Are you claiming an exception?</p>
+            ${confirmedBanner}
+            <div class="bg-[#FFF5F5] border border-[#F13D30] rounded-lg p-4">
+                <p class="font-bold text-sm text-[#22262A] mb-3">Exception Claim</p>
+                <p class="font-normal text-sm text-[#464E58] mb-3">Does your system ${practiceLabels} fall under the following condition?</p>
+                
+                <div class="mb-4">
+                    ${conditionsItems}
                 </div>
-                <div class="flex justify-end gap-3">
-                    <button onclick="setClaimingException('No')" class="px-6 py-2.5 bg-white border border-[#B5BCC4] text-[#464E58] rounded-lg font-semibold text-sm hover:bg-[#F0F1F2] transition-colors">
-                        No
-                    </button>
-                    <button onclick="setClaimingException('Yes')" class="px-6 py-2.5 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A] transition-colors">
-                        Yes
-                    </button>
+
+                <div class="flex gap-6">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="exception_claim_radio" value="Yes" class="w-4 h-4 text-[#F13D30] border-gray-300 focus:ring-[#F13D30]" 
+                            ${currentQualifies === 'Yes' ? 'checked' : ''} onchange="handleExceptionClaimChange(this.value)">
+                        <span class="text-sm text-[#464E58]">Yes</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="exception_claim_radio" value="No" class="w-4 h-4 text-[#F13D30] border-gray-300 focus:ring-[#F13D30]" 
+                            ${currentQualifies === 'No' ? 'checked' : ''} onchange="handleExceptionClaimChange(this.value)">
+                        <span class="text-sm text-[#464E58]">No</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="exception_claim_radio" value="Not sure" class="w-4 h-4 text-[#F13D30] border-gray-300 focus:ring-[#F13D30]" 
+                            ${currentQualifies === 'Not sure' ? 'checked' : ''} onchange="handleExceptionClaimChange(this.value)">
+                        <span class="text-sm text-[#464E58]">Not sure</span>
+                    </label>
                 </div>
             </div>
         `;
-    }
-    
-    if (block1State.claimingException === 'No') {
-        // User declined exception → Status: Prohibited (from flowchart)
-        block1State.prohibitedConfirmed = true; // Ensure state is set
-        updateAssessmentBlock(1);
-        return renderBlock1Content('Prohibited');
-    }
-    
-    if (block1State.claimingException === 'Yes') {
-        // Show exception condition and ask qualification question (from flowchart)
-        if (block1State.exceptionQualifies === '') {
-            const exceptionConditions = practicesWithException.map(p => {
-                const info = practicesInfo[p] || prohibitedPracticesMap[p];
-                if (!info) return '';
-                return `<li class="font-medium text-sm text-[#464E58] ml-2"><strong>${info.label || p}:</strong> ${info.exception_condition || info.exceptionCondition || 'N/A'}</li>`;
-            }).filter(html => html).join('');
-            
-            return `
-                <div class="space-y-4">
-                    <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-4">
-                        <p class="font-semibold text-sm text-[#22262A] mb-2">Exception Conditions</p>
-                        <p class="font-normal text-sm text-[#464E58] mb-2">
-                            The following exception conditions apply:
-                        </p>
-                        <ul class="list-disc list-inside space-y-2 mb-4">
-                            ${exceptionConditions}
-                        </ul>
-                        <p class="font-semibold text-sm text-[#22262A] mt-4">Does this exception apply to your AI system?</p>
-                    </div>
-                    <div class="flex justify-end gap-3">
-                        <button onclick="setExceptionQualifies('No')" class="px-6 py-2.5 bg-white border border-[#B5BCC4] text-[#464E58] rounded-lg font-semibold text-sm hover:bg-[#F0F1F2] transition-colors">
-                            No
-                        </button>
-                        <button onclick="setExceptionQualifies('Not sure')" class="px-6 py-2.5 bg-white border border-[#B5BCC4] text-[#464E58] rounded-lg font-semibold text-sm hover:bg-[#F0F1F2] transition-colors">
-                            Not sure
-                        </button>
-                        <button onclick="setExceptionQualifies('Yes')" class="px-6 py-2.5 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A] transition-colors">
-                            Yes
-                        </button>
-                    </div>
-                </div>
-            `;
-        }
-        
-        // Check exception qualification answer (from flowchart)
-        if (block1State.exceptionQualifies === 'No') {
-            // Status: Prohibited (from flowchart)
-            updateAssessmentBlock(1);
-            return renderBlock1Content('Prohibited');
-        }
-        
-        if (block1State.exceptionQualifies === 'Not sure') {
-            // Status: Needs Review (from flowchart)
-            updateAssessmentBlock(1);
-            return renderBlock1Content('Needs Review');
-        }
-        
-        if (block1State.exceptionQualifies === 'Yes') {
-            // Ask for Evidence & check if Uploaded or Link Saved (from flowchart)
-            if (!block1State.exceptionEvidenceUploaded && !block1State.exceptionEvidenceSavedLink) {
-                // No evidence → Status: Needs Review (from flowchart)
-                return `
-                    <div class="space-y-4">
-                        <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-4">
-                            <p class="font-semibold text-sm text-[#22262A] mb-2">Evidence Required</p>
-                            <p class="font-normal text-sm text-[#464E58] mb-2">
-                                To claim this exception, please provide evidence (upload document or paste link from Section 1).
-                            </p>
-                            <div class="mt-4 space-y-3">
-                                <div>
-                                    <label class="block text-sm font-medium text-[#374151] mb-2">Upload Evidence Document</label>
-                                    <input type="file" id="exception-evidence-upload" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-[#374151] mb-2">Or Paste Link</label>
-                                    <input type="text" id="exception-evidence-link" placeholder="Paste link here" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="flex justify-end">
-                            <button onclick="confirmExceptionEvidence()" class="px-6 py-2.5 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A] transition-colors">
-                                Confirm Evidence
-                            </button>
-                        </div>
-                    </div>
-                `;
-            } else {
-                // Evidence uploaded/linked → Status: Exception claimed → Status: PASS (from flowchart)
-                updateAssessmentBlock(1);
-                return renderBlock1Content('Exception claimed');
-            }
-        }
     }
     
     return '<p class="text-sm text-[#464E58]">Processing exception flow...</p>';
+}
+
+// Render evidence upload form for Exception Claim "Yes" case
+function renderBlock1ExceptionEvidenceForm(selectedPractices, practicesInfo = {}) {
+    const confirmedBanner = `
+        <div class="w-full bg-[#E8F5E9] border border-[#81C784] rounded-lg p-3 mb-4">
+            <p class="font-semibold text-sm text-[#2E7D32]">✓ Confirmed</p>
+        </div>
+    `;
+    
+    return `
+        ${confirmedBanner}
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-semibold text-[#22262A] mb-2">
+                    Evidence / Documentation <span class="text-[#F13D30]">*</span>
+                </label>
+                <p class="text-sm text-[#464E58] mb-3">Paste a link or upload new document below.</p>
+                
+                <div class="flex gap-3 mb-3">
+                    <input type="text" id="block1-evidence-link" placeholder="Paste link here" 
+                        class="flex-1 px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm text-[#464E58] focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
+                    <button onclick="saveBlock1EvidenceLink()" 
+                        class="px-6 py-2 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A] transition-colors">
+                        Save link
+                    </button>
+                </div>
+                
+                <div id="block1-file-list" class="space-y-2 mb-3">
+                    ${block1State.exceptionEvidenceFiles.map((file, idx) => `
+                        <div class="flex items-center justify-between p-2 bg-gray-50 rounded-lg border border-gray-200">
+                            <div class="flex items-center gap-2 overflow-hidden">
+                                <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                                <span class="text-sm text-gray-600 truncate">${file.name}</span>
+                            </div>
+                            <button onclick="removeBlock1EvidenceFile(${idx})" class="text-gray-400 hover:text-red-500">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <input type="file" id="block1-evidence-file-input" class="hidden" onchange="handleBlock1FileUpload(this)">
+                <button onclick="document.getElementById('block1-evidence-file-input').click()" 
+                    class="w-full px-4 py-3 border-2 border-dashed border-[#D1D5DB] rounded-lg text-sm text-[#464E58] hover:border-[#F13D30] hover:bg-[#FFF5F5] transition-colors flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                    </svg>
+                    Upload Supporting Documents
+                </button>
+            </div>
+            
+            <div>
+                <textarea id="block1-evidence-explanation" rows="4" placeholder="Explain how the evidence supports your exception claim." 
+                    class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm text-[#464E58] focus:outline-none focus:ring-2 focus:ring-[#F13D30] resize-none"></textarea>
+            </div>
+            
+            <div class="flex justify-end">
+                <button onclick="confirmBlock1ExceptionClaim()" 
+                    class="px-6 py-2.5 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A] transition-colors">
+                    Confirm Exception Claim
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+// Helper functions for Block 1 exception flow
+function acknowledgeNoException() {
+    setClaimingException('No');
+}
+
+async function handleExceptionClaimChange(value) {
+    const mainContainer = document.querySelector('[data-agent-id]');
+    const agentId = mainContainer ? parseInt(mainContainer.getAttribute('data-agent-id')) : 0;
+    
+    try {
+        // Collect exception condition text from input field(s)
+        const conditionInputs = document.querySelectorAll('[id^="exception-condition-"]');
+        const exceptionConditions = Array.from(conditionInputs).map(input => input.value).filter(v => v);
+        
+        // Update both claiming_exception, exception_qualifies, and the customized condition text
+        const response = await fetch(`/api/ai-inventory/${agentId}/block1-state/`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                claiming_exception: 'Yes',
+                exception_qualifies: value,
+                exception_conditions: exceptionConditions // Save the customized condition text
+            })
+        });
+        const result = await response.json();
+        
+        if (result.success) {
+            block1State.claimingException = 'Yes';
+            block1State.exceptionQualifies = value;
+            if (result.assessment && result.assessment.block1) {
+                updateAssessmentBlocksFromBE(result.assessment);
+            } else {
+                updateAssessmentBlock(1);
+            }
+        }
+    } catch(e) { console.error(e); }
+}
+
+// Evidence handling functions for Block 1
+async function saveBlock1EvidenceLink() {
+    const linkInput = document.getElementById('block1-evidence-link');
+    if (!linkInput || !linkInput.value.trim()) {
+        alert('Please enter a link');
+        return;
+    }
+    
+    const mainContainer = document.querySelector('[data-agent-id]');
+    const agentId = mainContainer ? parseInt(mainContainer.getAttribute('data-agent-id')) : 0;
+    
+    try {
+        const response = await fetch(`/api/ai-inventory/${agentId}/block1-state/`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                exception_evidence_saved_link: linkInput.value.trim()
+            })
+        });
+        const result = await response.json();
+        
+        if (result.success) {
+            alert('Link saved successfully!');
+            block1State.exceptionEvidenceSavedLink = linkInput.value.trim();
+        }
+    } catch(e) { 
+        console.error(e);
+        alert('Error saving link');
+    }
+}
+
+async function handleBlock1FileUpload(input) {
+    const files = Array.from(input.files);
+    if (!files.length) return;
+    
+    const formData = new FormData();
+    files.forEach(file => formData.append('file', file));
+    formData.append('folder', 'governance/uploads/block1');
+    
+    try {
+        const response = await fetch('/api/upload-file/', {
+            method: 'POST',
+            body: formData
+        });
+        const result = await response.json();
+        
+        if (result.success && result.files) {
+            // Append new files to state
+            block1State.exceptionEvidenceFiles = [...block1State.exceptionEvidenceFiles, ...result.files];
+            block1State.exceptionEvidenceUploaded = true;
+            
+            // Re-render the form to show the files
+            const statusEl = document.getElementById('block-1-status');
+            const status = statusEl ? statusEl.textContent.trim() : '';
+            const contentEl = document.getElementById('block-1-content-inner');
+            if (contentEl) {
+                contentEl.innerHTML = renderBlock1Content(status);
+            }
+        } else {
+            alert('Upload failed: ' + (result.error || 'Unknown error'));
+        }
+    } catch (e) {
+        console.error('File upload error:', e);
+        alert('Error uploading file');
+    }
+}
+
+function removeBlock1EvidenceFile(index) {
+    block1State.exceptionEvidenceFiles.splice(index, 1);
+    if (block1State.exceptionEvidenceFiles.length === 0) {
+        block1State.exceptionEvidenceUploaded = false;
+    }
+    
+    // Re-render the form
+    const statusEl = document.getElementById('block-1-status');
+    const status = statusEl ? statusEl.textContent.trim() : '';
+    const contentEl = document.getElementById('block-1-content-inner');
+    if (contentEl) {
+        contentEl.innerHTML = renderBlock1Content(status);
+    }
+}
+
+async function confirmBlock1ExceptionClaim() {
+    const linkInput = document.getElementById('block1-evidence-link');
+    const explanation = document.getElementById('block1-evidence-explanation');
+    
+    const hasLink = linkInput && linkInput.value.trim();
+    const hasExplanation = explanation && explanation.value.trim();
+    const hasFile = block1State.exceptionEvidenceFiles.length > 0;
+    
+    if (!hasLink && !hasExplanation && !hasFile) {
+        alert('Please provide evidence (link, document, or explanation) to support your exception claim');
+        return;
+    }
+    
+    const mainContainer = document.querySelector('[data-agent-id]');
+    const agentId = mainContainer ? parseInt(mainContainer.getAttribute('data-agent-id')) : 0;
+    
+    try {
+        const response = await fetch(`/api/ai-inventory/${agentId}/block1-state/`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                exception_evidence_uploaded: hasFile,
+                exception_evidence_saved_link: hasLink ? linkInput.value.trim() : '',
+                exception_explanation: hasExplanation ? explanation.value.trim() : '',
+                exception_evidence_files: block1State.exceptionEvidenceFiles // Send full file data
+            })
+        });
+        const result = await response.json();
+        
+        if (result.success) {
+            if (result.assessment && result.assessment.block1) {
+                updateAssessmentBlocksFromBE(result.assessment);
+            } else {
+                updateAssessmentBlock(1);
+            }
+        }
+    } catch(e) { 
+        console.error(e);
+        alert('Error confirming exception claim');
+    }
 }
 
 // Helper functions for Block 1 exception flow - Update BE state
@@ -2879,6 +2926,7 @@ async function confirmProhibited(confirmed) {
     }
     
     try {
+        console.log('[DEBUG] confirmProhibited: Sending request to backend...');
         // Update BE state
         const response = await fetch(`/api/ai-inventory/${agentId}/block1-state/`, {
             method: 'POST',
@@ -4215,15 +4263,7 @@ async function setGPAIProviderAnswer(value) {
     }
 }
 
-function confirmProhibited(confirmed) {
-    if (confirmed) {
-        // Update status to Prohibited or show exception flow
-        updateAssessmentBlock(1);
-    } else {
-        // Switch to Profile tab
-        switchTab('profile');
-    }
-}
+
 
 // Update all assessment blocks when switching to Assessment tab
 function updateAllAssessmentBlocks() {
@@ -4266,6 +4306,31 @@ function updateAssessmentBlocksFromBE(assessmentResults) {
     // Update Block 1
     if (assessmentResults.block1) {
         const block1Status = assessmentResults.block1.status;
+        
+        // Check if backend has preserved block1_state (from api_update_block1_state calls)
+        // vs. fresh assessment (from profile save which clears state)
+        const backendHasState = assessmentResults.block1_state && Object.keys(assessmentResults.block1_state).length > 0;
+        
+        if (!backendHasState) {
+            // Fresh assessment from profile save - RESET all frontend state
+            block1State.prohibitedConfirmed = false;
+            block1State.claimingException = '';
+            block1State.exceptionQualifies = '';
+            block1State.exceptionEvidenceUploaded = false;
+            block1State.exceptionEvidenceSavedLink = '';
+            block1State.exceptionEvidenceFiles = [];
+            block1State.noExceptionConfirmed = false;
+        } else {
+            // SYNC frontend state from backend state
+            const beState = assessmentResults.block1_state;
+            block1State.prohibitedConfirmed = beState.prohibited_confirmed || false;
+            block1State.claimingException = beState.claiming_exception || '';
+            block1State.exceptionQualifies = beState.exception_qualifies || '';
+            block1State.exceptionEvidenceUploaded = beState.exception_evidence_uploaded || false;
+            block1State.exceptionEvidenceSavedLink = beState.exception_evidence_saved_link || '';
+            block1State.exceptionEvidenceFiles = beState.exception_evidence_files || [];
+            block1State.noExceptionConfirmed = beState.no_exception_confirmed || false;
+        }
         
         // Store BE assessment data for reference (needed for renderBlock1Content)
         block1State.be_assessment = assessmentResults.block1;
@@ -4577,7 +4642,7 @@ function initDefaultRoleLogic() {
     const defaultRoleYes = document.getElementById('default-role-yes');
     const defaultRoleNo = document.getElementById('default-role-no');
     const roleCheckboxes = document.querySelectorAll('.role-checkbox');
-    const orgDefaultRole = '{{ org_default_role|default:"Deployer" }}'; // Get from backend or default to "Deployer"
+    const orgDefaultRoles = {{ org_default_roles_json|safe }}; // From Organization module Section 3 Q2 (e.g. ["Provider", "Deployer"])
     
     // Map role names to checkbox IDs
     const roleIdMap = {
@@ -4599,18 +4664,21 @@ function initDefaultRoleLogic() {
                 }
             });
             
-            // Auto-check default role
-            const defaultRoleId = roleIdMap[orgDefaultRole];
-            if (defaultRoleId) {
-                const defaultRoleCheckbox = document.getElementById(defaultRoleId);
-                if (defaultRoleCheckbox) {
-                    defaultRoleCheckbox.checked = true;
-                    const label = defaultRoleCheckbox.closest('label');
-                    if (label) {
-                        label.classList.add('border-[#F13D30]', 'bg-[#FEEDEC]');
+            // Auto-check all default roles from Organization (multiple roles)
+            const rolesToCheck = Array.isArray(orgDefaultRoles) && orgDefaultRoles.length ? orgDefaultRoles : ['Deployer'];
+            rolesToCheck.forEach(function(roleName) {
+                const defaultRoleId = roleIdMap[roleName];
+                if (defaultRoleId) {
+                    const defaultRoleCheckbox = document.getElementById(defaultRoleId);
+                    if (defaultRoleCheckbox) {
+                        defaultRoleCheckbox.checked = true;
+                        const label = defaultRoleCheckbox.closest('label');
+                        if (label) {
+                            label.classList.add('border-[#F13D30]', 'bg-[#FEEDEC]');
+                        }
                     }
                 }
-            }
+            });
         } else {
             // Enable all role checkboxes
             roleCheckboxes.forEach(checkbox => {
@@ -5074,6 +5142,12 @@ function initEuEeaLogic() {
     updateEuUsageStyling();
     updateEuEffectStyling();
     checkEuActNotice();
+    // Expose so notice updates after loadProfileData sets eu_usage / eu_effect
+    window.refreshEuActNotice = function() {
+        updateEuUsageStyling();
+        updateEuEffectStyling();
+        checkEuActNotice();
+    };
 }
 
 // Safety Component Logic Functions (Section 8, Q3)

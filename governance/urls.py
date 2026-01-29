@@ -19,6 +19,7 @@ urlpatterns = [
     path("ai-inventory/", views.ai_inventory, name="ai_inventory"),
     path("ai-inventory/<int:agent_id>/", views.ai_system_detail, name="ai_system_detail"),
     path("api/ai-inventory/create/", views.api_create_ai_inventory_system, name="api_create_ai_inventory_system"),
+    path("api/deployment-contexts/add/", views.api_add_deployment_context, name="api_add_deployment_context"),
     path("api/ai-inventory/delete/", views.api_delete_ai_inventory_systems, name="api_delete_ai_inventory_systems"),
     path("api/ai-inventory/export/", views.api_export_ai_inventory, name="api_export_ai_inventory"),
     path("api/ai-inventory/import/", views.api_import_ai_inventory, name="api_import_ai_inventory"),

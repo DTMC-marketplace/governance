@@ -26,7 +26,8 @@
     "q1": "Yes",
     "q2_roles": [
       "provider",
-      "deployer"
+      "deployer",
+      "importer"
     ],
     "q3": "No",
     "q4": "Planned"

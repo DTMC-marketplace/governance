@@ -194,8 +194,25 @@
         </div>
         <div class="p-6 section-content" id="section3-content">
             <form id="scope-form" class="space-y-4">
+                <!-- Q1: Default role display (reflects Q2 selection); data from Organization Section 3 Q2 -->
                 <div>
-                    <label class="block text-sm font-medium text-[#22262A] mb-2">Q1: Do you place AI systems and/or GPAI models on the EU/EEA market? <span class="text-[#F13D30] ml-1">*</span></label>
+                    <p class="text-sm font-medium text-[#22262A] mb-1">Q1: In Organization module, your default role is set to be: <span id="scope-default-roles-display" class="font-normal text-[#464E58]">—</span>.</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-[#22262A] mb-2">Use default roles from Organization? (If "Yes", Q2 will be auto-selected from saved Section 3 Q2.)</label>
+                    <div class="flex gap-4 pl-1">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="scope_use_default_roles" value="Yes" class="w-4 h-4 accent-[#F13D30] cursor-pointer" id="scope-use-default-yes">
+                            <span class="text-sm text-[#464E58]">Yes</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="scope_use_default_roles" value="No" class="w-4 h-4 accent-[#F13D30] cursor-pointer" id="scope-use-default-no" checked>
+                            <span class="text-sm text-[#464E58]">No</span>
+                        </label>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-[#22262A] mb-2">Q3: Do you place AI systems and/or GPAI models on the EU/EEA market? <span class="text-[#F13D30] ml-1">*</span></label>
                     <select name="q1" class="w-full px-4 py-2.5 border border-[#B5BCC4] rounded-lg font-normal text-sm text-[#22262A] focus:outline-none focus:border-[#F13D30] focus:ring-2 focus:ring-[#FEEDEC] transition-colors appearance-none bg-white bg-[url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 20 20%27 fill=%27none%27%3e%3cpath d=%27M5 7.5L10 12.5L15 7.5%27 stroke=%27%23565F6C%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3e%3c/svg%3e')] bg-no-repeat bg-[center_right_0.75rem] bg-[length:1.25rem] pr-10">
                         <option value="">Select an option</option>
                         <option value="Yes">Yes</option>
@@ -243,7 +260,7 @@
                     </div>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-[#22262A] mb-2">Q3: Is the system deployed / used in the EU / EEA? <span class="text-[#F13D30] ml-1">*</span></label>
+                    <label class="block text-sm font-medium text-[#22262A] mb-2">Q4: Is the system deployed / used in the EU / EEA? <span class="text-[#F13D30] ml-1">*</span></label>
                     <select name="q3" class="w-full px-4 py-2.5 border border-[#B5BCC4] rounded-lg font-normal text-sm text-[#22262A] focus:outline-none focus:border-[#F13D30] focus:ring-2 focus:ring-[#FEEDEC] transition-colors appearance-none bg-white bg-[url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 20 20%27 fill=%27none%27%3e%3cpath d=%27M5 7.5L10 12.5L15 7.5%27 stroke=%27%23565F6C%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3e%3c/svg%3e')] bg-no-repeat bg-[center_right_0.75rem] bg-[length:1.25rem] pr-10">
                         <option value="">Select an option</option>
                         <option value="Yes">Yes</option>
@@ -252,7 +269,7 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-[#22262A] mb-2">Q4: Does the system affect persons in the EU / EEA (outputs used in EU / EEA)? <span class="text-[#F13D30] ml-1">*</span></label>
+                    <label class="block text-sm font-medium text-[#22262A] mb-2">Q5: Does the system affect persons in the EU / EEA (outputs used in EU / EEA)? <span class="text-[#F13D30] ml-1">*</span></label>
                     <select name="q4" class="w-full px-4 py-2.5 border border-[#B5BCC4] rounded-lg font-normal text-sm text-[#22262A] focus:outline-none focus:border-[#F13D30] focus:ring-2 focus:ring-[#FEEDEC] transition-colors appearance-none bg-white bg-[url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 20 20%27 fill=%27none%27%3e%3cpath d=%27M5 7.5L10 12.5L15 7.5%27 stroke=%27%23565F6C%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3e%3c/svg%3e')] bg-no-repeat bg-[center_right_0.75rem] bg-[length:1.25rem] pr-10">
                         <option value="">Select an option</option>
                         <option value="Yes">Yes</option>
@@ -949,6 +966,21 @@ async function deleteSelectedFiles() {
 document.addEventListener('DOMContentLoaded', function() {
     updateDeleteButtonVisibility();
     
+    // Scope Section 3: when Q2 roles change, update Q1 display; when "Use default roles? Yes", auto-select from Organization Section 3 Q2
+    const scopeForm = document.getElementById('scope-form');
+    if (scopeForm) {
+        scopeForm.querySelectorAll('input[name="q2_roles"]').forEach(cb => {
+            cb.addEventListener('change', updateScopeDefaultRolesDisplay);
+        });
+        document.querySelectorAll('input[name="scope_use_default_roles"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                if (this.value === 'Yes') applyScopeDefaultRoles();
+            });
+        });
+        // Initial display in case no saved data
+        updateScopeDefaultRolesDisplay();
+    }
+    
     // Load organization data from backend - add delay to ensure all elements are rendered
     // Use longer delay to ensure sections are expanded and elements are accessible
     setTimeout(() => {
@@ -974,6 +1006,26 @@ document.addEventListener('DOMContentLoaded', function() {
         toggleQ5Evidence('yes');
     }
 });
+
+// Scope Section 3: Q1 display and "Use default roles?" (data from Organization Section 3 Q2)
+const SCOPE_ROLE_LABELS = { provider: 'Provider', deployer: 'Deployer', importer: 'Importer', distributor: 'Distributor' };
+
+function updateScopeDefaultRolesDisplay() {
+    const el = document.getElementById('scope-default-roles-display');
+    if (!el) return;
+    const checked = Array.from(document.querySelectorAll('#scope-form input[name="q2_roles"]:checked')).map(cb => cb.value);
+    const labels = checked.map(v => SCOPE_ROLE_LABELS[v] || v);
+    el.textContent = labels.length ? labels.join(', ') : '—';
+}
+
+function applyScopeDefaultRoles() {
+    const roles = window.scopeDefaultRolesFromOrg || [];
+    if (!roles.length) return;
+    document.querySelectorAll('#scope-form input[name="q2_roles"]').forEach(cb => {
+        cb.checked = roles.includes(cb.value);
+    });
+    updateScopeDefaultRolesDisplay();
+}
 
 // Toggle Q1 Other input visibility
 function toggleQ1OtherInput(checkbox) {
@@ -1759,7 +1811,8 @@ async function loadOrganizationData() {
             
             if (data.scope) {
                 console.log('Loading scope data:', data.scope);
-                
+                // Store default roles from Organization Section 3 Q2 for "Use default roles? Yes" auto-select
+                window.scopeDefaultRolesFromOrg = Array.isArray(data.scope.q2_roles) ? data.scope.q2_roles : [];
                 // Load q2_roles first (checkboxes)
                 if (data.scope.q2_roles) {
                     const roles = data.scope.q2_roles;
@@ -1780,6 +1833,17 @@ async function loadOrganizationData() {
                         });
                     }
                 }
+                // If we have saved default roles, set "Use default roles?" to Yes
+                if (window.scopeDefaultRolesFromOrg.length > 0) {
+                    const useDefaultYes = document.getElementById('scope-use-default-yes');
+                    if (useDefaultYes) {
+                        useDefaultYes.checked = true;
+                        const useDefaultNo = document.getElementById('scope-use-default-no');
+                        if (useDefaultNo) useDefaultNo.checked = false;
+                    }
+                }
+                // Update Q1 display: "In Organization module, your default role is set to be: [roles]"
+                updateScopeDefaultRolesDisplay();
                 
                 // Load SELECT fields one by one with specific handling
                 // Q1

@@ -816,29 +816,23 @@
                     </div>
                 </div>
 
-                <!-- Deployment Context and EU / EEA Relevance -->
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block font-semibold text-sm text-[#22262A] mb-2">Deployment Context</label>
-                        <select name="deployment_context" class="w-full px-4 py-2.5 border border-[#B5BCC4] rounded-lg font-normal text-sm text-[#22262A] focus:outline-none focus:border-[#F13D30] focus:ring-2 focus:ring-[#FEEDEC] transition-colors">
-                            <option value="Workplace" selected>Workplace</option>
-                            <option value="Education">Education</option>
-                            <option value="Healthcare">Healthcare</option>
-                            <option value="Law enforcement">Law enforcement</option>
-                            <option value="Consumer">Consumer</option>
-                            <option value="Other">Other</option>
-                        </select>
+                <!-- Deployment Context: click to show options, or type custom value (added to list) -->
+                <div class="relative" id="add-system-deployment-wrap">
+                    <label class="block font-semibold text-sm text-[#22262A] mb-2">Deployment Context</label>
+                    <input type="text" name="deployment_context" id="add-system-deployment-context" autocomplete="off" placeholder="Click to select or type (new values are added to the list)" value="" class="w-full px-4 py-2.5 pr-10 border border-[#B5BCC4] rounded-lg font-normal text-sm text-[#22262A] placeholder:text-[#B5BCC4] focus:outline-none focus:border-[#F13D30] focus:ring-2 focus:ring-[#FEEDEC] transition-colors">
+                    <div class="absolute right-3 top-[38px] pointer-events-none text-[#6B7280]">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                     </div>
-                    <div>
-                        <label class="block font-semibold text-sm text-[#22262A] mb-2">EU / EEA Relevance</label>
-                        <select name="eu_eea_relevance" class="w-full px-4 py-2.5 border border-[#B5BCC4] rounded-lg font-normal text-sm text-[#22262A] focus:outline-none focus:border-[#F13D30] focus:ring-2 focus:ring-[#FEEDEC] transition-colors">
-                            <option value="Yes">Yes</option>
-                            <option value="No">No</option>
-                            <option value="Planned">Planned</option>
-                            <option value="Unknown" selected>Unknown</option>
-                        </select>
+                    <div id="add-system-deployment-dropdown" class="absolute z-50 left-0 right-0 mt-1 bg-white border border-[#B5BCC4] rounded-lg shadow-lg max-h-48 overflow-y-auto hidden">
+                        <!-- options filled by JS from deployment_context_options -->
                     </div>
                 </div>
+                <script>
+                (function() {
+                    var opts = [{% for opt in deployment_context_options %}"{{ opt|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}];
+                    window.DEPLOYMENT_CONTEXT_OPTIONS = opts.length ? opts : ['Workplace (employee-facing)', 'Educational institution', 'Healthcare setting', 'Law enforcement / public security', 'Public administration / government service', 'General public / consumer-facing', 'Other:'];
+                })();
+                </script>
             </form>
         </div>
 
@@ -923,8 +917,7 @@ function downloadTemplate() {
         'Risk Classification',       // Not assessed, Prohibited, High-risk, Limited transparency, Minimal, Not in scope
         'Compliance Status',        // Not started, In progress, Compliant, Non-compliant
         'Provider Type',            // In-house, External, Mixed, Unknown
-        'Deployment Context',       // Workplace, Education, Healthcare, Law enforcement, Consumer, Other
-        'EU / EEA Relevance'        // Yes, No, Planned, Unknown
+        'Deployment Context'        // Workplace, Education, Healthcare, Law enforcement, Consumer, Other (or custom text)
     ];
     
     // Add example rows with different scenarios
@@ -936,8 +929,7 @@ function downloadTemplate() {
         'Not assessed',              // Risk Classification
         'Not started',               // Compliance Status
         'Unknown',                   // Provider Type
-        'Workplace',                 // Deployment Context
-        'Unknown'                    // EU / EEA Relevance
+        'Workplace'                  // Deployment Context
     ];
     
     const exampleRow2 = [
@@ -948,8 +940,7 @@ function downloadTemplate() {
         'High-risk',                 // Risk Classification
         'Compliant',                 // Compliance Status
         'Mixed',                     // Provider Type
-        'Healthcare',                // Deployment Context
-        'Yes'                        // EU / EEA Relevance
+        'Healthcare'                 // Deployment Context
     ];
     
     // Add third example with 3 roles to show more possibilities
@@ -961,8 +952,7 @@ function downloadTemplate() {
         'Limited transparency',      // Risk Classification
         'In progress',               // Compliance Status
         'External',                  // Provider Type
-        'Education',                 // Deployment Context
-        'No'                         // EU / EEA Relevance
+        'Education'                  // Deployment Context
     ];
     
     // Create CSV with proper escaping for values containing commas
@@ -1746,10 +1736,11 @@ function openAddSystemModal() {
 
 function closeAddSystemModal() {
     document.getElementById('add-system-modal').classList.add('hidden');
-    // Reset form
     document.getElementById('add-system-form').reset();
     document.getElementById('add-system-file-input').value = '';
     document.getElementById('add-system-file-name').textContent = 'Choose file...';
+    const dcInput = document.getElementById('add-system-deployment-context');
+    if (dcInput) dcInput.value = '';
 }
 
 function aiReadAndAutoFill() {
@@ -1819,8 +1810,7 @@ async function createAISystem() {
         provider_type: formData.get('provider_type') || 'Unknown',
         risk_classification: formData.get('risk_classification') || 'Not assessed',
         compliance_status: formData.get('compliance_status') || 'Not started',
-        deployment_context: formData.get('deployment_context') || '',
-        eu_eea_relevance: formData.get('eu_eea_relevance') || ''
+        deployment_context: (formData.get('deployment_context') || '').trim()
     };
     
     // Add file info if uploaded
@@ -1893,6 +1883,90 @@ document.getElementById('add-system-modal')?.addEventListener('click', function(
         closeAddSystemModal();
     }
 });
+
+// Deployment Context: show dropdown on click/focus
+(function initDeploymentContextDropdown() {
+    const input = document.getElementById('add-system-deployment-context');
+    const dropdown = document.getElementById('add-system-deployment-dropdown');
+    if (!input || !dropdown) return;
+    function getOptions() { return window.DEPLOYMENT_CONTEXT_OPTIONS || ['Workplace (employee-facing)', 'Educational institution', 'Healthcare setting', 'Law enforcement / public security', 'Public administration / government service', 'General public / consumer-facing', 'Other:']; }
+    function filterOptions(q) {
+        q = (q || '').toLowerCase().trim();
+        return getOptions().filter(function(o) { return !q || o.toLowerCase().indexOf(q) !== -1; });
+    }
+    function renderDropdown(options) {
+        dropdown.innerHTML = '';
+        options.forEach(function(opt) {
+            const div = document.createElement('div');
+            div.className = 'px-4 py-2.5 text-sm text-[#22262A] cursor-pointer hover:bg-[#F9FAFB] border-b border-[#F0F1F2] last:border-b-0 first:rounded-t-lg last:rounded-b-lg';
+            div.textContent = opt;
+            div.addEventListener('mousedown', function(e) {
+                e.preventDefault();
+                input.value = opt;
+                dropdown.classList.add('hidden');
+            });
+            dropdown.appendChild(div);
+        });
+        if (options.length === 0) {
+            var newVal = (input.value || '').trim();
+            if (newVal) {
+                var addRow = document.createElement('div');
+                addRow.className = 'px-4 py-2.5 text-sm border-b border-[#F0F1F2]';
+                var btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'w-full text-left text-[#F13D30] font-medium hover:underline focus:outline-none';
+                btn.textContent = "+ Add \"" + newVal + "\" to list";
+                btn.addEventListener('mousedown', function(e) {
+                    e.preventDefault();
+                    var list = window.DEPLOYMENT_CONTEXT_OPTIONS || [];
+                    if (list.indexOf(newVal) === -1) {
+                        list.push(newVal);
+                        list.sort();
+                        window.DEPLOYMENT_CONTEXT_OPTIONS = list;
+                    }
+                    // Persist to mock data file so Q1 uses the new value too
+                    fetch('/api/deployment-contexts/add/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ value: newVal })
+                    }).then(function(res) { return res.json(); })
+                      .then(function(payload) {
+                          if (payload && payload.success && Array.isArray(payload.options)) {
+                              window.DEPLOYMENT_CONTEXT_OPTIONS = payload.options;
+                          }
+                          showDropdown();
+                      }).catch(function() {
+                          showDropdown();
+                      });
+                });
+                addRow.appendChild(btn);
+                dropdown.appendChild(addRow);
+            } else {
+                var empty = document.createElement('div');
+                empty.className = 'px-4 py-2.5 text-sm text-[#6B7280]';
+                empty.textContent = 'Type a value then click "Add to list" above.';
+                dropdown.appendChild(empty);
+            }
+        }
+    }
+    function showDropdown() {
+        var opts = filterOptions(input.value);
+        renderDropdown(opts);
+        dropdown.classList.remove('hidden');
+    }
+    function hideDropdown() {
+        dropdown.classList.add('hidden');
+    }
+    input.addEventListener('focus', showDropdown);
+    input.addEventListener('click', showDropdown);
+    input.addEventListener('input', showDropdown);
+    input.addEventListener('blur', function() {
+        setTimeout(hideDropdown, 150);
+    });
+    document.getElementById('add-system-deployment-wrap')?.addEventListener('click', function(e) {
+        if (e.target === dropdown || dropdown.contains(e.target)) e.preventDefault();
+    });
+})();
 
 function viewSystemDetails(agentId) {
     window.location.href = '{% url "ai_system_detail" 0 %}'.replace('0', agentId);

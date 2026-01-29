@@ -39,6 +39,53 @@ from .mock_data import (
 )
 from .constants import VIRTUAL_AGENT
 
+# Shared list for "Deployment Context" (Add New AI System) and Q1 "In what context will this AI system be deployed?" (AI system detail)
+DEPLOYMENT_CONTEXT_DEFAULTS = [
+    "Workplace (employee-facing)",
+    "Educational institution",
+    "Healthcare setting",
+    "Law enforcement / public security",
+    "Public administration / government service",
+    "General public / consumer-facing",
+    "Other:",
+]
+
+def _deployment_contexts_file_path():
+    from pathlib import Path
+    return Path(__file__).parent.parent / 'mock_data' / 'deployment_contexts.json'
+
+def _load_deployment_context_options():
+    path = _deployment_contexts_file_path()
+    if path.exists():
+        try:
+            with open(path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                if isinstance(data, list) and data:
+                    return data
+        except Exception:
+            pass
+    # Fallback to defaults and persist for easier reuse
+    _save_deployment_context_options(DEPLOYMENT_CONTEXT_DEFAULTS)
+    return list(DEPLOYMENT_CONTEXT_DEFAULTS)
+
+def _save_deployment_context_options(options):
+    path = _deployment_contexts_file_path()
+    try:
+        with open(path, 'w', encoding='utf-8') as f:
+            json.dump(options, f, indent=2, ensure_ascii=False)
+    except Exception:
+        pass
+
+def _ensure_deployment_context_option(value):
+    if not value or not str(value).strip():
+        return
+    val = str(value).strip()
+    if val.lower().startswith('other'):
+        return
+    options = _load_deployment_context_options()
+    if val not in options:
+        options.append(val)
+        _save_deployment_context_options(options)
 
 # Use Clean Architecture implementations if available, otherwise use legacy
 if USE_CLEAN_ARCHITECTURE:
@@ -1766,7 +1813,6 @@ def api_create_ai_inventory_system(request):
         "risk_classification": "Not assessed",
         "compliance_status": "Not started",
         "deployment_context": "Workplace",
-        "eu_eea_relevance": "Unknown",
         "document": {
             "name": "file.pdf",
             "url": "/static/governance/uploads/uuid.pdf",
@@ -1835,6 +1881,8 @@ def api_create_ai_inventory_system(request):
         vendor = vendor_map.get(provider_type, '')
         
         # Create new agent
+        deployment_context = data.get('deployment_context', '')
+        _ensure_deployment_context_option(deployment_context)
         new_agent = {
             'id': next_id,
             'name': data.get('name', ''),
@@ -1847,8 +1895,7 @@ def api_create_ai_inventory_system(request):
             'risk_classification': risk_classification,
             'investment_type': 'internal',
             'status': data.get('status', 'Planned'),
-            'deployment_context': data.get('deployment_context', ''),
-            'eu_eea_relevance': data.get('eu_eea_relevance', 'Unknown')
+            'deployment_context': deployment_context
         }
         
         # Add document if provided
@@ -1877,6 +1924,30 @@ def api_create_ai_inventory_system(request):
         }, status=400)
     except Exception as e:
         logger.error(f"Error creating AI system: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'error': f'An error occurred: {str(e)}'
+        }, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def api_add_deployment_context(request):
+    """
+    Add a new deployment context option to mock_data/deployment_contexts.json.
+    """
+    import logging
+    logger = logging.getLogger(__name__)
+    try:
+        data = json.loads(request.body)
+        value = data.get('value', '')
+        _ensure_deployment_context_option(value)
+        return JsonResponse({
+            'success': True,
+            'options': _load_deployment_context_options()
+        })
+    except Exception as e:
+        logger.error(f"Error adding deployment context option: {str(e)}", exc_info=True)
         return JsonResponse({
             'success': False,
             'error': f'An error occurred: {str(e)}'
@@ -2013,8 +2084,7 @@ def api_export_ai_inventory(request):
             'Risk Classification',
             'Compliance Status',
             'Provider Type',
-            'Deployment Context',
-            'EU / EEA Relevance'
+            'Deployment Context'
         ]
         writer.writerow(headers)
         
@@ -2090,14 +2160,9 @@ def api_export_ai_inventory(request):
             
             owner = agent.get('business_unit', '') or '—'
             
-            # Get deployment context and EU/EEA relevance
             deployment_context = agent.get('deployment_context', 'Workplace')
-            eu_eea_relevance = agent.get('eu_eea_relevance', 'Unknown')
-            
-            # Mock last updated (use current date for simplicity)
             from datetime import datetime
             last_updated = datetime.now().strftime('%b %d, %Y')
-            
             writer.writerow([
                 agent.get('name', 'Unnamed System'),
                 owner,
@@ -2106,8 +2171,7 @@ def api_export_ai_inventory(request):
                 risk_display,
                 compliance_display,
                 provider_type,
-                deployment_context,
-                eu_eea_relevance
+                deployment_context
             ])
         
         # Get CSV content
@@ -2240,9 +2304,8 @@ def api_import_ai_inventory(request):
             }
             vendor = vendor_map.get(provider_type, '')
             
-            # Get deployment context and EU/EEA relevance (new fields)
             deployment_context = system_data.get('Deployment Context', 'Workplace')
-            eu_eea_relevance = system_data.get('EU / EEA Relevance', 'Unknown')
+            _ensure_deployment_context_option(deployment_context)
             
             # Get owner - support both "Owner" and "Owner (Person / Team)" headers
             owner = system_data.get('Owner (Person / Team)') or system_data.get('Owner', 'Not provided')
@@ -2259,8 +2322,7 @@ def api_import_ai_inventory(request):
                 'risk_classification': risk_classification,
                 'investment_type': 'internal',
                 'status': status,
-                'deployment_context': deployment_context,
-                'eu_eea_relevance': eu_eea_relevance
+                'deployment_context': deployment_context
             }
             
             existing_agents.append(new_agent)
@@ -2379,18 +2441,10 @@ def api_ai_system_detail_data(request, agent_id):
                 # This runs on BE as AI detection and assessment logic should be server-side
                 # Pass existing assessment state to preserve user confirmations
                 assessment_state = agent.get('assessment', {})
-                assessment_results = run_assessment_logic(agent['profile'], assessment_state)
+                assessment_results = run_assessment_logic(agent['profile'], assessment_state, reset_state=True)
                 agent['assessment'] = assessment_results
                 
-                # Preserve block1_state, block2_state, block3_state, and block4_state if exist
-                if 'block1_state' in assessment_state:
-                    agent['assessment']['block1_state'] = assessment_state['block1_state']
-                if 'block2_state' in assessment_state:
-                    agent['assessment']['block2_state'] = assessment_state['block2_state']
-                if 'block3_state' in assessment_state:
-                    agent['assessment']['block3_state'] = assessment_state['block3_state']
-                if 'block4_state' in assessment_state:
-                    agent['assessment']['block4_state'] = assessment_state['block4_state']
+
                 
                 logger.info(f"Ran assessment logic for AI system ID: {agent_id}")
                 
@@ -2451,7 +2505,7 @@ def ai_detects_prohibited_practice():
     return False
 
 
-def run_assessment_logic(profile_data, assessment_state=None):
+def run_assessment_logic(profile_data, assessment_state=None, reset_state=False):
     """
     Run assessment logic for Block 1, 2, 3, 4 in parallel (based on flowchart).
     
@@ -2475,7 +2529,7 @@ def run_assessment_logic(profile_data, assessment_state=None):
     block1_state = assessment_state.get('block1_state', {})
     block2_state = assessment_state.get('block2_state', {})
     
-    block1_result = get_block1_status(profile_data, block1_state)
+    block1_result = get_block1_status(profile_data, block1_state, reset_state=reset_state)
     block3_state = assessment_state.get('block3_state', {})
     block4_state = assessment_state.get('block4_state', {})
     
@@ -2498,18 +2552,18 @@ def run_assessment_logic(profile_data, assessment_state=None):
     return assessment_results
 
 
-def get_block1_status(profile_data, block1_state=None):
+def get_block1_status(profile_data, block1_state=None, reset_state=False):
     """
     Block 1: Prohibited Practices Screening - Logic based on flowchart.
     
     Args:
         profile_data: Dictionary containing profile form data
         block1_state: Dictionary containing Block 1 state (confirmation, exception, etc.)
+        reset_state: Boolean, if True, clear block1_state for fresh assessment
     
     Returns:
         {
             'status': 'PASS' | 'Triggered' | 'Needs Review' | 'Prohibited' | 'Exception claimed' | 'Not assessed',
-            'ai_detection': True/False,
             'selected_practices': [...],
             'details': {...}
         }
@@ -2517,46 +2571,44 @@ def get_block1_status(profile_data, block1_state=None):
     if block1_state is None:
         block1_state = {}
     
-    # STEP 1: AI Detection (from flowchart - START point)
-    ai_detection_result = ai_detects_prohibited_practice()
-    
-    # STEP 2: Check Section 7 Capabilities, Q1 (from flowchart)
-    # Get capabilities from profile data
+    # Check Section 7 Capabilities, Q1
     capability_practices = profile_data.get('capability_practices', [])
     if not isinstance(capability_practices, list):
         capability_practices = []
+        
+    # Conditionally reset Block 1 state based on reset_state flag
+    # reset_state=True: Fresh assessment from profile save
+    # reset_state=False: State update from api_update_block1_state (preserve state)
+    if reset_state:
+        block1_state.clear()
     
-    # STEP 3: Check if no capabilities selected (from flowchart)
+    # 1. Not Answered -> Not assessed
     if len(capability_practices) == 0:
         return {
             'status': 'Not assessed',
-            'ai_detection': ai_detection_result,
             'selected_practices': [],
             'details': {'reason': 'No capabilities selected'}
         }
     
-    # STEP 4: Check if "None of the above" selected (from flowchart)
-    none_selected = 'None of the above' in capability_practices
-    
-    # From flowchart: "Status: Not assessed" if "'None of the above' selected + AI detection result = No"
-    if none_selected and not ai_detection_result:
-        return {
-            'status': 'Not assessed',
-            'ai_detection': ai_detection_result,
-            'selected_practices': [],
-            'details': {'reason': 'None of the above selected and AI detection = No'}
-        }
-    
-    # If "None of the above" selected but AI detected something, still return PASS
-    if none_selected:
+    # 2. Answered, only "None of the above" -> PASS
+    if 'None of the above' in capability_practices and len(capability_practices) == 1:
         return {
             'status': 'PASS',
-            'ai_detection': ai_detection_result,
             'selected_practices': [],
             'details': {'reason': 'None of the above selected'}
         }
     
-    # STEP 5: Prohibited Practice Selected? (from flowchart)
+    # 3. Answered, any option other than "None of the above" -> Triggered
+    selected_practices = [p for p in capability_practices if p != 'None of the above']
+    
+    if not selected_practices:
+        # Should be covered by PASS case above, but safe fallback
+        return {
+            'status': 'PASS',
+            'selected_practices': [],
+            'details': {'reason': 'No prohibited practices selected'}
+        }
+    
     # Prohibited practices mapping (from Block_1_Prohibited_Practices_Logic.md)
     prohibited_practices_map = {
         'Subliminal / manipulative / deceptive techniques that materially distort behaviour and are likely to cause significant harm': {
@@ -2609,19 +2661,6 @@ def get_block1_status(profile_data, block1_state=None):
         }
     }
     
-    # Get selected prohibited practices (excluding "None of the above")
-    selected_practices = [p for p in capability_practices if p != 'None of the above' and p in prohibited_practices_map]
-    
-    if len(selected_practices) == 0:
-        # No prohibited practices selected
-        return {
-            'status': 'PASS',
-            'ai_detection': ai_detection_result,
-            'selected_practices': [],
-            'details': {'reason': 'No prohibited practices selected'}
-        }
-    
-    # STEP 6: Prohibited Practice Selected = YES (from flowchart)
     # Check if user has confirmed (from flowchart: "User Confirms")
     prohibited_confirmed = block1_state.get('prohibited_confirmed', False)
     
@@ -2629,27 +2668,25 @@ def get_block1_status(profile_data, block1_state=None):
         # Status: "Triggered" (awaiting user confirmation)
         return {
             'status': 'Triggered',
-            'ai_detection': ai_detection_result,
             'selected_practices': selected_practices,
-            'practices_info': {p: prohibited_practices_map[p] for p in selected_practices},
+            'practices_info': {p: prohibited_practices_map.get(p, {'label': p, 'article': 'Unknown', 'has_exception': False}) for p in selected_practices},
             'details': {
                 'reason': 'Prohibited practices detected, awaiting confirmation',
-                'has_exception_available': any(prohibited_practices_map[p]['has_exception'] for p in selected_practices),
-                'has_no_exception': any(not prohibited_practices_map[p]['has_exception'] for p in selected_practices)
+                'has_exception_available': any(prohibited_practices_map.get(p, {}).get('has_exception', False) for p in selected_practices),
+                'has_no_exception': any(not prohibited_practices_map.get(p, {}).get('has_exception', False) for p in selected_practices)
             }
         }
     
     # After user confirms - Check Exception Availability (from flowchart)
-    has_no_exception_practice = any(not prohibited_practices_map[p]['has_exception'] for p in selected_practices)
+    has_no_exception_practice = any(not prohibited_practices_map.get(p, {}).get('has_exception', False) for p in selected_practices)
     claiming_exception = block1_state.get('claiming_exception', '')
     
     # From flowchart: "All practices hasException: false" → "No Exception Available" → "Status: Prohibited"
     if has_no_exception_practice or claiming_exception == 'No':
         return {
             'status': 'Prohibited',
-            'ai_detection': ai_detection_result,
             'selected_practices': selected_practices,
-            'practices_info': {p: prohibited_practices_map[p] for p in selected_practices},
+            'practices_info': {p: prohibited_practices_map.get(p, {'label': p, 'article': 'Unknown'}) for p in selected_practices},
             'details': {
                 'reason': 'No exception available or user declined exception',
                 'has_exception_available': False,
@@ -2662,9 +2699,8 @@ def get_block1_status(profile_data, block1_state=None):
         # User hasn't answered exception claim question yet
         return {
             'status': 'Triggered',
-            'ai_detection': ai_detection_result,
             'selected_practices': selected_practices,
-            'practices_info': {p: prohibited_practices_map[p] for p in selected_practices},
+            'practices_info': {p: prohibited_practices_map.get(p, {'label': p, 'article': 'Unknown'}) for p in selected_practices},
             'details': {
                 'reason': 'Awaiting exception claim decision',
                 'has_exception_available': True,
@@ -2679,9 +2715,8 @@ def get_block1_status(profile_data, block1_state=None):
         # From flowchart: "No" → "Status: Prohibited"
         return {
             'status': 'Prohibited',
-            'ai_detection': ai_detection_result,
             'selected_practices': selected_practices,
-            'practices_info': {p: prohibited_practices_map[p] for p in selected_practices},
+            'practices_info': {p: prohibited_practices_map.get(p, {'label': p, 'article': 'Unknown'}) for p in selected_practices},
             'details': {
                 'reason': 'Exception does not apply',
                 'has_exception_available': True,
@@ -2693,9 +2728,8 @@ def get_block1_status(profile_data, block1_state=None):
         # From flowchart: "Not sure" → "Status: Needs Review"
         return {
             'status': 'Needs Review',
-            'ai_detection': ai_detection_result,
             'selected_practices': selected_practices,
-            'practices_info': {p: prohibited_practices_map[p] for p in selected_practices},
+            'practices_info': {p: prohibited_practices_map.get(p, {'label': p, 'article': 'Unknown'}) for p in selected_practices},
             'details': {
                 'reason': 'Uncertain about exception qualification',
                 'has_exception_available': True,
@@ -2707,14 +2741,15 @@ def get_block1_status(profile_data, block1_state=None):
         # From flowchart: "Yes" → "Ask for Evidence & check if Uploaded or Link Saved?"
         exception_evidence_uploaded = block1_state.get('exception_evidence_uploaded', False)
         exception_evidence_saved_link = block1_state.get('exception_evidence_saved_link', '')
+        exception_explanation = block1_state.get('exception_explanation', '')
+        exception_evidence_files = block1_state.get('exception_evidence_files', [])
         
-        if exception_evidence_uploaded or exception_evidence_saved_link:
+        if exception_evidence_uploaded or exception_evidence_saved_link or exception_explanation or exception_evidence_files:
             # From flowchart: "Yes" (evidence provided) → "Status: Exception claimed" → "Status: PASS"
             return {
                 'status': 'Exception claimed',
-                'ai_detection': ai_detection_result,
                 'selected_practices': selected_practices,
-                'practices_info': {p: prohibited_practices_map[p] for p in selected_practices},
+                'practices_info': {p: prohibited_practices_map.get(p, {'label': p, 'article': 'Unknown'}) for p in selected_practices},
                 'details': {
                     'reason': 'Exception claimed with evidence',
                     'has_exception_available': True,
@@ -2726,9 +2761,8 @@ def get_block1_status(profile_data, block1_state=None):
             # From flowchart: "No" (no evidence) → "Status: Needs Review"
             return {
                 'status': 'Needs Review',
-                'ai_detection': ai_detection_result,
                 'selected_practices': selected_practices,
-                'practices_info': {p: prohibited_practices_map[p] for p in selected_practices},
+                'practices_info': {p: prohibited_practices_map.get(p, {'label': p, 'article': 'Unknown'}) for p in selected_practices},
                 'details': {
                     'reason': 'Exception qualifies but no evidence provided',
                     'has_exception_available': True,
@@ -2737,16 +2771,13 @@ def get_block1_status(profile_data, block1_state=None):
                 }
             }
     
-    # Default: Still triggered if exception question not answered
+    # Default fallback
     return {
         'status': 'Triggered',
-        'ai_detection': ai_detection_result,
         'selected_practices': selected_practices,
-        'practices_info': {p: prohibited_practices_map[p] for p in selected_practices},
+        'practices_info': {p: prohibited_practices_map.get(p, {'label': p, 'article': 'Unknown'}) for p in selected_practices},
         'details': {
-            'reason': 'Awaiting exception qualification answer',
-            'has_exception_available': True,
-            'has_no_exception': False
+            'reason': 'Awaiting exception qualification answer'
         }
     }
 
@@ -3784,6 +3815,12 @@ def api_update_block1_state(request, agent_id):
             block1_state['exception_evidence_saved_link'] = data.get('exception_evidence_saved_link', '')
         if 'no_exception_confirmed' in data:
             block1_state['no_exception_confirmed'] = bool(data['no_exception_confirmed'])
+        if 'exception_conditions' in data:
+            block1_state['exception_conditions'] = data.get('exception_conditions', [])
+        if 'exception_explanation' in data:
+            block1_state['exception_explanation'] = data.get('exception_explanation', '')
+        if 'exception_evidence_files' in data:
+            block1_state['exception_evidence_files'] = data.get('exception_evidence_files', [])
         
         # Re-run assessment logic to get updated status
         if 'profile' in agent:
@@ -4121,15 +4158,27 @@ def ai_inventory(request):
     try:
         ai_systems.sort(key=lambda s: int(s.get('id') or 0), reverse=True)
     except Exception:
-        # Fallback: keep original order if ids are not sortable
         pass
-    
+
+    # Deployment context options: load from mock data file + append any unique values from agents
+    deployment_context_options = _load_deployment_context_options()
+    from_agents = set()
+    for agent in agents_data:
+        dc = agent.get('deployment_context') or ''
+        if dc.strip():
+            from_agents.add(dc.strip())
+    new_from_agents = sorted(from_agents - set(deployment_context_options))
+    if new_from_agents:
+        deployment_context_options = list(deployment_context_options) + new_from_agents
+        _save_deployment_context_options(deployment_context_options)
+
     return render(request, 'governance/pages/ai_inventory.html', {
         'company': company,
         'subpage': 'ai_inventory',
         'breadcrumbs': breadcrumbs,
         'ai_systems': ai_systems,
         'systems_need_attention': systems_need_attention,
+        'deployment_context_options': deployment_context_options,
     })
 
 
@@ -4276,15 +4325,8 @@ def ai_system_detail(request, agent_id):
         "Other / not listed:",
     ]
 
-    deployment_contexts = [
-        "Workplace (employee-facing)",
-        "Educational institution",
-        "Healthcare setting",
-        "Law enforcement / public security",
-        "Public administration / government service",
-        "General public / consumer-facing",
-        "Other:",
-    ]
+    # Q1 "In what context will this AI system be deployed?" – same options as Deployment Context list; Other: handled separately in template
+    deployment_contexts = _load_deployment_context_options()
 
     system_users = [
         "Internal employees",
@@ -4454,12 +4496,21 @@ def ai_system_detail(request, agent_id):
         {"name": "AI System", "url": request.build_absolute_uri()},
     ]
     
-    # Get organization default role from organization.json (if available)
+    # Get organization default roles from organization.json Section 3 Q2 (if available)
     from pathlib import Path
     mock_data_dir = Path(__file__).parent.parent / 'mock_data'
     org_file = mock_data_dir / 'organization.json'
-    org_default_role = 'Deployer'  # Default fallback
-    
+    role_map = {
+        'provider': 'Provider',
+        'deployer': 'Deployer',
+        'distributor': 'Distributor',
+        'importer': 'Importer'
+    }
+    org_default_role = 'Deployer'  # fallback single (for JS backward compat)
+    org_default_roles_list = []   # list of display names e.g. ['Provider', 'Deployer']
+    org_default_roles_display = 'Deployer'  # "Provider, Deployer" for question text
+    org_default_roles_json = '[]'  # JSON array for JS
+
     if org_file.exists():
         try:
             with open(org_file, 'r', encoding='utf-8') as f:
@@ -4467,19 +4518,17 @@ def ai_system_detail(request, agent_id):
                 scope_data = org_data.get('scope', {})
                 roles = scope_data.get('q2_roles', [])
                 if roles and len(roles) > 0:
-                    # Use first role as default
-                    role_map = {
-                        'provider': 'Provider',
-                        'deployer': 'Deployer',
-                        'distributor': 'Distributor',
-                        'importer': 'Importer'
-                    }
-                    org_default_role = role_map.get(roles[0].lower(), roles[0].title())
+                    org_default_roles_list = [
+                        role_map.get(r.lower(), r.title()) for r in roles
+                    ]
+                    org_default_roles_display = ', '.join(org_default_roles_list)
+                    org_default_role = org_default_roles_list[0]
+                    org_default_roles_json = json.dumps(org_default_roles_list)
         except Exception as e:
             import logging
             logger = logging.getLogger(__name__)
             logger.warning(f"Could not load organization data for default role: {e}")
-    
+
     return render(request, 'governance/pages/ai_system_detail.html', {
         'company': company,
         'subpage': 'ai_system_detail',
@@ -4487,6 +4536,9 @@ def ai_system_detail(request, agent_id):
         'agent': agent,
         'agent_id': agent_id,  # Pass agent_id to template for API calls
         'org_default_role': org_default_role,
+        'org_default_roles_display': org_default_roles_display,
+        'org_default_roles_list': org_default_roles_list,
+        'org_default_roles_json': org_default_roles_json,
         'uploaded_documents': uploaded_documents,
         'sector_options': sector_options,
         'deployment_contexts': deployment_contexts,
