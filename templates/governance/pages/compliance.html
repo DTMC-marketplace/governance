@@ -155,12 +155,58 @@
 
     <!-- Footer pagination -->
     <div class="flex items-center justify-between text-sm text-[#6B7280] mt-4">
-        <p>Showing <span id="compliance-count">{{ projects|length }}</span> project<span id="compliance-count-plural">{{ projects|length|pluralize }}</span></p>
+        <div class="flex items-center gap-4">
+            <p>Showing <span id="compliance-count">{{ projects|length }}</span> project<span id="compliance-count-plural">{{ projects|length|pluralize }}</span></p>
+            
+            <!-- Archived Toggle -->
+            {% if view_status == 'archived' %}
+                <a href="?view=active" class="text-[#F13D30] text-sm font-semibold hover:underline">← Back to Active Projects</a>
+            {% else %}
+                <a href="?view=archived" class="text-[#6B7280] text-sm hover:text-[#374151] font-medium hover:underline">View Archived Projects</a>
+            {% endif %}
+        </div>
+        
         <div class="flex items-center gap-2">
             <button id="compliance-pagination-prev" onclick="complianceChangePage(-1)" class="px-4 py-2 bg-white border border-[#B5BCC4] text-[#464E58] rounded-lg font-semibold text-sm hover:bg-[#F0F1F2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>Previous</button>
             <div id="compliance-pagination-numbers" class="flex items-center gap-2"></div>
             <button id="compliance-pagination-next" onclick="complianceChangePage(1)" class="px-4 py-2 bg-white border border-[#B5BCC4] text-[#464E58] rounded-lg font-semibold text-sm hover:bg-[#F0F1F2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>Next</button>
         </div>
+    </div>
+    
+    <!-- Floating Action Bar for Selection -->
+    <div id="compliance-selection-bar" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-white rounded-lg shadow-xl border border-[#E5E7EB] py-3 px-4 flex items-center gap-4 hidden z-50">
+        <span class="text-sm font-medium text-[#374151]"><span id="compliance-selected-count">0</span> projects selected</span>
+        <div class="h-4 border-l border-[#E5E7EB]"></div>
+        
+        {% if view_status == 'archived' %}
+            <button onclick="restoreSelectedProjects()" class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[#027A48] bg-[#ECFDF3] rounded-md hover:bg-[#D1FAE5]">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="9 14 15 14 15 20"></polyline>
+                    <path d="M20 14.66V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h6"></path>
+                </svg>
+                Restore
+            </button>
+        {% else %}
+            <button onclick="archiveSelectedProjects()" class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[#4B5563] hover:bg-[#F3F4F6] rounded-md">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 8v13H3V8"></path>
+                    <path d="M1 3h22v5H1z"></path>
+                    <line x1="10" y1="12" x2="14" y2="12"></line>
+                </svg>
+                Archive
+            </button>
+        {% endif %}
+        
+        <button onclick="deleteSelectedProjects()" class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[#B42318] hover:bg-[#FEE2E2] rounded-md">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+            Delete
+        </button>
+        
+        <div class="h-4 border-l border-[#E5E7EB]"></div>
+        <button onclick="complianceDeselectAll()" class="text-sm text-[#6B7280] hover:text-[#374151]">Cancel</button>
     </div>
 </div>
 
@@ -235,20 +281,6 @@
                 </div>
             </div>
 
-            <!-- Archived (UI only for now) -->
-            <div>
-                <h3 class="text-sm font-semibold text-[#111827] mb-3">If show archived project(s)</h3>
-                <div class="flex items-center gap-4">
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" id="compliance-archived-yes" class="w-4 h-4 text-[#F13D30] border-[#B5BCC4] rounded">
-                        <span class="text-sm text-[#22262A]">Yes</span>
-                    </label>
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" id="compliance-archived-no" class="w-4 h-4 text-[#F13D30] border-[#B5BCC4] rounded" checked>
-                        <span class="text-sm text-[#22262A]">No (Default)</span>
-                    </label>
-                </div>
-            </div>
         </div>
 
         <!-- Footer actions -->
@@ -342,10 +374,7 @@
         </div>
         <p class="px-6 pt-2 text-sm text-[#6B7280]">Select one or more AI systems to create a compliance assessment project.</p>
 
-        <!-- Selected count banner (show when at least one AI system selected) -->
-        <div id="new-compliance-selected-banner" class="hidden mx-6 mt-3 px-4 py-2.5 rounded-lg bg-[#FEEBEB] border border-[#FECACA]">
-            <span id="new-compliance-selected-text" class="text-sm font-semibold text-[#D32F2F]">0 systems selected</span>
-        </div>
+    
 
         <div class="p-6 space-y-4 overflow-y-auto flex-1 min-h-0">
             <!-- Project Name (optional) -->
@@ -378,6 +407,10 @@
                     {% empty %}
                     <div class="px-4 py-8 text-center text-sm text-[#6B7280]">No AI systems in inventory. Add systems from AI Inventory first.</div>
                     {% endfor %}
+                </div>
+                <!-- Selected count banner (show when at least one AI system selected) -->
+                <div id="new-compliance-selected-banner" class="hidden mt-3 px-4 py-2.5 rounded-lg bg-[#FEEBEB] border border-[#FECACA]">
+                    <span id="new-compliance-selected-text" class="text-sm font-semibold text-[#D32F2F]">0 systems selected</span>
                 </div>
             </div>
         </div>
@@ -608,11 +641,6 @@
         if (maxInput) maxInput.value = 100;
         // Blocker status
         setComplianceBlockerStatus('all');
-        // Archived (UI only)
-        const archivedYes = document.getElementById('compliance-archived-yes');
-        const archivedNo = document.getElementById('compliance-archived-no');
-        if (archivedYes) archivedYes.checked = false;
-        if (archivedNo) archivedNo.checked = true;
     }
 
     function applyComplianceFilters() {
@@ -748,15 +776,111 @@
     }
     window.applyComplianceSort = applyComplianceSort;
 
+    window.restoreSelectedProjects = function() {
+        if (selectedProjectIds.length === 0) return;
+        
+        const btn = document.querySelector('#compliance-selection-bar button[onclick="restoreSelectedProjects()"]');
+        const originalText = btn.innerText;
+        btn.innerText = 'Restoring...';
+        btn.disabled = true;
+
+        fetch('/api/compliance/project/restore/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ project_ids: selectedProjectIds })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert('Failed to restore: ' + data.error);
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Error restoring projects');
+            btn.innerText = originalText;
+            btn.disabled = false;
+        });
+    };
+
     window.archiveSelectedProjects = function() {
         if (selectedProjectIds.length === 0) return;
-        alert('Archive functionality: ' + selectedProjectIds.length + ' project(s) selected. (Demo)');
+        
+        const btn = document.querySelector('#compliance-selection-bar button[onclick="archiveSelectedProjects()"]');
+        const originalText = btn.innerText;
+        btn.innerText = 'Archiving...';
+        btn.disabled = true;
+
+        fetch('/api/compliance/project/archive/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ project_ids: selectedProjectIds })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                // UI: Reset defaults (No archived shown) and reload to reflect changes
+                // If "Show Archived" is No, archived projects will disappear
+                // If "Show Archived" is Yes, they might stay but we need to know their status?
+                // For valid refresh, simplest is reload
+                window.location.reload();
+            } else {
+                alert('Failed to archive: ' + data.error);
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Error archiving projects');
+            btn.innerText = originalText;
+            btn.disabled = false;
+        });
     };
 
     window.deleteSelectedProjects = function() {
         if (selectedProjectIds.length === 0) return;
         if (!confirm('Delete ' + selectedProjectIds.length + ' selected project(s)? This cannot be undone.')) return;
-        alert('Delete functionality is demo only. Selected: ' + selectedProjectIds.join(', '));
+        
+        const btn = document.querySelector('#compliance-selection-bar button[onclick="deleteSelectedProjects()"]');
+        const originalText = btn.innerText;
+        btn.innerText = 'Deleting...';
+        btn.disabled = true;
+
+        fetch('/api/compliance/project/delete/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ project_ids: selectedProjectIds })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert('Failed to delete: ' + data.error);
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Error deleting projects');
+            btn.innerText = originalText;
+            btn.disabled = false;
+        });
     };
 
     // New Compliance Project modal
@@ -798,15 +922,63 @@
     }
     function submitNewComplianceProject() {
         const nameInput = document.getElementById('new-compliance-project-name');
-        const name = (nameInput && nameInput.value || '').trim() || 'Compliance Project';
+        const name = (nameInput && nameInput.value || '').trim(); // Send empty if not provided, backend handles default
         const selected = Array.from(document.querySelectorAll('input[name="new-compliance-ai-system"]:checked')).map(cb => cb.value);
+        
         if (selected.length === 0) {
             alert('Please select at least one AI system.');
             return;
         }
-        closeNewComplianceProjectModal();
-        alert('Project "' + name + '" created with ' + selected.length + ' AI system(s). (Demo – backend integration pending.)');
-        window.location.reload();
+        
+        const btn = document.getElementById('new-compliance-project-create');
+        const originalText = btn.innerText;
+        btn.innerText = 'Creating...';
+        btn.disabled = true;
+        
+        fetch('/api/compliance/project/add/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken') // Ensure getCookie exists or use {{ csrf_token }} if in template context
+            },
+            body: JSON.stringify({
+                name: name,
+                ai_system_ids: selected
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                closeNewComplianceProjectModal();
+                window.location.reload();
+            } else {
+                alert('Failed to create project: ' + data.error);
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Error creating project');
+            btn.innerText = originalText;
+            btn.disabled = false;
+        });
+    }
+
+    // Helper for CSRF if not already present
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
     }
 
     document.addEventListener('DOMContentLoaded', function() {
@@ -849,6 +1021,16 @@
             cb.addEventListener('change', updateNewComplianceSelectedBanner);
         });
         updateComplianceDirectionUI();
+
+        // Row click listener
+        document.querySelectorAll('.compliance-row').forEach(row => {
+            row.addEventListener('click', function() {
+                const projectId = this.dataset.projectId;
+                if (projectId) {
+                    window.location.href = `/compliance/${projectId}/`;
+                }
+            });
+        });
         complianceRenderPage();
         complianceRenderPageNumbers();
         complianceUpdatePaginationButtons();

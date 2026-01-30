@@ -1,0 +1,406 @@
+{
+    "1": {
+        "id": 1,
+        "name": "Credit_Scorer_v2.0",
+        "ai_system": "Credit Scoring AI",
+        "role": "Provider",
+        "regulatory_profile": [
+            "High-Risk",
+            "Biometrics"
+        ],
+        "overall_progress": 65,
+        "stats": {
+            "todo": 4,
+            "in_progress": 5,
+            "blocked": 2,
+            "done": 5
+        },
+        "tasks": [
+            {
+                "id": 1,
+                "name": "Data Governance Checklist",
+                "category": "Data",
+                "category_class": "bg-[#EFF8FF] text-[#175CD3]",
+                "status": "Done",
+                "status_class": "bg-[#ECFDF3] text-[#027A48]",
+                "linked_articles": [
+                    "Art. 10",
+                    "Art. 12"
+                ],
+                "evidence": "Uploaded",
+                "evidence_status": "Uploaded",
+                "evidence_class": "text-[#027A48]",
+                "assignee": "Not assigned yet",
+                "assignee_initials": null,
+                "assignee_class": "bg-[#F2F4F7] text-[#475467]"
+            },
+            {
+                "id": 2,
+                "name": "Technical File Generator",
+                "category": "Legal",
+                "category_class": "bg-[#F9F5FF] text-[#6941C6]",
+                "status": "In Progress",
+                "status_class": "bg-[#EFF8FF] text-[#175CD3]",
+                "linked_articles": [
+                    "Art. 11",
+                    "Art. 53"
+                ],
+                "evidence": "Uploaded",
+                "evidence_status": "Uploaded",
+                "evidence_class": "text-[#027A48]",
+                "assignee": "Michael Torres",
+                "assignee_initials": "MT",
+                "assignee_class": "bg-[#F04438] text-white"
+            },
+            {
+                "id": 3,
+                "name": "Compliance Roadmap",
+                "category": "Risk",
+                "category_class": "bg-[#FEF6EE] text-[#B93815]",
+                "status": "In Progress",
+                "status_class": "bg-[#EFF8FF] text-[#175CD3]",
+                "linked_articles": [
+                    "Art. 9"
+                ],
+                "evidence": "Missing",
+                "evidence_status": "Missing",
+                "evidence_class": "text-[#D92D20]",
+                "assignee": "Sarah Chen",
+                "assignee_initials": "SC",
+                "assignee_class": "bg-[#F79009] text-white"
+            },
+            {
+                "id": 4,
+                "name": "Version History (Traceability)",
+                "category": "Data",
+                "category_class": "bg-[#EFF8FF] text-[#175CD3]",
+                "status": "Blocked",
+                "status_class": "bg-[#FEE4E2] text-[#B42318]",
+                "linked_articles": [
+                    "Art. 12",
+                    "Art. 19"
+                ],
+                "evidence": "Missing",
+                "evidence_status": "Missing",
+                "evidence_class": "text-[#D92D20]",
+                "assignee": "Emma Wilson",
+                "assignee_initials": "EW",
+                "assignee_class": "bg-[#F04438] text-white"
+            },
+            {
+                "id": 5,
+                "name": "Log Archive (Immutable)",
+                "category": "Data",
+                "category_class": "bg-[#EFF8FF] text-[#175CD3]",
+                "status": "Done",
+                "status_class": "bg-[#ECFDF3] text-[#027A48]",
+                "linked_articles": [
+                    "Art. 12",
+                    "Art. 20"
+                ],
+                "evidence": "Uploaded",
+                "evidence_status": "Uploaded",
+                "evidence_class": "text-[#027A48]",
+                "assignee": "Michael Torres",
+                "assignee_initials": "MT",
+                "assignee_class": "bg-[#F04438] text-white"
+            },
+            {
+                "id": 6,
+                "name": "Instructions for Use (IFU)",
+                "category": "Legal",
+                "category_class": "bg-[#F9F5FF] text-[#6941C6]",
+                "status": "To-Do",
+                "status_class": "bg-[#F2F4F7] text-[#344054]",
+                "linked_articles": [
+                    "Art. 13"
+                ],
+                "evidence": "Missing",
+                "evidence_status": "Missing",
+                "evidence_class": "text-[#D92D20]",
+                "assignee": "James Park",
+                "assignee_initials": "JP",
+                "assignee_class": "bg-[#667085] text-white"
+            },
+            {
+                "id": 7,
+                "name": "Human Oversight",
+                "category": "Risk",
+                "category_class": "bg-[#FEF6EE] text-[#B93815]",
+                "status": "To-Do",
+                "status_class": "bg-[#FEE4E2] text-[#B42318]",
+                "linked_articles": [
+                    "Art. 14"
+                ],
+                "evidence": "Missing",
+                "evidence_status": "Missing",
+                "evidence_class": "text-[#D92D20]",
+                "assignee": "Sarah Chen",
+                "assignee_initials": "SC",
+                "assignee_class": "bg-[#F79009] text-white"
+            },
+            {
+                "id": 8,
+                "name": "Test Result Repository",
+                "category": "Data",
+                "category_class": "bg-[#EFF8FF] text-[#175CD3]",
+                "status": "Done",
+                "status_class": "bg-[#ECFDF3] text-[#027A48]",
+                "linked_articles": [
+                    "Art. 15"
+                ],
+                "evidence": "Uploaded",
+                "evidence_status": "Uploaded",
+                "evidence_class": "text-[#027A48]",
+                "assignee": "Emma Wilson",
+                "assignee_initials": "EW",
+                "assignee_class": "bg-[#F04438] text-white"
+            },
+            {
+                "id": 9,
+                "name": "QMS Policy Manager",
+                "category": "Legal",
+                "category_class": "bg-[#F9F5FF] text-[#6941C6]",
+                "status": "Done",
+                "status_class": "bg-[#ECFDF3] text-[#027A48]",
+                "linked_articles": [
+                    "Art. 17"
+                ],
+                "evidence": "Uploaded",
+                "evidence_status": "Uploaded",
+                "evidence_class": "text-[#027A48]",
+                "assignee": "Michael Torres",
+                "assignee_initials": "MT",
+                "assignee_class": "bg-[#F04438] text-white"
+            }
+        ]
+    },
+    "2": {
+        "id": 2,
+        "name": "Resume_Screener_Compliance",
+        "ai_system": "Resume Screening AI",
+        "role": "Deployer",
+        "regulatory_profile": [
+            "High-Risk",
+            "Employment"
+        ],
+        "overall_progress": 45,
+        "stats": {
+            "todo": 8,
+            "in_progress": 4,
+            "blocked": 5,
+            "done": 3
+        },
+        "tasks": [
+            {
+                "id": 1,
+                "name": "Fundamental Rights Impact Assessment",
+                "category": "Risk",
+                "category_class": "bg-[#FEF6EE] text-[#B93815]",
+                "status": "Blocked",
+                "status_class": "bg-[#FEE4E2] text-[#B42318]",
+                "linked_articles": [
+                    "Art. 27",
+                    "Art. 29"
+                ],
+                "evidence": "Missing",
+                "evidence_status": "Missing",
+                "evidence_class": "text-[#D92D20]",
+                "assignee": "Sarah Chen",
+                "assignee_initials": "SC",
+                "assignee_class": "bg-[#F79009] text-white"
+            },
+            {
+                "id": 2,
+                "name": "Worker Consultation Protocol",
+                "category": "Legal",
+                "category_class": "bg-[#F9F5FF] text-[#6941C6]",
+                "status": "To-Do",
+                "status_class": "bg-[#F2F4F7] text-[#344054]",
+                "linked_articles": [
+                    "Art. 26"
+                ],
+                "evidence": "Missing",
+                "evidence_status": "Missing",
+                "evidence_class": "text-[#D92D20]",
+                "assignee": "Emma Wilson",
+                "assignee_initials": "EW",
+                "assignee_class": "bg-[#F04438] text-white"
+            }
+        ]
+    },
+    "3": {
+        "id": 3,
+        "name": "ChatBot_Transparency_Check",
+        "ai_system": "Customer Service Chatbot",
+        "role": "Deployer",
+        "regulatory_profile": [
+            "Limited transparency"
+        ],
+        "overall_progress": 50,
+        "stats": {
+            "todo": 0,
+            "in_progress": 0,
+            "blocked": 1,
+            "done": 1
+        },
+        "tasks": [
+            {
+                "id": 1,
+                "name": "User Notification Design",
+                "category": "Legal",
+                "category_class": "bg-[#F9F5FF] text-[#6941C6]",
+                "status": "Done",
+                "status_class": "bg-[#ECFDF3] text-[#027A48]",
+                "linked_articles": [
+                    "Art. 52"
+                ],
+                "evidence": "Uploaded",
+                "evidence_status": "Uploaded",
+                "evidence_class": "text-[#027A48]",
+                "assignee": "aaa",
+                "assignee_initials": "A",
+                "assignee_class": "bg-[#7F56D9] text-white",
+                "notes": [
+                    {
+                        "id": 1,
+                        "content": "Completed initial review of data governance requirements",
+                        "author": "Sarah Chen",
+                        "timestamp": "2 days ago"
+                    },
+                    {
+                        "id": 2,
+                        "content": "All checklist items verified and approved",
+                        "author": "Michael Torres",
+                        "timestamp": "1 day ago"
+                    },
+                    {
+                        "id": 3,
+                        "content": "test",
+                        "author": "Current User",
+                        "timestamp": "Just now"
+                    },
+                    {
+                        "id": 4,
+                        "content": "test2",
+                        "author": "Current User",
+                        "timestamp": "Just now"
+                    }
+                ]
+            },
+            {
+                "id": 2,
+                "name": "Interaction Disclosure",
+                "category": "Legal",
+                "category_class": "bg-[#F9F5FF] text-[#6941C6]",
+                "status": "Blocked",
+                "status_class": "bg-[#FEE4E2] text-[#B42318]",
+                "linked_articles": [
+                    "Art. 52"
+                ],
+                "evidence": "Uploaded",
+                "evidence_status": "Uploaded",
+                "evidence_class": "text-[#027A48]",
+                "assignee": "Michael Torres",
+                "assignee_initials": "MT",
+                "assignee_class": "bg-[#F04438] text-white"
+            }
+        ],
+        "custom_assignees": [
+            {
+                "name": "aaa",
+                "email": "asd2@gmail.com",
+                "initials": "A",
+                "class": "bg-[#7F56D9] text-white"
+            }
+        ]
+    },
+    "4": {
+        "id": 4,
+        "name": "Predictive_Maintenance_Review",
+        "ai_system": "Predictive Maintenance System",
+        "role": "Provider",
+        "regulatory_profile": [
+            "Minimal"
+        ],
+        "overall_progress": 100,
+        "stats": {
+            "todo": 0,
+            "in_progress": 0,
+            "blocked": 0,
+            "done": 12
+        },
+        "tasks": [
+            {
+                "id": 1,
+                "name": "Risk Documentation",
+                "category": "Risk",
+                "category_class": "bg-[#FEF6EE] text-[#B93815]",
+                "status": "Done",
+                "status_class": "bg-[#ECFDF3] text-[#027A48]",
+                "linked_articles": [
+                    "Art. 2"
+                ],
+                "evidence": "Uploaded",
+                "evidence_status": "Uploaded",
+                "evidence_class": "text-[#027A48]",
+                "assignee": "Michael Torres",
+                "assignee_initials": "MT",
+                "assignee_class": "bg-[#F04438] text-white"
+            }
+        ]
+    },
+    "5": {
+        "id": 5,
+        "name": "test agent Project",
+        "ai_system": "test agent",
+        "role": "Deployer",
+        "regulatory_profile": [
+            "High-Risk"
+        ],
+        "overall_progress": 0,
+        "stats": {
+            "todo": 2,
+            "in_progress": 0,
+            "blocked": 0,
+            "done": 0
+        },
+        "tasks": [
+            {
+                "id": 1,
+                "name": "Initial Risk Assessment",
+                "category": "Risk",
+                "category_class": "bg-[#FEF6EE] text-[#B93815]",
+                "status": "To-Do",
+                "status_class": "bg-[#F2F4F7] text-[#344054]",
+                "linked_articles": [
+                    "Art. 9"
+                ],
+                "evidence": "Missing",
+                "evidence_status": "Missing",
+                "evidence_class": "text-[#D92D20]",
+                "assignee": "Not assigned yet",
+                "assignee_initials": null,
+                "assignee_class": "bg-[#F2F4F7] text-[#475467]"
+            },
+            {
+                "id": 2,
+                "name": "Data Governance Setup",
+                "category": "Data",
+                "category_class": "bg-[#EFF8FF] text-[#175CD3]",
+                "status": "To-Do",
+                "status_class": "bg-[#F2F4F7] text-[#344054]",
+                "linked_articles": [
+                    "Art. 10"
+                ],
+                "evidence": "Missing",
+                "evidence_status": "Missing",
+                "evidence_class": "text-[#D92D20]",
+                "assignee": "Not assigned yet",
+                "assignee_initials": null,
+                "assignee_class": "bg-[#F2F4F7] text-[#475467]"
+            }
+        ],
+        "custom_assignees": []
+    }
+}

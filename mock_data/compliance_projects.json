@@ -1,50 +1,35 @@
 [
-  {
-    "id": 1,
-    "name": "Credit_Scorer_v2.0",
-    "updated": "Updated Jan 25",
-    "source_system": "Credit Scoring AI",
-    "risk_label": "High-Risk",
-    "risk_class": "bg-[#FEE4E2] text-[#B42318]",
-    "progress": 65,
-    "progress_label": "65% Complete",
-    "blockers_label": "3 items to complete",
-    "blockers_class": "text-[#B42318]"
-  },
-  {
-    "id": 2,
-    "name": "Resume_Screener_Compliance",
-    "updated": "Updated Jan 26",
-    "source_system": "Resume Screening AI",
-    "risk_label": "High-Risk",
-    "risk_class": "bg-[#FEE4E2] text-[#B42318]",
-    "progress": 45,
-    "progress_label": "45% Complete",
-    "blockers_label": "5 items to complete",
-    "blockers_class": "text-[#B42318]"
-  },
-  {
-    "id": 3,
-    "name": "ChatBot_Transparency_Check",
-    "updated": "Updated Jan 27",
-    "source_system": "Customer Service Chatbot",
-    "risk_label": "Limited transparency",
-    "risk_class": "bg-[#FEF0C7] text-[#B54708]",
-    "progress": 90,
-    "progress_label": "90% Complete",
-    "blockers_label": "1 item to complete",
-    "blockers_class": "text-[#B42318]"
-  },
-  {
-    "id": 4,
-    "name": "Predictive_Maintenance_Review",
-    "updated": "Updated Jan 20",
-    "source_system": "Predictive Maintenance System",
-    "risk_label": "Minimal",
-    "risk_class": "bg-[#ECFDF3] text-[#027A48]",
-    "progress": 100,
-    "progress_label": "100% Complete",
-    "blockers_label": "No Blocker",
-    "blockers_class": "text-[#027A48]"
-  }
+    {
+        "id": 1,
+        "name": "Credit_Scorer_v2.0",
+        "updated": "Updated Jan 25",
+        "source_system": "Credit Scoring AI",
+        "risk_label": "High-Risk",
+        "risk_class": "bg-[#FEE4E2] text-[#B42318]"
+    },
+    {
+        "id": 2,
+        "name": "Resume_Screener_Compliance",
+        "updated": "Updated Jan 26",
+        "source_system": "Resume Screening AI",
+        "risk_label": "High-Risk",
+        "risk_class": "bg-[#FEE4E2] text-[#B42318]"
+    },
+    {
+        "id": 3,
+        "name": "ChatBot_Transparency_Check",
+        "updated": "Updated Jan 27",
+        "source_system": "Customer Service Chatbot",
+        "risk_label": "Limited transparency",
+        "risk_class": "bg-[#FEF0C7] text-[#B54708]",
+        "archived": true
+    },
+    {
+        "id": 4,
+        "name": "Predictive_Maintenance_Review",
+        "updated": "Updated Jan 20",
+        "source_system": "Predictive Maintenance System",
+        "risk_label": "Minimal",
+        "risk_class": "bg-[#ECFDF3] text-[#027A48]"
+    }
 ]

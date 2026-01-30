@@ -1,0 +1,932 @@
+{% extends "governance/base.html" %}
+{% load static %}
+
+{% block title %}{{ project.name }} - Compliance Detail{% endblock %}
+
+{% block dashboard_content %}
+<div class="flex flex-col gap-6">
+    <!-- Breadcrumb & Navigation -->
+    <div class="flex items-center gap-3">
+        <button class="w-6 h-6 bg-transparent border-none cursor-pointer p-0 flex items-center justify-center" onclick="history.back()">
+            <img src="{% static 'governance/img/arrow-left.svg' %}" alt="Back" class="w-3.5 h-3.5">
+        </button>
+        <button class="w-6 h-6 bg-transparent border-none cursor-pointer p-0 flex items-center justify-center" onclick="history.forward()">
+            <img src="{% static 'governance/img/arrow-right-gray.svg' %}" alt="Forward" class="w-3.5 h-3.5">
+        </button>
+        <div class="flex items-center gap-2 text-sm">
+            <a href="{% url 'compliance' %}" class="text-[#6B7280] hover:text-[#F13D30] transition-colors">Compliance</a>
+            <span class="text-[#D1D5DB]">/</span>
+            <span class="font-semibold text-[#F13D30]">{{ project.name }}</span>
+        </div>
+    </div>
+
+    <!-- Header Info -->
+    <div class="flex flex-col gap-2">
+        <h1 class="text-2xl font-bold text-[#111827]">{{ project.name }}</h1>
+        <div class="flex items-center gap-4 text-sm text-[#6B7280]">
+            <div class="flex items-center gap-1">
+                <span class="font-medium">AI System:</span>
+                <span class="text-[#111827] font-semibold">{{ project.ai_system }}</span>
+            </div>
+            <div class="w-1 h-1 rounded-full bg-[#D1D5DB]"></div>
+            <div class="flex items-center gap-1">
+                <span class="font-medium">Role:</span>
+                <span class="text-[#111827] font-semibold">{{ project.role }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Stats Card -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Regulatory Profile -->
+        <div class="bg-white rounded-xl border border-[#E5E7EB] p-6 shadow-sm">
+            <h3 class="text-xs font-semibold text-[#6B7280] uppercase tracking-wider mb-4">Regulatory Profile</h3>
+            <div class="flex flex-wrap gap-2">
+                {% for badge in project.regulatory_profile %}
+                <span class="px-3 py-1 rounded-full text-xs font-semibold bg-[#FEF0C7] text-[#B54708] border border-[#FEDF89]">{{ badge }}</span>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Progress -->
+        <div class="bg-white rounded-xl border border-[#E5E7EB] p-6 shadow-sm">
+            <h3 class="text-xs font-semibold text-[#6B7280] uppercase tracking-wider mb-4">Overall Compliance Progress</h3>
+            <div class="flex items-center gap-4">
+                <div class="flex-1 h-2 rounded-full bg-[#F3F4F6] overflow-hidden">
+                    <div class="h-2 rounded-full bg-[#F13D30]" style="width: {{ project.overall_progress }}%;"></div>
+                </div>
+                <span class="text-lg font-bold text-[#F13D30]">{{ project.overall_progress }}%</span>
+            </div>
+        </div>
+
+        <!-- Stats Breakdown -->
+        <div class="bg-white rounded-xl border border-[#E5E7EB] p-6 shadow-sm">
+            <div class="grid grid-cols-4 gap-2">
+                <div class="text-center">
+                    <div class="text-lg font-bold text-[#111827]">{{ project.stats.todo }}</div>
+                    <div class="text-[10px] font-semibold text-[#6B7280] uppercase">To-Do</div>
+                    <div class="h-1 w-full bg-[#F2F4F7] rounded-full mt-1"></div>
+                </div>
+                <div class="text-center">
+                    <div class="text-lg font-bold text-[#175CD3]">{{ project.stats.in_progress }}</div>
+                    <div class="text-[10px] font-semibold text-[#6B7280] uppercase">In Progress</div>
+                    <div class="h-1 w-full bg-[#EFF8FF] rounded-full mt-1"></div>
+                </div>
+                <div class="text-center">
+                    <div class="text-lg font-bold text-[#B42318]">{{ project.stats.blocked }}</div>
+                    <div class="text-[10px] font-semibold text-[#6B7280] uppercase">Blocked</div>
+                    <div class="h-1 w-full bg-[#FEE4E2] rounded-full mt-1"></div>
+                </div>
+                <div class="text-center">
+                    <div class="text-lg font-bold text-[#027A48]">{{ project.stats.done }}</div>
+                    <div class="text-[10px] font-semibold text-[#6B7280] uppercase">Done</div>
+                    <div class="h-1 w-full bg-[#ECFDF3] rounded-full mt-1"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tasks Table Card -->
+    <div class="bg-white rounded-xl border border-[#E5E7EB] shadow-sm mb-8">
+        <!-- Toolbar -->
+        <div class="p-4 border-b border-[#E5E7EB] flex flex-col sm:flex-row justify-between items-center gap-4">
+            <h2 class="text-lg font-bold text-[#111827]">Compliance Tasks / Items ({{ project.tasks|length }})</h2>
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+                <div class="relative flex-1 sm:w-64">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#9CA3AF]">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="m21 21-4.35-4.35"></path>
+                    </svg>
+                    <input type="text" id="task-search-input" placeholder="Search tasks..." class="w-full pl-10 pr-4 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F13D30]/20 focus:border-[#F13D30]">
+                </div>
+                <button onclick="applyFilters()" class="bg-[#F13D30] text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-[#DC180A] transition-colors">Search</button>
+                <button onclick="openFilterModal()" class="bg-white border border-[#D1D5DB] text-[#374151] px-4 py-2 rounded-lg text-sm font-semibold hover:bg-[#F9FAFB] flex items-center gap-2">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                    </svg>
+                    Filter
+                </button>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="overflow-visible">
+            <table class="w-full text-left">
+                <thead class="bg-[#F9FAFB] border-b border-[#E5E7EB]">
+                    <tr>
+                        <th class="px-6 py-4 text-xs font-semibold text-[#6B7280] uppercase tracking-wider">Task Name</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-[#6B7280] uppercase tracking-wider">Category</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-[#6B7280] uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-[#6B7280] uppercase tracking-wider">Linked Article</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-[#6B7280] uppercase tracking-wider">Evidence</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-[#6B7280] uppercase tracking-wider">Assignee</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-[#6B7280] uppercase tracking-wider">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-[#E5E7EB]">
+                    {% for task in project.tasks %}
+                    <tr class="hover:bg-[#F9FAFB] transition-colors">
+                        <td class="px-6 py-4">
+                            <span class="text-sm font-semibold text-[#111827]">{{ task.name }}</span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="px-2.5 py-1 rounded-full text-xs font-medium {{ task.category_class }}">{{ task.category }}</span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="relative" x-data="{ open: false }">
+                                <button @click="open = !open" @click.outside="open = false" 
+                                    class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold border border-transparent transition-all w-32 justify-between {{ task.status_class }}"
+                                    data-task-id="{{ task.id }}">
+                                    <span class="truncate status-text">{{ task.status }}</span>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-3 h-3 flex-shrink-0 transition-transform duration-200" :class="open ? 'rotate-180' : ''">
+                                        <polyline points="6 9 12 15 18 9"></polyline>
+                                    </svg>
+                                </button>
+                                <!-- Dropdown -->
+                                <div x-show="open" style="display: none;" 
+                                    x-transition:enter="transition ease-out duration-100"
+                                    x-transition:enter-start="transform opacity-0 scale-95"
+                                    x-transition:enter-end="transform opacity-100 scale-100"
+                                    x-transition:leave="transition ease-in duration-75"
+                                    x-transition:leave-start="transform opacity-100 scale-100"
+                                    x-transition:leave-end="transform opacity-0 scale-95"
+                                    class="absolute top-full left-0 mt-1 w-36 bg-white rounded-lg shadow-xl border border-gray-100 z-50 py-1 overflow-hidden">
+                                    
+                                    <button @click="updateTaskStatus($el, 'Done'); open=false" class="w-full text-left px-3 py-2 text-xs font-medium text-[#027A48] hover:bg-[#ECFDF3] flex items-center gap-2 transition-colors">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-[#027A48]"></span> Done
+                                    </button>
+                                    <button @click="updateTaskStatus($el, 'In Progress'); open=false" class="w-full text-left px-3 py-2 text-xs font-medium text-[#175CD3] hover:bg-[#EFF8FF] flex items-center gap-2 transition-colors">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-[#175CD3]"></span> In Progress
+                                    </button>
+                                    <button @click="updateTaskStatus($el, 'Blocked'); open=false" class="w-full text-left px-3 py-2 text-xs font-medium text-[#B42318] hover:bg-[#FEE4E2] flex items-center gap-2 transition-colors">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-[#B42318]"></span> Blocked
+                                    </button>
+                                    <button @click="updateTaskStatus($el, 'To-Do'); open=false" class="w-full text-left px-3 py-2 text-xs font-medium text-[#344054] hover:bg-[#F2F4F7] flex items-center gap-2 transition-colors">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-[#344054]"></span> To-Do
+                                    </button>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="flex flex-wrap gap-1">
+                                {% for art in task.linked_articles %}
+                                <span class="px-2 py-0.5 rounded bg-[#EFF8FF] text-[#175CD3] text-[10px] font-bold border border-[#B2DDFF]">{{ art }}</span>
+                                {% endfor %}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-2 text-sm {{ task.evidence_class }}">
+                                {% if task.evidence_status == 'Uploaded' %}
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4 text-[#027A48]">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                                    <polyline points="10 9 9 9 8 9"></polyline>
+                                </svg>
+                                <span class="font-medium">Uploaded</span>
+                                {% else %}
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4 text-[#D92D20]">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                </svg>
+                                <span class="font-medium text-[#D92D20]">Missing</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            {% if task.assignee_initials %}
+                            <div class="flex items-center gap-2">
+                                <div class="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold {{ task.assignee_class }}">
+                                    {{ task.assignee_initials }}
+                                </div>
+                                <span class="text-sm text-[#374151]">{{ task.assignee }}</span>
+                            </div>
+                            {% else %}
+                            <span class="text-sm text-[#6B7280] italic">{{ task.assignee }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-2">
+                                <button onclick="openAssigneeModal('{{ task.id }}', '{{ task.name|escapejs }}')" class="p-2 rounded-lg hover:bg-[#F3F4F6] text-[#6B7280] transition-colors border">
+                                    <img src="{% static 'governance/img/assignee.svg' %}" alt="">
+                                </button>
+                                <button onclick="openNotesModal('{{ task.id }}')" class="p-2 rounded-lg hover:bg-[#F3F4F6] text-[#6B7280] transition-colors border">
+                                    <img src="{% static 'governance/img/chat.svg' %}" alt="">
+                                </button>
+                                <button class="p-2 rounded-lg bg-[#F13D30] text-white hover:bg-[#DC180A] transition-colors">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                                        <polyline points="9 18 15 12 9 6"></polyline>
+                                    </svg>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Assignee Modal -->
+<div id="assignee-modal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeAssigneeModal()"></div>
+    
+    <!-- Main View: Select Assignee -->
+    <div id="assignee-main-view" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden filter-modal-enter">
+         <div class="px-6 py-4 border-b border-[#E5E7EB] flex items-center justify-between bg-white/50">
+            <h2 class="text-xl font-bold text-[#111827]">Add / Change Assignee</h2>
+            <button onclick="closeAssigneeModal()" class="p-2 hover:bg-[#F3F4F6] rounded-lg text-[#6B7280] transition-colors">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-5 h-5">
+                    <path d="M18 6L6 18M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        
+        <div class="p-6">
+            <div class="mb-4 text-sm text-[#4B5563]">
+                Select a new assignee for: <span id="assignee-task-name" class="font-bold text-[#111827]">Task Name</span>
+            </div>
+            
+            <div id="assignee-list" class="flex flex-col gap-3 max-h-[60vh] overflow-y-auto mb-4">
+                <!-- Assignee items populated by JS -->
+                <div class="text-center py-4 text-gray-500 text-sm">Loading assignees...</div>
+            </div>
+            
+            <button onclick="switchToAddAssigneeView()" class="w-full py-2.5 border border-[#D1D5DB] rounded-xl text-sm font-semibold text-[#4B5563] hover:bg-[#F9FAFB] transition-colors flex items-center justify-center gap-2">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-4 h-4">
+                    <path d="M12 5v14M5 12h14"></path>
+                </svg>
+                Add New Assignee
+            </button>
+        
+             <div class="flex justify-end mt-4">
+                 <button onclick="closeAssigneeModal()" class="px-5 py-2 text-sm font-semibold text-[#6B7280] hover:bg-[#F3F4F6] rounded-lg transition-colors">Cancel</button>
+             </div>
+        </div>
+    </div>
+    
+    <!-- Add View: New Assignee Form -->
+    <div id="assignee-add-view" class="hidden absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden">
+         <div class="px-6 py-4 border-b border-[#E5E7EB] flex items-center justify-between bg-white/50">
+            <h2 class="text-xl font-bold text-[#111827]">Add New Assignee</h2>
+            <button onclick="closeAssigneeModal()" class="p-2 hover:bg-[#F3F4F6] rounded-lg text-[#6B7280] transition-colors">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-5 h-5">
+                    <path d="M18 6L6 18M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        
+        <div class="p-6">
+            <div class="mb-4 text-sm text-[#4B5563]">
+                Add a new assignee for: <span id="add-assignee-task-name" class="font-bold text-[#111827]">Task Name</span>
+            </div>
+            
+            <div class="flex flex-col gap-4">
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-sm font-semibold text-[#374151]">Name <span class="text-red-500">*</span></label>
+                    <input type="text" id="new-assignee-name" placeholder="Enter full name" class="w-full px-4 py-2.5 bg-white border border-[#D1D5DB] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F13D30]/20 focus:border-[#F13D30]">
+                </div>
+                 <div class="flex flex-col gap-1.5">
+                    <label class="text-sm font-semibold text-[#374151]">Email <span class="text-red-500">*</span></label>
+                    <input type="email" id="new-assignee-email" placeholder="Enter email address" class="w-full px-4 py-2.5 bg-white border border-[#D1D5DB] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F13D30]/20 focus:border-[#F13D30]">
+                </div>
+            </div>
+            
+            <div class="flex items-center justify-between mt-8 gap-3">
+                 <button onclick="switchToMainAssigneeView()" class="w-full px-5 py-2.5 bg-[#F3F4F6] text-[#4B5563] text-sm font-bold rounded-xl hover:bg-[#E5E7EB] transition-colors">Back</button>
+                 <button onclick="saveNewAssignee()" class="w-full px-5 py-2.5 bg-[#F13D30] text-white text-sm font-bold rounded-xl hover:bg-[#DC180A] shadow-md shadow-[#F13D30]/20 transition-all hover:-translate-y-0.5">Add Assignee</button>
+             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Notes Modal -->
+<div id="notes-modal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeNotesModal()"></div>
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-white rounded-2xl shadow-xl overflow-hidden filter-modal-enter">
+        <div class="px-6 py-4 border-b border-[#E5E7EB] flex items-center justify-between bg-white/50">
+            <h2 class="text-xl font-bold text-[#111827]">Add Internal Notes</h2>
+            <button onclick="closeNotesModal()" class="p-2 hover:bg-[#F3F4F6] rounded-lg text-[#6B7280] transition-colors">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-5 h-5">
+                    <path d="M18 6L6 18M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        
+        <div class="p-6 flex flex-col gap-6 max-h-[80vh] overflow-y-auto">
+            <div class="flex flex-col gap-2">
+                <h3 class="text-sm font-semibold text-[#374151]">Notes</h3>
+                <div id="notes-list" class="flex flex-col gap-3">
+                    <!-- Notes will be loaded here -->
+                    <div class="text-center py-4 text-gray-500 text-sm">Loading notes...</div>
+                </div>
+            </div>
+            
+            <div class="flex flex-col gap-2">
+                <h3 class="text-sm font-semibold text-[#374151]">Add New Note</h3>
+                <textarea id="note-content" rows="4" placeholder="Enter your internal note here..." class="w-full px-4 py-3 bg-white border border-[#D1D5DB] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F13D30]/20 focus:border-[#F13D30] resize-none"></textarea>
+            </div>
+        </div>
+        
+        <div class="px-6 py-4 bg-[#F9FAFB] flex items-center justify-end gap-3 border-t border-[#E5E7EB]">
+            <button onclick="closeNotesModal()" class="px-5 py-2.5 text-sm font-semibold text-[#6B7280] hover:text-[#111827] transition-colors">Cancel</button>
+            <button onclick="saveNote()" class="px-6 py-2.5 bg-[#F13D30] text-white text-sm font-bold rounded-xl hover:bg-[#DC180A] shadow-md shadow-[#F13D30]/20 transition-all hover:-translate-y-0.5">Save Note</button>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Modal -->
+<div id="filter-modal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in duration-200">
+        <div class="px-6 py-4 border-b border-[#E5E7EB] flex items-center justify-between bg-white/50">
+            <h2 class="text-xl font-bold text-[#111827]">Filter Compliance Items</h2>
+            <button onclick="closeFilterModal()" class="p-2 hover:bg-[#F3F4F6] rounded-lg text-[#6B7280] transition-colors">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-5 h-5">
+                    <path d="M18 6L6 18M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <div class="p-6 flex flex-col gap-5">
+            <div class="flex flex-col gap-2">
+                <label class="text-xs font-bold text-[#6B7280] uppercase tracking-wider">Category</label>
+                <select id="filter-category" class="w-full px-4 py-2.5 bg-[#F9FAFB] border border-[#D1D5DB] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F13D30]/20 focus:border-[#F13D30] appearance-none cursor-pointer">
+                    <option value="">All Categories</option>
+                    <option value="Data">Data</option>
+                    <option value="Legal">Legal</option>
+                    <option value="Risk">Risk</option>
+                </select>
+            </div>
+            <div class="flex flex-col gap-2">
+                <label class="text-xs font-bold text-[#6B7280] uppercase tracking-wider">Status</label>
+                <select id="filter-status" class="w-full px-4 py-2.5 bg-[#F9FAFB] border border-[#D1D5DB] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F13D30]/20 focus:border-[#F13D30] appearance-none cursor-pointer">
+                    <option value="">All Statuses</option>
+                    <option value="Done">Done</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="To-Do">To-Do</option>
+                    <option value="Blocked">Blocked</option>
+                </select>
+            </div>
+            <div class="flex flex-col gap-2">
+                <label class="text-xs font-bold text-[#6B7280] uppercase tracking-wider">Evidence</label>
+                <select id="filter-evidence" class="w-full px-4 py-2.5 bg-[#F9FAFB] border border-[#D1D5DB] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F13D30]/20 focus:border-[#F13D30] appearance-none cursor-pointer">
+                    <option value="">All Evidence</option>
+                    <option value="Uploaded">Uploaded</option>
+                    <option value="Missing">Missing</option>
+                </select>
+            </div>
+            <div class="flex flex-col gap-2">
+                <label class="text-xs font-bold text-[#6B7280] uppercase tracking-wider">Assignee</label>
+                <select id="filter-assignee" class="w-full px-4 py-2.5 bg-[#F9FAFB] border border-[#D1D5DB] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F13D30]/20 focus:border-[#F13D30] appearance-none cursor-pointer">
+                    <option value="">All Assignees</option>
+                    {% regroup project.tasks|dictsort:"assignee" by assignee as assignee_list %}
+                    {% for item in assignee_list %}
+                    <option value="{{ item.grouper }}">{{ item.grouper }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="px-6 py-4 bg-[#F9FAFB] flex items-center justify-end gap-3 border-t border-[#E5E7EB]">
+            <button onclick="clearFilters()" class="px-5 py-2.5 text-sm font-semibold text-[#6B7280] hover:text-[#111827] transition-colors">Clear All</button>
+            <button onclick="applyFilters()" class="px-6 py-2.5 bg-[#F13D30] text-white text-sm font-bold rounded-xl hover:bg-[#DC180A] shadow-md shadow-[#F13D30]/20 transition-all hover:-translate-y-0.5">Apply Filters</button>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Filter Modal Styles */
+    .filter-modal-enter {
+        animation: filter-modal-enter 0.2s ease-out forwards;
+    }
+
+    @keyframes filter-modal-enter {
+        from {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.95);
+        }
+        to {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+    }
+</style>
+
+<script>
+    // --- ASSIGNEE MODAL LOGIC ---
+    let currentTaskIdForAssignee = null;
+    let currentTaskNameForAssignee = '';
+    const assigneeModal = document.getElementById('assignee-modal');
+    
+    window.openAssigneeModal = function(taskId, taskName) {
+        currentTaskIdForAssignee = taskId;
+        currentTaskNameForAssignee = taskName;
+        
+        // Reset view
+        switchToMainAssigneeView();
+        
+        // Set task name
+        const nameSpans = document.querySelectorAll('#assignee-task-name, #add-assignee-task-name');
+        nameSpans.forEach(span => span.textContent = taskName);
+        
+        if (assigneeModal) {
+            assigneeModal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            fetchAssignees();
+        }
+    };
+    
+    window.closeAssigneeModal = function() {
+        if (assigneeModal) {
+             assigneeModal.classList.add('hidden');
+        }
+        document.body.style.overflow = '';
+        currentTaskIdForAssignee = null;
+        
+        // Clear form
+        document.getElementById('new-assignee-name').value = '';
+        document.getElementById('new-assignee-email').value = '';
+    };
+    
+    window.switchToAddAssigneeView = function() {
+        document.getElementById('assignee-main-view').classList.add('hidden');
+        const addView = document.getElementById('assignee-add-view');
+        addView.classList.remove('hidden');
+        addView.classList.add('filter-modal-enter');
+    };
+    
+    window.switchToMainAssigneeView = function() {
+        document.getElementById('assignee-add-view').classList.add('hidden');
+        const mainView = document.getElementById('assignee-main-view');
+        mainView.classList.remove('hidden');
+    };
+    
+    function fetchAssignees() {
+        const list = document.getElementById('assignee-list');
+        if (!list) return;
+        
+        list.innerHTML = '<div class="text-center py-4 text-gray-500 text-sm">Loading assignees...</div>';
+        
+        const projectId = window.location.pathname.split('/')[2];
+        
+        fetch(`/api/compliance/assignees/get/?project_id=${projectId}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                renderAssigneeList(data.assignees);
+            } else {
+                list.innerHTML = '<div class="text-center py-4 text-red-500 text-sm">Failed to load assignees</div>';
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            list.innerHTML = '<div class="text-center py-4 text-red-500 text-sm">Error loading assignees</div>';
+        });
+    }
+    
+    function renderAssigneeList(assignees) {
+        const list = document.getElementById('assignee-list');
+        if (!list) return;
+        
+        if (!assignees || assignees.length === 0) {
+            list.innerHTML = '<div class="text-center py-4 text-gray-500 text-sm">No assignees found</div>';
+            return;
+        }
+        
+        list.innerHTML = assignees.map(a => `
+            <div onclick="selectAssignee('${a.name.replace(/'/g, "\\'")}')" class="flex items-center gap-3 p-3 border border-[#E5E7EB] rounded-xl hover:bg-[#F9FAFB] cursor-pointer transition-colors group">
+                <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${a.class}">
+                    ${a.initials}
+                </div>
+                <span class="text-sm font-medium text-[#374151] group-hover:text-[#111827]">${a.name}</span>
+            </div>
+        `).join('');
+    }
+    
+    window.selectAssignee = function(assigneeName) {
+        // Update task with selected assignee
+        const projectId = window.location.pathname.split('/')[2];
+        
+        // Show loading state? 
+        // We can just close modal and refresh page or update UI optimistically
+        
+        fetch('/api/compliance/assignees/update/', {
+            method: 'POST',
+            headers: {
+                 'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                project_id: projectId,
+                task_id: currentTaskIdForAssignee,
+                assignee_name: assigneeName
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                closeAssigneeModal();
+                // Reload page to reflect changes properly (simplest way to update various UI parts)
+                window.location.reload();
+            } else {
+                alert('Failed to update assignee: ' + data.error);
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Error updating assignee');
+        });
+    };
+    
+    window.saveNewAssignee = function() {
+        const nameInput = document.getElementById('new-assignee-name');
+        const emailInput = document.getElementById('new-assignee-email');
+        
+        const name = nameInput.value.trim();
+        const email = emailInput.value.trim();
+        
+        if (!name || !email) {
+            alert('Please fill in all required fields');
+            return;
+        }
+        
+        const projectId = window.location.pathname.split('/')[2];
+        const saveBtn = document.querySelector('#assignee-add-view button[onclick="saveNewAssignee()"]');
+        const originalText = saveBtn.innerText;
+        saveBtn.innerText = 'Adding...';
+        saveBtn.disabled = true;
+        
+        fetch('/api/compliance/assignees/add/', {
+             method: 'POST',
+            headers: {
+                 'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                project_id: projectId,
+                name: name,
+                email: email
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                // New assignee added successfully
+                // Switch back to main view and reload list
+                switchToMainAssigneeView();
+                fetchAssignees();
+                
+                // Clear form
+                nameInput.value = '';
+                emailInput.value = '';
+            } else {
+                alert('Failed to add assignee: ' + data.error);
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Error adding assignee');
+        })
+        .finally(() => {
+            saveBtn.innerText = originalText;
+            saveBtn.disabled = false;
+        });
+    };
+
+    // --- NOTES MODAL LOGIC ---
+    let currentTaskIdForNotes = null;
+    const notesModal = document.getElementById('notes-modal');
+    
+    window.openNotesModal = function(taskId) {
+        currentTaskIdForNotes = taskId;
+        if (notesModal) {
+            notesModal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            
+            // Add animation class
+            const content = notesModal.querySelector('div:last-child');
+            if (content) content.classList.add('filter-modal-enter');
+            
+            // Load notes
+            fetchNotes(taskId);
+        }
+    };
+    
+    window.closeNotesModal = function() {
+        if (notesModal) {
+             notesModal.classList.add('hidden');
+             const content = notesModal.querySelector('div:last-child');
+             if (content) content.classList.remove('filter-modal-enter');
+        }
+        document.body.style.overflow = '';
+        currentTaskIdForNotes = null;
+        const noteInput = document.getElementById('note-content');
+        if (noteInput) noteInput.value = '';
+    };
+    
+    function fetchNotes(taskId) {
+        const list = document.getElementById('notes-list');
+        if (!list) return;
+        
+        list.innerHTML = '<div class="text-center py-4 text-gray-500 text-sm">Loading notes...</div>';
+        
+        const projectId = window.location.pathname.split('/')[2];
+        
+        fetch(`/api/compliance/notes/get/?project_id=${projectId}&task_id=${taskId}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                renderNotesList(data.notes);
+            } else {
+                list.innerHTML = '<div class="text-center py-4 text-red-500 text-sm">Failed to load notes</div>';
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            list.innerHTML = '<div class="text-center py-4 text-red-500 text-sm">Error loading notes</div>';
+        });
+    }
+    
+    function renderNotesList(notes) {
+        const list = document.getElementById('notes-list');
+        if (!list) return;
+        
+        if (!notes || notes.length === 0) {
+            list.innerHTML = '<div class="bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl p-4 text-sm text-[#6B7280] italic text-center">No notes yet.</div>';
+            return;
+        }
+        
+        list.innerHTML = notes.map(note => `
+            <div class="bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl p-4 flex flex-col gap-1">
+                <div class="text-sm text-[#374151]">${note.content}</div>
+                <div class="text-xs text-[#9CA3AF] flex items-center gap-1.5 mt-1">
+                    <span class="font-semibold text-[#6B7280]">By: ${note.author}</span>
+                    <span class="w-1 h-1 rounded-full bg-[#D1D5DB]"></span>
+                    <span>${note.timestamp}</span>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    window.saveNote = function() {
+        const noteInput = document.getElementById('note-content');
+        if (!noteInput) return;
+        
+        const content = noteInput.value.trim();
+        if (!content) return;
+        
+        const projectId = window.location.pathname.split('/')[2];
+        const saveBtn = document.querySelector('#notes-modal button[onclick="saveNote()"]');
+        const originalText = saveBtn ? saveBtn.innerText : 'Save Note';
+        
+        if (saveBtn) {
+            saveBtn.innerText = 'Saving...';
+            saveBtn.disabled = true;
+        }
+        
+        fetch('/api/compliance/notes/add/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                project_id: projectId,
+                task_id: currentTaskIdForNotes,
+                content: content
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                noteInput.value = '';
+                fetchNotes(currentTaskIdForNotes); // Reload list
+            } else {
+                alert('Failed to save note: ' + data.error);
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Error saving note');
+        })
+        .finally(() => {
+            if (saveBtn) {
+                saveBtn.innerText = originalText;
+                saveBtn.disabled = false;
+            }
+        });
+    };
+
+    function getElements() {
+        return {
+            modal: document.getElementById('filter-modal'),
+            modalContent: document.querySelector('#filter-modal > div:last-child'),
+            rows: document.querySelectorAll('tbody tr'),
+            searchInput: document.getElementById('task-search-input'),
+            catSelect: document.getElementById('filter-category'),
+            statSelect: document.getElementById('filter-status'),
+            evSelect: document.getElementById('filter-evidence'),
+            assignSelect: document.getElementById('filter-assignee')
+        };
+    }
+
+    window.openFilterModal = function() {
+        console.log('Opening filter modal...');
+        const els = getElements();
+        console.log('Elements found:', els);
+        if (els.modal) {
+            els.modal.classList.remove('hidden');
+            // Add animation class to the content box
+            if (els.modalContent) {
+                els.modalContent.classList.add('filter-modal-enter');
+            }
+            document.body.style.overflow = 'hidden';
+            console.log('Modal shown');
+        } else {
+            console.error('Filter modal element not found!');
+        }
+    };
+
+    window.closeFilterModal = function() {
+        const els = getElements();
+        if (els.modal) {
+            els.modal.classList.add('hidden');
+             // Remove animation class for next time
+             if (els.modalContent) {
+                els.modalContent.classList.remove('filter-modal-enter');
+            }
+            document.body.style.overflow = '';
+        }
+    };
+
+    window.clearFilters = function() {
+        const els = getElements();
+        if (els.catSelect) els.catSelect.value = '';
+        if (els.statSelect) els.statSelect.value = '';
+        if (els.evSelect) els.evSelect.value = '';
+        if (els.assignSelect) els.assignSelect.value = '';
+        applyFilters();
+    };
+
+    window.applyFilters = function() {
+        const els = getElements();
+        const query = (els.searchInput?.value || '').toLowerCase();
+        const category = els.catSelect?.value || '';
+        const status = els.statSelect?.value || '';
+        const evidence = els.evSelect?.value || '';
+        const assignee = els.assignSelect?.value || '';
+
+        els.rows.forEach(row => {
+            // Only filter rows in the main table body
+            if (!row.closest('tbody')) return;
+            
+            const rowTaskName = row.cells[0]?.textContent.trim().toLowerCase() || '';
+            const rowCategory = row.cells[1]?.textContent.trim() || '';
+            
+            // Fix: Status cell contains dropdown options, so .textContent includes ALL statuses.
+            // We must target only the status-text span.
+            const statusSpan = row.cells[2]?.querySelector('.status-text');
+            const rowStatus = statusSpan ? statusSpan.textContent.trim() : (row.cells[2]?.textContent.trim() || '');
+            
+            const rowEvidence = row.cells[4]?.textContent.trim() || '';
+            const rowAssignee = row.cells[5]?.textContent.trim() || '';
+
+            const matchesSearch = !query || rowTaskName.includes(query);
+            const matchesCategory = !category || rowCategory === category;
+            
+            // For status we prefer exact match or at least contains, but since we extracted
+            // the exact status text, strict equality is safer, or check if it matches the value from dropdown
+            // The dropdown values are "Done", "In Progress", etc.
+            const matchesStatus = !status || rowStatus === status;
+            
+            const matchesEvidence = !evidence || rowEvidence.includes(evidence);
+            const matchesAssignee = !assignee || rowAssignee.includes(assignee);
+
+            if (matchesSearch && matchesCategory && matchesStatus && matchesEvidence && matchesAssignee) {
+                row.classList.remove('hidden');
+            } else {
+                row.classList.add('hidden');
+            }
+        });
+
+        closeFilterModal();
+    };
+
+    window.updateTaskStatus = function(el, status) {
+        // Find the parent dropdown wrapper
+        const wrapper = el.closest('.relative');
+        if (!wrapper) return;
+
+        // Find the main button
+        const btn = wrapper.querySelector('button[data-task-id]');
+        if (!btn) return;
+        
+        const taskId = btn.getAttribute('data-task-id');
+        // We can get project ID from the URL or add it to the button data attributes
+        // URL is /compliance/<project_id>/
+        const projectId = window.location.pathname.split('/')[2];
+        
+        // Optimistic UI update
+        const originalText = btn.querySelector('.status-text').textContent;
+        const originalClasses = Array.from(btn.classList);
+
+        // Update the text
+        const textSpan = btn.querySelector('.status-text');
+        if (textSpan) textSpan.textContent = status;
+
+        // Update the classes based on status
+        const allClasses = [
+            'bg-[#ECFDF3]', 'text-[#027A48]', // Done
+            'bg-[#EFF8FF]', 'text-[#175CD3]', // In Progress
+            'bg-[#FEE4E2]', 'text-[#B42318]', // Blocked
+            'bg-[#F2F4F7]', 'text-[#344054]'   // To-Do
+        ];
+        btn.classList.remove(...allClasses);
+
+        if (status === 'Done') {
+            btn.classList.add('bg-[#ECFDF3]', 'text-[#027A48]');
+        } else if (status === 'In Progress') {
+            btn.classList.add('bg-[#EFF8FF]', 'text-[#175CD3]');
+        } else if (status === 'Blocked') {
+            btn.classList.add('bg-[#FEE4E2]', 'text-[#B42318]');
+        } else if (status === 'To-Do') {
+            btn.classList.add('bg-[#F2F4F7]', 'text-[#344054]');
+        }
+        
+        // Send request to backend
+        fetch('/api/compliance/update-task-status/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                project_id: projectId,
+                task_id: taskId,
+                status: status
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success) {
+                console.error('Failed to update status:', data.error);
+                // Revert changes on error
+                if (textSpan) textSpan.textContent = originalText;
+                btn.className = '';
+                originalClasses.forEach(cls => btn.classList.add(cls));
+                alert('Failed to update status: ' + data.error);
+            } else {
+                console.log('Status updated successfully');
+            }
+        })
+        .catch(error => {
+            console.error('Error updating status:', error);
+            // Revert changes on error
+            if (textSpan) textSpan.textContent = originalText;
+            btn.className = '';
+            originalClasses.forEach(cls => btn.classList.add(cls));
+            alert('Error updating status. Please try again.');
+        });
+    };
+    
+    // Helper to get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Initialize Event Listeners
+    document.addEventListener('DOMContentLoaded', () => {
+        const searchInput = document.getElementById('task-search-input');
+        
+        // Real-time search on input
+        searchInput?.addEventListener('input', () => {
+             applyFilters();
+        });
+
+        // Keep Enter key support just in case
+        searchInput?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') applyFilters();
+        });
+
+        document.getElementById('filter-modal')?.addEventListener('click', (e) => {
+            // Close if clicking the backdrop (the outer fixed div or the backdrop div)
+            if (e.target.id === 'filter-modal' || e.target.classList.contains('backdrop-blur-sm')) {
+                closeFilterModal();
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -31,6 +31,18 @@ urlpatterns = [
     
     # Compliance Projects
     path("compliance/", views.compliance, name="compliance"),
+    path("compliance/<int:project_id>/", views.compliance_detail, name="compliance_detail"),
+    path("api/compliance/update-task-status/", views.update_task_status_view, name="api_update_task_status"),
+    path("api/compliance/notes/get/", views.get_task_notes_view, name="api_get_task_notes"),
+    path("api/compliance/notes/add/", views.add_task_note_view, name="api_add_task_note"),
+    
+    path("api/compliance/assignees/get/", views.get_assignees_view, name="api_get_assignees"),
+    path("api/compliance/assignees/add/", views.add_new_assignee_view, name="api_add_new_assignee"),
+    path("api/compliance/assignees/update/", views.update_task_assignee_view, name="api_update_task_assignee"),
+    path("api/compliance/project/add/", views.create_compliance_project_view, name="api_create_compliance_project"),
+    path("api/compliance/project/archive/", views.archive_projects_view, name="api_archive_compliance_projects"),
+    path("api/compliance/project/restore/", views.restore_projects_view, name="api_restore_compliance_projects"),
+    path("api/compliance/project/delete/", views.delete_projects_view, name="api_delete_compliance_projects"),
     
     # AI Systems
     path("ai-systems/", views.ai_systems, name="ai_systems"),

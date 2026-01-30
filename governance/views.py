@@ -9,7 +9,7 @@ import os
 import tempfile
 from django.shortcuts import render
 from django.http import JsonResponse
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.http import require_http_methods, require_POST
 from django.views.decorators.csrf import csrf_exempt
 import json
 
@@ -33,7 +33,7 @@ from .presentation.views.ai_act_chat_view import ai_act_chat_api
 from .mock_data import (
     get_mock_agents, get_mock_use_cases, get_mock_models, get_mock_datasets,
     get_mock_evidences, get_mock_evaluation_reports, get_mock_review_comments,
-    get_compliance_projects,
+    get_compliance_projects, get_compliance_detail,
     create_mock_agent, create_mock_use_case, calculate_compliance_mock, calculate_risks_mock,
     MockObject, convert_evidences_to_objects, convert_reports_to_objects, convert_comments_to_objects
 )
@@ -4247,18 +4247,30 @@ def compliance(request):
     """
     Compliance page - Active projects overview (UI based on design).
     Data loaded from mock_data/compliance_projects.json.
+    Supports ?view=archived query param.
     """
     ensure_governance_platform(request)
 
     company = MockCompany()
+    
+    # Check if viewing archived
+    view_status = request.GET.get('view', 'active')
+    show_archived = (view_status == 'archived')
+    
     breadcrumbs = [
-        {"name": "Compliance", "url": request.build_absolute_uri()},
+        {"name": "Compliance", "url": request.build_absolute_uri(request.path)}, # Base URL 
     ]
+    if show_archived:
+        breadcrumbs.append({"name": "Archived", "url": request.build_absolute_uri()})
 
-    projects = get_compliance_projects()
+    projects = get_compliance_projects(archived=show_archived)
     total_projects = len(projects)
-    active_projects = total_projects  # demo: all active
-    not_compliant_count = 3  # demo for alert banner
+    
+    # Active are those Progress not yet 100% (of the current set)
+    active_projects = sum(1 for p in projects if p.get('progress', 0) < 100)
+    
+    # Not compliant: same logic as active/in-progress (progress < 100%) as requested
+    not_compliant_count = active_projects
     ai_systems_for_modal = _ai_systems_for_compliance_modal()
 
     return render(request, 'governance/pages/compliance.html', {
@@ -4270,7 +4282,269 @@ def compliance(request):
         'active_projects': active_projects,
         'not_compliant_count': not_compliant_count,
         'ai_systems_for_modal': ai_systems_for_modal,
+        'view_status': view_status, # Pass status to template
     })
+
+
+def compliance_detail(request, project_id):
+    """
+    Compliance Project Detail page.
+    Data loaded from mock_data/compliance_details.json.
+    """
+    ensure_governance_platform(request)
+    company = MockCompany()
+    
+    project = get_compliance_detail(project_id)
+    if not project:
+        from django.http import Http404
+        raise Http404("Compliance project not found")
+    
+    breadcrumbs = [
+        {"name": "Compliance", "url": "/compliance/"},
+        {"name": project.get('name', 'Detail'), "url": request.build_absolute_uri()},
+    ]
+    return render(request, 'governance/pages/compliance_detail.html', {
+        'company': company,
+        'subpage': 'compliance',
+        'breadcrumbs': breadcrumbs,
+        'project': project,
+    })
+
+
+@require_POST
+def update_task_status_view(request):
+    """
+    Update a compliance task status.
+    Expects JSON data: { "project_id": "...", "task_id": "...", "status": "..." }
+    """
+    try:
+        data = json.loads(request.body)
+        project_id = data.get('project_id')
+        task_id = data.get('task_id')
+        status = data.get('status')
+        
+        if not all([project_id, task_id, status]):
+            return JsonResponse({'success': False, 'error': 'Missing required fields'}, status=400)
+            
+        from .mock_data import update_compliance_task_status
+        success = update_compliance_task_status(project_id, task_id, status)
+        
+        if success:
+            return JsonResponse({'success': True})
+        else:
+            return JsonResponse({'success': False, 'error': 'Failed to update status'}, status=500)
+            
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Invalid JSON'}, status=400)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@require_http_methods(["GET"])
+def get_task_notes_view(request):
+    """
+    Get notes for a specific task.
+    Params: project_id, task_id
+    """
+    project_id = request.GET.get('project_id')
+    task_id = request.GET.get('task_id')
+    
+    if not all([project_id, task_id]):
+        return JsonResponse({'success': False, 'error': 'Missing required params'}, status=400)
+        
+    from .mock_data import get_compliance_task_notes
+    notes = get_compliance_task_notes(project_id, task_id)
+    return JsonResponse({'success': True, 'notes': notes})
+
+
+@require_POST
+def add_task_note_view(request):
+    """
+    Add a note to a task.
+    Expects JSON: { "project_id", "task_id", "content" }
+    """
+    try:
+        data = json.loads(request.body)
+        project_id = data.get('project_id')
+        task_id = data.get('task_id')
+        content = data.get('content')
+        
+        if not all([project_id, task_id, content]):
+            return JsonResponse({'success': False, 'error': 'Missing required fields'}, status=400)
+            
+        from .mock_data import add_compliance_task_note
+        new_note = add_compliance_task_note(project_id, task_id, content)
+        
+        if new_note:
+            return JsonResponse({'success': True, 'note': new_note})
+        else:
+            return JsonResponse({'success': False, 'error': 'Failed to add note'}, status=500)
+            
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@require_http_methods(["GET"])
+def get_assignees_view(request):
+    """
+    Get list of assignees for a project.
+    Params: project_id
+    """
+    project_id = request.GET.get('project_id')
+    if not project_id:
+        return JsonResponse({'success': False, 'error': 'Missing project_id'}, status=400)
+    
+    from .mock_data import get_compliance_assignees
+    assignees = get_compliance_assignees(project_id)
+    return JsonResponse({'success': True, 'assignees': assignees})
+
+
+@require_POST
+def add_new_assignee_view(request):
+    """
+    Add a new assignee to the project.
+    Expects JSON: { "project_id", "name", "email" }
+    """
+    try:
+        data = json.loads(request.body)
+        project_id = data.get('project_id')
+        name = data.get('name')
+        email = data.get('email')
+        
+        if not all([project_id, name, email]):
+             return JsonResponse({'success': False, 'error': 'Missing required fields'}, status=400)
+             
+        from .mock_data import add_new_assignee_to_project
+        new_assignee = add_new_assignee_to_project(project_id, name, email)
+        
+        if new_assignee:
+            return JsonResponse({'success': True, 'assignee': new_assignee})
+        else:
+            return JsonResponse({'success': False, 'error': 'Failed to add assignee'}, status=500)
+            
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@require_POST
+def update_task_assignee_view(request):
+    """
+    Update a task's assignee.
+    Expects JSON: { "project_id", "task_id", "assignee_name" }
+    """
+    try:
+        data = json.loads(request.body)
+        project_id = data.get('project_id')
+        task_id = data.get('task_id')
+        assignee_name = data.get('assignee_name')
+        
+        if not all([project_id, task_id, assignee_name]):
+             return JsonResponse({'success': False, 'error': 'Missing required fields'}, status=400)
+             
+        from .mock_data import update_compliance_task_assignee
+        success = update_compliance_task_assignee(project_id, task_id, assignee_name)
+        
+        if success:
+            return JsonResponse({'success': True})
+        else:
+            return JsonResponse({'success': False, 'error': 'Failed to update assignee'}, status=500)
+            
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+@require_POST
+def create_compliance_project_view(request):
+    """
+    Create a new compliance project.
+    Expects JSON: { "name": "...", "ai_system_ids": ["1", "2"] }
+    """
+    try:
+        data = json.loads(request.body)
+        name = data.get('name', '').strip()
+        ai_system_ids = data.get('ai_system_ids', [])
+        
+        if not ai_system_ids:
+            return JsonResponse({'success': False, 'error': 'No AI systems selected'}, status=400)
+            
+        # Resolve AI system details using the helper
+        all_systems = _ai_systems_for_compliance_modal()
+        selected_systems = [s for s in all_systems if str(s['id']) in map(str, ai_system_ids)]
+        
+        if not selected_systems:
+            return JsonResponse({'success': False, 'error': 'Selected AI systems not found'}, status=404)
+        
+        from .mock_data import create_compliance_project
+        new_project = create_compliance_project(name, selected_systems)
+        
+        if new_project:
+            return JsonResponse({'success': True, 'project': new_project})
+        else:
+            return JsonResponse({'success': False, 'error': 'Failed to create project'}, status=500)
+            
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+@require_POST
+def archive_projects_view(request):
+    """Archive a list of projects."""
+    try:
+        data = json.loads(request.body)
+        project_ids = data.get('project_ids', [])
+        
+        if not project_ids:
+            return JsonResponse({'success': False, 'error': 'No projects selected'}, status=400)
+            
+        from .mock_data import archive_compliance_projects
+        success = archive_compliance_projects(project_ids)
+        
+        if success:
+            return JsonResponse({'success': True})
+        else:
+            return JsonResponse({'success': False, 'error': 'Failed to archive projects'}, status=500)
+            
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+@require_POST
+def delete_projects_view(request):
+    """Delete a list of projects."""
+    try:
+        data = json.loads(request.body)
+        project_ids = data.get('project_ids', [])
+        
+        if not project_ids:
+            return JsonResponse({'success': False, 'error': 'No projects selected'}, status=400)
+            
+        from .mock_data import delete_compliance_projects
+        success = delete_compliance_projects(project_ids)
+        
+        if success:
+            return JsonResponse({'success': True})
+        else:
+            return JsonResponse({'success': False, 'error': 'Failed to delete projects'}, status=500)
+            
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+@require_POST
+def restore_projects_view(request):
+    """Restore a list of projects."""
+    try:
+        data = json.loads(request.body)
+        project_ids = data.get('project_ids', [])
+        
+        if not project_ids:
+            return JsonResponse({'success': False, 'error': 'No projects selected'}, status=400)
+            
+        from .mock_data import restore_compliance_projects
+        success = restore_compliance_projects(project_ids)
+        
+        if success:
+            return JsonResponse({'success': True})
+        else:
+            return JsonResponse({'success': False, 'error': 'Failed to restore projects'}, status=500)
+            
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 def ai_system_detail(request, agent_id):
     """
