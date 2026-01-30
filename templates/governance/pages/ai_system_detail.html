@@ -1139,6 +1139,14 @@
 </div>
 
 <script>
+// Utility for notifications
+function showNotification(message, type = 'info') {
+    // For now use alert, but could be replaced with a toast UI
+    console.log(`[${type.toUpperCase()}] ${message}`);
+    // Optional: could add a simple toast div if needed
+    alert(message);
+}
+
 // Tab switching
 // Tab switching
 function switchTab(tabName, skipUpdate = false) {
@@ -2164,6 +2172,8 @@ let block1State = {
     prohibitedConfirmed: false,
     claimingException: '', // 'Yes' | 'No' | ''
     exceptionQualifies: '', // 'Yes' | 'No' | 'Not sure' | ''
+    exceptionQualifiesMap: {}, // Mapping practice to 'Yes' | 'No' | 'Not sure'
+    exceptionEvidenceMap: {}, // New: { [practiceName]: { link: '', files: [], explanation: '' } }
     exceptionEvidenceUploaded: false,
     exceptionEvidenceSavedLink: '',
     exceptionEvidenceFiles: [], // Array of {name, url, path, size}
@@ -2398,15 +2408,15 @@ function renderConfirmProfileInput(selectedPractices, practicesInfo, showButtons
 
     // Render content
     let html = `
-        <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-4 mb-4">
+        <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-5 mb-4 shadow-sm">
             <div class="mb-4">
                 <p class="font-bold text-sm text-[#22262A] mb-2">Confirm Profile input:</p>
-                <p class="font-normal text-sm text-[#464E58] mb-1">
+                <p class="font-normal text-sm text-[#464E58] mb-2">
                     You indicated the system uses the following capabilities or practices:
                 </p>
-                <ul class="list-disc list-outside ml-5 space-y-1 mb-3">
-                    ${selectedPractices.map(p => `<li class="font-normal text-sm text-[#464E58] pl-1">${p}</li>`).join('')}
-                </ul>
+                <div class="pl-4 space-y-2 mb-3">
+                    ${selectedPractices.map(p => `<p class="font-normal text-sm text-[#22262A] leading-relaxed">${p}</p>`).join('')}
+                </div>
                 <p class="font-normal text-sm text-[#464E58]">
                     ${articleSummary}
                 </p>
@@ -2482,34 +2492,6 @@ function renderBlock1Content(status) {
         }
     }
     
-    if (status === 'Prohibited') {
-        const confirmedBanner = `
-            <div class="w-full bg-[#E8F5E9] border border-[#81C784] rounded-lg p-3 mb-4">
-                <p class="font-semibold text-sm text-[#2E7D32]">✓ Confirmed</p>
-            </div>
-        `;
-        
-        const prohibitedBox = `
-            <div class="bg-[#FFF5F5] border border-[#F13D30] rounded-lg p-4">
-                <p class="font-bold text-sm text-[#F13D30] mb-2">Result: Prohibited</p>
-                <p class="font-normal text-sm text-[#464E58]">
-                    Your AI System is Prohibited under Art.5. You need to redesign or remove certain features to make it comply to EU AI Act.
-                </p>
-            </div>
-        `;
-
-        if (selectedPractices.length > 0) {
-            return `<div class="space-y-4">` + 
-                   renderConfirmProfileInput(selectedPractices, practicesInfo, false) + 
-                   confirmedBanner + 
-                   prohibitedBox + 
-                   `</div>`;
-        }
-        
-        return prohibitedBox;
-    }
-    
-    
     if (status === 'Exception claimed') {
         const confirmedBanner = `
             <div class="w-full bg-[#E8F5E9] border border-[#81C784] rounded-lg p-3 mb-4">
@@ -2517,67 +2499,108 @@ function renderBlock1Content(status) {
             </div>
         `;
         
-        const exceptionClaimedBox = `
-            <div class="bg-[#E8F5E9] border border-[#81C784] rounded-lg p-4">
-                <p class="font-bold text-sm text-[#2E7D32] mb-2">✓ Exception Claimed</p>
-                <p class="font-normal text-sm text-[#464E58]">
-                    Your exception claim has been recorded with supporting evidence. This will be subject to regulatory review.
-                </p>
-            </div>
-        `;
+        const practicesWithException = selectedPractices.filter(practice => {
+            const info = practicesInfo[practice] || prohibitedPracticesMap[practice];
+            return info && info.has_exception;
+        });
+
+        const successItems = practicesWithException.map(p => {
+            const info = practicesInfo[p] || prohibitedPracticesMap[p];
+            const conditionText = info.exception_condition || info.exceptionCondition || 'Exception available';
+            return `
+                <div class="bg-[#E8F5E9] border border-[#81C784] rounded-lg p-4 mb-3">
+                    <p class="font-bold text-sm text-[#2E7D32] mb-1">✓ Exception Claimed: ${p}</p>
+                    <p class="text-xs text-[#464E58] mb-2">${conditionText}</p>
+                    <p class="font-normal text-sm text-[#464E58]">
+                        Your exception claim has been recorded with supporting evidence. This will be subject to regulatory review.
+                    </p>
+                </div>
+            `;
+        }).join('');
 
         return `<div class="space-y-4">` + 
                renderConfirmProfileInput(selectedPractices, practicesInfo, false) + 
                confirmedBanner + 
-               exceptionClaimedBox + 
+               successItems + 
                `</div>`;
     }
     
-    if (status === 'Needs Review') {
-        if (selectedPractices.length > 0 && block1State.be_assessment) {
-            const details = block1State.be_assessment.details || {};
-            
-            // If user said "Yes" to exception - SHOW EVIDENCE FORM
-            // Note: We check block1State.exceptionQualifies which should be synced from BE or set on interaction
-            if (block1State.exceptionQualifies === 'Yes') {
-                return `<div class="space-y-4">` + 
-                       renderConfirmProfileInput(selectedPractices, practicesInfo, false) + 
-                       renderBlock1ExceptionEvidenceForm(selectedPractices, practicesInfo) + 
-                       `</div>`;
-            }
+    if (status === 'Prohibited') {
+        const confirmedBanner = `
+            <div class="w-full bg-[#E8F5E9] border border-[#81C784] rounded-lg p-3 mb-4">
+                <p class="font-semibold text-sm text-[#2E7D32]">✓ Confirmed</p>
+            </div>
+        `;
+        
+        const prohibitedItems = selectedPractices.map(p => {
+             const info = practicesInfo[p] || prohibitedPracticesMap[p];
+             const hasException = info && info.has_exception;
+             const answer = block1State.exceptionQualifiesMap[p];
+             
+             let reasonText = "Your AI System is Prohibited under Art.5 because of this practice.";
+             let statusTitle = "Result: Prohibited Practice Detected";
+             
+             if (!hasException) {
+                 reasonText = "This practice does not allow any exceptions under the EU AI Act.";
+             } else if (answer === 'No') {
+                 reasonText = "You stated that the system does NOT fall under the allowed exception conditions for this practice.";
+             }
 
-            // Otherwise, this is the "Not sure" case - SHOW RESULT BOX
-            const confirmedBanner = `
-                <div class="w-full bg-[#E8F5E9] border border-[#81C784] rounded-lg p-3 mb-4">
-                    <p class="font-semibold text-sm text-[#2E7D32]">✓ Confirmed</p>
-                </div>
-            `;
-            
-            const needsReviewBox = `
-                <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-4">
-                    <p class="font-bold text-sm text-[#F57C00] mb-2">Result: Needs Review</p>
+             return `
+                <div class="bg-[#FFF5F5] border border-[#F13D30] rounded-lg p-4 mb-3">
+                    <p class="font-bold text-sm text-[#F13D30] mb-2">${statusTitle}</p>
+                    <p class="font-semibold text-sm text-[#22262A] mb-1">${p}</p>
                     <p class="font-normal text-sm text-[#464E58]">
-                        This system requires legal review to determine if the exception applies. Please consult with your legal team or compliance officer.
+                        ${reasonText} You need to redesign or remove this feature to ensure compliance.
                     </p>
                 </div>
             `;
-            
+        }).join('');
+
+        if (selectedPractices.length > 0) {
             return `<div class="space-y-4">` + 
                    renderConfirmProfileInput(selectedPractices, practicesInfo, false) + 
                    confirmedBanner + 
-                   needsReviewBox + 
+                   prohibitedItems + 
                    `</div>`;
         }
         
-        // Default Needs Review (simple view)
-        return `
-            <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-4">
-                <p class="font-semibold text-sm text-[#F57C00] mb-2">⚠️ Needs Review</p>
-                <p class="font-normal text-sm text-[#464E58] mt-2">
-                    This assessment requires manual review by the compliance team.
+        return `<div class="bg-[#FFF5F5] border border-[#F13D30] rounded-lg p-4">
+                <p class="font-bold text-sm text-[#F13D30] mb-2">Result: Prohibited</p>
+                <p class="font-normal text-sm text-[#464E58]">
+                    Your AI System is Prohibited under Art.5. You need to redesign or remove certain features to make it comply with the EU AI Act.
+                </p>
+            </div>`;
+    }
+    
+    if (status === 'Needs Review') {
+        const confirmedBanner = `
+            <div class="w-full bg-[#E8F5E9] border border-[#81C784] rounded-lg py-2.5 px-4 mb-4 flex items-center gap-2 shadow-sm">
+                <svg class="w-4 h-4 text-[#2E7D32]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <p class="font-semibold text-sm text-[#2E7D32]">Confirmed</p>
+            </div>
+        `;
+
+        const needsReviewBanner = `
+            <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-5 mb-4 shadow-sm">
+                <p class="font-bold text-sm text-[#F57C00] mb-2 uppercase tracking-wide">Result: Needs Review</p>
+                <p class="font-normal text-sm text-[#464E58] leading-relaxed">
+                    This system requires legal review to determine if the exception applies. Please consult with your legal team or compliance officer.
                 </p>
             </div>
         `;
+
+        if (selectedPractices.length > 0) {
+            return `<div class="space-y-4">` + 
+                   renderConfirmProfileInput(selectedPractices, practicesInfo, false) + 
+                   confirmedBanner +
+                   needsReviewBanner + 
+                   `</div>`;
+        }
+        
+        return needsReviewBanner;
     }
     
     return '<p class="text-sm text-[#464E58]">Status: ' + status + '</p>';
@@ -2585,25 +2608,26 @@ function renderBlock1Content(status) {
 
 // Render exception flow content (from flowchart)
 function renderBlock1ExceptionFlow(selectedPractices, practicesInfo = {}) {
-    // Banner for Confirmed state
+    // Banner for Confirmed state (Slimmer with icon like image)
     const confirmedBanner = `
-        <div class="w-full bg-[#E8F5E9] border border-[#81C784] rounded-lg p-3 mb-4">
-            <p class="font-semibold text-sm text-[#2E7D32]">✓ Confirmed</p>
+        <div class="w-full bg-[#E8F5E9] border border-[#81C784] rounded-lg py-2.5 px-4 mb-4 flex items-center gap-2">
+            <svg class="w-4 h-4 text-[#2E7D32]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+            </svg>
+            <p class="font-semibold text-sm text-[#2E7D32]">Confirmed</p>
         </div>
     `;
 
-    // 1. Check if ANY practice has NO exception available (from flowchart)
-    // If any selected practice has has_exception: false, then NO exception is available for the system as a whole (conservative approach)
+    // 1. Check if ANY practice has NO exception available
     const practicesWithNoException = selectedPractices.filter(practice => {
         const info = practicesInfo[practice] || prohibitedPracticesMap[practice];
         return info && !info.has_exception;
     });
     
     if (practicesWithNoException.length > 0) {
-        // All practices hasException: false → No Exception Available → Status: Prohibited (from flowchart)
         return `
             ${confirmedBanner}
-            <div class="bg-[#FFEBEE] border border-[#EF5350] rounded-lg p-4">
+            <div class="bg-[#FFEBEE] border border-[#EF5350] rounded-lg p-4 shadow-sm">
                 <p class="font-bold text-sm text-[#C62828] mb-2">No exception available</p>
                 <p class="font-normal text-sm text-[#464E58] mb-4">
                     This prohibited practice does not allow exceptions under the EU AI Act.
@@ -2624,63 +2648,116 @@ function renderBlock1ExceptionFlow(selectedPractices, practicesInfo = {}) {
     });
     
     if (practicesWithException.length > 0) {
-        // Show exception condition and ask qualification question
-        // Combine conditions if multiple
-        const conditionsItems = practicesWithException.map((p, index) => {
-             const info = practicesInfo[p] || prohibitedPracticesMap[p];
-             // Ensure we display the condition text correctly
-             const conditionText = info.exception_condition || info.exceptionCondition || 'Exception available';
-             return `<div class="mb-2">
-                <input type="text" id="exception-condition-${index}" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-[#464E58] bg-white text-sm" value="${conditionText}">
-             </div>`;
-        }).join('');
-        
-        const currentQualifies = block1State.exceptionQualifies; // 'Yes', 'No', 'Not sure', ''
-        
-        const practiceLabels = practicesWithException.map(p => {
-            // Find the full version (key) if p is just a label
-            let fullText = p;
+        const exceptionBlocks = practicesWithException.map((p, index) => {
+            const info = practicesInfo[p] || prohibitedPracticesMap[p];
+            const conditionText = info.exception_condition || info.exceptionCondition || 'Exception available';
+            const currentAnswer = block1State.exceptionQualifiesMap[p] || '';
+            
+            let fullPracticeText = p;
             for (const key in prohibitedPracticesMap) {
                 if (prohibitedPracticesMap[key].label === p) {
-                    fullText = key;
+                    fullPracticeText = key;
                     break;
                 }
             }
-            return `“${fullText}”`;
-        }).join(' and ');
+
+            let statusBadge = '';
+            if (currentAnswer === 'Yes') {
+                statusBadge = '<span class="px-2 py-1 bg-[#E8F5E9] text-[#2E7D32] text-[10px] font-bold rounded uppercase">Yes</span>';
+            } else if (currentAnswer === 'No') {
+                statusBadge = '<span class="px-2 py-1 bg-[#FEEDEC] text-[#DC180A] text-[10px] font-bold rounded uppercase">No</span>';
+            } else if (currentAnswer === 'Not sure') {
+                statusBadge = '<span class="px-2 py-1 bg-[#FFF9E6] text-[#F57C00] text-[10px] font-bold rounded uppercase">Not sure</span>';
+            }
+
+            let evidenceForm = '';
+            if (currentAnswer === 'Yes') {
+                const evidenceData = block1State.exceptionEvidenceMap[p] || { link: '', files: [], explanation: '' };
+                evidenceForm = `
+                    <div class="mt-4 pt-4 border-t border-[#F13D30]/20">
+                        <label class="block text-sm font-semibold text-[#22262A] mb-2">
+                            Evidence / Documentation for "${p}" <span class="text-[#F13D30]">*</span>
+                        </label>
+                        <p class="text-xs text-[#464E58] mb-3">Paste a link or upload new document below for this specific practice.</p>
+                        <div class="flex gap-3 mb-3">
+                            <input type="text" id="link-${index}" placeholder="Paste link here" value="${evidenceData.link || ''}"
+                                class="flex-1 px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm text-[#464E58]">
+                            <button onclick="saveBlock1EvidenceLink('${p}', ${index})" class="px-4 py-2 bg-[#F13D30] text-white rounded-lg font-semibold text-xs hover:bg-[#DC180A]">Save link</button>
+                        </div>
+                        <div id="file-list-${index}" class="space-y-2 mb-3">
+                            ${(evidenceData.files || []).map((file, fIdx) => `
+                                <div class="flex items-center justify-between p-2 bg-gray-50 rounded-lg border border-gray-200">
+                                    <span class="text-xs text-gray-600 truncate">${file.name}</span>
+                                    <button onclick="removeBlock1EvidenceFile(${fIdx}, '${p}')" class="text-gray-400 hover:text-red-500">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"></path></svg>
+                                    </button>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <input type="file" id="file-input-${index}" class="hidden" onchange="handleBlock1FileUpload(this, '${p}')">
+                        <button onclick="document.getElementById('file-input-${index}').click()" class="w-full px-4 py-2 border-2 border-dashed border-[#D1D5DB] rounded-lg text-xs text-[#464E58] hover:border-[#F13D30] hover:bg-[#FFF5F5] transition-colors flex items-center justify-center gap-2 mb-3">
+                            Upload Supporting Documents
+                        </button>
+                        <textarea id="explanation-${index}" rows="2" placeholder="Explanation..." onchange="updateBlock1Explanation('${p}', this.value)" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#F13D30] resize-none">${evidenceData.explanation || ''}</textarea>
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="bg-[#FFF5F5] border border-[#F13D30] rounded-lg p-4 mb-4 relative shadow-sm">
+                    <div class="flex justify-between items-start mb-3">
+                        <p class="font-bold text-sm text-[#22262A]">Exception Claim</p>
+                        ${statusBadge}
+                    </div>
+                    <p class="font-normal text-sm text-[#464E58] mb-3">Does your system “${fullPracticeText}” fall under the following condition?</p>
+                    <div class="mb-4">
+                        <input type="text" id="exception-condition-${index}" readonly class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-[#22262A] bg-white text-sm" value="${conditionText}">
+                    </div>
+                    <div class="flex gap-6">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="exception_claim_radio_${index}" value="Yes" class="w-4 h-4 text-[#F13D30]" ${currentAnswer === 'Yes' ? 'checked' : ''} onchange="handleExceptionClaimChange('${p}', this.value)">
+                            <span class="text-sm text-[#464E58]">Yes</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="exception_claim_radio_${index}" value="No" class="w-4 h-4 text-[#F13D30]" ${currentAnswer === 'No' ? 'checked' : ''} onchange="handleExceptionClaimChange('${p}', this.value)">
+                            <span class="text-sm text-[#464E58]">No</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="exception_claim_radio_${index}" value="Not sure" class="w-4 h-4 text-[#F13D30]" ${currentAnswer === 'Not sure' ? 'checked' : ''} onchange="handleExceptionClaimChange('${p}', this.value)">
+                            <span class="text-sm text-[#464E58]">Not sure</span>
+                        </label>
+                    </div>
+                    ${evidenceForm}
+                </div>
+            `;
+        }).join('');
+
+        const hasNotSure = Object.values(block1State.exceptionQualifiesMap).includes('Not sure');
+        const needsReviewBanner = hasNotSure ? `
+            <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-5 mb-4 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <p class="font-bold text-sm text-[#F57C00] mb-2 uppercase tracking-wide">Result: Needs Review</p>
+                <p class="font-normal text-sm text-[#464E58] leading-relaxed">
+                    This system requires legal review to determine if the exception applies. Please consult with your legal team or compliance officer.
+                </p>
+            </div>
+        ` : '';
+
+        const finalConfirmButton = `
+            <div class="flex justify-end mt-4">
+                <button onclick="confirmBlock1ExceptionClaim()" class="px-8 py-3 bg-[#F13D30] text-white rounded-lg font-bold text-sm hover:bg-[#DC180A] transition-all shadow-md">
+                    Confirm Exception Claim
+                </button>
+            </div>
+        `;
 
         return `
             ${confirmedBanner}
-            <div class="bg-[#FFF5F5] border border-[#F13D30] rounded-lg p-4">
-                <p class="font-bold text-sm text-[#22262A] mb-3">Exception Claim</p>
-                <p class="font-normal text-sm text-[#464E58] mb-3">Does your system ${practiceLabels} fall under the following condition?</p>
-                
-                <div class="mb-4">
-                    ${conditionsItems}
-                </div>
-
-                <div class="flex gap-6">
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" name="exception_claim_radio" value="Yes" class="w-4 h-4 text-[#F13D30] border-gray-300 focus:ring-[#F13D30]" 
-                            ${currentQualifies === 'Yes' ? 'checked' : ''} onchange="handleExceptionClaimChange(this.value)">
-                        <span class="text-sm text-[#464E58]">Yes</span>
-                    </label>
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" name="exception_claim_radio" value="No" class="w-4 h-4 text-[#F13D30] border-gray-300 focus:ring-[#F13D30]" 
-                            ${currentQualifies === 'No' ? 'checked' : ''} onchange="handleExceptionClaimChange(this.value)">
-                        <span class="text-sm text-[#464E58]">No</span>
-                    </label>
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" name="exception_claim_radio" value="Not sure" class="w-4 h-4 text-[#F13D30] border-gray-300 focus:ring-[#F13D30]" 
-                            ${currentQualifies === 'Not sure' ? 'checked' : ''} onchange="handleExceptionClaimChange(this.value)">
-                        <span class="text-sm text-[#464E58]">Not sure</span>
-                    </label>
-                </div>
-            </div>
+            ${exceptionBlocks}
+            ${needsReviewBanner}
+            ${finalConfirmButton}
         `;
     }
-    
-    return '<p class="text-sm text-[#464E58]">Processing exception flow...</p>';
+    return '';
 }
 
 // Render evidence upload form for Exception Claim "Yes" case
@@ -2757,23 +2834,26 @@ function acknowledgeNoException() {
     setClaimingException('No');
 }
 
-async function handleExceptionClaimChange(value) {
+async function handleExceptionClaimChange(practiceName, value) {
     const mainContainer = document.querySelector('[data-agent-id]');
     const agentId = mainContainer ? parseInt(mainContainer.getAttribute('data-agent-id')) : 0;
     
+    // Update local state map
+    block1State.exceptionQualifiesMap[practiceName] = value;
+    
     try {
-        // Collect exception condition text from input field(s)
+        // Collect all exception condition texts
         const conditionInputs = document.querySelectorAll('[id^="exception-condition-"]');
         const exceptionConditions = Array.from(conditionInputs).map(input => input.value).filter(v => v);
         
-        // Update both claiming_exception, exception_qualifies, and the customized condition text
+        // Send the complete map to BE
         const response = await fetch(`/api/ai-inventory/${agentId}/block1-state/`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
                 claiming_exception: 'Yes',
-                exception_qualifies: value,
-                exception_conditions: exceptionConditions // Save the customized condition text
+                exception_qualifies_map: block1State.exceptionQualifiesMap,
+                exception_conditions: exceptionConditions
             })
         });
         const result = await response.json();
@@ -2791,126 +2871,110 @@ async function handleExceptionClaimChange(value) {
 }
 
 // Evidence handling functions for Block 1
-async function saveBlock1EvidenceLink() {
-    const linkInput = document.getElementById('block1-evidence-link');
-    if (!linkInput || !linkInput.value.trim()) {
-        alert('Please enter a link');
+async function saveBlock1EvidenceLink(practiceName, index) {
+    const input = document.getElementById(`link-${index}`);
+    const link = input ? input.value.trim() : '';
+    if (!link) {
+        showNotification('Please enter a link', 'warning');
         return;
     }
-    
-    const mainContainer = document.querySelector('[data-agent-id]');
-    const agentId = mainContainer ? parseInt(mainContainer.getAttribute('data-agent-id')) : 0;
-    
-    try {
-        const response = await fetch(`/api/ai-inventory/${agentId}/block1-state/`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                exception_evidence_saved_link: linkInput.value.trim()
-            })
-        });
-        const result = await response.json();
-        
-        if (result.success) {
-            alert('Link saved successfully!');
-            block1State.exceptionEvidenceSavedLink = linkInput.value.trim();
-        }
-    } catch(e) { 
-        console.error(e);
-        alert('Error saving link');
+
+    if (!block1State.exceptionEvidenceMap[practiceName]) {
+        block1State.exceptionEvidenceMap[practiceName] = { link: '', files: [], explanation: '' };
     }
+    block1State.exceptionEvidenceMap[practiceName].link = link;
+
+    await updateBlock1EvidenceMapOnBE();
+    showNotification('Evidence link saved for ' + practiceName, 'success');
 }
 
-async function handleBlock1FileUpload(input) {
+function updateBlock1Explanation(practiceName, value) {
+    if (!block1State.exceptionEvidenceMap[practiceName]) {
+        block1State.exceptionEvidenceMap[practiceName] = { link: '', files: [], explanation: '' };
+    }
+    block1State.exceptionEvidenceMap[practiceName].explanation = value;
+}
+
+async function handleBlock1FileUpload(input, practiceName) {
     const files = Array.from(input.files);
     if (!files.length) return;
-    
+
     const formData = new FormData();
     files.forEach(file => formData.append('file', file));
     formData.append('folder', 'governance/uploads/block1');
-    
+
     try {
         const response = await fetch('/api/upload-file/', {
             method: 'POST',
             body: formData
         });
         const result = await response.json();
-        
+
         if (result.success && result.files) {
-            // Append new files to state
-            block1State.exceptionEvidenceFiles = [...block1State.exceptionEvidenceFiles, ...result.files];
-            block1State.exceptionEvidenceUploaded = true;
-            
-            // Re-render the form to show the files
-            const statusEl = document.getElementById('block-1-status');
-            const status = statusEl ? statusEl.textContent.trim() : '';
-            const contentEl = document.getElementById('block-1-content-inner');
-            if (contentEl) {
-                contentEl.innerHTML = renderBlock1Content(status);
+            if (!block1State.exceptionEvidenceMap[practiceName]) {
+                block1State.exceptionEvidenceMap[practiceName] = { link: '', files: [], explanation: '' };
             }
+            // Append new files
+            block1State.exceptionEvidenceMap[practiceName].files = [
+                ...block1State.exceptionEvidenceMap[practiceName].files, 
+                ...result.files
+            ];
+            
+            await updateBlock1EvidenceMapOnBE();
+            showNotification('Document uploaded for ' + practiceName, 'success');
+            updateAssessmentBlock(1); // Re-render to show new file
         } else {
             alert('Upload failed: ' + (result.error || 'Unknown error'));
         }
-    } catch (e) {
-        console.error('File upload error:', e);
+    } catch (err) {
+        console.error('File upload failed:', err);
         alert('Error uploading file');
     }
 }
 
-function removeBlock1EvidenceFile(index) {
-    block1State.exceptionEvidenceFiles.splice(index, 1);
-    if (block1State.exceptionEvidenceFiles.length === 0) {
-        block1State.exceptionEvidenceUploaded = false;
-    }
-    
-    // Re-render the form
-    const statusEl = document.getElementById('block-1-status');
-    const status = statusEl ? statusEl.textContent.trim() : '';
-    const contentEl = document.getElementById('block-1-content-inner');
-    if (contentEl) {
-        contentEl.innerHTML = renderBlock1Content(status);
+async function removeBlock1EvidenceFile(fIdx, practiceName) {
+    if (block1State.exceptionEvidenceMap[practiceName]) {
+        block1State.exceptionEvidenceMap[practiceName].files.splice(fIdx, 1);
+        await updateBlock1EvidenceMapOnBE();
+        updateAssessmentBlock(1);
     }
 }
 
-async function confirmBlock1ExceptionClaim() {
-    const linkInput = document.getElementById('block1-evidence-link');
-    const explanation = document.getElementById('block1-evidence-explanation');
-    
-    const hasLink = linkInput && linkInput.value.trim();
-    const hasExplanation = explanation && explanation.value.trim();
-    const hasFile = block1State.exceptionEvidenceFiles.length > 0;
-    
-    if (!hasLink && !hasExplanation && !hasFile) {
-        alert('Please provide evidence (link, document, or explanation) to support your exception claim');
-        return;
-    }
-    
+async function updateBlock1EvidenceMapOnBE() {
     const mainContainer = document.querySelector('[data-agent-id]');
     const agentId = mainContainer ? parseInt(mainContainer.getAttribute('data-agent-id')) : 0;
     
+    await fetch(`/api/ai-inventory/${agentId}/block1-state/`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            exception_evidence_map: block1State.exceptionEvidenceMap
+        })
+    });
+}
+
+async function confirmBlock1ExceptionClaim() {
+    const mainContainer = document.querySelector('[data-agent-id]');
+    const agentId = mainContainer ? parseInt(mainContainer.getAttribute('data-agent-id')) : 0;
+
     try {
         const response = await fetch(`/api/ai-inventory/${agentId}/block1-state/`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
-                exception_evidence_uploaded: hasFile,
-                exception_evidence_saved_link: hasLink ? linkInput.value.trim() : '',
-                exception_explanation: hasExplanation ? explanation.value.trim() : '',
-                exception_evidence_files: block1State.exceptionEvidenceFiles // Send full file data
+                exception_evidence_map: block1State.exceptionEvidenceMap
             })
         });
         const result = await response.json();
         
         if (result.success) {
-            if (result.assessment && result.assessment.block1) {
-                updateAssessmentBlocksFromBE(result.assessment);
-            } else {
-                updateAssessmentBlock(1);
-            }
+            updateAssessmentBlocksFromBE(result.assessment);
+            updateAssessmentBlock(1);
+            showNotification('Exception claim documentation updated', 'success');
         }
-    } catch(e) { 
-        console.error(e);
-        alert('Error confirming exception claim');
+    } catch (err) {
+        console.error('Failed to confirm exception claim:', err);
+        showNotification('Error confirming exception claim', 'error');
     }
 }
 
@@ -4316,6 +4380,8 @@ function updateAssessmentBlocksFromBE(assessmentResults) {
             block1State.prohibitedConfirmed = false;
             block1State.claimingException = '';
             block1State.exceptionQualifies = '';
+            block1State.exceptionQualifiesMap = {};
+            block1State.exceptionEvidenceMap = {};
             block1State.exceptionEvidenceUploaded = false;
             block1State.exceptionEvidenceSavedLink = '';
             block1State.exceptionEvidenceFiles = [];
@@ -4326,6 +4392,8 @@ function updateAssessmentBlocksFromBE(assessmentResults) {
             block1State.prohibitedConfirmed = beState.prohibited_confirmed || false;
             block1State.claimingException = beState.claiming_exception || '';
             block1State.exceptionQualifies = beState.exception_qualifies || '';
+            block1State.exceptionQualifiesMap = beState.exception_qualifies_map || {};
+            block1State.exceptionEvidenceMap = beState.exception_evidence_map || {};
             block1State.exceptionEvidenceUploaded = beState.exception_evidence_uploaded || false;
             block1State.exceptionEvidenceSavedLink = beState.exception_evidence_saved_link || '';
             block1State.exceptionEvidenceFiles = beState.exception_evidence_files || [];

@@ -2681,16 +2681,16 @@ def get_block1_status(profile_data, block1_state=None, reset_state=False):
     has_no_exception_practice = any(not prohibited_practices_map.get(p, {}).get('has_exception', False) for p in selected_practices)
     claiming_exception = block1_state.get('claiming_exception', '')
     
-    # From flowchart: "All practices hasException: false" → "No Exception Available" → "Status: Prohibited"
+    # 1. As long as, one option with no exception is selected -> Prohibited
     if has_no_exception_practice or claiming_exception == 'No':
         return {
             'status': 'Prohibited',
             'selected_practices': selected_practices,
             'practices_info': {p: prohibited_practices_map.get(p, {'label': p, 'article': 'Unknown'}) for p in selected_practices},
             'details': {
-                'reason': 'No exception available or user declined exception',
-                'has_exception_available': False,
-                'has_no_exception': True
+                'reason': 'No exception available for one or more selected practices' if has_no_exception_practice else 'User declined exception',
+                'has_exception_available': not has_no_exception_practice,
+                'has_no_exception': has_no_exception_practice
             }
         }
     
@@ -2708,68 +2708,95 @@ def get_block1_status(profile_data, block1_state=None, reset_state=False):
             }
         }
     
-    # Exception Question: Does system fall under exception condition? (from flowchart)
-    exception_qualifies = block1_state.get('exception_qualifies', '')
+    # Exception Question: Does system fall under exception condition?
+    # Handle multi-selection: all with exception need to be claimed.
+    qualifies_map = block1_state.get('exception_qualifies_map', {})
+    practices_with_exception = [p for p in selected_practices if prohibited_practices_map.get(p, {}).get('has_exception', False)]
     
-    if exception_qualifies == 'No':
-        # From flowchart: "No" → "Status: Prohibited"
+    # Check if all practices with exceptions have been answered
+    all_answered = all(p in qualifies_map for p in practices_with_exception)
+    
+    if not all_answered:
+        return {
+            'status': 'Triggered',
+            'selected_practices': selected_practices,
+            'practices_info': {p: prohibited_practices_map.get(p, {'label': p, 'article': 'Unknown'}) for p in selected_practices},
+            'details': {
+                'reason': 'Awaiting answers for all exception claims',
+                'has_exception_available': True,
+                'has_no_exception': False
+            }
+        }
+    
+    # Evaluate combined results
+    results = [qualifies_map.get(p) for p in practices_with_exception]
+    
+    if 'No' in results:
+        # If any is "No" -> Prohibited
         return {
             'status': 'Prohibited',
             'selected_practices': selected_practices,
             'practices_info': {p: prohibited_practices_map.get(p, {'label': p, 'article': 'Unknown'}) for p in selected_practices},
             'details': {
-                'reason': 'Exception does not apply',
+                'reason': 'One or more exception claims were denied (answered "No")',
                 'has_exception_available': True,
                 'has_no_exception': False
             }
         }
     
-    if exception_qualifies == 'Not sure':
-        # From flowchart: "Not sure" → "Status: Needs Review"
+    if 'Not sure' in results:
+        # If any is "Not sure" (and none are "No") -> Needs Review
+        # (Technically "otherwise prohibited" could mean this too, but Needs Review is more helpful)
         return {
             'status': 'Needs Review',
             'selected_practices': selected_practices,
             'practices_info': {p: prohibited_practices_map.get(p, {'label': p, 'article': 'Unknown'}) for p in selected_practices},
             'details': {
-                'reason': 'Uncertain about exception qualification',
+                'reason': 'Uncertain about at least one exception qualification',
                 'has_exception_available': True,
                 'has_no_exception': False
             }
         }
     
-    if exception_qualifies == 'Yes':
-        # From flowchart: "Yes" → "Ask for Evidence & check if Uploaded or Link Saved?"
-        exception_evidence_uploaded = block1_state.get('exception_evidence_uploaded', False)
-        exception_evidence_saved_link = block1_state.get('exception_evidence_saved_link', '')
-        exception_explanation = block1_state.get('exception_explanation', '')
-        exception_evidence_files = block1_state.get('exception_evidence_files', [])
+    # If we reached here, it means all were answered and all are 'Yes'
+    # Check for evidence for EACH practice (since they need it "cho từng data value")
+    evidence_map = block1_state.get('exception_evidence_map', {})
+    
+    all_evidence_provided = True
+    for p in practices_with_exception:
+        p_evidence = evidence_map.get(p, {})
+        has_link = p_evidence.get('link', '')
+        has_files = p_evidence.get('files', [])
+        has_explanation = p_evidence.get('explanation', '')
         
-        if exception_evidence_uploaded or exception_evidence_saved_link or exception_explanation or exception_evidence_files:
-            # From flowchart: "Yes" (evidence provided) → "Status: Exception claimed" → "Status: PASS"
-            return {
-                'status': 'Exception claimed',
-                'selected_practices': selected_practices,
-                'practices_info': {p: prohibited_practices_map.get(p, {'label': p, 'article': 'Unknown'}) for p in selected_practices},
-                'details': {
-                    'reason': 'Exception claimed with evidence',
-                    'has_exception_available': True,
-                    'has_no_exception': False,
-                    'evidence_provided': True
-                }
+        if not (has_link or has_files or has_explanation):
+            all_evidence_provided = False
+            break
+            
+    if all_evidence_provided:
+        return {
+            'status': 'Exception claimed',
+            'selected_practices': selected_practices,
+            'practices_info': {p: prohibited_practices_map.get(p, {'label': p, 'article': 'Unknown'}) for p in selected_practices},
+            'details': {
+                'reason': 'Evidence provided for all exception claims',
+                'has_exception_available': True,
+                'has_no_exception': False,
+                'evidence_provided': True
             }
-        else:
-            # From flowchart: "No" (no evidence) → "Status: Needs Review"
-            return {
-                'status': 'Needs Review',
-                'selected_practices': selected_practices,
-                'practices_info': {p: prohibited_practices_map.get(p, {'label': p, 'article': 'Unknown'}) for p in selected_practices},
-                'details': {
-                    'reason': 'Exception qualifies but no evidence provided',
-                    'has_exception_available': True,
-                    'has_no_exception': False,
-                    'evidence_provided': False
-                }
+        }
+    else:
+        return {
+            'status': 'Needs Review',
+            'selected_practices': selected_practices,
+            'practices_info': {p: prohibited_practices_map.get(p, {'label': p, 'article': 'Unknown'}) for p in selected_practices},
+            'details': {
+                'reason': 'Awaiting evidence for one or more exception claims',
+                'has_exception_available': True,
+                'has_no_exception': False,
+                'evidence_provided': False
             }
+        }
     
     # Default fallback
     return {
@@ -3809,6 +3836,10 @@ def api_update_block1_state(request, agent_id):
             block1_state['claiming_exception'] = data.get('claiming_exception', '')
         if 'exception_qualifies' in data:
             block1_state['exception_qualifies'] = data.get('exception_qualifies', '')
+        if 'exception_qualifies_map' in data:
+            block1_state['exception_qualifies_map'] = data.get('exception_qualifies_map', {})
+        if 'exception_evidence_map' in data:
+            block1_state['exception_evidence_map'] = data.get('exception_evidence_map', {})
         if 'exception_evidence_uploaded' in data:
             block1_state['exception_evidence_uploaded'] = bool(data['exception_evidence_uploaded'])
         if 'exception_evidence_saved_link' in data:
