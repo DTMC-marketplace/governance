@@ -4,227 +4,453 @@
 {% block title %}{{ project.name }} - Compliance Detail{% endblock %}
 
 {% block dashboard_content %}
-<div class="flex flex-col gap-6">
-    <!-- Breadcrumb & Navigation -->
-    <div class="flex items-center gap-3">
-        <button class="w-6 h-6 bg-transparent border-none cursor-pointer p-0 flex items-center justify-center" onclick="history.back()">
-            <img src="{% static 'governance/img/arrow-left.svg' %}" alt="Back" class="w-3.5 h-3.5">
-        </button>
-        <button class="w-6 h-6 bg-transparent border-none cursor-pointer p-0 flex items-center justify-center" onclick="history.forward()">
-            <img src="{% static 'governance/img/arrow-right-gray.svg' %}" alt="Forward" class="w-3.5 h-3.5">
-        </button>
-        <div class="flex items-center gap-2 text-sm">
-            <a href="{% url 'compliance' %}" class="text-[#6B7280] hover:text-[#F13D30] transition-colors">Compliance</a>
-            <span class="text-[#D1D5DB]">/</span>
-            <span class="font-semibold text-[#F13D30]">{{ project.name }}</span>
-        </div>
-    </div>
-
-    <!-- Header Info -->
-    <div class="flex flex-col gap-2">
-        <h1 class="text-2xl font-bold text-[#111827]">{{ project.name }}</h1>
-        <div class="flex items-center gap-4 text-sm text-[#6B7280]">
-            <div class="flex items-center gap-1">
-                <span class="font-medium">AI System:</span>
-                <span class="text-[#111827] font-semibold">{{ project.ai_system }}</span>
-            </div>
-            <div class="w-1 h-1 rounded-full bg-[#D1D5DB]"></div>
-            <div class="flex items-center gap-1">
-                <span class="font-medium">Role:</span>
-                <span class="text-[#111827] font-semibold">{{ project.role }}</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Summary Stats Card -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <!-- Regulatory Profile -->
-        <div class="bg-white rounded-xl border border-[#E5E7EB] p-6 shadow-sm">
-            <h3 class="text-xs font-semibold text-[#6B7280] uppercase tracking-wider mb-4">Regulatory Profile</h3>
-            <div class="flex flex-wrap gap-2">
-                {% for badge in project.regulatory_profile %}
-                <span class="px-3 py-1 rounded-full text-xs font-semibold bg-[#FEF0C7] text-[#B54708] border border-[#FEDF89]">{{ badge }}</span>
-                {% endfor %}
+<div class="flex flex-col gap-6 dashboard-content-wrapper">
+    <div id="project-main-header">
+        <!-- Breadcrumb & Navigation -->
+        <div class="flex items-center gap-3">
+            <button class="w-6 h-6 bg-transparent border-none cursor-pointer p-0 flex items-center justify-center" onclick="history.back()">
+                <img src="{% static 'governance/img/arrow-left.svg' %}" alt="Back" class="w-3.5 h-3.5">
+            </button>
+            <button class="w-6 h-6 bg-transparent border-none cursor-pointer p-0 flex items-center justify-center" onclick="history.forward()">
+                <img src="{% static 'governance/img/arrow-right-gray.svg' %}" alt="Forward" class="w-3.5 h-3.5">
+            </button>
+            <div class="flex items-center gap-2 text-sm">
+                <a href="{% url 'compliance' %}" class="text-[#6B7280] hover:text-[#F13D30] transition-colors">Compliance</a>
+                <span class="text-[#D1D5DB]">/</span>
+                <span class="font-semibold text-[#F13D30]">{{ project.name }}</span>
             </div>
         </div>
 
-        <!-- Progress -->
-        <div class="bg-white rounded-xl border border-[#E5E7EB] p-6 shadow-sm">
-            <h3 class="text-xs font-semibold text-[#6B7280] uppercase tracking-wider mb-4">Overall Compliance Progress</h3>
-            <div class="flex items-center gap-4">
-                <div class="flex-1 h-2 rounded-full bg-[#F3F4F6] overflow-hidden">
-                    <div class="h-2 rounded-full bg-[#F13D30]" style="width: {{ project.overall_progress }}%;"></div>
+        <!-- Header Info -->
+        <div class="flex flex-col gap-2 mt-4">
+            <h1 class="text-2xl font-bold text-[#111827]">{{ project.name }}</h1>
+            <div class="flex items-center gap-4 text-sm text-[#6B7280]">
+                <div class="flex items-center gap-1">
+                    <span class="font-medium">AI System:</span>
+                    <span class="text-[#111827] font-semibold">{{ project.ai_system }}</span>
                 </div>
-                <span class="text-lg font-bold text-[#F13D30]">{{ project.overall_progress }}%</span>
-            </div>
-        </div>
-
-        <!-- Stats Breakdown -->
-        <div class="bg-white rounded-xl border border-[#E5E7EB] p-6 shadow-sm">
-            <div class="grid grid-cols-4 gap-2">
-                <div class="text-center">
-                    <div class="text-lg font-bold text-[#111827]">{{ project.stats.todo }}</div>
-                    <div class="text-[10px] font-semibold text-[#6B7280] uppercase">To-Do</div>
-                    <div class="h-1 w-full bg-[#F2F4F7] rounded-full mt-1"></div>
-                </div>
-                <div class="text-center">
-                    <div class="text-lg font-bold text-[#175CD3]">{{ project.stats.in_progress }}</div>
-                    <div class="text-[10px] font-semibold text-[#6B7280] uppercase">In Progress</div>
-                    <div class="h-1 w-full bg-[#EFF8FF] rounded-full mt-1"></div>
-                </div>
-                <div class="text-center">
-                    <div class="text-lg font-bold text-[#B42318]">{{ project.stats.blocked }}</div>
-                    <div class="text-[10px] font-semibold text-[#6B7280] uppercase">Blocked</div>
-                    <div class="h-1 w-full bg-[#FEE4E2] rounded-full mt-1"></div>
-                </div>
-                <div class="text-center">
-                    <div class="text-lg font-bold text-[#027A48]">{{ project.stats.done }}</div>
-                    <div class="text-[10px] font-semibold text-[#6B7280] uppercase">Done</div>
-                    <div class="h-1 w-full bg-[#ECFDF3] rounded-full mt-1"></div>
+                <div class="w-1 h-1 rounded-full bg-[#D1D5DB]"></div>
+                <div class="flex items-center gap-1">
+                    <span class="font-medium">Role:</span>
+                    <span class="text-[#111827] font-semibold">{{ project.role }}</span>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Tasks Table Card -->
-    <div class="bg-white rounded-xl border border-[#E5E7EB] shadow-sm mb-8">
-        <!-- Toolbar -->
-        <div class="p-4 border-b border-[#E5E7EB] flex flex-col sm:flex-row justify-between items-center gap-4">
-            <h2 class="text-lg font-bold text-[#111827]">Compliance Tasks / Items ({{ project.tasks|length }})</h2>
-            <div class="flex items-center gap-2 w-full sm:w-auto">
-                <div class="relative flex-1 sm:w-64">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#9CA3AF]">
-                        <circle cx="11" cy="11" r="8"></circle>
-                        <path d="m21 21-4.35-4.35"></path>
-                    </svg>
-                    <input type="text" id="task-search-input" placeholder="Search tasks..." class="w-full pl-10 pr-4 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F13D30]/20 focus:border-[#F13D30]">
+    <!-- Wrapping Task List in a View Container -->
+    <div id="task-list-view">
+        <!-- Summary Stats Card -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <!-- Regulatory Profile -->
+            <div class="bg-white rounded-xl border border-[#E5E7EB] p-6 shadow-[0px_2px_4px_rgba(34,38,42,0.05)] hover:shadow-md transition-shadow">
+                <h3 class="text-xs font-bold text-[#6B7280] uppercase tracking-wider mb-4">Regulatory Profile</h3>
+                <div class="flex flex-wrap gap-2">
+                    {% if project.regulatory_profile %}
+                        {% for badge in project.regulatory_profile %}
+                        <span class="px-3 py-1 rounded-full text-xs font-semibold bg-[#FEF0C7] text-[#B54708] border border-[#FEDF89]">{{ badge }}</span>
+                        {% endfor %}
+                    {% else %}
+                        <span class="px-3 py-1 rounded-full text-xs font-semibold bg-[#FEF0C7] text-[#B54708] border border-[#FEDF89]">EU AI Act</span>
+                        <span class="px-3 py-1 rounded-full text-xs font-semibold bg-[#DBEAFE] text-[#1E40AF] border border-[#B2DDFF]">GDPR</span>
+                        <span class="px-3 py-1 rounded-full text-xs font-semibold bg-[#F5F3FF] text-[#6B21A8] border border-[#DDD6FE]">High-Risk</span>
+                    {% endif %}
                 </div>
-                <button onclick="applyFilters()" class="bg-[#F13D30] text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-[#DC180A] transition-colors">Search</button>
-                <button onclick="openFilterModal()" class="bg-white border border-[#D1D5DB] text-[#374151] px-4 py-2 rounded-lg text-sm font-semibold hover:bg-[#F9FAFB] flex items-center gap-2">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
-                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
-                    </svg>
-                    Filter
+            </div>
+
+            <!-- Progress -->
+            <div class="bg-white rounded-xl border border-[#E5E7EB] p-6 shadow-[0px_2px_4px_rgba(34,38,42,0.05)] hover:shadow-md transition-shadow">
+                <h3 class="text-xs font-bold text-[#6B7280] uppercase tracking-wider mb-4">Compliance Progress</h3>
+                <div class="flex items-center gap-4">
+                    <div class="flex-1 h-3 rounded-full bg-[#F3F4F6] overflow-hidden">
+                        <div class="h-full rounded-full bg-gradient-to-r from-[#F13D30] to-[#DC180A]" style="width: {{ project.overall_progress|default:45 }}%;"></div>
+                    </div>
+                    <span class="text-xl font-extrabold text-[#F13D30]">{{ project.overall_progress|default:45 }}%</span>
+                </div>
+            </div>
+
+            <!-- Stats Breakdown -->
+            <div class="bg-white rounded-xl border border-[#E5E7EB] p-6 shadow-[0px_2px_4px_rgba(34,38,42,0.05)] hover:shadow-md transition-shadow">
+                <div class="grid grid-cols-4 gap-2">
+                    <div class="text-center">
+                        <div class="text-lg font-bold text-[#111827]">{{ project.stats.todo|default:8 }}</div>
+                        <div class="text-[10px] font-semibold text-[#6B7280] uppercase">To-Do</div>
+                        <div class="h-1.5 w-full bg-[#F2F4F7] rounded-full mt-2"></div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-lg font-bold text-[#175CD3]">{{ project.stats.in_progress|default:6 }}</div>
+                        <div class="text-[10px] font-semibold text-[#6B7280] uppercase">In Progress</div>
+                        <div class="h-1.5 w-full bg-[#EFF8FF] rounded-full mt-2"></div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-lg font-bold text-[#B42318]">{{ project.stats.blocked|default:2 }}</div>
+                        <div class="text-[10px] font-semibold text-[#6B7280] uppercase">Blocked</div>
+                        <div class="h-1.5 w-full bg-[#FEE4E2] rounded-full mt-2"></div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-lg font-bold text-[#027A48]">{{ project.stats.done|default:6 }}</div>
+                        <div class="text-[10px] font-semibold text-[#6B7280] uppercase">Done</div>
+                        <div class="h-1.5 w-full bg-[#ECFDF3] rounded-full mt-2"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tasks Table Card -->
+        <div class="bg-white rounded-xl border border-[#E5E7EB] shadow-[0px_4px_12px_rgba(34,38,42,0.08)] mb-8 overflow-hidden">
+            <!-- Toolbar -->
+            <div class="p-6 border-b border-[#E5E7EB] flex flex-col sm:flex-row justify-between items-center gap-4 bg-[#F9FAFB]/50">
+                <div>
+                    <h2 class="text-xl font-bold text-[#111827]">Compliance Tasks / Items</h2>
+                    <p class="text-sm text-[#6B7280] mt-0.5">Manage and track AI Act compliance requirements</p>
+                </div>
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <div class="relative flex-1 sm:w-72">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#9CA3AF]">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.35-4.35"></path>
+                        </svg>
+                        <input type="text" id="task-search-input" placeholder="Search tasks, articles..." class="w-full pl-10 pr-4 py-2.5 bg-white border border-[#D1D5DB] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F13D30]/20 focus:border-[#F13D30] transition-all">
+                    </div>
+                    <button onclick="openFilterModal()" class="bg-white border border-[#D1D5DB] text-[#374151] px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#F9FAFB] flex items-center gap-2 transition-colors border-2">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                        </svg>
+                        Filter
+                    </button>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-[#F9FAFB] border-b border-[#E5E7EB]">
+                            <th class="px-6 py-4 text-xs font-bold text-[#6B7280] uppercase tracking-wider">Task Name</th>
+                            <th class="px-6 py-4 text-xs font-bold text-[#6B7280] uppercase tracking-wider">Category</th>
+                            <th class="px-6 py-4 text-xs font-bold text-[#6B7280] uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-4 text-xs font-bold text-[#6B7280] uppercase tracking-wider">Article</th>
+                            <th class="px-6 py-4 text-xs font-bold text-[#6B7280] uppercase tracking-wider">Evidence</th>
+                            <th class="px-6 py-4 text-xs font-bold text-[#6B7280] uppercase tracking-wider">Assignee</th>
+                            <th class="px-6 py-4 text-xs font-bold text-[#6B7280] uppercase tracking-wider">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="compliance-tasks-tbody" class="divide-y divide-[#E5E7EB]">
+                        <!-- Dynamic items from Django -->
+                        {% for task in project.tasks %}
+                        <tr class="hover:bg-[#F9FAFB] transition-colors group">
+                            <td class="px-6 py-4">
+                                <span class="text-sm font-bold text-[#111827] group-hover:text-[#F13D30] transition-colors">{{ task.name }}</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="px-2.5 py-1 rounded-full text-[10px] font-bold {{ task.category_class }}">{{ task.category }}</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="relative" x-data="{ open: false }">
+                                    <button @click="open = !open" @click.outside="open = false" 
+                                        class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold border border-transparent transition-all w-32 justify-between {{ task.status_class }}"
+                                        data-task-id="{{ task.id }}">
+                                        <span class="truncate status-text">{{ task.status }}</span>
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-3 h-3 flex-shrink-0 transition-transform duration-200" :class="open ? 'rotate-180' : ''">
+                                            <polyline points="6 9 12 15 18 9"></polyline>
+                                        </svg>
+                                    </button>
+                                    <!-- Dropdown -->
+                                    <div x-show="open" style="display: none;" class="absolute top-full left-0 mt-1 w-36 bg-white rounded-lg shadow-xl border border-gray-100 z-50 py-1 overflow-hidden">
+                                        <button @click="updateTaskStatus($el, 'Done'); open=false" class="w-full text-left px-3 py-2 text-xs font-medium text-[#027A48] hover:bg-[#ECFDF3] flex items-center gap-2 transition-colors">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-[#027A48]"></span> Done
+                                        </button>
+                                        <button @click="updateTaskStatus($el, 'In Progress'); open=false" class="w-full text-left px-3 py-2 text-xs font-medium text-[#175CD3] hover:bg-[#EFF8FF] flex items-center gap-2 transition-colors">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-[#175CD3]"></span> In Progress
+                                        </button>
+                                        <button @click="updateTaskStatus($el, 'Blocked'); open=false" class="w-full text-left px-3 py-2 text-xs font-medium text-[#B42318] hover:bg-[#FEE4E2] flex items-center gap-2 transition-colors">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-[#B42318]"></span> Blocked
+                                        </button>
+                                        <button @click="updateTaskStatus($el, 'To-Do'); open=false" class="w-full text-left px-3 py-2 text-xs font-medium text-[#344054] hover:bg-[#F2F4F7] flex items-center gap-2 transition-colors">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-[#344054]"></span> To-Do
+                                        </button>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex flex-wrap gap-1">
+                                    {% for art in task.linked_articles %}
+                                    <span class="px-2 py-0.5 rounded bg-[#EFF8FF] text-[#175CD3] text-[10px] font-bold border border-[#B2DDFF]">{{ art }}</span>
+                                    {% endfor %}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-2 text-xs {{ task.evidence_class }}">
+                                    {% if task.evidence_status == 'Uploaded' %}
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4 text-[#027A48]">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                    </svg>
+                                    <span class="font-bold">Uploaded</span>
+                                    {% else %}
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4 text-[#D92D20]">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    </svg>
+                                    <span class="font-bold text-[#D92D20]">Missing</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                {% if task.assignee_initials %}
+                                <div class="flex items-center gap-2">
+                                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold {{ task.assignee_class }} border-2 border-white shadow-sm">
+                                        {{ task.assignee_initials }}
+                                    </div>
+                                    <span class="text-sm font-medium text-[#374151]">{{ task.assignee }}</span>
+                                </div>
+                                {% else %}
+                                <span class="text-sm text-[#6B7280] italic">Unassigned</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-2">
+                                    <button onclick="openAssigneeModal('{{ task.id }}', '{{ task.name|escapejs }}')" class="p-2.5 rounded-xl hover:bg-[#F3F4F6] text-[#6B7280] transition-all border border-[#E5E7EB] hover:border-[#D1D5DB]">
+                                        <img src="{% static 'governance/img/assignee.svg' %}" alt="Assign" class="w-4 h-4">
+                                    </button>
+                                    <button onclick="openNotesModal('{{ task.id }}')" class="p-2.5 rounded-xl hover:bg-[#F3F4F6] text-[#6B7280] transition-all border border-[#E5E7EB] hover:border-[#D1D5DB]">
+                                        <img src="{% static 'governance/img/chat.svg' %}" alt="Notes" class="w-4 h-4">
+                                    </button>
+                                    <button onclick="openTaskDetail('{{ task.id }}', '{{ task.name|escapejs }}', '{{ task.linked_articles.0|escapejs }}', '{{ task.category|escapejs }}')" class="p-2.5 rounded-xl bg-[#F13D30] text-white hover:bg-[#DC180A] transition-all shadow-sm hover:shadow-md">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                                            <polyline points="9 18 15 12 9 6"></polyline>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+
+                        <!-- Fallback Hardcoded Tasks for Demo (visible if no project.tasks) -->
+                        {% if not project.tasks %}
+                        <tr class="hover:bg-[#F9FAFB] transition-colors group">
+                            <td class="px-6 py-4"><span class="text-sm font-bold text-[#111827] group-hover:text-[#F13D30] transition-colors">Risk Management System</span></td>
+                            <td class="px-6 py-4"><span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#FEE2E2] text-[#991B1B]">Risk</span></td>
+                            <td class="px-6 py-4"><span class="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#ECFDF3] text-[#027A48]">Done</span></td>
+                            <td class="px-6 py-4"><span class="px-2 py-0.5 rounded bg-[#EFF8FF] text-[#175CD3] text-[10px] font-bold border border-[#B2DDFF]">Art. 9</span></td>
+                            <td class="px-6 py-4"><span class="font-bold text-[#027A48] text-xs">Uploaded</span></td>
+                            <td class="px-6 py-4"><div class="flex items-center gap-2"><div class="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold bg-blue-100 text-blue-600 border-2 border-white">JD</div><span class="text-sm font-medium">John Doe</span></div></td>
+                            <td class="px-6 py-4"><button onclick="openTaskDetail('1', 'Risk Management System', 'Art. 9', 'Risk')" class="p-2.5 rounded-xl bg-[#F13D30] text-white hover:bg-[#DC180A] transition-all shadow-sm flex items-center justify-center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4"><polyline points="9 18 15 12 9 6"></polyline></svg></button></td>
+                        </tr>
+                        <tr class="hover:bg-[#F9FAFB] transition-colors group">
+                            <td class="px-6 py-4"><span class="text-sm font-bold text-[#111827] group-hover:text-[#F13D30] transition-colors">Data Governance</span></td>
+                            <td class="px-6 py-4"><span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#DBEAFE] text-[#1E40AF]">Data</span></td>
+                            <td class="px-6 py-4"><span class="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#ECFDF3] text-[#027A48]">Done</span></td>
+                            <td class="px-6 py-4"><span class="px-2 py-0.5 rounded bg-[#EFF8FF] text-[#175CD3] text-[10px] font-bold border border-[#B2DDFF]">Art. 10</span></td>
+                            <td class="px-6 py-4"><span class="font-bold text-[#027A48] text-xs">Uploaded</span></td>
+                            <td class="px-6 py-4"><div class="flex items-center gap-2"><div class="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold bg-purple-100 text-purple-600 border-2 border-white">AS</div><span class="text-sm font-medium">Alice Smith</span></div></td>
+                            <td class="px-6 py-4"><button onclick="openTaskDetail('2', 'Data Governance', 'Art. 10', 'Data')" class="p-2.5 rounded-xl bg-[#F13D30] text-white hover:bg-[#DC180A] transition-all shadow-sm flex items-center justify-center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4"><polyline points="9 18 15 12 9 6"></polyline></svg></button></td>
+                        </tr>
+                        <tr class="hover:bg-[#F9FAFB] transition-colors group">
+                            <td class="px-6 py-4"><span class="text-sm font-bold text-[#111827] group-hover:text-[#F13D30] transition-colors">Accuracy & Cybersecurity</span></td>
+                            <td class="px-6 py-4"><span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#FEF3C7] text-[#92400E]">Security</span></td>
+                            <td class="px-6 py-4"><span class="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#EFF8FF] text-[#175CD3]">In Progress</span></td>
+                            <td class="px-6 py-4"><span class="px-2 py-0.5 rounded bg-[#EFF8FF] text-[#175CD3] text-[10px] font-bold border border-[#B2DDFF]">Art. 15</span></td>
+                            <td class="px-6 py-4"><span class="font-bold text-[#D92D20] text-xs">Missing</span></td>
+                            <td class="px-6 py-4"><div class="flex items-center gap-2"><div class="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold bg-green-100 text-green-600 border-2 border-white">RB</div><span class="text-sm font-medium">Robert Brown</span></div></td>
+                            <td class="px-6 py-4"><button onclick="openTaskDetail('8', 'Accuracy & Cybersecurity', 'Art. 15', 'Security')" class="p-2.5 rounded-xl bg-[#F13D30] text-white hover:bg-[#DC180A] transition-all shadow-sm flex items-center justify-center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4"><polyline points="9 18 15 12 9 6"></polyline></svg></button></td>
+                        </tr>
+                        <tr class="hover:bg-[#F9FAFB] transition-colors group">
+                            <td class="px-6 py-4"><span class="text-sm font-bold text-[#111827] group-hover:text-[#F13D30] transition-colors">Fundamental Rights Impact</span></td>
+                            <td class="px-6 py-4"><span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#E9D5FF] text-[#6B21A8]">Risk</span></td>
+                            <td class="px-6 py-4"><span class="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#F2F4F7] text-[#344054]">To-Do</span></td>
+                            <td class="px-6 py-4"><span class="px-2 py-0.5 rounded bg-[#EFF8FF] text-[#175CD3] text-[10px] font-bold border border-[#B2DDFF]">Art. 27</span></td>
+                            <td class="px-6 py-4"><span class="font-bold text-[#D92D20] text-xs">Missing</span></td>
+                            <td class="px-6 py-4"><div class="flex items-center gap-2"><div class="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold bg-gray-100 text-gray-600 border-2 border-white">?</div><span class="text-sm italic text-gray-400">Unassigned</span></div></td>
+                            <td class="px-6 py-4"><button onclick="openTaskDetail('14', 'Fundamental Rights Impact', 'Art. 27', 'Risk')" class="p-2.5 rounded-xl bg-[#F13D30] text-white hover:bg-[#DC180A] transition-all shadow-sm flex items-center justify-center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4"><polyline points="9 18 15 12 9 6"></polyline></svg></button></td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Task Detail View Container -->
+    <div id="task-detail-view" class="hidden">
+        <!-- Breadcrumb -->
+        <div class="flex items-center gap-3 mb-6">
+            <button onclick="closeTaskDetail()" class="flex items-center gap-2 text-[#565F6C] hover:text-[#22262A] transition-colors font-medium text-sm">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+                Back to Compliance Items
+            </button>
+        </div>
+
+        <!-- Detail Header -->
+        <div class="flex flex-col gap-2 mb-6">
+            <div class="flex items-center gap-3">
+                <h1 id="detail-task-name" class="text-3xl font-extrabold text-[#111827]">Risk Management System</h1>
+                <span id="detail-article-label" class="text-xl font-medium text-[#6B7280]">Art. 9</span>
+                <span id="detail-category-badge" class="px-3 py-1 rounded-full bg-[#FEE2E2] text-[#991B1B] font-bold text-xs">Risk</span>
+            </div>
+            <div class="flex items-center gap-2 text-[#DC180A] bg-[#FEEDEC] px-4 py-3 rounded-xl border border-[#FEE2E2] mt-2">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5 flex-shrink-0">
+                    <path d="M12 8v4m0 4h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"></path>
+                </svg>
+                <span id="detail-requirements-status" class="text-sm font-semibold">Status: Mandatory for all high-risk systems per Article 9.</span>
+            </div>
+        </div>
+
+        <!-- Compulsory Skills Section -->
+        <div class="bg-white rounded-2xl border border-[#F0F1F2] shadow-[0px_4px_16px_rgba(34,38,42,0.06)] p-8 mb-8">
+            <h2 class="text-xl font-bold text-[#22262A] mb-6 flex items-center gap-2">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5 text-[#F13D30]">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14l-5-4.87 6.91-1.01L12 2z"></path>
+                </svg>
+                Compulsory Skills
+            </h2>
+            <div id="compulsory-skills-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Dynamically populated -->
+            </div>
+        </div>
+
+        <!-- Assessment Categories Breakdown -->
+        <div class="bg-white rounded-2xl border border-[#F0F1F2] shadow-[0px_8px_24px_rgba(34,38,42,0.1)] overflow-hidden mb-12">
+            <div class="px-6 py-5 border-b border-[#F0F1F2] bg-[#F9FAFB]/50 flex justify-between items-center">
+                <h2 class="text-xl font-bold text-[#22262A]">Assessment Categories Breakdown</h2>
+                <div class="flex gap-2">
+                    <span class="px-2 py-1 rounded bg-[#D1FAE5] text-[#065F46] text-[10px] font-bold">4 DONE</span>
+                    <span class="px-2 py-1 rounded bg-[#FFFAEB] text-[#D78C02] text-[10px] font-bold">2 PENDING</span>
+                </div>
+            </div>
+            <div id="assessment-categories-list">
+                <!-- Dynamically populated -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Assessment Choice View Container -->
+    <div id="assessment-choice-view" class="hidden">
+        <div class="px-8 pt-4 pb-2">
+            <button onclick="closeAssessmentChoice()" class="flex items-center gap-2 mb-4 text-[#565F6C] hover:text-[#22262A] transition-colors font-medium text-sm">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+                Back to Compliance Items
+            </button>
+            <div class="mb-2">
+                <p class="font-medium text-sm text-[#565F6C] mb-1">
+                    <span id="choice-task-name">Risk Management System</span> · <span id="choice-article">Art. 9</span>
+                </p>
+                <h3 id="choice-skill-name" class="font-bold text-xl text-[#22262A] tracking-tight mb-1">Risk Assessment</h3>
+                <p id="choice-skill-description" class="text-[#565F6C] text-sm max-w-4xl leading-relaxed">Systematic identification, analysis, and management of risks in AI systems.</p>
+            </div>
+        </div>
+
+        <div class="max-w-[1000px] mx-auto py-6 px-4">
+            <h2 class="font-bold text-2xl text-[#22262A] text-center mb-8">Choose Your Assessment Method</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
+                <!-- AI Agent Scan Card -->
+                <button onclick="handleAssessmentChoice('ai-scan-ready')" class="relative bg-white border border-[#E5E7EB] rounded-3xl p-10 text-left hover:border-[#F13D30] hover:shadow-2xl transition-all group flex flex-col h-full">
+                    <div class="absolute top-5 right-10">
+                        <div class="w-14 h-14 rounded-2xl bg-[#F13D30] flex items-center justify-center shadow-lg shadow-[#F13D30]/20 group-hover:scale-110 transition-transform">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-7 h-7 text-white">
+                                <path d="M9.5 2L11 6.5L15.5 8L11 9.5L9.5 14L8 9.5L3.5 8L8 6.5L9.5 2Z" fill="white" stroke="none"></path>
+                                <path d="M18 12L19 15L22 16L19 17L18 20L17 17L14 16L17 15L18 12Z" fill="white" stroke="none" opacity="0.6"></path>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <h3 class="font-bold text-2xl text-[#22262A] mb-4 pr-16">AI Agent Scan</h3>
+                    <p class="text-[15px] text-[#565F6C] mb-10 leading-relaxed">
+                        Let our AI agents automatically scan and analyze your system to provide instant compliance insights using RAG and pattern recognition.
+                    </p>
+
+                    <ul class="space-y-4 mb-12 flex-grow">
+                        <li class="flex items-center gap-3">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="3" class="w-5 h-5 flex-shrink-0">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            <span class="font-medium text-[15px] text-[#464E58]">Automated analysis</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="3" class="w-5 h-5 flex-shrink-0">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            <span class="font-medium text-[15px] text-[#464E58]">Instant results & mapping</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="3" class="w-5 h-5 flex-shrink-0">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            <span class="font-medium text-[15px] text-[#464E58]">Evidence extraction</span>
+                        </li>
+                    </ul>
+
+                    <div class="flex items-center justify-between pt-6 border-t border-[#F0F1F2]">
+                        <div class="flex items-center gap-2.5 text-[#565F6C]">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5 opacity-70">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                            </svg>
+                            <span class="text-sm font-bold tracking-tight">~2 minutes</span>
+                        </div>
+                        <span class="px-4 py-1.5 bg-[#FFF1F0] text-[#F13D30] rounded-full font-bold text-[11px] uppercase tracking-wider">RECOMMENDED</span>
+                    </div>
+                </button>
+
+                <!-- Fill Questionnaire Card -->
+                <button onclick="handleAssessmentChoice('questionnaire')" class="relative bg-white border border-[#E5E7EB] rounded-3xl p-10 text-left hover:border-[#F13D30] hover:shadow-2xl transition-all group flex flex-col h-full">
+                    <div class="absolute top-5 right-10">
+                        <div class="w-14 h-14 rounded-2xl bg-white border-2 border-[#E5E7EB] flex items-center justify-center group-hover:border-[#F13D30] transition-all">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-7 h-7 text-[#565F6C] group-hover:text-[#F13D30] transition-colors">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <h3 class="font-bold text-2xl text-[#22262A] mb-4 pr-16">Fill Questionnaire</h3>
+                    <p class="text-[15px] text-[#565F6C] mb-10 leading-relaxed">
+                        Manually complete a comprehensive questionnaire for detailed assessment, human oversight, and full control.
+                    </p>
+
+                    <ul class="space-y-4 mb-12 flex-grow">
+                        <li class="flex items-center gap-3">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="#4B5563" stroke-width="3" class="w-5 h-5 flex-shrink-0 opacity-40">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            <span class="font-medium text-[15px] text-[#464E58]">Step-by-step guidance</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="#4B5563" stroke-width="3" class="w-5 h-5 flex-shrink-0 opacity-40">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            <span class="font-medium text-[15px] text-[#464E58]">Complete control</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="#4B5563" stroke-width="3" class="w-5 h-5 flex-shrink-0 opacity-40">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            <span class="font-medium text-[15px] text-[#464E58]">Human validation</span>
+                        </li>
+                    </ul>
+
+                    <div class="flex items-center justify-between pt-6 border-t border-[#F0F1F2]">
+                        <div class="flex items-center gap-2.5 text-[#565F6C]">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5 opacity-70">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                            </svg>
+                            <span class="text-sm font-bold tracking-tight">~15 minutes</span>
+                        </div>
+                    </div>
                 </button>
             </div>
         </div>
+    </div>
 
-        <!-- Table -->
-        <div class="overflow-visible">
-            <table class="w-full text-left">
-                <thead class="bg-[#F9FAFB] border-b border-[#E5E7EB]">
-                    <tr>
-                        <th class="px-6 py-4 text-xs font-semibold text-[#6B7280] uppercase tracking-wider">Task Name</th>
-                        <th class="px-6 py-4 text-xs font-semibold text-[#6B7280] uppercase tracking-wider">Category</th>
-                        <th class="px-6 py-4 text-xs font-semibold text-[#6B7280] uppercase tracking-wider">Status</th>
-                        <th class="px-6 py-4 text-xs font-semibold text-[#6B7280] uppercase tracking-wider">Linked Article</th>
-                        <th class="px-6 py-4 text-xs font-semibold text-[#6B7280] uppercase tracking-wider">Evidence</th>
-                        <th class="px-6 py-4 text-xs font-semibold text-[#6B7280] uppercase tracking-wider">Assignee</th>
-                        <th class="px-6 py-4 text-xs font-semibold text-[#6B7280] uppercase tracking-wider">Action</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-[#E5E7EB]">
-                    {% for task in project.tasks %}
-                    <tr class="hover:bg-[#F9FAFB] transition-colors">
-                        <td class="px-6 py-4">
-                            <span class="text-sm font-semibold text-[#111827]">{{ task.name }}</span>
-                        </td>
-                        <td class="px-6 py-4">
-                            <span class="px-2.5 py-1 rounded-full text-xs font-medium {{ task.category_class }}">{{ task.category }}</span>
-                        </td>
-                        <td class="px-6 py-4">
-                            <div class="relative" x-data="{ open: false }">
-                                <button @click="open = !open" @click.outside="open = false" 
-                                    class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold border border-transparent transition-all w-32 justify-between {{ task.status_class }}"
-                                    data-task-id="{{ task.id }}">
-                                    <span class="truncate status-text">{{ task.status }}</span>
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-3 h-3 flex-shrink-0 transition-transform duration-200" :class="open ? 'rotate-180' : ''">
-                                        <polyline points="6 9 12 15 18 9"></polyline>
-                                    </svg>
-                                </button>
-                                <!-- Dropdown -->
-                                <div x-show="open" style="display: none;" 
-                                    x-transition:enter="transition ease-out duration-100"
-                                    x-transition:enter-start="transform opacity-0 scale-95"
-                                    x-transition:enter-end="transform opacity-100 scale-100"
-                                    x-transition:leave="transition ease-in duration-75"
-                                    x-transition:leave-start="transform opacity-100 scale-100"
-                                    x-transition:leave-end="transform opacity-0 scale-95"
-                                    class="absolute top-full left-0 mt-1 w-36 bg-white rounded-lg shadow-xl border border-gray-100 z-50 py-1 overflow-hidden">
-                                    
-                                    <button @click="updateTaskStatus($el, 'Done'); open=false" class="w-full text-left px-3 py-2 text-xs font-medium text-[#027A48] hover:bg-[#ECFDF3] flex items-center gap-2 transition-colors">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-[#027A48]"></span> Done
-                                    </button>
-                                    <button @click="updateTaskStatus($el, 'In Progress'); open=false" class="w-full text-left px-3 py-2 text-xs font-medium text-[#175CD3] hover:bg-[#EFF8FF] flex items-center gap-2 transition-colors">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-[#175CD3]"></span> In Progress
-                                    </button>
-                                    <button @click="updateTaskStatus($el, 'Blocked'); open=false" class="w-full text-left px-3 py-2 text-xs font-medium text-[#B42318] hover:bg-[#FEE4E2] flex items-center gap-2 transition-colors">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-[#B42318]"></span> Blocked
-                                    </button>
-                                    <button @click="updateTaskStatus($el, 'To-Do'); open=false" class="w-full text-left px-3 py-2 text-xs font-medium text-[#344054] hover:bg-[#F2F4F7] flex items-center gap-2 transition-colors">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-[#344054]"></span> To-Do
-                                    </button>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4">
-                            <div class="flex flex-wrap gap-1">
-                                {% for art in task.linked_articles %}
-                                <span class="px-2 py-0.5 rounded bg-[#EFF8FF] text-[#175CD3] text-[10px] font-bold border border-[#B2DDFF]">{{ art }}</span>
-                                {% endfor %}
-                            </div>
-                        </td>
-                        <td class="px-6 py-4">
-                            <div class="flex items-center gap-2 text-sm {{ task.evidence_class }}">
-                                {% if task.evidence_status == 'Uploaded' %}
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4 text-[#027A48]">
-                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                    <polyline points="14 2 14 8 20 8"></polyline>
-                                    <line x1="16" y1="13" x2="8" y2="13"></line>
-                                    <line x1="16" y1="17" x2="8" y2="17"></line>
-                                    <polyline points="10 9 9 9 8 9"></polyline>
-                                </svg>
-                                <span class="font-medium">Uploaded</span>
-                                {% else %}
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4 text-[#D92D20]">
-                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                    <polyline points="14 2 14 8 20 8"></polyline>
-                                </svg>
-                                <span class="font-medium text-[#D92D20]">Missing</span>
-                                {% endif %}
-                            </div>
-                        </td>
-                        <td class="px-6 py-4">
-                            {% if task.assignee_initials %}
-                            <div class="flex items-center gap-2">
-                                <div class="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold {{ task.assignee_class }}">
-                                    {{ task.assignee_initials }}
-                                </div>
-                                <span class="text-sm text-[#374151]">{{ task.assignee }}</span>
-                            </div>
-                            {% else %}
-                            <span class="text-sm text-[#6B7280] italic">{{ task.assignee }}</span>
-                            {% endif %}
-                        </td>
-                        <td class="px-6 py-4">
-                            <div class="flex items-center gap-2">
-                                <button onclick="openAssigneeModal('{{ task.id }}', '{{ task.name|escapejs }}')" class="p-2 rounded-lg hover:bg-[#F3F4F6] text-[#6B7280] transition-colors border">
-                                    <img src="{% static 'governance/img/assignee.svg' %}" alt="">
-                                </button>
-                                <button onclick="openNotesModal('{{ task.id }}')" class="p-2 rounded-lg hover:bg-[#F3F4F6] text-[#6B7280] transition-colors border">
-                                    <img src="{% static 'governance/img/chat.svg' %}" alt="">
-                                </button>
-                                <button class="p-2 rounded-lg bg-[#F13D30] text-white hover:bg-[#DC180A] transition-colors">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
-                                        <polyline points="9 18 15 12 9 6"></polyline>
-                                    </svg>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+    <!-- Assessment Tool View -->
+    <div id="risk-eval-tool-view" class="hidden">
+        <div id="risk-eval-tool-view-content">
+            <!-- Dynamically populated -->
         </div>
     </div>
 </div>
@@ -813,6 +1039,383 @@
         closeFilterModal();
     };
 
+    // --- ASSESSMENT FRAMEWORKS DATA ---
+    const assessmentFrameworks = {
+        'risk-assessment': {
+            displayName: 'Risk Assessment and Management',
+            description: 'Systematic identification, analysis, and management of risks in AI systems.'
+        },
+        'ai-logging-system': {
+            displayName: 'AI Logging System Assessment',
+            description: 'Automated logging system for AI operations capturing decisions, inputs, outputs, and system events. Ensures auditability and traceability per Article 12 record-keeping requirements for high-risk AI systems.'
+        },
+        'ai-governance': {
+            displayName: 'AI Governance Assessment',
+            description: 'Establishes governance structures and processes for responsible AI development and deployment. Implements policies, roles, and oversight mechanisms to ensure compliance.'
+        },
+        'qms-tracker': {
+            displayName: 'Quality Management System Tracker Assessment',
+            description: 'Tracks quality management system implementation and maintenance for AI systems. Ensures continuous compliance with Article 17 QMS requirements.'
+        },
+        'ai-system-registry': {
+            displayName: 'AI System Registry Assessment',
+            description: 'Central registry for documenting and tracking AI systems throughout their lifecycle. Maintains compliance records and system metadata.'
+        },
+        'data-classification': {
+            displayName: 'Data Classification Assessment',
+            description: 'Automatically classifies and labels sensitive data including personal data, special categories of data, and confidential information.'
+        },
+        'gdpr-compliance': {
+            displayName: 'GDPR Compliance Assessment',
+            description: 'Comprehensive toolkit for ensuring General Data Protection Regulation compliance in AI systems.'
+        },
+        'bias-assessment': {
+            displayName: 'Bias Assessment',
+            description: 'Systematic evaluation framework for identifying and quantifying algorithmic bias in AI systems.'
+        },
+        'fria-assessment': {
+            displayName: 'Fundamental Rights Impact Assessment (FRIA)',
+            description: 'Conducts comprehensive assessment of AI system impact on fundamental rights per Article 27.'
+        },
+        'ai-safety': {
+            displayName: 'AI Safety Assessment',
+            description: 'Comprehensive AI safety framework ensuring systems behave as intended and avoid harm.'
+        },
+        'red-team-testing': {
+            displayName: 'Red Team Testing Assessment',
+            description: 'Adversarial testing methodology to identify vulnerabilities and safety issues in AI systems.'
+        },
+        'guardrails-implementation': {
+            displayName: 'Guardrails Implementation Assessment',
+            description: 'Implements input validation and output filtering guardrails for AI systems.'
+        }
+    };
+
+    // --- ARTICLE REQUIREMENTS ---
+    const articleRequirements = {
+        'Art. 9': {
+            status: 'Mandatory for all high-risk systems per Article 9.',
+            compulsorySkills: ['risk-management', 'risk-assessment', 'ai-safety', 'red-team-testing', 'guardrails-implementation', 'toxicity-detection', 'hate-speech-detection', 'claim-verification', 'ai-ethics-fact-checking', 'content-toxicity-analysis', 'ai-ethics', 'ai-governance', 'ai-alignment-framework', 'incident-responder', 'ethics-review'],
+        },
+        'Art. 10': {
+            status: 'Mandatory. Data must be relevant, representative, and free of errors. Bias testing is required.',
+            compulsorySkills: ['data-classification', 'gdpr-compliance', 'bias-assessment', 'disaggregated-evaluation', 'ai-fairness-360', 'fairlearn', 'aequitas', 'what-if-tool', 'detoxify', 'perspective-api', 'moderate-content-api', 'hate-speech-detector', 'toxicity-detection', 'hate-speech-detection', 'claim-verification', 'ai-ethics-fact-checking', 'content-toxicity-analysis', 'ai-ethics', 'ai-governance', 'ai-alignment-framework', 'validating-ai-ethics-and-fairness'],
+        },
+        'Art. 11': {
+            status: 'Mandatory. Must be maintained and kept up-to-date.',
+            compulsorySkills: ['model-card-generation', 'model-cards-generator', 'weights-and-biases', 'ai-governance'],
+        },
+        'Art. 12': {
+            status: 'Mandatory. Systems must automatically log events (traceability).',
+            compulsorySkills: ['ai-logging-system', 'langsmith', 'ai-governance'],
+        },
+        'Art. 13': {
+            status: 'Mandatory. Users must be able to interpret outputs and understand limitations.',
+            compulsorySkills: ['shap-explainer', 'lime', 'captum', 'interpretml', 'what-if-tool', 'ai-transparency-labels', 'model-card-generation', 'explainability-planning', 'toxicity-detection', 'claim-verification', 'ai-ethics-fact-checking', 'ai-content-detector', 'ai-generated-content-detection', 'ai-ethics', 'ai-governance', 'ai-alignment-framework'],
+        },
+        'Art. 14': {
+            status: 'Mandatory for high-risk AI systems.',
+            compulsorySkills: ['hitl-design', 'conformance-calibration', 'ai-alignment-framework', 'ai-governance'],
+        },
+        'Art. 15': {
+            status: 'Mandatory. Systems must be accurate, robust, and secure against cyber threats.',
+            compulsorySkills: ['disaggregated-evaluation', 'red-team-testing', 'guardrails-implementation', 'ragas', 'deepeval', 'huggingface-evaluate', 'langsmith', 'weights-and-biases', 'promptfoo', 'evidently-ai', 'alibi-detect', 'prompt-injection-detector', 'security-frameworks', 'vulnerability-scanning', 'python-dependency-safety', 'snyk-security-assessment', 'oss-scorecard-assessment', 'claimbuster-api', 'ai-hallucination', 'ai-ethics-fact-checking', 'ai-governance', 'disaggregated-evaluation'],
+        },
+        'Art. 17': {
+            status: 'Mandatory for high-risk AI systems.',
+            compulsorySkills: ['qms-tracker', 'conformance-calibration', 'ai-governance'],
+        },
+        'Art. 22': {
+            status: 'Required for providers established outside the EU.',
+            compulsorySkills: ['authorized-rep-manager'],
+        },
+        'Art. 23': {
+            status: 'Importers must ensure systems comply before placing on EU market.',
+            compulsorySkills: ['importer-compliance-check'],
+        },
+        'Art. 24': {
+            status: 'Distributors must verify compliance before distribution.',
+            compulsorySkills: ['distributor-verification'],
+        },
+        'Art. 26': {
+            status: 'Deployers must use systems according to instructions and monitor operations.',
+            compulsorySkills: ['hitl-design', 'deployer-monitoring'],
+        },
+        'Art. 27': {
+            status: 'Required for high-risk AI systems that may impact fundamental rights.',
+            compulsorySkills: ['fria-assessment', 'bias-assessment', 'hitl-design', 'ai-fairness-360', 'ethics-review', 'validating-ai-ethics-and-fairness', 'ai-governance'],
+        },
+        'Art. 47': {
+            status: 'Required before placing high-risk AI system on the market.',
+            compulsorySkills: ['doc-vault', 'ai-governance'],
+        },
+        'Art. 48': {
+            status: 'Required for high-risk AI systems before market placement.',
+            compulsorySkills: ['ce-marking-generator', 'ai-governance'],
+        },
+        'Art. 49': {
+            status: 'Required registration in EU database for high-risk AI systems.',
+            compulsorySkills: ['ai-system-registry', 'ai-governance'],
+        },
+        'Art. 72': {
+            status: 'Mandatory for providers of high-risk AI systems.',
+            compulsorySkills: ['post-market-monitor', 'incident-responder', 'validating-ai-ethics-and-fairness', 'ai-system-registry'],
+        }
+    };
+
+    const assessmentData = {
+        'Art. 10': [
+            {
+                title: 'Data Quality Assessment',
+                bgColor: 'bg-[#daefee]',
+                data: [
+                    { id: 'DQ-01', paragraph: '10.2.a', dataPoint: 'Data relevance verification', information: 'Verify that training data is relevant to the intended purpose and context of the AI system', status: 'Done', gapAnalysis: 'No gaps identified' },
+                    { id: 'DQ-02', paragraph: '10.2.b', dataPoint: 'Data representativeness check', information: 'Ensure training data represents all relevant demographic groups and use cases without bias', status: 'In Progress', gapAnalysis: 'Partial data representation' },
+                    { id: 'DQ-03', paragraph: '10.2.c', dataPoint: 'Error detection and correction', information: 'Identify and correct errors, outliers, and inconsistencies in training datasets', status: 'To Do', gapAnalysis: 'No data correction measures in place' }
+                ]
+            },
+            {
+                title: 'Bias Testing and Monitoring',
+                bgColor: 'bg-[#f3eec5]',
+                data: [
+                    { id: 'BT-01', paragraph: '10.3', dataPoint: 'Fairness metrics evaluation', information: 'Apply fairness assessment tools to measure potential discrimination across protected characteristics', status: 'In Progress', gapAnalysis: 'Partial fairness metrics evaluation' },
+                    { id: 'BT-02', paragraph: '10.3', dataPoint: 'Content moderation assessment', information: 'Test AI outputs for toxic, harmful, or discriminatory content generation', status: 'To Do', gapAnalysis: 'No content moderation assessment' }
+                ]
+            },
+            {
+                title: 'Data Governance Documentation',
+                bgColor: 'bg-[#dbf6fe]',
+                data: [
+                    { id: 'DG-01', paragraph: '10.5', dataPoint: 'Data lineage tracking', information: 'Document the origin, collection methods, and processing steps for all training data', status: 'Done', gapAnalysis: 'No gaps identified' },
+                    { id: 'DG-02', paragraph: '10.5', dataPoint: 'Data retention policies', information: 'Establish and document data retention, deletion, and archival procedures', status: 'Blocked', gapAnalysis: 'No data retention policies' }
+                ]
+            }
+        ],
+        'Art. 9': [
+            {
+                title: 'Risk Identification',
+                bgColor: 'bg-[#FEEDEC]',
+                data: [
+                    { id: 'RI-01', paragraph: '9.2.a', dataPoint: 'Risk assessment methodology', information: 'Define and document the risk assessment methodology for the AI system', status: 'Done', gapAnalysis: 'No gaps identified' },
+                    { id: 'RI-02', paragraph: '9.2.b', dataPoint: 'Known and foreseeable risks', information: 'Identify all known and reasonably foreseeable risks associated with the AI system', status: 'In Progress', gapAnalysis: 'Partial risk identification' }
+                ]
+            },
+            {
+                title: 'Risk Mitigation',
+                bgColor: 'bg-[#FEF3C7]',
+                data: [
+                    { id: 'RM-01', paragraph: '9.4', dataPoint: 'Risk mitigation measures', information: 'Implement and document measures to eliminate or reduce identified risks', status: 'To Do', gapAnalysis: 'No risk mitigation measures' }
+                ]
+            }
+        ],
+        'Art. 15': [
+            {
+                title: 'Accuracy Assessment',
+                bgColor: 'bg-[#FEEDEC]',
+                data: [
+                    { id: 'AC-01', paragraph: '15.1', dataPoint: 'Accuracy metrics definition', information: 'Define appropriate accuracy metrics for the AI system and its intended use', status: 'Done', gapAnalysis: 'No gaps identified' },
+                    { id: 'AC-02', paragraph: '15.1', dataPoint: 'Performance monitoring', information: 'Continuously monitor AI system accuracy and performance in production', status: 'In Progress', gapAnalysis: 'Partial performance monitoring' }
+                ]
+            },
+            {
+                title: 'Robustness Testing',
+                bgColor: 'bg-[#FEF3C7]',
+                data: [
+                    { id: 'RT-01', paragraph: '15.2', dataPoint: 'Adversarial testing', information: 'Test AI system resilience against adversarial inputs and edge cases', status: 'To Do', gapAnalysis: 'No adversarial testing' },
+                    { id: 'RT-02', paragraph: '15.2', dataPoint: 'Data drift detection', information: 'Monitor and detect data distribution shifts that may affect system performance', status: 'In Progress', gapAnalysis: 'Partial data drift detection' }
+                ]
+            },
+            {
+                title: 'Cybersecurity Measures',
+                bgColor: 'bg-[#D1FAE5]',
+                data: [
+                    { id: 'CS-01', paragraph: '15.3', dataPoint: 'Vulnerability assessment', information: 'Conduct regular vulnerability scans and penetration testing of AI infrastructure', status: 'Done', gapAnalysis: 'No gaps identified' },
+                    { id: 'CS-02', paragraph: '15.3', dataPoint: 'Security patch management', information: 'Maintain up-to-date security patches for all AI system components and dependencies', status: 'Done', gapAnalysis: 'No gaps identified' }
+                ]
+            }
+        ]
+    };
+
+    // Central view switching logic to prevent layout gaps
+    window.switchView = function(viewId) {
+        const views = ['task-list-view', 'task-detail-view', 'assessment-choice-view', 'risk-eval-tool-view'];
+        views.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.classList.add('hidden');
+        });
+        
+        const activeView = document.getElementById(viewId);
+        if (activeView) activeView.classList.remove('hidden');
+        
+        const header = document.getElementById('project-main-header');
+        if (header) {
+            if (viewId === 'assessment-choice-view' || viewId === 'risk-eval-tool-view') {
+                header.classList.add('hidden');
+                document.querySelector('.dashboard-content-wrapper')?.classList.remove('gap-6');
+            } else {
+                header.classList.remove('hidden');
+                document.querySelector('.dashboard-content-wrapper')?.classList.add('gap-6');
+            }
+        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    window.openTaskDetail = function(taskId, taskName, article, category) {
+        switchView('task-detail-view');
+        
+        // Populate header
+        document.getElementById('detail-task-name').textContent = taskName;
+        document.getElementById('detail-article-label').textContent = article;
+        
+        const badge = document.getElementById('detail-category-badge');
+        badge.textContent = category;
+        badge.className = 'px-3 py-1 rounded-full font-semibold text-xs ' + 
+            (category === 'Risk' ? 'bg-[#FEE2E2] text-[#991B1B]' :
+             category === 'Data' ? 'bg-[#DBEAFE] text-[#1E40AF]' :
+             category === 'Security' ? 'bg-[#FEF3C7] text-[#92400E]' :
+             'bg-[#E9D5FF] text-[#6B21A8]');
+
+        // Get requirements
+        const reqs = articleRequirements[article] || { status: `Mandatory requirements for ${article}.`, compulsorySkills: ['compliance-review', 'governance-oversight'] };
+        document.getElementById('detail-requirements-status').textContent = reqs.status;
+
+        // Populate skills
+        const skillsList = document.getElementById('compulsory-skills-list');
+        skillsList.className = "grid grid-cols-1 gap-4";
+        skillsList.innerHTML = reqs.compulsorySkills.map(skill => {
+            const framework = assessmentFrameworks[skill];
+            const displayName = framework ? framework.displayName : skill.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+            const description = framework ? framework.description : 'Click to access assessment tool';
+            const hasFramework = !!framework;
+            
+            return `
+                <button onclick="${hasFramework ? `openAssessmentChoice('${taskName.replace(/'/g, "\\'")}', '${displayName.replace(/'/g, "\\'")}', '${skill}', '${article}')` : ''}" 
+                        class="group relative bg-white border-2 border-[#E5E7EB] rounded-2xl p-6 text-left hover:border-[#F13D30] hover:shadow-xl transition-all flex items-center gap-5 w-full ${!hasFramework ? 'cursor-default' : ''}">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 rounded-xl ${hasFramework ? 'bg-[#F13D30]' : 'bg-[#D1D5DB]'} flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-6 h-6 text-white">
+                                <path d="M12 3L14.5 9L21 12L14.5 15L12 21L9.5 15L3 12L9.5 9L12 3Z" fill="${hasFramework ? 'white' : 'currentColor'}"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="flex-grow min-w-0">
+                        <div class="flex items-center gap-3 mb-1">
+                            <h3 class="font-bold text-lg text-[#22262A] group-hover:text-[#F13D30] transition-colors">
+                                ${displayName}
+                            </h3>
+                            ${hasFramework ? `
+                                <span class="px-2.5 py-1 bg-[#D1FAE5] text-[#065F46] rounded-full font-bold text-[10px] uppercase tracking-wider flex-shrink-0">
+                                    Questionnaire Available
+                                </span>
+                            ` : `
+                                <span class="px-2.5 py-1 bg-[#FEF3C7] text-[#92400E] rounded-full font-bold text-[10px] uppercase tracking-wider flex-shrink-0">
+                                    Coming Soon
+                                </span>
+                            `}
+                        </div>
+                        <p class="text-[14px] text-[#565F6C] line-clamp-2 leading-relaxed">
+                            ${description}
+                        </p>
+                    </div>
+                    ${hasFramework ? `
+                        <div class="flex-shrink-0 ml-4 group-hover:translate-x-1 transition-transform">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="#B5BCC4" stroke-width="2.5" class="w-5 h-5 group-hover:text-[#F13D30]">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                        </div>
+                    ` : ''}
+                </button>
+            `;
+        }).join('');
+
+        const sections = assessmentData[article] || [{ title: 'Requirements Breakdown', bgColor: 'bg-gray-100', data: [{ id: 'REQ-01', paragraph: article, dataPoint: 'General Compliance', information: 'Compliance tracking initiated', status: 'To Do', gapAnalysis: 'Review pending' }] }];
+        const categoriesList = document.getElementById('assessment-categories-list');
+        categoriesList.innerHTML = sections.map((section, idx) => `
+            <div class="section-wrapper">
+                <button onclick="this.nextElementSibling.classList.toggle('hidden')" class="w-full flex items-center justify-between px-6 py-4 ${section.bgColor} hover:opacity-90 transition-opacity border-b border-[#f0f1f2]">
+                    <span class="font-bold text-[#22262a]">${section.title}</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5 text-[#565F6C]">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </button>
+                <div class="section-content ${idx === 0 ? '' : 'hidden'}">
+                    <div class="flex items-center bg-[#F9FAFB] border-b border-[#f0f1f2] text-[11px] font-bold text-[#6B7280] uppercase tracking-wider">
+                        <div class="px-4 py-3 w-24 border-r border-[#f0f1f2]">ID</div>
+                        <div class="px-4 py-3 w-28 border-r border-[#f0f1f2]">Art.</div>
+                        <div class="px-4 py-3 flex-[2] border-r border-[#f0f1f2]">Requirement</div>
+                        <div class="px-4 py-3 flex-[2] border-r border-[#f0f1f2]">Data Points</div>
+                        <div class="px-4 py-3 flex-[1.5] border-r border-[#f0f1f2]">Analysis</div>
+                        <div class="px-4 py-3 w-40">Status</div>
+                    </div>
+                    ${section.data.map(item => `
+                        <div class="flex items-center bg-white hover:bg-[#fef6f5] transition-colors border-b border-[#f0f1f2]">
+                            <div class="px-4 py-4 w-24 border-r border-[#f0f1f2] text-sm">${item.id}</div>
+                            <div class="px-4 py-4 w-28 border-r border-[#f0f1f2] text-sm">${item.paragraph}</div>
+                            <div class="px-4 py-4 flex-[2] border-r border-[#f0f1f2] text-sm font-medium text-[#f13d30]">${item.dataPoint}</div>
+                            <div class="px-4 py-4 flex-[2] border-r border-[#f0f1f2] text-sm">${item.information}</div>
+                            <div class="px-4 py-4 flex-[1.5] border-r border-[#f0f1f2] text-sm">${item.gapAnalysis}</div>
+                            <div class="px-4 py-4 w-40">
+                                <span class="flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium ${
+                                    item.status === 'Done' ? 'bg-[#D1FAE5] text-[#065F46]' :
+                                    item.status === 'In Progress' ? 'bg-[#FFFAEB] text-[#D78C02]' :
+                                    'bg-[#FEEDEC] text-[#DC180A]'
+                                }">
+                                    <span class="w-1.5 h-1.5 rounded-full ${
+                                        item.status === 'Done' ? 'bg-[#065F46]' :
+                                        item.status === 'In Progress' ? 'bg-[#D78C02]' :
+                                        'bg-[#DC180A]'
+                                    }"></span>
+                                    ${item.status}
+                                </span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `).join('');
+    };
+
+    window.openAssessmentChoice = function(taskName, skillName, skillId, article) {
+        switchView('assessment-choice-view');
+        
+        document.getElementById('choice-task-name').textContent = taskName;
+        document.getElementById('choice-article').textContent = article;
+        document.getElementById('choice-skill-name').textContent = skillName;
+        
+        const framework = assessmentFrameworks[skillId];
+        if (framework && framework.description) {
+            document.getElementById('choice-skill-description').textContent = framework.description;
+        }
+
+        if (typeof riskState !== 'undefined') {
+            riskState.selectedToolId = skillId;
+            riskState.mode = 'choice';
+            riskState.currentSectionIndex = 0;
+            if (riskState.scanInterval) clearInterval(riskState.scanInterval);
+        }
+    };
+
+    window.closeAssessmentChoice = function() {
+        switchView('task-detail-view');
+    };
+
+    window.closeTaskDetail = function() {
+        switchView('task-list-view');
+    };
+
+    window.closeRiskTool = function() {
+        if (typeof riskState !== 'undefined' && riskState.scanInterval) clearInterval(riskState.scanInterval);
+        switchView('assessment-choice-view');
+    };
+
+    window.handleAssessmentChoice = function(mode) {
+        if (typeof riskState !== 'undefined') {
+            riskState.mode = mode;
+            switchView('risk-eval-tool-view');
+            renderRiskToolView();
+        }
+    };
+
     window.updateTaskStatus = function(el, status) {
         // Find the parent dropdown wrapper
         const wrapper = el.closest('.relative');
@@ -823,8 +1426,6 @@
         if (!btn) return;
         
         const taskId = btn.getAttribute('data-task-id');
-        // We can get project ID from the URL or add it to the button data attributes
-        // URL is /compliance/<project_id>/
         const projectId = window.location.pathname.split('/')[2];
         
         // Optimistic UI update
@@ -854,7 +1455,6 @@
             btn.classList.add('bg-[#F2F4F7]', 'text-[#344054]');
         }
         
-        // Send request to backend
         fetch('/api/compliance/update-task-status/', {
             method: 'POST',
             headers: {
@@ -870,34 +1470,26 @@
         .then(response => response.json())
         .then(data => {
             if (!data.success) {
-                console.error('Failed to update status:', data.error);
-                // Revert changes on error
                 if (textSpan) textSpan.textContent = originalText;
                 btn.className = '';
                 originalClasses.forEach(cls => btn.classList.add(cls));
                 alert('Failed to update status: ' + data.error);
-            } else {
-                console.log('Status updated successfully');
             }
         })
         .catch(error => {
-            console.error('Error updating status:', error);
-            // Revert changes on error
             if (textSpan) textSpan.textContent = originalText;
             btn.className = '';
             originalClasses.forEach(cls => btn.classList.add(cls));
             alert('Error updating status. Please try again.');
         });
     };
-    
-    // Helper to get CSRF token
+
     function getCookie(name) {
         let cookieValue = null;
         if (document.cookie && document.cookie !== '') {
             const cookies = document.cookie.split(';');
             for (let i = 0; i < cookies.length; i++) {
                 const cookie = cookies[i].trim();
-                // Does this cookie string begin with the name we want?
                 if (cookie.substring(0, name.length + 1) === (name + '=')) {
                     cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
                     break;
@@ -911,22 +1503,53 @@
     document.addEventListener('DOMContentLoaded', () => {
         const searchInput = document.getElementById('task-search-input');
         
-        // Real-time search on input
         searchInput?.addEventListener('input', () => {
              applyFilters();
         });
 
-        // Keep Enter key support just in case
         searchInput?.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') applyFilters();
         });
 
         document.getElementById('filter-modal')?.addEventListener('click', (e) => {
-            // Close if clicking the backdrop (the outer fixed div or the backdrop div)
             if (e.target.id === 'filter-modal' || e.target.classList.contains('backdrop-blur-sm')) {
                 closeFilterModal();
             }
         });
     });
+
+    // Injected Risk Evaluations Logic
+    {% include "governance/pages/risk_evaluations_logic.js" %}
+
+    // Overrides and specific bridges for compliance_detail.html
+    const originalSetRiskMode = typeof window.setRiskMode === 'function' ? window.setRiskMode : null;
+    window.setRiskMode = function(mode) {
+        if (mode === 'choice') {
+            closeRiskTool();
+            return;
+        }
+        if (typeof riskState !== 'undefined') {
+            riskState.mode = mode;
+            switchView('risk-eval-tool-view');
+            renderRiskToolView();
+            if (mode === 'ai-scan' && typeof startAIScan === 'function') {
+                startAIScan();
+            }
+        }
+    };
+
+    window.closeRiskTool = function() {
+        if (typeof riskState !== 'undefined' && riskState.scanInterval) clearInterval(riskState.scanInterval);
+        switchView('assessment-choice-view');
+    };
+
+    window.handleAssessmentChoice = function(mode) {
+        if (typeof riskState !== 'undefined') {
+            riskState.mode = mode;
+            document.getElementById('assessment-choice-view').classList.add('hidden');
+            document.getElementById('risk-eval-tool-view').classList.remove('hidden');
+            renderRiskToolView();
+        }
+    };
 </script>
 {% endblock %}

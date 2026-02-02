@@ -67,6 +67,9 @@
             <button onclick="switchTab('result')" id="tab-result" class="tab-button px-4 py-3 text-sm font-medium text-[#6B7280] border-b-2 border-transparent hover:text-[#F13D30]">
                 Result
             </button>
+            <button onclick="switchTab('risk-evaluations')" id="tab-risk-evaluations" class="tab-button px-4 py-3 text-sm font-medium text-[#6B7280] border-b-2 border-transparent hover:text-[#F13D30]">
+                Risk Evaluations
+            </button>
         </div>
     </div>
 
@@ -1138,8 +1141,111 @@
   </div>
 </div>
 
+    <!-- Tab Content: Risk Evaluations -->
+    <div id="content-risk-evaluations" class="tab-content hidden space-y-6">
+        
+        <!-- Main View -->
+        <div id="risk-eval-main-view">
+            <!-- Header -->
+            <div class="bg-white rounded-lg border border-[#F0F1F2] shadow-sm p-6">
+                <h1 class="font-bold text-2xl text-[#22262A] mb-2">Risk Evaluations</h1>
+                <p class="text-sm text-[#464E58]">Upload your code to automate ai powered risk assessments</p>
+            </div>
+
+            <!-- Upload Code Section -->
+            <div class="bg-white rounded-lg border border-[#F0F1F2] shadow-sm p-6 mt-6">
+                <div class="grid grid-cols-2 gap-6">
+                    <!-- Code Upload -->
+                    <div class="border-2 border-dashed border-[#B5BCC4] rounded-lg p-8 flex flex-col items-center justify-center">
+                        <div class="w-16 h-16 bg-[#F9FAFB] rounded-full flex items-center justify-center mb-4">
+                            <svg class="w-8 h-8 text-[#6B7280]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                        </div>
+                        <h3 class="font-semibold text-base text-[#22262A] mb-2">Upload Your Code</h3>
+                        <p class="text-sm text-[#464E58] text-center mb-4 max-w-md">Upload your code to automate ai powered risk assessments</p>
+                        <button class="px-6 py-2.5 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A] transition-colors flex items-center gap-2">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                            Select Files
+                        </button>
+                        <p class="text-xs text-[#6B7280] mt-3">Supported formats: .py, .js, .java, .cpp, .zip</p>
+                    </div>
+
+                    <!-- Dataset Upload -->
+                    <div class="border-2 border-dashed border-[#B5BCC4] rounded-lg p-8 flex flex-col items-center justify-center">
+                        <div class="w-16 h-16 bg-[#F9FAFB] rounded-full flex items-center justify-center mb-4">
+                            <svg class="w-8 h-8 text-[#6B7280]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                        </div>
+                        <h3 class="font-semibold text-base text-[#22262A] mb-2">Upload Your Datasets</h3>
+                        <p class="text-sm text-[#464E58] text-center mb-4 max-w-md">Upload your datasets to automate ai powered risk assessments</p>
+                        <button class="px-6 py-2.5 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A] transition-colors flex items-center gap-2">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                            Select Files
+                        </button>
+                        <p class="text-xs text-[#6B7280] mt-3">Supported formats: .csv, .json, .xlsx, .parquet, .zip</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Overall Risk Profile -->
+            <div class="bg-white rounded-lg border border-[#F0F1F2] shadow-sm p-6 mt-6">
+                <h2 class="font-bold text-lg text-[#22262A] mb-4">Overall Risk Profile</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <!-- Prohibited Practices Status -->
+                    <div class="bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg p-4">
+                        <p class="font-semibold text-xs text-[#6B7280] mb-2 uppercase">PROHIBITED PRACTICES</p>
+                        <div id="risk-profile-block1" class="inline-flex px-3 py-1.5 rounded-full font-semibold text-sm bg-[#F0F1F2] text-[#B5BCC4]">
+                            Loading...
+                        </div>
+                    </div>
+                    <!-- High-Risk Classification Status -->
+                    <div class="bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg p-4">
+                        <p class="font-semibold text-xs text-[#6B7280] mb-2 uppercase">HIGH-RISK CLASSIFICATION</p>
+                        <div id="risk-profile-block2" class="inline-flex px-3 py-1.5 rounded-full font-semibold text-sm bg-[#F0F1F2] text-[#B5BCC4]">
+                            Loading...
+                        </div>
+                    </div>
+                    <!-- GPAI Applicability Status -->
+                    <div class="bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg p-4">
+                        <p class="font-semibold text-xs text-[#6B7280] mb-2 uppercase">GPAI APPLICABILITY</p>
+                        <div id="risk-profile-block4" class="inline-flex px-3 py-1.5 rounded-full font-semibold text-sm bg-[#F0F1F2] text-[#B5BCC4]">
+                            Loading...
+                        </div>
+                    </div>
+                     <!-- GPAI Risk Level -->
+                    <div class="bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg p-4">
+                        <p class="font-semibold text-xs text-[#6B7280] mb-2 uppercase">GPAI RISK LEVEL</p>
+                        <div id="risk-profile-gpai-level" class="inline-flex px-3 py-1.5 rounded-full font-semibold text-sm bg-[#F0F1F2] text-[#B5BCC4]">
+                           N/A
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Risk Assessment -->
+            <div class="bg-white rounded-lg border border-[#F0F1F2] shadow-sm p-6 mt-6">
+                <h2 class="font-bold text-lg text-[#22262A] mb-4">Detailed Risk Assessment</h2>
+                <div class="space-y-4" id="risk-eval-tools-list">
+                    <!-- Tools will be rendered here by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Tool Detail View -->
+        <div id="risk-eval-tool-view" class="hidden">
+             <div id="risk-eval-tool-view-content">
+                 <!-- Dynamic content rendered by risk_evaluations_logic.js -->
+             </div>
+        </div>
+    </div>
+
 <script>
-// Utility for notifications
 function showNotification(message, type = 'info') {
     // For now use alert, but could be replaced with a toast UI
     console.log(`[${type.toUpperCase()}] ${message}`);
@@ -1162,7 +1268,10 @@ function switchTab(tabName, skipUpdate = false) {
     });
     
     // Show selected tab content
-    document.getElementById('content-' + tabName).classList.remove('hidden');
+    const content = document.getElementById('content-' + tabName);
+    if (content) {
+        content.classList.remove('hidden');
+    }
     
     // Add active class to selected tab
     const activeTab = document.getElementById('tab-' + tabName);
@@ -1173,7 +1282,6 @@ function switchTab(tabName, skipUpdate = false) {
     
     // Update assessment blocks when switching to Assessment tab
     if (tabName === 'assessment' && !skipUpdate) {
-        // Use setTimeout to ensure tab switch happens first, then update blocks
         setTimeout(function() {
             try {
                 if (typeof updateAllAssessmentBlocks === 'function') {
@@ -1182,12 +1290,24 @@ function switchTab(tabName, skipUpdate = false) {
             } catch (error) {
                 console.error('Error updating assessment blocks:', error);
             }
-        }, 0);
+        }, 10);
     }
     
+    // Update risk evaluations when switching to that tab
+    if (tabName === 'risk-evaluations') {
+        setTimeout(function() {
+            try {
+                if (typeof updateRiskEvaluations === 'function') {
+                    updateRiskEvaluations();
+                }
+            } catch (e) {
+                console.error('Error updating risk evaluations:', e);
+            }
+        }, 10);
+    }
+
     // Update result blocks when switching to Result tab
     if (tabName === 'result') {
-        // Use setTimeout to ensure tab switch happens first, then update blocks
         setTimeout(function() {
             try {
                 if (typeof updateAllResultBlocks === 'function') {
@@ -1196,9 +1316,10 @@ function switchTab(tabName, skipUpdate = false) {
             } catch (error) {
                 console.error('Error updating result blocks:', error);
             }
-        }, 0);
+        }, 10);
     }
 }
+
 
 // Save section data (saves all profile data)
 async function saveSection() {
@@ -5755,6 +5876,16 @@ function initGPAIIntegrationLogic() {
     // Initialize state
     handleGPAIIntegrationChange();
 }
+
+// ==========================================
+// Risk Evaluations Tab Logic
+// ==========================================
+
+// ==========================================
+// Risk Evaluations Tab Logic
+// ==========================================
+{% include "governance/pages/risk_evaluations_logic.js" %}
+
 </script>
 
 <style>
