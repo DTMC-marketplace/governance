@@ -1299,38 +1299,50 @@ async function loadAISystemDetailData() {
             if (result.data.assessment) {
                 loadAssessmentData(result.data.assessment);
                 
-                // Load Block 1 state from BE
+                if (result.data.assessment.block1) {
+                    block1State.be_assessment = result.data.assessment.block1;
+                }
                 if (result.data.assessment.block1_state) {
-                    block1State.prohibitedConfirmed = result.data.assessment.block1_state.prohibited_confirmed || false;
-                    block1State.claimingException = result.data.assessment.block1_state.claiming_exception || '';
-                    block1State.exceptionQualifies = result.data.assessment.block1_state.exception_qualifies || '';
-                    block1State.exceptionEvidenceUploaded = result.data.assessment.block1_state.exception_evidence_uploaded || false;
-                    block1State.exceptionEvidenceSavedLink = result.data.assessment.block1_state.exception_evidence_saved_link || '';
-                    block1State.noExceptionConfirmed = result.data.assessment.block1_state.no_exception_confirmed || false;
+                    const b1s = result.data.assessment.block1_state;
+                    block1State.prohibitedConfirmed = b1s.prohibited_confirmed || false;
+                    block1State.claimingException = b1s.claiming_exception || '';
+                    block1State.exceptionQualifies = b1s.exception_qualifies || '';
+                    block1State.exceptionEvidenceUploaded = b1s.exception_evidence_uploaded || false;
+                    block1State.exceptionEvidenceSavedLink = b1s.exception_evidence_saved_link || '';
+                    block1State.noExceptionConfirmed = b1s.no_exception_confirmed || false;
                 }
                 
-                // Load Block 2 state from BE
+                if (result.data.assessment.block2) {
+                    block2State.be_assessment = result.data.assessment.block2;
+                }
                 if (result.data.assessment.block2_state) {
-                    block2State.highRiskConfirmed = result.data.assessment.block2_state.high_risk_confirmed || false;
-                    block2State.materialInfluence = result.data.assessment.block2_state.material_influence || '';
-                    block2State.narrowTasks = result.data.assessment.block2_state.narrow_tasks || [];
-                    block2State.profiling = result.data.assessment.block2_state.profiling || '';
-                    block2State.exemptionEvidenceUploaded = result.data.assessment.block2_state.exemption_evidence_uploaded || false;
-                    block2State.exemptionEvidenceSavedLink = result.data.assessment.block2_state.exemption_evidence_saved_link || '';
+                    const b2s = result.data.assessment.block2_state;
+                    block2State.highRiskConfirmed = b2s.high_risk_confirmed || false;
+                    block2State.materialInfluence = b2s.material_influence || '';
+                    block2State.narrowTasks = b2s.narrow_tasks || [];
+                    block2State.profiling = b2s.profiling || '';
+                    block2State.exemptionEvidenceUploaded = b2s.exemption_evidence_uploaded || false;
+                    block2State.exemptionEvidenceSavedLink = b2s.exemption_evidence_saved_link || '';
                 }
                 
-                // Load Block 3 state from BE
+                if (result.data.assessment.block3) {
+                    block3State.be_assessment = result.data.assessment.block3;
+                }
                 if (result.data.assessment.block3_state) {
-                    block3State.transparencyConfirmed = result.data.assessment.block3_state.transparency_confirmed || false;
-                    block3State.exceptionOptions = result.data.assessment.block3_state.exception_options || [];
-                    block3State.transparencyEvidenceUploaded = result.data.assessment.block3_state.transparency_evidence_uploaded || false;
-                    block3State.transparencyEvidenceSavedLink = result.data.assessment.block3_state.transparency_evidence_saved_link || '';
+                    const b3s = result.data.assessment.block3_state;
+                    block3State.transparencyConfirmed = b3s.transparency_confirmed || false;
+                    block3State.exceptionOptions = b3s.exception_options || [];
+                    block3State.transparencyEvidenceUploaded = b3s.transparency_evidence_uploaded || false;
+                    block3State.transparencyEvidenceSavedLink = b3s.transparency_evidence_saved_link || '';
                 }
                 
-                // Load Block 4 state from BE
+                if (result.data.assessment.block4) {
+                    block4State.be_assessment = result.data.assessment.block4;
+                }
                 if (result.data.assessment.block4_state) {
-                    block4State.gpaiConfirmed = result.data.assessment.block4_state.gpai_confirmed || false;
-                    block4State.gpaiProviderAnswer = result.data.assessment.block4_state.gpai_provider_answer || '';
+                    const b4s = result.data.assessment.block4_state;
+                    block4State.gpaiConfirmed = b4s.gpai_confirmed || false;
+                    block4State.gpaiProviderAnswer = b4s.gpai_provider_answer || '';
                 }
             }
             
@@ -2166,8 +2178,6 @@ function toggleAssessmentBlock(blockNum) {
     }
 }
 
-// Block 1 State Variables (for confirmation and exception flow)
-// This will be synced with BE state when loading assessment
 let block1State = {
     prohibitedConfirmed: false,
     claimingException: '', // 'Yes' | 'No' | ''
@@ -2181,8 +2191,6 @@ let block1State = {
     be_assessment: null // Store BE assessment results for reference
 };
 
-// Block 2 State Variables (for confirmation and Annex III flow)
-// This will be synced with BE state when loading assessment
 let block2State = {
     highRiskConfirmed: false,
     materialInfluence: '', // 'Yes' | 'No' | 'Not sure' | ''
@@ -2193,8 +2201,6 @@ let block2State = {
     be_assessment: null // Store BE assessment results for reference
 };
 
-// Block 3 State Variables (for confirmation and exception flow)
-// This will be synced with BE state when loading assessment
 let block3State = {
     transparencyConfirmed: false,
     exceptionOptions: [], // Array of selected exception options
@@ -2203,8 +2209,6 @@ let block3State = {
     be_assessment: null // Store BE assessment results for reference
 };
 
-// Block 4 State Variables (for confirmation and provider determination)
-// This will be synced with BE state when loading assessment
 let block4State = {
     gpaiConfirmed: false,
     gpaiProviderAnswer: '', // 'Yes' | 'No' | 'Not sure' | ''
@@ -2307,6 +2311,22 @@ function getGPAIStatus() {
     // If Block 1 is Prohibited, Block 4 is de-activated
     if (isBlock1Prohibited()) {
         return 'De-activated';
+    }
+    
+    // Get integration from local input to handle immediate Profile changes
+    const gpaiIntegration = document.querySelector('input[name="gpai_integration"]:checked')?.value || '';
+    
+    if (gpaiIntegration === 'Unknown') return 'Needs Review';
+    if (gpaiIntegration === 'No') return 'Not Applicable';
+    
+    // For "Yes" integration, handle optimistic confirmation and provider answer
+    if (gpaiIntegration === 'Yes') {
+        if (block4State.gpaiConfirmed) {
+            if (block4State.gpaiProviderAnswer === 'Yes') return 'Applies';
+            if (block4State.gpaiProviderAnswer === 'No') return 'Not Applicable';
+            return 'Needs Review';
+        }
+        return 'Triggered';
     }
     
     if (block4State.be_assessment && block4State.be_assessment.status) {
@@ -2606,9 +2626,9 @@ function renderBlock1Content(status) {
     return '<p class="text-sm text-[#464E58]">Status: ' + status + '</p>';
 }
 
-// Render exception flow content (from flowchart)
+// Render exception flow content
 function renderBlock1ExceptionFlow(selectedPractices, practicesInfo = {}) {
-    // Banner for Confirmed state (Slimmer with icon like image)
+    // Confirmed state banner
     const confirmedBanner = `
         <div class="w-full bg-[#E8F5E9] border border-[#81C784] rounded-lg py-2.5 px-4 mb-4 flex items-center gap-2">
             <svg class="w-4 h-4 text-[#2E7D32]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2984,7 +3004,7 @@ async function confirmProhibited(confirmed) {
     const agentId = mainContainer ? parseInt(mainContainer.getAttribute('data-agent-id')) : 0;
     
     if (!confirmed) {
-        // Send to Profile Screen (from flowchart)
+        // Redirect to Profile tab
         switchTab('profile');
         return;
     }
@@ -3184,7 +3204,7 @@ async function confirmExceptionEvidence() {
     }
 }
 
-// Helper functions for Block 2 (based on React code)
+// Helper functions for Block 2
 function isCondition1Met() {
     const safetyComponent = document.querySelector('input[name="safety_component"]:checked')?.value || '';
     const thirdPartyConformity = document.querySelector('input[name="third_party_conformity"]:checked')?.value || '';
@@ -3805,7 +3825,7 @@ function getTransparencyTriggerReasons(triggers) {
     return reasons;
 }
 
-// Render exception selection flow (flowchart: Exception Selection for Each Group)
+// Render exception selection flow
 function renderBlock3ExceptionFlow(triggers, block3Details) {
     const caseGroups = block3Details?.case_groups || [];
     
@@ -4145,86 +4165,169 @@ function renderBlock4Content(status, block4Details = null) {
             </div>
         `;
     }
-    
-    if (status === 'Not Applicable') {
+
+    let gpaiIntegration = block4Details?.gpai_integration || '';
+    if (!gpaiIntegration) {
+        gpaiIntegration = document.querySelector('input[name="gpai_integration"]:checked')?.value || '';
+    }
+
+    // Case: No integration
+    if (gpaiIntegration === 'No') {
         return `
-            <div class="bg-[#E8F5E9] border border-[#81C784] rounded-lg p-4">
-                <p class="font-semibold text-sm text-[#2E7D32]">✓ Not Applicable</p>
-                <p class="font-normal text-sm text-[#464E58] mt-2">
-                    ${block4Details?.reason || 'GPAI obligations do not apply. You are a GPAI user, not a provider. Chapter V does not apply.'}
+            <div class="bg-[#E8F5E9] border border-[#81C784] rounded-lg p-6">
+                <p class="font-bold text-sm text-[#2E7D32]">✓ GPAI Obligations Not Applicable</p>
+                <p class="font-normal text-sm text-[#464E58] mt-3 leading-relaxed">
+                    Based on your Profile inputs, this AI system does not qualify as a general-purpose AI model, so GPAI obligations under Chapter V of the EU AI Act do not apply.
                 </p>
             </div>
         `;
     }
     
-    if (status === 'Needs Review') {
+    // Case: Unknown integration
+    if (gpaiIntegration === 'Unknown') {
         return `
-            <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-4">
-                <p class="font-semibold text-sm text-[#F57C00]">⚠️ Needs Review</p>
-                <p class="font-normal text-sm text-[#464E58] mt-2">
-                    ${block4Details?.reason || 'This assessment requires manual review by the compliance team.'}
+            <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-6">
+                <p class="font-bold text-sm text-[#F57C00] mb-3">Result: Needs Review</p>
+                <p class="font-normal text-sm text-[#464E58] leading-relaxed">
+                    In your Profile (Section 8, Q2), you indicated that it is <strong>Unknown</strong> whether this system is provided as a general-purpose AI (GPAI) model/component or integrates one.
+                </p>
+                <p class="font-normal text-sm text-[#464E58] mt-3 leading-relaxed">
+                    Please clarify this information to determine whether GPAI obligations under Chapter V of the EU AI Act apply to your system. Consult with your technical team or legal counsel for guidance.
                 </p>
             </div>
         `;
     }
-    
-    if (status === 'Applies') {
-        return `
-            <div class="bg-[#FFEBEE] border border-[#EF5350] rounded-lg p-4">
-                <p class="font-semibold text-sm text-[#C62828]">📋 GPAI Obligations Apply</p>
-                <p class="font-normal text-sm text-[#464E58] mt-2">
-                    ${block4Details?.reason || 'GPAI provider - Chapter V obligations apply.'}
-                </p>
-            </div>
-        `;
-    }
-    
-    // Status = 'Triggered' - Show confirmation or provider question
-    if (status === 'Triggered') {
-        const gpaiIntegration = block4Details?.gpai_integration || 
-                               document.querySelector('input[name="gpai_integration"]:checked')?.value || '';
-        
-        // If not confirmed yet, show confirmation card
-        if (!block4State.gpaiConfirmed) {
-            let reasonText = '';
-            if (gpaiIntegration === 'Yes') {
-                reasonText = 'This AI system integrates or uses a General Purpose AI (GPAI) model (Section 8, Q2).';
-            } else if (gpaiIntegration === 'Unknown') {
-                reasonText = 'GPAI integration status is Unknown - requires confirmation (Section 8, Q2).';
-            }
-            
+
+    // GPAI integration is "Yes"
+    if (gpaiIntegration === 'Yes') {
+        // Triggered state
+        if (status === 'Triggered') {
             return `
                 <div class="space-y-4">
-                    <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-4">
-                        <p class="font-semibold text-sm text-[#22262A] mb-2">Confirm Profile input:</p>
-                        <p class="font-normal text-sm text-[#464E58] mb-2">
-                            Based on your Profile inputs, GPAI obligations may apply because:
+                    <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-6 shadow-sm">
+                        <p class="font-bold text-sm text-[#22262A] mb-3">Confirm Profile input:</p>
+                        <p class="font-normal text-sm text-[#464E58] mb-3">
+                            Based on your Profile inputs, GPAI obligations apply to this AI system because:
                         </p>
-                        <ul class="list-disc list-inside space-y-1 mb-4">
-                            <li class="font-medium text-sm text-[#464E58] ml-2">${reasonText}</li>
-                        </ul>
-                        <p class="font-semibold text-sm text-[#22262A]">Do you confirm?</p>
+                        <div class="pl-8 mb-4">
+                             <p class="font-normal text-sm text-[#464E58] leading-relaxed">
+                                System is provided as or integrates a general-purpose AI (GPAI) model / component (Section 8, Q2)
+                             </p>
+                        </div>
+                        <p class="font-bold text-sm text-[#22262A]">Do you confirm?</p>
                     </div>
-                    <div class="flex justify-end gap-3">
-                        <button onclick="switchTab('profile')" class="px-6 py-2.5 bg-white border border-[#B5BCC4] text-[#464E58] rounded-lg font-semibold text-sm hover:bg-[#F0F1F2] transition-colors">
+                    <div class="flex justify-end gap-3 mt-2 pr-1">
+                        <button onclick="switchTab('profile')" class="px-6 py-2.5 bg-white border border-[#B5BCC4] text-[#464E58] rounded-lg font-bold text-sm hover:bg-[#F0F1F2] transition-colors shadow-sm">
                             Edit Profile Info
                         </button>
-                        <button onclick="confirmGPAI()" class="px-6 py-2.5 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A] transition-colors">
+                        <button onclick="confirmGPAI()" class="px-8 py-2.5 bg-[#F13D30] text-white rounded-lg font-bold text-sm hover:bg-[#DC180A] transition-colors shadow-sm">
                             Confirm
                         </button>
                     </div>
                 </div>
             `;
         }
+
+        // Confirmed flow (status is 'Needs Review', 'Applies', or 'Not Applicable')
+        let html = '<div class="space-y-4">';
         
-        // After confirmation - show provider question (flowchart: Are you the provider of AI model?)
-        return renderBlock4ProviderQuestion(block4Details);
+        // Static Profile Confirmation Box
+        html += `
+            <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-6 shadow-sm">
+                <p class="font-bold text-sm text-[#22262A] mb-3">Confirm Profile input:</p>
+                <p class="font-normal text-sm text-[#464E58] mb-3">
+                    Based on your Profile inputs, GPAI obligations apply to this AI system because:
+                </p>
+                <div class="pl-8">
+                     <p class="font-normal text-sm text-[#464E58] leading-relaxed">
+                        System is provided as or integrates a general-purpose AI (GPAI) model / component (Section 8, Q2)
+                     </p>
+                </div>
+            </div>
+        `;
+
+        // Initial assessment confirmation
+        html += `
+            <div class="bg-[#E8F5E9] border border-[#81C784] rounded-lg p-3 px-4 shadow-sm flex items-center gap-2">
+                 <p class="font-bold text-sm text-[#2E7D32]">✓ Confirmed</p>
+            </div>
+        `;
+
+        // Provider determination
+        html += `
+            <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-6 shadow-sm">
+                <p class="font-bold text-sm text-[#22262A] mb-3">Provider Status</p>
+                <p class="font-normal text-sm text-[#464E58] leading-relaxed">
+                    Please clarify your role in relation to the AI model:
+                </p>
+            </div>
+
+            <div class="space-y-4 px-2 pt-2">
+                <p class="font-bold text-sm text-[#22262A]">Are you the provider of the AI model (you develop it / release it under your name)? <span class="text-red-500">*</span></p>
+                <div class="space-y-4 ml-2">
+                    <label class="flex items-start gap-3 cursor-pointer group">
+                        <input type="radio" name="gpai_provider_answer" value="Yes" 
+                               ${block4State.gpaiProviderAnswer === 'Yes' ? 'checked' : ''}
+                               onchange="setGPAIProviderAnswer('Yes')" 
+                               class="w-4 h-4 text-[#F13D30] border-[#B5BCC4] focus:ring-[#F13D30] mt-0.5">
+                        <span class="font-normal text-sm text-[#464E58] group-hover:text-[#111827]">Yes - I am the provider of the AI model</span>
+                    </label>
+                    <label class="flex items-start gap-3 cursor-pointer group">
+                        <input type="radio" name="gpai_provider_answer" value="No" 
+                               ${block4State.gpaiProviderAnswer === 'No' ? 'checked' : ''}
+                               onchange="setGPAIProviderAnswer('No')" 
+                               class="w-4 h-4 text-[#F13D30] border-[#B5BCC4] focus:ring-[#F13D30] mt-0.5">
+                        <span class="font-normal text-sm text-[#464E58] group-hover:text-[#111827]">No - I am not the provider (e.g., I am a deployer / user of the model)</span>
+                    </label>
+                    <label class="flex items-start gap-3 cursor-pointer group">
+                        <input type="radio" name="gpai_provider_answer" value="Not sure" 
+                               ${block4State.gpaiProviderAnswer === 'Not sure' ? 'checked' : ''}
+                               onchange="setGPAIProviderAnswer('Not sure')" 
+                               class="w-4 h-4 text-[#F13D30] border-[#B5BCC4] focus:ring-[#F13D30] mt-0.5">
+                        <span class="font-normal text-sm text-[#464E58] group-hover:text-[#111827]">Not sure - Requires further review</span>
+                    </label>
+                </div>
+            </div>
+        `;
+
+        // Result banners
+        if (status === 'Applies' && block4State.gpaiProviderAnswer === 'Yes') {
+            html += `
+                <div class="bg-[#FFF3E0] border border-[#FFB74D] rounded-lg p-6 shadow-sm mt-4">
+                    <p class="font-bold text-sm text-[#E65100] mb-2">Result: GPAI Obligations Apply</p>
+                    <p class="font-normal text-sm text-[#464E58] leading-relaxed">
+                        As the provider of the AI model, your AI system is subject to General-Purpose AI obligations under Chapter V of the EU AI Act.
+                    </p>
+                </div>
+            `;
+        } else if (status === 'Not Applicable' && block4State.gpaiProviderAnswer === 'No') {
+            html += `
+                <div class="bg-[#E8F5E9] border border-[#81C784] rounded-lg p-6 shadow-sm mt-4">
+                    <p class="font-bold text-sm text-[#2E7D32] mb-2">Result: GPAI Obligations Not Applicable</p>
+                    <p class="font-normal text-sm text-[#464E58] leading-relaxed">
+                        As you are not the provider of the AI model, GPAI obligations under Chapter V do not apply to you. However, you may have other obligations as a deployer or user.
+                    </p>
+                </div>
+            `;
+        } else if (status === 'Needs Review' && block4State.gpaiProviderAnswer === 'Not sure') {
+            html += `
+                <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-6 shadow-sm mt-4">
+                    <p class="font-bold text-sm text-[#F57C00] mb-2">Result: Needs Review</p>
+                    <p class="font-normal text-sm text-[#464E58] leading-relaxed">
+                        Your provider status needs to be clarified. Please consult with your legal team or compliance officer to determine whether you are the provider of the AI model.
+                    </p>
+                </div>
+            `;
+        }
+
+        html += '</div>';
+        return html;
     }
     
     return '<p class="text-sm text-[#464E58]">Status: ' + status + '</p>';
 }
 
-// Render provider question (flowchart: Are you the provider of AI model?)
+// Provider determination question
 function renderBlock4ProviderQuestion(block4Details) {
     const gpaiIntegration = block4Details?.gpai_integration || 'Yes';
     
@@ -4436,6 +4539,17 @@ function updateAssessmentBlocksFromBE(assessmentResults) {
         const block4Status = assessmentResults.block4.status;
         const block4Details = assessmentResults.block4.details || {};
         
+        // Sync state from backend
+        const backendHasState = assessmentResults.block4_state && Object.keys(assessmentResults.block4_state).length > 0;
+        if (!backendHasState) {
+            block4State.gpaiConfirmed = false;
+            block4State.gpaiProviderAnswer = '';
+        } else {
+            const beState = assessmentResults.block4_state;
+            block4State.gpaiConfirmed = beState.gpai_confirmed || false;
+            block4State.gpaiProviderAnswer = beState.gpai_provider_answer || '';
+        }
+        
         // Store BE assessment data for reference
         block4State.be_assessment = assessmentResults.block4;
         
@@ -4459,7 +4573,7 @@ function updateBlockStatus(blockNum, status, content) {
     }
 }
 
-// Wrapper functions for Result screen (based on React code)
+// Result screen status helpers
 function getBlock1ResultStatus() {
     const status = getProhibitedStatus();
     if (status === 'PASS') return 'Not Prohibited';
@@ -4480,9 +4594,7 @@ function getBlock3ResultStatus() {
 }
 
 function getBlock4ResultStatus() {
-    const status = getGPAIStatus();
-    if (status === 'Triggered') return 'Needs Review';
-    return status;
+    return getGPAIStatus();
 }
 
 // Update all result blocks when switching to Result tab
@@ -4510,7 +4622,7 @@ function updateAllResultBlocks() {
     });
 }
 
-// Map result status to display format with descriptions (based on React code)
+// Result status display formatting
 function mapResultStatusToDisplay(resultStatus, blockNum) {
     let description = '';
     let statusClass = '';
@@ -4569,13 +4681,16 @@ function mapResultStatusToDisplay(resultStatus, blockNum) {
                 description = 'This assessment is de-activated because the AI system is prohibited.';
                 statusClass = 'bg-[#F0F1F2] text-[#B5BCC4]';
             } else if (resultStatus === 'Applies') {
-                description = 'This AI system is subject to General-Purpose AI obligations under Chapter V of the EU AI Act as you are the provider of the AI model.';
+                description = 'This AI system is subject to General-Purpose AI obligations under Chapter V of the EU AI Act.';
                 statusClass = 'bg-[#FFF3E0] text-[#E65100]';
             } else if (resultStatus === 'Not Applicable') {
-                description = 'This AI system is not subject to GPAI obligations, either because it does not integrate a GPAI model or you are not the provider.';
+                description = 'Based on your Profile inputs, this AI system does not qualify as a general-purpose AI model, so GPAI obligations under Chapter V of the EU AI Act do not apply.';
                 statusClass = 'bg-[#E8F5E9] text-[#2E7D32]';
+            } else if (resultStatus === 'Triggered') {
+                description = 'Based on your Profile inputs, GPAI obligations may apply. Please confirm the assessment.';
+                statusClass = 'bg-[#FFF3E0] text-[#E65100]';
             } else {
-                description = 'Your provider status needs to be clarified to determine GPAI applicability. Consult with your legal team.';
+                description = 'GPAI integration status is Unknown or needs clarification to determine applicability. Consult with your technical team or legal counsel.';
                 statusClass = 'bg-[#FFF9E6] text-[#F57C00]';
             }
             break;

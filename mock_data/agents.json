@@ -14,6 +14,90 @@
     "investment_type": "internal",
     "status": "Testing",
     "deployment_context": "Education",
-    "eu_eea_relevance": "Planned"
+    "eu_eea_relevance": "Planned",
+    "profile": {
+      "system_identity": {
+        "ai_system_name": "test agent",
+        "internal_system_id": "",
+        "commercial_name": "",
+        "owner_name": "",
+        "owner_email": "",
+        "owner_department": "",
+        "same_as_compliance_owner": false,
+        "system_status": "Planned",
+        "go_live_date": "02/02/2026",
+        "part_of_product": "",
+        "product_service_name": ""
+      },
+      "source_operator_role": {
+        "default_role_apply": "No",
+        "roles": [],
+        "system_source": "",
+        "vendor_name": "",
+        "vendor_evidence_link": "",
+        "modify_customize": "",
+        "eu_usage": "",
+        "eu_effect": ""
+      },
+      "intended_purpose": {
+        "intended_purpose": "",
+        "sector_domain": [],
+        "sector_other": "",
+        "safety_component": "",
+        "third_party_conformity": ""
+      },
+      "deployment_context": "",
+      "deployment_other": "",
+      "system_users": [],
+      "system_users_other": "",
+      "affected_outputs": [],
+      "affected_outputs_other": "",
+      "vulnerable_groups": [],
+      "workflow_role": "",
+      "output_types": [],
+      "decision_influence": "",
+      "auto_execute": "",
+      "capability_practices": [],
+      "interacts_persons": "",
+      "synthetic_content": [],
+      "ai_kind": [],
+      "gpai_integration": "No",
+      "gpai_provider": "",
+      "training_source": "",
+      "update_frequency": "",
+      "data_types": []
+    },
+    "assessment": {
+      "block1": {
+        "status": "Not assessed",
+        "selected_practices": [],
+        "details": {
+          "reason": "No capabilities selected"
+        }
+      },
+      "block2": {
+        "status": "Not assessed",
+        "details": {
+          "reason": "Section 4 not answered (Q2 Sector, Q3 Safety)"
+        }
+      },
+      "block3": {
+        "status": "Not assessed",
+        "details": {
+          "reason": "Capabilities not answered (Section 7, Q1)"
+        }
+      },
+      "block4": {
+        "status": "Not Applicable",
+        "details": {
+          "reason": "Based on your Profile inputs, this AI system does not qualify as a general-purpose AI model, so GPAI obligations under Chapter V of the EU AI Act do not apply.",
+          "gpai_integration": "No"
+        }
+      },
+      "block4_state": {
+        "gpai_confirmed": true,
+        "gpai_provider_answer": "No"
+      }
+    }
   }
 ]

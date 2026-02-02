@@ -2437,9 +2437,8 @@ def api_ai_system_detail_data(request, agent_id):
             if 'profile' in data:
                 agent['profile'] = data['profile']
                 
-                # Run assessment logic when profile is saved (Block 1, 2, 3, 4 - run in parallel)
-                # This runs on BE as AI detection and assessment logic should be server-side
-                # Pass existing assessment state to preserve user confirmations
+                # Run assessment logic when profile is saved
+                assessment_state = agent.get('assessment', {})
                 assessment_state = agent.get('assessment', {})
                 assessment_results = run_assessment_logic(agent['profile'], assessment_state, reset_state=True)
                 agent['assessment'] = assessment_results
@@ -2499,15 +2498,14 @@ def api_ai_system_detail_data(request, agent_id):
 
 def ai_detects_prohibited_practice():
     """
-    AI Detection Function (Random - will be updated later with actual AI logic).
-    Returns True if AI detects prohibited practice, False otherwise.
+    Returns True if prohibited practice is detected, False otherwise.
     """
     return False
 
 
 def run_assessment_logic(profile_data, assessment_state=None, reset_state=False):
     """
-    Run assessment logic for Block 1, 2, 3, 4 in parallel (based on flowchart).
+    Run assessment logic for Block 1, 2, 3, 4.
     
     Args:
         profile_data: Dictionary containing profile form data
@@ -2537,7 +2535,7 @@ def run_assessment_logic(profile_data, assessment_state=None, reset_state=False)
         'block1': block1_result,
         'block2': get_block2_status(profile_data, block1_result=block1_result, block2_state=block2_state),
         'block3': get_block3_status(profile_data, block1_result=block1_result, block3_state=block3_state),
-        'block4': get_block4_status(profile_data, block1_result=block1_result, block4_state=block4_state)
+        'block4': get_block4_status(profile_data, block1_result=block1_result, block4_state=block4_state, reset_state=reset_state)
     }
     
     if block1_state:
@@ -2554,7 +2552,7 @@ def run_assessment_logic(profile_data, assessment_state=None, reset_state=False)
 
 def get_block1_status(profile_data, block1_state=None, reset_state=False):
     """
-    Block 1: Prohibited Practices Screening - Logic based on flowchart.
+    Block 1: Prohibited Practices Screening.
     
     Args:
         profile_data: Dictionary containing profile form data
@@ -2661,7 +2659,7 @@ def get_block1_status(profile_data, block1_state=None, reset_state=False):
         }
     }
     
-    # Check if user has confirmed (from flowchart: "User Confirms")
+    # Check if user has confirmed
     prohibited_confirmed = block1_state.get('prohibited_confirmed', False)
     
     if not prohibited_confirmed:
@@ -2677,7 +2675,7 @@ def get_block1_status(profile_data, block1_state=None, reset_state=False):
             }
         }
     
-    # After user confirms - Check Exception Availability (from flowchart)
+    # After user confirms - Check Exception Availability
     has_no_exception_practice = any(not prohibited_practices_map.get(p, {}).get('has_exception', False) for p in selected_practices)
     claiming_exception = block1_state.get('claiming_exception', '')
     
@@ -2694,7 +2692,7 @@ def get_block1_status(profile_data, block1_state=None, reset_state=False):
             }
         }
     
-    # From flowchart: "At least one hasException: true" → "Exception Question"
+    # Check for exception qualifications
     if claiming_exception == '':
         # User hasn't answered exception claim question yet
         return {
@@ -2811,27 +2809,19 @@ def get_block1_status(profile_data, block1_state=None, reset_state=False):
 
 def ai_detects_high_risk():
     """
-    AI Detection for Block 2: High-Risk Classification (random placeholder).
-    Returns True if AI detects high-risk, False otherwise.
-    Image/flowchart: "AI Detects High-risk classification" → Yes = Trigger High-risk.
+    High-Risk Classification check.
+    Returns True if high-risk, False otherwise.
     """
     return False
 
 
 def get_block2_status(profile_data, block1_result=None, block2_state=None):
     """
-    Block 2: High-Risk Classification - Logic theo flowchart image.
-    
-    Flowchart order:
-    1. AI Detects High-risk = Yes → Trigger High-risk (status Triggered)
-    2. AI = No → Check Block 1: Block 1 = Prohibited → Trigger High-risk; ≠ Prohibited → Section 4
-    3. Section 4 (Q3 Safety, Q2 Sector): Not all answered → Not assessed; All answered → Condition 1/2
-    4. No conditions met → De-activated; Condition 1 or 2 or both → Trigger High-risk
-    5. Triggered + User Confirms → Condition 1 ONLY → High-risk; Condition 2 or Both → Annex III
-    6. Annex III: Q1 (Material influence) → Q2 (Task type) → Q3 (Profiling) → Evidence
+    Block 2: High-Risk Classification.
     """
     if block2_state is None:
         block2_state = {}
+    
     ip = profile_data.get('intended_purpose', {}) or {}
     sector_domain = ip.get('sector_domain') or []
     if not isinstance(sector_domain, list):
@@ -2839,9 +2829,8 @@ def get_block2_status(profile_data, block1_result=None, block2_state=None):
     safety_component = ip.get('safety_component', '')
     third_party_conformity = ip.get('third_party_conformity', '')
 
-    # 1) AI Detects High-risk = Yes → Trigger High-risk (flowchart)
-    # IMPORTANT: If user already confirmed, return High-risk (prevents confirmation being
-    # overridden by the random AI-detection placeholder on subsequent re-runs).
+    # 1) Check for high-risk detection
+    # PRESERVE confirmation
     if ai_detects_high_risk():
         high_risk_confirmed = block2_state.get('high_risk_confirmed', False)
         if high_risk_confirmed:
@@ -2862,7 +2851,7 @@ def get_block2_status(profile_data, block1_result=None, block2_state=None):
             },
         }
 
-    # 2) Check Block 1 Status (flowchart)
+    # 2) Check Block 1 Status
     block1_prohibited = False
     if block1_result is not None:
         s = block1_result.get('status', '') if isinstance(block1_result, dict) else str(block1_result)
@@ -2931,7 +2920,7 @@ def get_block2_status(profile_data, block1_result=None, block2_state=None):
         }
 
     # 6) User đã confirm → Which condition triggered?
-    # Condition 1 ONLY → Status: High-risk (flowchart)
+    # Condition 1 ONLY → Status: High-risk
     if condition1 and not condition2:
         return {
             'status': 'High-risk',
@@ -2942,7 +2931,7 @@ def get_block2_status(profile_data, block1_result=None, block2_state=None):
             },
         }
 
-    # 7) Condition 2 or Both → Annex III Exemption Test (flowchart)
+    # 7) Condition 2 or Both → Annex III Exemption Test
     material_influence = block2_state.get('material_influence', '')
     narrow_tasks = block2_state.get('narrow_tasks') or []
     if not isinstance(narrow_tasks, list):
@@ -2967,7 +2956,7 @@ def get_block2_status(profile_data, block1_result=None, block2_state=None):
         return {
             'status': 'Not high-risk',
             'details': {
-                'reason': 'Annex III Q1: Material influence Yes → Not high-risk (per flowchart)',
+                'reason': 'Annex III Q1: Material influence Yes → Not high-risk',
                 'condition1': condition1,
                 'condition2': condition2,
                 'step': 'q1',
@@ -3002,7 +2991,7 @@ def get_block2_status(profile_data, block1_result=None, block2_state=None):
         return {
             'status': 'Needs Review',
             'details': {
-                'reason': 'Annex III Q2: None of above → Needs review (per flowchart)',
+                'reason': 'Annex III Q2: None of above → Needs review',
                 'condition1': condition1,
                 'condition2': condition2,
                 'step': 'q2',
@@ -3041,7 +3030,7 @@ def get_block2_status(profile_data, block1_result=None, block2_state=None):
             },
         }
 
-    # Profiling = No → Evidence (flowchart: Ask for Evidence & check Uploaded or Link Saved?)
+    # Check for evidence
     if exemption_evidence:
         return {
             'status': 'Not high-risk',
@@ -3065,22 +3054,12 @@ def get_block2_status(profile_data, block1_result=None, block2_state=None):
 
 def get_block3_status(profile_data, block1_result=None, block3_state=None):
     """
-    Block 3: Transparency Obligation - Logic theo flowchart image.
-    
-    Flowchart order:
-    1. Check Block 1 Status → Block 1 = Prohibited → De-activated
-    2. Block 1 ≠ Prohibited → Check 6 Trigger Conditions
-    3. Triggers + Unknowns và Questions not all answered → Not assessed
-    4. Triggers met → Status: Triggered
-    5. User Confirms → Exception Selection for Each Group
-    6. Valid exceptions for all groups → Evidence check
-    7. 'None of above' for any group → Applies
-    8. Incomplete selections → Needs Review
+    Block 3: Transparency Obligation.
     """
     if block3_state is None:
         block3_state = {}
     
-    # 1) Check Block 1 Status (flowchart)
+    # 1) Check Block 1 Status
     block1_prohibited = False
     if block1_result is not None:
         s = block1_result.get('status', '') if isinstance(block1_result, dict) else str(block1_result)
@@ -3092,7 +3071,7 @@ def get_block3_status(profile_data, block1_result=None, block3_state=None):
             'details': {'reason': 'Block 1 Prohibited - transparency obligation assessment not applicable'}
         }
     
-    # 2) Check 6 Trigger Conditions (flowchart)
+    # 2) Check Trigger Conditions
     capability_practices = profile_data.get('capability_practices', [])
     if not isinstance(capability_practices, list):
         capability_practices = []
@@ -3107,7 +3086,7 @@ def get_block3_status(profile_data, block1_result=None, block3_state=None):
     if not isinstance(affected_outputs, list):
         affected_outputs = []
     
-    # Check if questions not all answered (flowchart: "Questions not all answered")
+    # Check if questions not all answered
     if len(capability_practices) == 0:
         return {
             'status': 'Not assessed',
@@ -3141,10 +3120,10 @@ def get_block3_status(profile_data, block1_result=None, block3_state=None):
     if 'Citizens / residents' in affected_outputs or deployment_context == 'General public / consumer-facing':
         triggers.append('case6')
     
-    # Check for unknowns (flowchart: "Triggers + Unknowns")
+    # Check for unknowns
     has_unknowns = (interacts_persons == 'Unknown')
     
-    # 3) Triggers + Unknowns và Questions not all answered → Not assessed (flowchart)
+    # 3) Handle Unknown values
     if has_unknowns and len(triggers) > 0:
         return {
             'status': 'Not assessed',
@@ -3155,18 +3134,18 @@ def get_block3_status(profile_data, block1_result=None, block3_state=None):
             }
         }
     
-    # 4) No triggers met → Not Applicable (flowchart: implicit)
+    # 4) No triggers met → Not Applicable
     if len(triggers) == 0:
         return {
             'status': 'Not Applicable',
             'details': {'reason': 'No transparency triggers detected'}
         }
     
-    # 5) Triggers met → Status: Triggered (flowchart)
+    # 5) Triggers met → Status: Triggered
     transparency_confirmed = block3_state.get('transparency_confirmed', False)
     
     if not transparency_confirmed:
-        # Check if has unknowns (flowchart: "Triggers + Unknowns")
+        # Check for unknowns
         if has_unknowns:
             return {
                 'status': 'Needs Review',
@@ -3185,7 +3164,7 @@ def get_block3_status(profile_data, block1_result=None, block3_state=None):
             }
         }
     
-    # 6) User Confirms → Exception Selection for Each Group (flowchart)
+    # 6) User Confirms → Exception Selection
     exception_options = block3_state.get('exception_options', [])
     if not isinstance(exception_options, list):
         exception_options = []
@@ -3221,7 +3200,7 @@ def get_block3_status(profile_data, block1_result=None, block3_state=None):
         'None of the above (no exception for citizens/public-facing case)'
     ]
     
-    # Check if "None of above" for any group (flowchart)
+    # Check for "None of above"
     has_no_exception = False
     for opt in exception_options:
         if 'None of the above' in opt:
@@ -3238,7 +3217,7 @@ def get_block3_status(profile_data, block1_result=None, block3_state=None):
             }
         }
     
-    # Check if valid exceptions for all groups (flowchart)
+    # Check if valid exceptions for all groups
     has_exception_for_all = True
     if 'group1_2_3' in case_groups:
         has_group1_2_3 = any(opt in group1_2_3_options and 'None of the above' not in opt for opt in exception_options)
@@ -3257,7 +3236,7 @@ def get_block3_status(profile_data, block1_result=None, block3_state=None):
         if not has_group6:
             has_exception_for_all = False
     
-    # 7) Incomplete selections → Needs Review (flowchart)
+    # 7) Incomplete selections → Needs Review
     if not has_exception_for_all:
         return {
             'status': 'Needs Review',
@@ -3268,7 +3247,7 @@ def get_block3_status(profile_data, block1_result=None, block3_state=None):
             }
         }
     
-    # 8) Valid exceptions for all groups → Evidence check (flowchart)
+    # 8) Evidence check
     evidence_uploaded = block3_state.get('transparency_evidence_uploaded', False)
     evidence_saved_link = block3_state.get('transparency_evidence_saved_link', '')
     evidence_provided = evidence_uploaded or bool((evidence_saved_link or '').strip())
@@ -3293,27 +3272,18 @@ def get_block3_status(profile_data, block1_result=None, block3_state=None):
         }
 
 
-def get_block4_status(profile_data, block1_result=None, block4_state=None):
+def get_block4_status(profile_data, block1_result=None, block4_state=None, reset_state=False):
     """
-    Block 4: GPAI Obligation - Logic theo flowchart image.
-    
-    Flowchart order:
-    1. Check Block 1 Status → Block 1 = Prohibited → De-activated
-    2. Block 1 ≠ Prohibited → Q2: Is this GPAI or integrates one?
-    3. Q2 Not answered → Not assessed
-    4. Q2 No → Needs Review
-    5. Q2 Unknown → Triggered → Needs Review
-    6. Q2 Yes → Show Reason Confirm or Edit?
-    7. User Confirms → Are you the provider of AI model?
-       - No → Not Applicable
-       - Yes → Applies
-       - Not sure → Needs Review
-       - No selection → Needs Review
+    Block 4: GPAI Obligation.
     """
     if block4_state is None:
         block4_state = {}
     
-    # 1) Check Block 1 Status (flowchart)
+    if reset_state:
+        # Reset confirmations when profile is re-saved
+        block4_state = {}
+    
+    # 1) Check Block 1 Status
     block1_prohibited = False
     if block1_result is not None:
         s = block1_result.get('status', '') if isinstance(block1_result, dict) else str(block1_result)
@@ -3325,41 +3295,37 @@ def get_block4_status(profile_data, block1_result=None, block4_state=None):
             'details': {'reason': 'Block 1 Prohibited - GPAI obligation assessment not applicable'}
         }
     
-    # 2) Q2: Is this GPAI or integrates one? (flowchart)
+    # 2) Q2: Is this GPAI or integrates one?
     gpai_integration = profile_data.get('gpai_integration', '')
     
-    # 3) Q2 Not answered → Not assessed (flowchart)
+    # Q2 Not answered → Not assessed
     if gpai_integration == '':
         return {
             'status': 'Not assessed',
             'details': {'reason': 'GPAI integration question not answered (Section 8, Q2)'}
         }
     
-    # 4) Q2 No → Needs Review (flowchart)
+    # Q2 No → Not Applicable
     if gpai_integration == 'No':
         return {
-            'status': 'Needs Review',
-            'details': {'reason': 'GPAI integration = No - needs review (per flowchart)'}
+            'status': 'Not Applicable',
+            'details': {
+                'reason': 'Based on your Profile inputs, this AI system does not qualify as a general-purpose AI model, so GPAI obligations under Chapter V of the EU AI Act do not apply.',
+                'gpai_integration': 'No'
+            }
         }
     
-    # 5) Q2 Unknown → Triggered → Needs Review (flowchart)
+    # Q2 Unknown → Needs Review
     if gpai_integration == 'Unknown':
-        gpai_confirmed = block4_state.get('gpai_confirmed', False)
-        if not gpai_confirmed:
-            return {
-                'status': 'Triggered',
-                'details': {
-                    'reason': 'GPAI integration = Unknown - triggered, awaiting confirmation',
-                    'gpai_integration': 'Unknown'
-                }
-            }
-        # After confirmation, Unknown leads to Needs Review
         return {
             'status': 'Needs Review',
-            'details': {'reason': 'GPAI integration = Unknown - requires review'}
+            'details': {
+                'reason': 'In your Profile (Section 8, Q2), you indicated that it is Unknown whether this system is provided as a general-purpose AI (GPAI) model/component or integrates one. Please clarify this information to determine whether GPAI obligations under Chapter V of the EU AI Act apply to your system.',
+                'gpai_integration': 'Unknown'
+            }
         }
     
-    # 6) Q2 Yes → Show Reason Confirm or Edit? (flowchart)
+    # Q2 Yes → Triggered
     if gpai_integration == 'Yes':
         gpai_confirmed = block4_state.get('gpai_confirmed', False)
         
@@ -3367,58 +3333,56 @@ def get_block4_status(profile_data, block1_result=None, block4_state=None):
             return {
                 'status': 'Triggered',
                 'details': {
-                    'reason': 'GPAI integration = Yes - awaiting confirmation',
+                    'reason': 'Based on your Profile inputs, GPAI obligations apply to this AI system because: System is provided as or integrates a general-purpose AI (GPAI) model / component (Section 8, Q2).',
                     'gpai_integration': 'Yes'
                 }
             }
         
-        # 7) User Confirms → Are you the provider of AI model? (flowchart)
+        # Steps 2-5: Confirmed flow
         gpai_provider_answer = block4_state.get('gpai_provider_answer', '')
         
-        # No selection → Needs Review (flowchart)
-        if gpai_provider_answer == '':
+        if not gpai_provider_answer:
+            # Step 2: Confirmed but provider role not yet selected
             return {
                 'status': 'Needs Review',
                 'details': {
-                    'reason': 'GPAI integration confirmed but provider question not answered',
-                    'gpai_integration': 'Yes'
-                }
-            }
-        
-        # No → Not Applicable (flowchart)
-        if gpai_provider_answer == 'No':
-            return {
-                'status': 'Not Applicable',
-                'details': {
-                    'reason': 'GPAI integration = Yes but not a provider - Chapter V does not apply',
                     'gpai_integration': 'Yes',
-                    'gpai_provider_answer': 'No'
+                    'gpai_confirmed': True
                 }
             }
         
-        # Not sure → Needs Review (flowchart)
-        if gpai_provider_answer == 'Not sure':
-            return {
-                'status': 'Needs Review',
-                'details': {
-                    'reason': 'GPAI provider status uncertain - requires review',
-                    'gpai_integration': 'Yes',
-                    'gpai_provider_answer': 'Not sure'
-                }
-            }
-        
-        # Yes → Applies (flowchart)
+        # Steps 3-5: Provider role selected
         if gpai_provider_answer == 'Yes':
             return {
                 'status': 'Applies',
                 'details': {
-                    'reason': 'GPAI provider - Chapter V obligations apply',
+                    'reason': 'GPAI integration confirmed and provider role selected - Chapter V obligations apply.',
                     'gpai_integration': 'Yes',
+                    'gpai_confirmed': True,
                     'gpai_provider_answer': 'Yes'
                 }
             }
-    
-    # Default fallback
+        elif gpai_provider_answer == 'No':
+            return {
+                'status': 'Not Applicable',
+                'details': {
+                    'reason': 'GPAI integration confirmed but role is not a provider - Chapter V obligations do not apply.',
+                    'gpai_integration': 'Yes',
+                    'gpai_confirmed': True,
+                    'gpai_provider_answer': 'No'
+                }
+            }
+        else: # 'Not sure'
+            return {
+                'status': 'Needs Review',
+                'details': {
+                    'reason': 'GPAI integration confirmed but role selection requires review.',
+                    'gpai_integration': 'Yes',
+                    'gpai_confirmed': True,
+                    'gpai_provider_answer': 'Not sure'
+                }
+            }
+
     return {
         'status': 'Not assessed',
         'details': {'reason': 'GPAI integration status unclear'}
