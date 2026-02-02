@@ -2412,6 +2412,13 @@ def api_ai_system_detail_data(request, agent_id):
             }, status=404)
         
         if request.method == 'GET':
+            # Run assessment logic to ensure fresh data (especially if mock data was edited manually)
+            if 'profile' in agent:
+                assessment_state = agent.get('assessment', {})
+                # For GET, we don't necessarily want to reset state (preserve confirms)
+                assessment_results = run_assessment_logic(agent['profile'], assessment_state, reset_state=False)
+                agent['assessment'] = assessment_results
+            
             # Return detail data
             detail_data = {
                 'profile': agent.get('profile', {}),
@@ -2438,10 +2445,12 @@ def api_ai_system_detail_data(request, agent_id):
                 agent['profile'] = data['profile']
                 
                 # Run assessment logic when profile is saved
-                assessment_state = agent.get('assessment', {})
+                # Reset state for fresh assessment as requested
                 assessment_state = agent.get('assessment', {})
                 assessment_results = run_assessment_logic(agent['profile'], assessment_state, reset_state=True)
                 agent['assessment'] = assessment_results
+
+
                 
 
                 
@@ -2533,8 +2542,8 @@ def run_assessment_logic(profile_data, assessment_state=None, reset_state=False)
     
     assessment_results = {
         'block1': block1_result,
-        'block2': get_block2_status(profile_data, block1_result=block1_result, block2_state=block2_state),
-        'block3': get_block3_status(profile_data, block1_result=block1_result, block3_state=block3_state),
+        'block2': get_block2_status(profile_data, block1_result=block1_result, block2_state=block2_state, reset_state=reset_state),
+        'block3': get_block3_status(profile_data, block1_result=block1_result, block3_state=block3_state, reset_state=reset_state),
         'block4': get_block4_status(profile_data, block1_result=block1_result, block4_state=block4_state, reset_state=reset_state)
     }
     
@@ -2726,31 +2735,34 @@ def get_block1_status(profile_data, block1_state=None, reset_state=False):
             }
         }
     
-    # Evaluate combined results
+    # Combined result check - only if all answered
     results = [qualifies_map.get(p) for p in practices_with_exception]
     
-    if 'No' in results:
-        # If any is "No" -> Prohibited
+    # NEW: Check for final confirmation before transitioning to result status
+    exception_confirmed = block1_state.get('exception_confirmed', False)
+    
+    if not exception_confirmed:
+        return {
+            'status': 'Triggered',
+            'selected_practices': selected_practices,
+            'practices_info': {p: prohibited_practices_map.get(p, {'label': p, 'article': 'Unknown'}) for p in selected_practices},
+            'details': {
+                'reason': 'Awaiting final confirmation of exception claim(s)',
+                'has_exception_available': True,
+                'has_no_exception': False,
+                'is_all_answered': True,
+                'answers': results
+            }
+        }
+
+    if 'No' in results or 'Not sure' in results:
+        # If any is "No" or "Not sure" -> Prohibited
         return {
             'status': 'Prohibited',
             'selected_practices': selected_practices,
             'practices_info': {p: prohibited_practices_map.get(p, {'label': p, 'article': 'Unknown'}) for p in selected_practices},
             'details': {
-                'reason': 'One or more exception claims were denied (answered "No")',
-                'has_exception_available': True,
-                'has_no_exception': False
-            }
-        }
-    
-    if 'Not sure' in results:
-        # If any is "Not sure" (and none are "No") -> Needs Review
-        # (Technically "otherwise prohibited" could mean this too, but Needs Review is more helpful)
-        return {
-            'status': 'Needs Review',
-            'selected_practices': selected_practices,
-            'practices_info': {p: prohibited_practices_map.get(p, {'label': p, 'article': 'Unknown'}) for p in selected_practices},
-            'details': {
-                'reason': 'Uncertain about at least one exception qualification',
+                'reason': 'One or more exception claims were denied or uncertain (answered "No" or "Not sure")',
                 'has_exception_available': True,
                 'has_no_exception': False
             }
@@ -2815,12 +2827,23 @@ def ai_detects_high_risk():
     return False
 
 
-def get_block2_status(profile_data, block1_result=None, block2_state=None):
+def get_block2_status(profile_data, block1_result=None, block2_state=None, reset_state=False):
     """
     Block 2: High-Risk Classification.
     """
     if block2_state is None:
         block2_state = {}
+    
+    if reset_state:
+        block2_state.clear()
+
+    if block1_result:
+        b1_status = block1_result.get('status', '')
+        if b1_status == 'Prohibited':
+            return {
+                'status': 'De-activated',
+                'details': {'reason': 'Block 1 Prohibited - High-risk classification assessment not applicable'}
+            }
     
     ip = profile_data.get('intended_purpose', {}) or {}
     sector_domain = ip.get('sector_domain') or []
@@ -2851,85 +2874,71 @@ def get_block2_status(profile_data, block1_result=None, block2_state=None):
             },
         }
 
-    # 2) Check Block 1 Status
-    block1_prohibited = False
-    if block1_result is not None:
-        s = block1_result.get('status', '') if isinstance(block1_result, dict) else str(block1_result)
-        block1_prohibited = (s == 'Prohibited')
-
-    if block1_prohibited:
-        high_risk_confirmed = block2_state.get('high_risk_confirmed', False)
-        if high_risk_confirmed:
-            return {
-                'status': 'High-risk',
-                'details': {
-                    'reason': 'Block 1 Prohibited, user confirmed high-risk',
-                    'trigger': 'block1_prohibited',
-                },
-            }
-        return {
-            'status': 'Triggered',
-            'details': {
-                'reason': 'Block 1 Prohibited – high-risk trigger; confirm or edit profile',
-                'trigger': 'block1_prohibited',
-            },
-        }
-
-    # 3) Section 4: Q3 Safety Component?, Q2 Sector Selected? – “Not all answered” → Not assessed
-    has_sector = len(sector_domain) > 0
-    has_safety = safety_component != ''
-    if not has_sector and not has_safety:
+    # 3) Assessment logic: Q2 (Sector) and Q3 (Safety component)
+    selected_high_risk_sectors = [
+        s for s in sector_domain 
+        if s and s not in ('Other / not listed', 'Other / not listed:', '')
+    ]
+    
+    # Not assessed if Q2 not answered or Q3 not answered
+    if not sector_domain or safety_component == '':
         return {
             'status': 'Not assessed',
-            'details': {'reason': 'Section 4 not answered (Q2 Sector, Q3 Safety)'},
+            'details': {'reason': 'Please complete Section 4 (Q2 Sector and Q3 Safety) to assess high-risk status.'},
         }
+    
+    # Special case: Q3 Yes but Q4 not answered
     if safety_component == 'Yes' and third_party_conformity == '':
         return {
             'status': 'Not assessed',
-            'details': {'reason': 'Safety component Yes but third-party conformity not answered'},
+            'details': {'reason': 'Safety component Yes but third-party conformity (Q4) not answered'},
         }
 
-    # 4) Condition 1 (Safety + Third-party) / Condition 2 (Sector selected)
+    # Condition 1: Q3=Yes AND Q4=Yes (Annex I)
     condition1 = safety_component == 'Yes' and third_party_conformity == 'Yes'
-    condition2 = any(
-        s not in ('Other / not listed', 'Other / not listed:', '')
-        for s in sector_domain
-    )
+    # Condition 2: Any sector selected (Annex III)
+    condition2 = len(selected_high_risk_sectors) > 0
 
+    # 4) If neither triggered -> Not high-risk
     if not condition1 and not condition2:
         return {
-            'status': 'De-activated',
+            'status': 'Not high-risk',
             'details': {
-                'reason': 'No high-risk conditions met',
+                'reason': 'Based on your Profile inputs, this AI system is not classified as high-risk under the EU AI Act.',
                 'condition1': False,
                 'condition2': False,
             },
         }
 
-    # 5) Condition 1 or 2 or both → Trigger; nếu chưa confirm → Triggered
+    # 5) High-risk status: returned if either condition is met
+    # UI will handle the confirmation flow based on block2_state
+    trigger = 'both' if (condition1 and condition2) else ('condition1' if condition1 else 'condition2')
+    
+    # Return High-risk with full details for the frontend to render appropriate step
+    result = {
+        'status': 'High-risk',
+        'details': {
+            'reason': 'This AI system is classified as high-risk under the EU AI Act because it is a safety component of a product requiring third-party conformity assessment under EU harmonisation legislation (Annex I).' if condition1 else 'This AI system is classified as high-risk under the EU AI Act based on its sector of application (Annex III).',
+            'condition1': condition1,
+            'condition2': condition2,
+            'selected_sectors': selected_high_risk_sectors,
+            'trigger': trigger,
+            'step': 'condition1_only' if condition1 else 'q1' # default step after confirmation
+        },
+    }
+    
+    # If already confirmed, potentially update the step or reason based on Annex III flow
     high_risk_confirmed = block2_state.get('high_risk_confirmed', False)
     if not high_risk_confirmed:
-        return {
-            'status': 'Triggered',
-            'details': {
-                'reason': 'High-risk conditions met, awaiting confirmation',
-                'condition1': condition1,
-                'condition2': condition2,
-                'trigger': 'both' if (condition1 and condition2) else ('condition1' if condition1 else 'condition2'),
-            },
-        }
+        return result
 
-    # 6) User đã confirm → Which condition triggered?
-    # Condition 1 ONLY → Status: High-risk
-    if condition1 and not condition2:
-        return {
-            'status': 'High-risk',
-            'details': {
-                'reason': 'Safety component + third-party conformity (Condition 1 only)',
-                'condition1': True,
-                'condition2': False,
-            },
-        }
+    # 6) User has confirmed → Progress through Annex III if applicable
+    if condition1:
+        # Condition 1 stays as is - confirmed high-risk
+        return result
+
+    # 7) Condition 2 only → Annex III Exemption Test flow
+    # This part remains the same as before, but we are already in 'High-risk' status
 
     # 7) Condition 2 or Both → Annex III Exemption Test
     material_influence = block2_state.get('material_influence', '')
@@ -2937,9 +2946,10 @@ def get_block2_status(profile_data, block1_result=None, block2_state=None):
     if not isinstance(narrow_tasks, list):
         narrow_tasks = []
     profiling = block2_state.get('profiling', '')
-    exemption_evidence = block2_state.get('exemption_evidence_uploaded', False) or bool(
-        (block2_state.get('exemption_evidence_saved_link') or '').strip()
-    )
+    exemption_evidence = block2_state.get('exemption_confirmed', False)
+    # also check if evidence is present for legacy or automatic transition if desired, 
+    # but let's stick to explicit confirmation for 'Exemption' status
+    
 
     # Q1: Material Influence or Significant Risk?
     if material_influence == 'Not sure':
@@ -2954,9 +2964,9 @@ def get_block2_status(profile_data, block1_result=None, block2_state=None):
         }
     if material_influence == 'Yes':
         return {
-            'status': 'Not high-risk',
+            'status': 'High-risk',
             'details': {
-                'reason': 'Annex III Q1: Material influence Yes → Not high-risk',
+                'reason': 'Annex III Q1: Material influence Yes → High-risk',
                 'condition1': condition1,
                 'condition2': condition2,
                 'step': 'q1',
@@ -2965,9 +2975,9 @@ def get_block2_status(profile_data, block1_result=None, block2_state=None):
 
     if material_influence != 'No':
         return {
-            'status': 'Triggered',
+            'status': 'Needs Review',
             'details': {
-                'reason': 'Annex III: awaiting Q1 (Material influence)',
+                'reason': 'Annex III: pending Q1 (Material influence)',
                 'condition1': condition1,
                 'condition2': condition2,
                 'step': 'q1',
@@ -2979,9 +2989,9 @@ def get_block2_status(profile_data, block1_result=None, block2_state=None):
     specific_tasks = [t for t in narrow_tasks if t and str(t).strip() and str(t) != 'None of above']
     if not specific_tasks and not none_of_above:
         return {
-            'status': 'Triggered',
+            'status': 'Needs Review',
             'details': {
-                'reason': 'Annex III: awaiting Q2 (Task type selection)',
+                'reason': 'Annex III: pending Q2 (Task type selection)',
                 'condition1': condition1,
                 'condition2': condition2,
                 'step': 'q2',
@@ -2989,9 +2999,9 @@ def get_block2_status(profile_data, block1_result=None, block2_state=None):
         }
     if none_of_above:
         return {
-            'status': 'Needs Review',
+            'status': 'High-risk',
             'details': {
-                'reason': 'Annex III Q2: None of above → Needs review',
+                'reason': 'Annex III Q2: None of above → High-risk',
                 'condition1': condition1,
                 'condition2': condition2,
                 'step': 'q2',
@@ -3021,9 +3031,9 @@ def get_block2_status(profile_data, block1_result=None, block2_state=None):
         }
     if profiling != 'No':
         return {
-            'status': 'Triggered',
+            'status': 'Needs Review',
             'details': {
-                'reason': 'Annex III: awaiting Q3 (Profiling)',
+                'reason': 'Annex III: pending Q3 (Profiling)',
                 'condition1': condition1,
                 'condition2': condition2,
                 'step': 'q3',
@@ -3031,47 +3041,52 @@ def get_block2_status(profile_data, block1_result=None, block2_state=None):
         }
 
     # Check for evidence
+    details_base = {
+        'condition1': condition1,
+        'condition2': condition2,
+        'step': 'evidence',
+        'exemption_evidence_file_name': block2_state.get('exemption_evidence_file_name', ''),
+        'exemption_evidence_file_url': block2_state.get('exemption_evidence_file_url', ''),
+        'exemption_evidence_saved_link': block2_state.get('exemption_evidence_saved_link', ''),
+        'exemption_evidence_explanation': block2_state.get('exemption_evidence_explanation', ''),
+    }
+
     if exemption_evidence:
         return {
-            'status': 'Not high-risk',
+            'status': 'Exemption',
             'details': {
+                **details_base,
                 'reason': 'Annex III: Profiling No + evidence provided → Not high-risk',
-                'condition1': condition1,
-                'condition2': condition2,
-                'step': 'evidence',
             },
         }
+    
     return {
         'status': 'High-risk',
         'details': {
+            **details_base,
             'reason': 'Annex III: Profiling No but no exemption evidence yet',
-            'condition1': condition1,
-            'condition2': condition2,
-            'step': 'evidence',
-        },
+        }
     }
 
 
-def get_block3_status(profile_data, block1_result=None, block3_state=None):
+def get_block3_status(profile_data, block1_result=None, block3_state=None, reset_state=False):
     """
     Block 3: Transparency Obligation.
     """
     if block3_state is None:
         block3_state = {}
+
+    if reset_state:
+        block3_state.clear()
     
-    # 1) Check Block 1 Status
-    block1_prohibited = False
-    if block1_result is not None:
-        s = block1_result.get('status', '') if isinstance(block1_result, dict) else str(block1_result)
-        block1_prohibited = (s == 'Prohibited')
+    if block1_result:
+        b1_status = block1_result.get('status', '')
+        if b1_status == 'Prohibited':
+            return {
+                'status': 'De-activated',
+                'details': {'reason': 'Block 1 Prohibited - Transparency obligation assessment not applicable'}
+            }
     
-    if block1_prohibited:
-        return {
-            'status': 'De-activated',
-            'details': {'reason': 'Block 1 Prohibited - transparency obligation assessment not applicable'}
-        }
-    
-    # 2) Check Trigger Conditions
     capability_practices = profile_data.get('capability_practices', [])
     if not isinstance(capability_practices, list):
         capability_practices = []
@@ -3085,67 +3100,66 @@ def get_block3_status(profile_data, block1_result=None, block3_state=None):
     affected_outputs = profile_data.get('affected_outputs', [])
     if not isinstance(affected_outputs, list):
         affected_outputs = []
+
+    sector_domain = profile_data.get('sector_domain')
+    if not sector_domain:
+        ip = profile_data.get('intended_purpose', {}) or {}
+        sector_domain = ip.get('sector_domain') or []
+    if not isinstance(sector_domain, list):
+        sector_domain = []
     
-    # Check if questions not all answered
-    if len(capability_practices) == 0:
+    if not sector_domain or not deployment_context or not affected_outputs or \
+       not interacts_persons or not synthetic_content:
         return {
             'status': 'Not assessed',
-            'details': {'reason': 'Capabilities not answered (Section 7, Q1)'}
+            'details': {'reason': 'One or more transparency-related profile questions are not answered.'}
         }
     
-    # Get 6 trigger cases
+    # Get 7 trigger cases
     triggers = []
     
-    # Case 1: Biometric identification and categorisation
-    if any('Biometric identification and categorisation' in p for p in capability_practices):
+    # Case 1: Section 4, Q2: "Biometric identification and categorisation"
+    if any('Biometric identification and categorisation' in s for s in sector_domain):
         triggers.append('case1')
     
-    # Case 2: Emotion recognition in workplace/education
-    if any('Emotion recognition in the workplace or in education settings' in p for p in capability_practices):
+    # Case 2: Section 5, Q1: "General public / consumer-facing"
+    if deployment_context == 'General public / consumer-facing':
         triggers.append('case2')
     
-    # Case 3: Biometric categorisation (sensitive traits)
-    if any('Biometric categorisation that infers or predicts sensitive traits' in p for p in capability_practices):
+    # Case 3: Section 5, Q3: "Citizens / residents"
+    if 'Citizens / residents' in affected_outputs:
         triggers.append('case3')
     
-    # Case 4: Direct interaction with persons
-    if interacts_persons == 'Yes':
+    # Case 4: Section 7, Q1: "Emotion recognition ..."
+    if any('Emotion recognition in the workplace or in education settings' in p for p in capability_practices):
         triggers.append('case4')
     
-    # Case 5: Synthetic content (any choice other than No)
-    if len(synthetic_content) > 0 and 'No' not in synthetic_content:
+    # Case 5: Section 7, Q1: "Biometric categorisation (sensitive traits)"
+    if any('Biometric categorisation that infers or predicts sensitive traits' in p for p in capability_practices):
         triggers.append('case5')
     
-    # Case 6: Citizens/residents OR General public facing
-    if 'Citizens / residents' in affected_outputs or deployment_context == 'General public / consumer-facing':
+    # Case 6: Section 7, Q2: "Yes"
+    if interacts_persons == 'Yes':
         triggers.append('case6')
     
-    # Check for unknowns
-    has_unknowns = (interacts_persons == 'Unknown')
+    # Case 7: Section 7, Q3: any except "No"
+    if len(synthetic_content) > 0 and 'No' not in synthetic_content:
+        triggers.append('case7')
     
-    # 3) Handle Unknown values
-    if has_unknowns and len(triggers) > 0:
-        return {
-            'status': 'Not assessed',
-            'details': {
-                'reason': 'Triggers detected but questions not all answered (Unknown values)',
-                'triggers': triggers,
-                'has_unknowns': True
-            }
-        }
+    # Check for unknowns (if any specific question is 'Unknown')
+    has_unknowns = (interacts_persons == 'Unknown' or deployment_context == 'Unknown')
     
     # 4) No triggers met → Not Applicable
     if len(triggers) == 0:
         return {
             'status': 'Not Applicable',
-            'details': {'reason': 'No transparency triggers detected'}
+            'details': {'reason': 'Based on your Profile inputs, this AI system does not trigger transparency obligations under Article 50 of the EU AI Act.'}
         }
     
     # 5) Triggers met → Status: Triggered
     transparency_confirmed = block3_state.get('transparency_confirmed', False)
     
     if not transparency_confirmed:
-        # Check for unknowns
         if has_unknowns:
             return {
                 'status': 'Needs Review',
@@ -3171,41 +3185,37 @@ def get_block3_status(profile_data, block1_result=None, block3_state=None):
     
     # Map triggers to case groups
     case_groups = []
-    if 'case1' in triggers or 'case2' in triggers or 'case3' in triggers:
-        case_groups.append('group1_2_3')  # Biometric/Emotion
-    if 'case4' in triggers:
-        case_groups.append('group4')  # Direct interaction
-    if 'case5' in triggers:
-        case_groups.append('group5')  # Synthetic content
+    if 'case1' in triggers or 'case4' in triggers or 'case5' in triggers:
+        case_groups.append('group_biometric_emotion')
     if 'case6' in triggers:
-        case_groups.append('group6')  # Citizens/Public
+        case_groups.append('group_direct_interaction')
+    if 'case7' in triggers:
+        case_groups.append('group_synthetic_content')
+    if 'case2' in triggers or 'case3' in triggers:
+        case_groups.append('group_public_exposure')
     
     # Exception options by group
-    group1_2_3_options = [
+    group_biometric_emotion_options = [
         'Permitted by law to detect, prevent or investigate criminal offences, as stated in Art. 50(3)',
         'None of the above (no exception for biometric/emotion recognition cases)'
     ]
-    group4_options = [
+    group_direct_interaction_options = [
         '"Obvious to the user" exception (no notice needed), as stated in Art. 50(1)',
         'Authorised by law to detect, prevent, investigate or prosecute criminal offences, as stated in Art. 50(1)',
         'None of the above (no exception for direct interaction case)'
     ]
-    group5_options = [
+    group_synthetic_content_options = [
         'Deepfake labelling exception (e.g., artistic / satire / fiction), as stated in Art. 50(4)',
         'None of the above (no exception for synthetic content case)'
     ]
-    group6_options = [
+    group_public_exposure_options = [
         'Authorised by law to detect, prevent, investigate or prosecute criminal offences, as stated in Art. 50(4)',
         'Human review is in place or a natural or legal person holds editorial responsibility for the publication of the content, as stated in Art. 50(4)',
         'None of the above (no exception for citizens/public-facing case)'
     ]
     
     # Check for "None of above"
-    has_no_exception = False
-    for opt in exception_options:
-        if 'None of the above' in opt:
-            has_no_exception = True
-            break
+    has_no_exception = any('None of the above' in opt for opt in exception_options)
     
     if has_no_exception:
         return {
@@ -3219,21 +3229,17 @@ def get_block3_status(profile_data, block1_result=None, block3_state=None):
     
     # Check if valid exceptions for all groups
     has_exception_for_all = True
-    if 'group1_2_3' in case_groups:
-        has_group1_2_3 = any(opt in group1_2_3_options and 'None of the above' not in opt for opt in exception_options)
-        if not has_group1_2_3:
+    if 'group_biometric_emotion' in case_groups:
+        if not any(opt in group_biometric_emotion_options and 'None of the above' not in opt for opt in exception_options):
             has_exception_for_all = False
-    if 'group4' in case_groups:
-        has_group4 = any(opt in group4_options and 'None of the above' not in opt for opt in exception_options)
-        if not has_group4:
+    if 'group_direct_interaction' in case_groups:
+        if not any(opt in group_direct_interaction_options and 'None of the above' not in opt for opt in exception_options):
             has_exception_for_all = False
-    if 'group5' in case_groups:
-        has_group5 = any(opt in group5_options and 'None of the above' not in opt for opt in exception_options)
-        if not has_group5:
+    if 'group_synthetic_content' in case_groups:
+        if not any(opt in group_synthetic_content_options and 'None of the above' not in opt for opt in exception_options):
             has_exception_for_all = False
-    if 'group6' in case_groups:
-        has_group6 = any(opt in group6_options and 'None of the above' not in opt for opt in exception_options)
-        if not has_group6:
+    if 'group_public_exposure' in case_groups:
+        if not any(opt in group_public_exposure_options and 'None of the above' not in opt for opt in exception_options):
             has_exception_for_all = False
     
     # 7) Incomplete selections → Needs Review
@@ -3254,9 +3260,9 @@ def get_block3_status(profile_data, block1_result=None, block3_state=None):
     
     if evidence_provided:
         return {
-            'status': 'Not Applicable',
+            'status': 'Exception',
             'details': {
-                'reason': 'Valid exceptions for all groups with evidence provided - transparency obligations do not apply',
+                'reason': 'All triggered cases have valid exceptions with supporting evidence. Transparency obligations do not apply to this AI system.',
                 'triggers': triggers,
                 'case_groups': case_groups
             }
@@ -3280,32 +3286,24 @@ def get_block4_status(profile_data, block1_result=None, block4_state=None, reset
         block4_state = {}
     
     if reset_state:
-        # Reset confirmations when profile is re-saved
-        block4_state = {}
+        block4_state.clear()
     
-    # 1) Check Block 1 Status
-    block1_prohibited = False
-    if block1_result is not None:
-        s = block1_result.get('status', '') if isinstance(block1_result, dict) else str(block1_result)
-        block1_prohibited = (s == 'Prohibited')
+    if block1_result:
+        b1_status = block1_result.get('status', '')
+        if b1_status == 'Prohibited':
+            return {
+                'status': 'De-activated',
+                'details': {'reason': 'Block 1 Prohibited - GPAI obligation assessment not applicable'}
+            }
     
-    if block1_prohibited:
-        return {
-            'status': 'De-activated',
-            'details': {'reason': 'Block 1 Prohibited - GPAI obligation assessment not applicable'}
-        }
-    
-    # 2) Q2: Is this GPAI or integrates one?
     gpai_integration = profile_data.get('gpai_integration', '')
     
-    # Q2 Not answered → Not assessed
     if gpai_integration == '':
         return {
             'status': 'Not assessed',
             'details': {'reason': 'GPAI integration question not answered (Section 8, Q2)'}
         }
     
-    # Q2 No → Not Applicable
     if gpai_integration == 'No':
         return {
             'status': 'Not Applicable',
@@ -3452,7 +3450,11 @@ def api_update_block2_state(request, agent_id):
                 'narrow_tasks': [],
                 'profiling': '',
                 'exemption_evidence_uploaded': False,
-                'exemption_evidence_saved_link': ''
+                'exemption_evidence_saved_link': '',
+                'exemption_evidence_explanation': '',
+                'exemption_confirmed': False,
+                'exemption_evidence_file_name': '',
+                'exemption_evidence_file_url': ''
             }
         
         # Update block2_state
@@ -3470,12 +3472,20 @@ def api_update_block2_state(request, agent_id):
             block2_state['exemption_evidence_uploaded'] = bool(data['exemption_evidence_uploaded'])
         if 'exemption_evidence_saved_link' in data:
             block2_state['exemption_evidence_saved_link'] = data.get('exemption_evidence_saved_link', '')
+        if 'exemption_evidence_explanation' in data:
+            block2_state['exemption_evidence_explanation'] = data.get('exemption_evidence_explanation', '')
+        if 'exemption_confirmed' in data:
+            block2_state['exemption_confirmed'] = bool(data['exemption_confirmed'])
+        if 'exemption_evidence_file_name' in data:
+            block2_state['exemption_evidence_file_name'] = data.get('exemption_evidence_file_name', '')
+        if 'exemption_evidence_file_url' in data:
+            block2_state['exemption_evidence_file_url'] = data.get('exemption_evidence_file_url', '')
         
         # Re-run assessment logic to get updated status
         if 'profile' in agent:
             assessment_state = agent.get('assessment', {})
             assessment_results = run_assessment_logic(agent['profile'], assessment_state)
-            agent['assessment'].update(assessment_results)
+            agent['assessment'] = assessment_results
         
         # Update agent in list
         for idx, a in enumerate(existing_agents):
@@ -3587,7 +3597,7 @@ def api_update_block3_state(request, agent_id):
         if 'profile' in agent:
             assessment_state = agent.get('assessment', {})
             assessment_results = run_assessment_logic(agent['profile'], assessment_state)
-            agent['assessment'].update(assessment_results)
+            agent['assessment'] = assessment_results
         
         # Update agent in list
         for idx, a in enumerate(existing_agents):
@@ -3691,7 +3701,7 @@ def api_update_block4_state(request, agent_id):
         if 'profile' in agent:
             assessment_state = agent.get('assessment', {})
             assessment_results = run_assessment_logic(agent['profile'], assessment_state)
-            agent['assessment'].update(assessment_results)
+            agent['assessment'] = assessment_results
         
         # Update agent in list
         for idx, a in enumerate(existing_agents):
@@ -3810,6 +3820,8 @@ def api_update_block1_state(request, agent_id):
             block1_state['exception_evidence_saved_link'] = data.get('exception_evidence_saved_link', '')
         if 'no_exception_confirmed' in data:
             block1_state['no_exception_confirmed'] = bool(data['no_exception_confirmed'])
+        if 'exception_confirmed' in data:
+            block1_state['exception_confirmed'] = bool(data['exception_confirmed'])
         if 'exception_conditions' in data:
             block1_state['exception_conditions'] = data.get('exception_conditions', [])
         if 'exception_explanation' in data:
@@ -3821,7 +3833,7 @@ def api_update_block1_state(request, agent_id):
         if 'profile' in agent:
             assessment_state = agent.get('assessment', {})
             assessment_results = run_assessment_logic(agent['profile'], assessment_state)
-            agent['assessment'].update(assessment_results)
+            agent['assessment'] = assessment_results
         
         # Update agent in list
         for idx, a in enumerate(existing_agents):

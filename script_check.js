@@ -1,1144 +1,3 @@
-{% extends "governance/base.html" %}
-{% load static %}
-
-{% block title %}{{ agent.name }} - AI System Detail{% endblock %}
-
-{% block dashboard_content %}
-<style>
-/* Styled select to match provided design (rounded, padded, custom arrow) */
-.styled-select {
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    background-color: #fff;
-    border: 1px solid #D1D5DB;
-    border-radius: 0.75rem; /* 12px */
-    padding: 0.75rem 3rem 0.75rem 0.75rem;
-    width: 100%;
-    color: #374151;
-    font-size: 0.95rem;
-    line-height: 1.4;
-}
-.styled-select:focus {
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(241, 61, 48, 0.15);
-    border-color: #F13D30;
-}
-.styled-select-wrapper {
-    position: relative;
-}
-.styled-select-wrapper svg {
-    pointer-events: none;
-}
-</style>
-<div class="flex flex-col gap-6 mx-auto" data-agent-id="{{ agent.id }}">
-    <!-- Breadcrumb Navigation -->
-    <div class="flex items-center gap-3">
-        <button class="w-6 h-6 bg-transparent border-none cursor-pointer p-0 flex items-center justify-center" onclick="history.back()">
-            <img src="{% static 'governance/img/arrow-left.svg' %}" alt="Back" class="w-3.5 h-3.5">
-        </button>
-        <button class="w-6 h-6 bg-transparent border-none cursor-pointer p-0 flex items-center justify-center" onclick="history.forward()">
-            <img src="{% static 'governance/img/arrow-right-gray.svg' %}" alt="Forward" class="w-3.5 h-3.5">
-        </button>
-        <span class="text-sm font-semibold text-[#F13D30]">AI Inventory / {{ agent.name }}</span>
-    </div>
-
-
-    <!-- Title -->
-    <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-bold text-[#22262A]">{{ agent.name }}</h1>
-        <a href="{% url 'ai_inventory' %}" class="flex items-center gap-2 px-4 py-2 border border-[#D1D5DB] text-[#374151] text-sm font-medium rounded-lg hover:bg-[#F9FAFB] transition-colors">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
-                <polyline points="15 18 9 12 15 6"></polyline>
-            </svg>
-            Back to List
-        </a>
-    </div>
-
-    <!-- Tabs -->
-    <div class="border-b border-[#E5E7EB]">
-        <div class="flex gap-6">
-            <button onclick="switchTab('profile')" id="tab-profile" class="tab-button active px-4 py-3 text-sm font-medium text-[#F13D30] border-b-2 border-[#F13D30]">
-                Profile
-            </button>
-            <button onclick="switchTab('assessment')" id="tab-assessment" class="tab-button px-4 py-3 text-sm font-medium text-[#6B7280] border-b-2 border-transparent hover:text-[#F13D30]">
-                Assessment
-            </button>
-            <button onclick="switchTab('result')" id="tab-result" class="tab-button px-4 py-3 text-sm font-medium text-[#6B7280] border-b-2 border-transparent hover:text-[#F13D30]">
-                Result
-            </button>
-        </div>
-    </div>
-
-    <!-- Tab Content: Profile -->
-    <div id="content-profile" class="tab-content">
-         <!-- Section 1: Document & Evidence Upload -->
-        <div class="flex flex-col gap-6">
-            <div class="bg-white rounded-lg border border-[#E5E7EB] shadow-sm">
-                <div class="p-6 border-b border-[#E5E7EB] cursor-pointer" onclick="toggleSection('section1')">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h2 class="text-lg font-semibold text-[#22262A]">1. Document & Evidence Upload</h2>
-                            <p class="text-sm text-[#6B7280] mt-1">Upload documents for AI-assisted form completion.</p>
-                        </div>
-                        <img src="{% static 'governance/img/chevron-up.svg' %}" alt="Toggle" class="w-5 h-5 section-toggle" id="section1-toggle">
-                    </div>
-                </div>
-                <div class="p-6 section-content" id="section1-content">
-                    <!-- File Upload Zone -->
-                    <div class="border-2 border-dashed border-[#D1D5DB] rounded-lg p-8 text-center mb-6">
-                        <p class="text-sm text-[#6B7280] mb-2">Click or drag and drop to add more evidence document...</p>
-                        <p class="text-sm text-[#6B7280] mb-4">or</p>
-                        <p class="text-xs text-[#6B7280] mb-4">PDF, DOC, JPG, XLS, XLSX, CSV</p>
-                        <input type="file" id="file-upload" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.xls,.xlsx,.csv" class="hidden">
-                        <button onclick="document.getElementById('file-upload').click()" class="bg-[#F13D30] text-white px-6 py-2.5 rounded-lg font-medium hover:bg-[#d63529] transition-colors flex items-center gap-2 mx-auto">
-                            <span>📎</span> Choose File
-                        </button>
-                    </div>
-
-                    <!-- Uploaded Documents List -->
-                    <div id="uploaded-documents" class="space-y-3 mb-6">
-                        <!-- Documents will be loaded dynamically from API -->
-                    </div>
-
-                    <!-- AI Read & Auto-fill options -->
-                    <div class="flex gap-3 items-center">
-                        <span class="text-sm text-[#6B7280]">AI Read & Auto-fill from:</span>
-                        <button class="ai-read-toggle active px-4 py-2 rounded-lg bg-[#F13D30] text-white font-medium shadow-sm flex items-center gap-2" data-option="all">
-                            <img src="{% static 'governance/img/sparkle.svg' %}" alt="Sparkle" class="w-4 h-4" style="filter: brightness(0) invert(1);">
-                            <span>All files</span>
-                        </button>
-                        <button class="ai-read-toggle px-4 py-2 rounded-lg border border-[#F13D30] text-[#F13D30] font-medium bg-white flex items-center gap-2" data-option="selected">
-                            <img src="{% static 'governance/img/sparkle.svg' %}" alt="Sparkle" class="w-4 h-4" style="filter: brightness(0) saturate(100%) invert(32%) sepia(98%) saturate(1500%) hue-rotate(344deg) brightness(98%) contrast(95%);">
-                            <span>Selected files</span>
-                        </button>
-                        <button id="delete-selected-files-btn" onclick="deleteSelectedFiles()" class="hidden px-4 py-2 rounded-lg border border-[#DC180A] text-[#F13D30] font-medium bg-white flex items-center gap-2 hover:bg-[#FEE2E2] transition-colors">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
-                                <polyline points="3 6 5 6 21 6"></polyline>
-                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                            </svg>
-                            <span>Delete selected</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Section 2: System Identity -->
-            <div class="bg-white rounded-lg border border-[#E5E7EB] shadow-sm">
-                <div class="p-6 border-b border-[#E5E7EB] cursor-pointer" onclick="toggleSection('section2')">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h2 class="text-lg font-semibold text-[#22262A]">2. System Identity</h2>
-                            <p class="text-sm text-[#6B7280] mt-1">Basic information about this AI system.</p>
-                        </div>
-                        <img src="{% static 'governance/img/chevron-up.svg' %}" alt="Toggle" class="w-5 h-5 section-toggle" id="section2-toggle">
-                    </div>
-                </div>
-                <div class="p-6 section-content" id="section2-content">
-                    <form id="system-identity-form" class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-[#374151] mb-1">Q1: AI System Name <span class="text-[#F13D30]">*</span></label>
-                            <input type="text" name="ai_system_name" value="{{ agent.name }}" placeholder="Customer Service Chatbot" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-[#374151] mb-1">Q2: Internal system ID / reference</label>
-                            <input type="text" name="internal_system_id" placeholder="Enter internal system ID or reference" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-[#374151] mb-1">Q3: Commercial name of the AI system, if any</label>
-                            <input type="text" name="commercial_name" placeholder="Enter commercial name" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-[#374151] mb-1">Q4: Owner / Responsible Team</label>
-                            <div class="mb-3">
-                                <label class="flex items-center gap-2 cursor-pointer">
-                                    <input type="checkbox" name="same_as_compliance_owner" id="same-as-compliance-owner" class="w-4 h-4">
-                                    <span class="text-sm text-[#374151]">Same as internal AI compliance owner</span>
-                                </label>
-                            </div>
-                            <div class="grid grid-cols-3 gap-4">
-                                <div>
-                                    <label class="block text-xs text-[#6B7280] mb-1">Name</label>
-                                    <input type="text" name="owner_name" placeholder="Enter name" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
-                                </div>
-                                <div>
-                                    <label class="block text-xs text-[#6B7280] mb-1">Email</label>
-                                    <input type="email" name="owner_email" placeholder="Enter email" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
-                                </div>
-                                <div>
-                                    <label class="block text-xs text-[#6B7280] mb-1">Department</label>
-                                    <input type="text" name="owner_department" placeholder="Enter department" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
-                                </div>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-[#374151] mb-1">Q5: System status <span class="text-[#F13D30]">*</span></label>
-                            <div class="styled-select-wrapper">
-                                <select name="system_status" id="system-status" class="styled-select">
-                                    <option value="Planned" selected>Planned</option>
-                                    <option value="In development">In development</option>
-                                    <option value="Testing / Pilot">Testing / Pilot</option>
-                                    <option value="In use (production)">In use (production)</option>
-                                    <option value="Retired">Retired</option>
-                                </select>
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5 text-[#9CA3AF] absolute right-3 top-1/2 transform -translate-y-1/2">
-                                    <polyline points="6 9 12 15 18 9"></polyline>
-                                </svg>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block font-semibold text-sm text-[#22262A] mb-2">Q6: Go-live date (planned or actual)</label>
-                            <div class="relative">
-                                <!-- Custom date input with highlighted day -->
-                                <div id="go-live-date-wrapper" class="relative w-full px-4 py-2.5 border border-[#B5BCC4] rounded-lg font-normal text-sm text-[#22262A] focus-within:border-[#F13D30] focus-within:ring-2 focus-within:ring-[#FEEDEC] transition-colors cursor-pointer bg-white">
-                                    <div id="go-live-date-display" class="flex items-center gap-1">
-                                        <span id="date-day" class="px-1.5 py-0.5 rounded bg-[#3B82F6]/20 text-[#3B82F6] font-medium">DD</span>
-                                        <span>/</span>
-                                        <span id="date-month">MM</span>
-                                        <span>/</span>
-                                        <span id="date-year">YYYY</span>
-                                    </div>
-                                    <input type="text" 
-                                        id="go-live-date-input" 
-                                        name="go_live_date" 
-                                        placeholder="DD/MM/YYYY" 
-                                        readonly
-                                        class="absolute inset-0 opacity-0 cursor-pointer">
-                                    <input type="date" 
-                                        id="go-live-date-hidden" 
-                                        class="hidden">
-                                </div>
-                                <!-- Date Picker Dropdown -->
-                                <div id="date-picker-dropdown" class="hidden absolute top-full left-0 mt-2 z-[100] bg-[#1F2937] rounded-lg shadow-xl p-4 min-w-[280px]">
-                                    <div class="flex items-center justify-between mb-4">
-                                        <button type="button" id="date-picker-prev-month" class="text-white hover:text-[#9CA3AF] transition-colors">
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
-                                                <polyline points="15 18 9 12 15 6"></polyline>
-                                            </svg>
-                                        </button>
-                                        <div class="flex items-center gap-2">
-                                            <span id="date-picker-month-year" class="text-white font-medium text-sm">Jan 2026</span>
-                                            <button type="button" id="date-picker-today" class="w-4 h-4 rounded-full bg-white/20 hover:bg-white/30 transition-colors"></button>
-                                        </div>
-                                        <button type="button" id="date-picker-next-month" class="text-white hover:text-[#9CA3AF] transition-colors">
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
-                                                <polyline points="9 18 15 12 9 6"></polyline>
-                                            </svg>
-                                        </button>
-                                    </div>
-                                    <div class="grid grid-cols-7 gap-1 mb-2">
-                                        <div class="text-center text-xs text-[#9CA3AF] py-1">Mo</div>
-                                        <div class="text-center text-xs text-[#9CA3AF] py-1">Tu</div>
-                                        <div class="text-center text-xs text-[#9CA3AF] py-1">We</div>
-                                        <div class="text-center text-xs text-[#9CA3AF] py-1">Th</div>
-                                        <div class="text-center text-xs text-[#9CA3AF] py-1">Fr</div>
-                                        <div class="text-center text-xs text-[#9CA3AF] py-1">Sa</div>
-                                        <div class="text-center text-xs text-[#9CA3AF] py-1">Su</div>
-                                    </div>
-                                    <div id="date-picker-calendar" class="grid grid-cols-7 gap-1">
-                                        <!-- Calendar dates will be populated by JavaScript -->
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-[#374151] mb-1">Q7: Is this system part of a broader product / service?</label>
-                            <div class="flex gap-4">
-                                <label class="flex items-center gap-2 cursor-pointer">
-                                    <input type="radio" name="part_of_product" value="yes" class="w-4 h-4">
-                                    <span class="text-sm text-[#374151]">Yes</span>
-                                </label>
-                                <label class="flex items-center gap-2 cursor-pointer">
-                                    <input type="radio" name="part_of_product" value="no" class="w-4 h-4">
-                                    <span class="text-sm text-[#374151]">No</span>
-                                </label>
-                            </div>
-                            <div id="product-service-name-field" class="mt-3 hidden">
-                                <label class="block text-xs text-[#6B7280] mb-1">Product / Service Name</label>
-                                <input type="text" name="product_service_name" placeholder="Enter product/service name" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]">
-                            </div>
-                        </div>
-                        <div class="flex justify-end gap-3 pt-4">
-                            <button type="button" class="px-6 py-2 border border-[#F13D30] text-[#F13D30] rounded-lg font-medium hover:bg-[#F13D30] hover:text-white transition-colors">Cancel</button>
-                            <button type="button" onclick="saveSection('system-identity-form')" class="px-6 py-2 bg-[#F13D30] text-white rounded-lg font-medium hover:bg-[#d63529] transition-colors">Confirm and Save</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Section 3: Source & Operator Role -->
-            <div class="bg-white rounded-lg border border-[#E5E7EB] shadow-sm">
-                <div class="p-6 border-b border-[#E5E7EB] cursor-pointer" onclick="toggleSection('section3')">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h2 class="text-lg font-semibold text-[#22262A]">3. Source & Operator Role</h2>
-                            <p class="text-sm text-[#6B7280] mt-1">Define your organization's role and system source</p>
-                        </div>
-                        <img src="{% static 'governance/img/chevron-up.svg' %}" alt="Toggle" class="w-5 h-5 section-toggle" id="section3-toggle">
-                    </div>
-                </div>
-                <div class="p-6 section-content" id="section3-content">
-                    <div class="space-y-6">
-                        <!-- Q1 -->
-                        <div class="space-y-2">
-                            <label class="block font-semibold text-sm text-[#22262A]">
-                                Q1: In Organization module, your default role is set to be: <span class="text-[#F13D30]">"{{ org_default_roles_display|default:'Deployer' }}"</span>. Does your organisation's default role apply to this AI system? <span class="text-[#F13D30]">*</span>
-                            </label>
-                            <div class="flex gap-4">
-                                <label class="flex items-center gap-2 cursor-pointer">
-                                    <input type="radio" name="default_role_apply" id="default-role-yes" value="Yes" class="w-4 h-4 text-[#F13D30] border-[#B5BCC4] focus:ring-[#F13D30]">
-                                    <span class="font-normal text-sm text-[#22262A]">Yes</span>
-                                </label>
-                                <label class="flex items-center gap-2 cursor-pointer">
-                                    <input type="radio" name="default_role_apply" id="default-role-no" value="No" class="w-4 h-4 text-[#F13D30] border-[#B5BCC4] focus:ring-[#F13D30]" checked>
-                                    <span class="font-normal text-sm text-[#22262A]">No</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <!-- Q2 -->
-                        <div class="space-y-3">
-                            <div class="flex items-start gap-2">
-                                <label class="block font-semibold text-sm text-[#22262A]">
-                                    Q2: Your role for this AI system <span class="text-[#F13D30]">*</span>
-                                </label>
-                                <div class="group relative">
-                                    <div class="w-4 h-4 rounded-full bg-[#B5BCC4] flex items-center justify-center cursor-help">
-                                        <span class="text-xs text-white font-medium">?</span>
-                                    </div>
-                                    <div class="invisible group-hover:visible absolute left-0 top-6 w-64 p-3 bg-[#22262A] text-white text-xs rounded-lg shadow-lg z-10">
-                                        <p class="font-normal">
-                                            <strong>Provider:</strong> Develops, produces or trains AI systems<br />
-                                            <strong>Deployer:</strong> Uses AI systems under its authority<br />
-                                            <strong>Importer:</strong> Places AI systems on EU market<br />
-                                            <strong>Distributor:</strong> Makes AI systems available on EU market
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                            <p class="font-normal text-xs text-[#565F6C]">
-                                Multiple selections allowed
-                            </p>
-                            <div class="grid grid-cols-2 gap-3">
-                                <label id="role-provider-label" class="flex items-center gap-2 px-4 py-3 border border-[#F0F1F2] rounded-lg cursor-pointer transition-colors bg-white hover:bg-[#F9FAFB]">
-                                    <input type="checkbox" name="roles[]" id="role-provider" value="Provider" class="role-checkbox w-4 h-4 text-[#F13D30] border-[#B5BCC4] rounded focus:ring-[#F13D30]">
-                                    <span class="font-normal text-sm text-[#22262A]">Provider</span>
-                                </label>
-                                <label id="role-deployer-label" class="flex items-center gap-2 px-4 py-3 border border-[#F0F1F2] rounded-lg cursor-pointer transition-colors bg-white hover:bg-[#F9FAFB]">
-                                    <input type="checkbox" name="roles[]" id="role-deployer" value="Deployer" class="role-checkbox w-4 h-4 text-[#F13D30] border-[#B5BCC4] rounded focus:ring-[#F13D30]">
-                                    <span class="font-normal text-sm text-[#22262A]">Deployer</span>
-                                </label>
-                                <label id="role-importer-label" class="flex items-center gap-2 px-4 py-3 border border-[#F0F1F2] rounded-lg cursor-pointer transition-colors bg-white hover:bg-[#F9FAFB]">
-                                    <input type="checkbox" name="roles[]" id="role-importer" value="Importer" class="role-checkbox w-4 h-4 text-[#F13D30] border-[#B5BCC4] rounded focus:ring-[#F13D30]">
-                                    <span class="font-normal text-sm text-[#22262A]">Importer</span>
-                                </label>
-                                <label id="role-distributor-label" class="flex items-center gap-2 px-4 py-3 border border-[#F0F1F2] rounded-lg cursor-pointer transition-colors bg-white hover:bg-[#F9FAFB]">
-                                    <input type="checkbox" name="roles[]" id="role-distributor" value="Distributor" class="role-checkbox w-4 h-4 text-[#F13D30] border-[#B5BCC4] rounded focus:ring-[#F13D30]">
-                                    <span class="font-normal text-sm text-[#22262A]">Distributor</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <!-- Q3 -->
-                        <div class="space-y-3">
-                            <label class="block font-semibold text-sm text-[#22262A]">
-                                Q3: System source <span class="text-[#F13D30]">*</span>
-                            </label>
-                            <div class="grid grid-cols-2 gap-3">
-                                <label class="system-source-option flex items-center gap-2 px-4 py-3 border border-[#F0F1F2] rounded-lg cursor-pointer transition-colors bg-white hover:bg-[#F9FAFB]">
-                                    <input type="radio" name="system_source" value="In-house" class="w-4 h-4 text-[#F13D30] border-[#B5BCC4] focus:ring-[#F13D30]">
-                                    <span class="font-normal text-sm text-[#22262A]">In-house</span>
-                                </label>
-                                <label class="system-source-option flex items-center gap-2 px-4 py-3 border border-[#F0F1F2] rounded-lg cursor-pointer transition-colors bg-white hover:bg-[#F9FAFB]">
-                                    <input type="radio" name="system_source" value="Vendor / Third-party" class="w-4 h-4 text-[#F13D30] border-[#B5BCC4] focus:ring-[#F13D30]">
-                                    <span class="font-normal text-sm text-[#22262A]">Vendor / Third-party</span>
-                                </label>
-                                <label class="system-source-option flex items-center gap-2 px-4 py-3 border border-[#F0F1F2] rounded-lg cursor-pointer transition-colors bg-white hover:bg-[#F9FAFB]">
-                                    <input type="radio" name="system_source" value="Mixed" class="w-4 h-4 text-[#F13D30] border-[#B5BCC4] focus:ring-[#F13D30]">
-                                    <span class="font-normal text-sm text-[#22262A]">Mixed</span>
-                                </label>
-                                <label class="system-source-option flex items-center gap-2 px-4 py-3 border border-[#F0F1F2] rounded-lg cursor-pointer transition-colors bg-white hover:bg-[#F9FAFB]">
-                                    <input type="radio" name="system_source" value="Unknown" class="w-4 h-4 text-[#F13D30] border-[#B5BCC4] focus:ring-[#F13D30]">
-                                    <span class="font-normal text-sm text-[#22262A]">Unknown</span>
-                                </label>
-                            </div>
-                            <!-- Conditional fields for Vendor/Mixed -->
-                            <div id="vendor-fields" class="space-y-3 pt-3 hidden">
-                                <div>
-                                    <label class="block font-medium text-sm text-[#22262A] mb-2">
-                                        External vendor / provider name <span class="text-[#F13D30]">*</span>
-                                    </label>
-                                    <input type="text" name="vendor_name" id="vendor-name" placeholder="Enter vendor / provider name" class="w-full px-4 py-2.5 border border-[#B5BCC4] rounded-lg font-normal text-sm text-[#22262A] placeholder:text-[#B5BCC4] focus:outline-none focus:border-[#F13D30] focus:ring-2 focus:ring-[#FEEDEC]">
-                                </div>
-                                <div class="space-y-3">
-                                    <label class="font-normal text-sm text-[#464E58]">
-                                        Paste a link from Section 1 or an external link
-                                    </label>
-                                    <div class="flex gap-2">
-                                        <input type="text" name="vendor_evidence_link" id="vendor-evidence-link" placeholder="Paste link here" class="flex-1 px-4 py-2.5 border border-[#B5BCC4] rounded-lg font-normal text-sm text-[#22262A] placeholder:text-[#B5BCC4] focus:outline-none focus:border-[#F13D30] focus:ring-2 focus:ring-[#FEEDEC] transition-colors">
-                                        <button type="button" id="save-vendor-link-btn" class="px-4 py-2 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A] transition-colors whitespace-nowrap">
-                                            Save link
-                                        </button>
-                                    </div>
-                                    <div id="vendor-link-saved" class="flex items-center gap-2 mt-2 hidden">
-                                        <svg class="w-4 h-4 text-[#F13D30]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
-                                        </svg>
-                                        <span id="vendor-link-text" class="font-normal text-sm text-[#464E58]"></span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Q4 -->
-                        <div class="space-y-3">
-                            <div class="flex items-start gap-2">
-                                <label class="block font-semibold text-sm text-[#22262A]">
-                                    Q4: Do you modify / customize this AI system before use or resale? <span class="text-[#F13D30]">*</span>
-                                </label>
-                                <div class="group relative">
-                                    <div class="w-4 h-4 rounded-full bg-[#B5BCC4] flex items-center justify-center cursor-help">
-                                        <span class="text-xs text-white font-medium">?</span>
-                                    </div>
-                                    <div class="invisible group-hover:visible absolute left-0 top-6 w-64 p-3 bg-[#22262A] text-white text-xs rounded-lg shadow-lg z-10">
-                                        <p class="font-normal">
-                                            Examples: fine-tuning, retraining, changing decision logic, changing intended purpose, re-branding
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="flex gap-4">
-                                <label class="flex items-center gap-2 cursor-pointer">
-                                    <input type="radio" name="modify_customize" value="Yes" class="w-4 h-4 text-[#F13D30] border-[#B5BCC4] focus:ring-[#F13D30]">
-                                    <span class="font-normal text-sm text-[#22262A]">Yes</span>
-                                </label>
-                                <label class="flex items-center gap-2 cursor-pointer">
-                                    <input type="radio" name="modify_customize" value="No" class="w-4 h-4 text-[#F13D30] border-[#B5BCC4] focus:ring-[#F13D30]">
-                                    <span class="font-normal text-sm text-[#22262A]">No</span>
-                                </label>
-                                <label class="flex items-center gap-2 cursor-pointer">
-                                    <input type="radio" name="modify_customize" value="Unknown" class="w-4 h-4 text-[#F13D30] border-[#B5BCC4] focus:ring-[#F13D30]">
-                                    <span class="font-normal text-sm text-[#22262A]">Unknown</span>
-                                </label>
-                            </div>
-                            <!-- Warning banner when Yes is selected -->
-                            <div id="modify-warning" class="bg-[#FEF3C7] border border-[#FDE047] rounded-lg p-4 flex items-start gap-3 hidden">
-                                <svg class="w-5 h-5 text-[#92400E] shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                                <div>
-                                    <p class="font-semibold text-sm text-[#92400E] mb-1">
-                                        Role impact
-                                    </p>
-                                    <p class="font-normal text-sm text-[#92400E]">
-                                        Customising / modifying an AI system may make your organisation responsible as a Provider (in addition to Deployer / Distributor / Importer). Please review and update the role for this AI system if needed.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Q5 -->
-                        <div class="space-y-3">
-                            <label class="block font-semibold text-sm text-[#22262A]">
-                                Q5: Is this AI system offered / used in the EU / EEA? <span class="text-[#F13D30]">*</span>
-                            </label>
-                            <div class="grid grid-cols-2 gap-3">
-                                <label class="eu-usage-option flex items-center gap-2 px-4 py-3 border border-[#F0F1F2] rounded-lg cursor-pointer transition-colors bg-white hover:bg-[#F9FAFB]">
-                                    <input type="radio" name="eu_usage" value="Yes" class="w-4 h-4 text-[#F13D30] border-[#B5BCC4] focus:ring-[#F13D30]">
-                                    <span class="font-normal text-sm text-[#22262A]">Yes</span>
-                                </label>
-                                <label class="eu-usage-option flex items-center gap-2 px-4 py-3 border border-[#F0F1F2] rounded-lg cursor-pointer transition-colors bg-white hover:bg-[#F9FAFB]">
-                                    <input type="radio" name="eu_usage" value="No" class="w-4 h-4 text-[#F13D30] border-[#B5BCC4] focus:ring-[#F13D30]">
-                                    <span class="font-normal text-sm text-[#22262A]">No</span>
-                                </label>
-                                <label class="eu-usage-option flex items-center gap-2 px-4 py-3 border border-[#F0F1F2] rounded-lg cursor-pointer transition-colors bg-white hover:bg-[#F9FAFB]">
-                                    <input type="radio" name="eu_usage" value="Planned" class="w-4 h-4 text-[#F13D30] border-[#B5BCC4] focus:ring-[#F13D30]">
-                                    <span class="font-normal text-sm text-[#22262A]">Planned</span>
-                                </label>
-                                <label class="eu-usage-option flex items-center gap-2 px-4 py-3 border border-[#F0F1F2] rounded-lg cursor-pointer transition-colors bg-white hover:bg-[#F9FAFB]">
-                                    <input type="radio" name="eu_usage" value="Unknown" class="w-4 h-4 text-[#F13D30] border-[#B5BCC4] focus:ring-[#F13D30]">
-                                    <span class="font-normal text-sm text-[#22262A]">Unknown</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <!-- Q6 -->
-                        <div class="space-y-3">
-                            <label class="block font-semibold text-sm text-[#22262A]">
-                                Q6: Do system outputs affect persons located in the EU / EEA? <span class="text-[#F13D30]">*</span>
-                            </label>
-                            <div class="grid grid-cols-2 gap-3">
-                                <label class="eu-effect-option flex items-center gap-2 px-4 py-3 border border-[#F0F1F2] rounded-lg cursor-pointer transition-colors bg-white hover:bg-[#F9FAFB]">
-                                    <input type="radio" name="eu_effect" value="Yes" class="w-4 h-4 text-[#F13D30] border-[#B5BCC4] focus:ring-[#F13D30]">
-                                    <span class="font-normal text-sm text-[#22262A]">Yes</span>
-                                </label>
-                                <label class="eu-effect-option flex items-center gap-2 px-4 py-3 border border-[#F0F1F2] rounded-lg cursor-pointer transition-colors bg-white hover:bg-[#F9FAFB]">
-                                    <input type="radio" name="eu_effect" value="No" class="w-4 h-4 text-[#F13D30] border-[#B5BCC4] focus:ring-[#F13D30]">
-                                    <span class="font-normal text-sm text-[#22262A]">No</span>
-                                </label>
-                                <label class="eu-effect-option flex items-center gap-2 px-4 py-3 border border-[#F0F1F2] rounded-lg cursor-pointer transition-colors bg-white hover:bg-[#F9FAFB]">
-                                    <input type="radio" name="eu_effect" value="Planned" class="w-4 h-4 text-[#F13D30] border-[#B5BCC4] focus:ring-[#F13D30]">
-                                    <span class="font-normal text-sm text-[#22262A]">Planned</span>
-                                </label>
-                                <label class="eu-effect-option flex items-center gap-2 px-4 py-3 border border-[#F0F1F2] rounded-lg cursor-pointer transition-colors bg-white hover:bg-[#F9FAFB]">
-                                    <input type="radio" name="eu_effect" value="Unknown" class="w-4 h-4 text-[#F13D30] border-[#B5BCC4] focus:ring-[#F13D30]">
-                                    <span class="font-normal text-sm text-[#22262A]">Unknown</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <!-- Notice when BOTH Q5 and Q6 are "No" -->
-                        <div id="eu-act-notice" class="rounded-xl p-4 flex items-start gap-3 hidden" style="background-color: #FFF2D6; border: 1px solid #FFD58C;">
-                            <svg class="w-5 h-5 text-[#92400E] shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            <div class="min-w-0">
-                                <p class="font-semibold text-[#8B4513] text-base leading-tight">
-                                    Out of Scope
-                                </p>
-                                <p class="font-normal text-[#8B4513] text-sm mt-1 leading-snug">
-                                    Based on your selection in Q5 and Q6, this AI system appears to be out of scope for the EU AI Act.
-                                </p>
-                            </div>
-                        </div>
-
-                        <!-- Action Buttons -->
-                        <div class="flex justify-end gap-3 pt-4">
-                            <button type="button" class="px-6 py-2 border border-[#F13D30] text-[#F13D30] rounded-lg font-medium hover:bg-[#F13D30] hover:text-white transition-colors">Cancel</button>
-                            <button type="button" onclick="saveSection()" class="px-6 py-2 bg-[#F13D30] text-white rounded-lg font-medium hover:bg-[#d63529] transition-colors">Confirm and Save</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Section 4: Intended Purpose & Decision Use -->
-            <div class="bg-white rounded-lg border border-[#E5E7EB] shadow-sm">
-                <div class="p-6 border-b border-[#E5E7EB] cursor-pointer" onclick="toggleSection('section4')">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h2 class="text-lg font-semibold text-[#22262A]">4. Intended Purpose & Decision Use</h2>
-                            <p class="text-sm text-[#6B7280] mt-1">Define the purpose and usage domain</p>
-                        </div>
-                        <img src="{% static 'governance/img/chevron-up.svg' %}" alt="Toggle" class="w-5 h-5 section-toggle" id="section4-toggle">
-                    </div>
-                </div>
-                <div class="p-6 section-content" id="section4-content">
-                    <div class="space-y-6">
-                        <!-- Q1 -->
-                        <div class="space-y-2">
-                            <label class="block text-sm font-medium text-[#374151]">Q1: What is the intended purpose of this system? (1–3 sentences) <span class="text-[#F13D30]">*</span></label>
-                            <textarea name="intended_purpose" rows="4" placeholder="Describe the intended purpose of this AI system..." class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F13D30]"></textarea>
-                        </div>
-
-                        <!-- Q2 -->
-                        <div class="space-y-3">
-                            <div class="flex items-center gap-2">
-                                <label class="block font-semibold text-sm text-[#22262A]">Q2: In which sector / domain is this system used? <span class="text-[#F13D30]">*</span></label>
-                                <span class="font-normal text-xs text-[#565F6C]">Multiple selections allowed</span>
-                            </div>
-                            <div class="space-y-2">
-                                {% for option in sector_options %}
-                                    {% if option != "Other / not listed:" and option != "Other / not listed" %}
-                                    <label class="flex items-start gap-3 cursor-pointer">
-                                        <input type="checkbox" name="sector_domain" value="{{ option }}" class="sector-domain-checkbox w-4 h-4 text-[#F13D30] border-[#B5BCC4] rounded focus:ring-[#F13D30] mt-0.5">
-                                        <span class="font-normal text-sm text-[#464E58]">{{ option }}</span>
-                                    </label>
-                                    {% endif %}
-                                {% endfor %}
-                                <!-- Other / not listed with conditional input -->
-                                <div class="flex items-start gap-3">
-                                    <input type="checkbox" name="sector_domain" id="sector-other-checkbox" value="Other / not listed" class="sector-domain-checkbox w-4 h-4 text-[#F13D30] border-[#B5BCC4] rounded focus:ring-[#F13D30] mt-0.5">
-                                    <div class="flex-1">
-                                        <label for="sector-other-checkbox" class="font-normal text-sm text-[#464E58] cursor-pointer">
-                                            Other / not listed:
-                                        </label>
-                                        <input type="text" name="sector_other" id="sector-other-input" placeholder="Please specify" class="w-full mt-2 px-4 py-2.5 border border-[#B5BCC4] rounded-lg font-normal text-sm text-[#22262A] placeholder:text-[#B5BCC4] focus:outline-none focus:border-[#F13D30] focus:ring-2 focus:ring-[#FEEDEC] hidden">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Q3 -->
-                        <div class="space-y-2">
-                            <label class="block font-semibold text-sm text-[#22262A]">
-                                Q3: Is this AI system a safety component of a product, or itself a product, covered by EU harmonisation legislation in Annex I? <span class="text-[#F13D30]">*</span>
-                            </label>
-                            <div class="space-y-2">
-                                <label class="flex items-center gap-3 cursor-pointer">
-                                    <input type="radio" name="safety_component" id="safety-component-yes" value="Yes" class="w-4 h-4 text-[#F13D30] border-[#B5BCC4] focus:ring-[#F13D30]">
-                                    <span class="font-normal text-sm text-[#464E58]">Yes</span>
-                                </label>
-                                <label class="flex items-center gap-3 cursor-pointer">
-                                    <input type="radio" name="safety_component" id="safety-component-no" value="No" class="w-4 h-4 text-[#F13D30] border-[#B5BCC4] focus:ring-[#F13D30]">
-                                    <span class="font-normal text-sm text-[#464E58]">No</span>
-                                </label>
-                            </div>
-                            
-                            <!-- Follow-up Question (conditional) -->
-                            <div id="third-party-conformity-field" class="ml-7 mt-4 pl-4 border-l-2 border-[#F0F1F2] space-y-3 hidden">
-                                <label class="block font-semibold text-sm text-[#22262A]">
-                                    If the product requires a third-party conformity assessment under the corresponding legislation. <span class="text-[#F13D30]">*</span>
-                                </label>
-                                <div class="space-y-2">
-                                    <label class="flex items-center gap-3 cursor-pointer">
-                                        <input type="radio" name="third_party_conformity" value="Yes" class="w-4 h-4 text-[#F13D30] border-[#B5BCC4] focus:ring-[#F13D30]">
-                                        <span class="font-normal text-sm text-[#464E58]">Yes</span>
-                                    </label>
-                                    <label class="flex items-center gap-3 cursor-pointer">
-                                        <input type="radio" name="third_party_conformity" value="No" class="w-4 h-4 text-[#F13D30] border-[#B5BCC4] focus:ring-[#F13D30]">
-                                        <span class="font-normal text-sm text-[#464E58]">No</span>
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Action Buttons -->
-                        <div class="flex justify-end gap-3 pt-4">
-                            <button type="button" class="px-6 py-2 border border-[#F13D30] text-[#F13D30] rounded-lg font-medium hover:bg-[#F13D30] hover:text-white transition-colors">Cancel</button>
-                            <button type="button" onclick="saveSection()" class="px-6 py-2 bg-[#F13D30] text-white rounded-lg font-medium hover:bg-[#d63529] transition-colors">Confirm and Save</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Section 5: Deployment & Stakeholders -->
-            <div class="bg-white rounded-lg border border-[#E5E7EB] shadow-sm">
-                <div class="p-6 border-b border-[#E5E7EB] cursor-pointer" onclick="toggleSection('section5')">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h2 class="text-lg font-semibold text-[#22262A]">5. Deployment & Stakeholders</h2>
-                            <p class="text-sm text-[#6B7280] mt-1">Define deployment context and affected parties</p>
-                        </div>
-                        <img src="{% static 'governance/img/chevron-up.svg' %}" alt="Toggle" class="w-5 h-5 section-toggle" id="section5-toggle">
-                    </div>
-                </div>
-                <div class="p-6 section-content" id="section5-content">
-                    <div class="space-y-8">
-                        <!-- Q1 -->
-                        <div class="space-y-3">
-                            <label class="block font-semibold text-sm text-[#22262A]">
-                                Q1: In what context will this AI system be deployed? <span class="text-[#F13D30]">*</span>
-                            </label>
-                            <div class="space-y-2">
-                                {% for option in deployment_contexts %}
-                                    {% if option != "Other:" and option != "Other" %}
-                                    <label class="flex items-center gap-3 cursor-pointer">
-                                        <input type="radio" name="deployment_context" value="{{ option }}" class="deployment-context-radio w-4 h-4 text-[#F13D30] border-[#B5BCC4] focus:ring-[#F13D30]">
-                                        <span class="font-normal text-sm text-[#464E58]">{{ option }}</span>
-                                    </label>
-                                    {% endif %}
-                                {% endfor %}
-                                <!-- Other option with conditional input -->
-                                <div class="flex items-start gap-3">
-                                    <input type="radio" name="deployment_context" id="deployment-other-radio" value="Other" class="deployment-context-radio w-4 h-4 text-[#F13D30] border-[#B5BCC4] focus:ring-[#F13D30] mt-0.5">
-                                    <div class="flex-1">
-                                        <label for="deployment-other-radio" class="font-normal text-sm text-[#464E58] cursor-pointer">
-                                            Other:
-                                        </label>
-                                        <input type="text" name="deployment_other" id="deployment-other-input" placeholder="Please specify" class="w-full mt-2 px-4 py-2.5 border border-[#B5BCC4] rounded-lg font-normal text-sm text-[#22262A] placeholder:text-[#B5BCC4] focus:outline-none focus:border-[#F13D30] focus:ring-2 focus:ring-[#FEEDEC] hidden">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Q2 -->
-                        <div class="space-y-3">
-                            <div class="flex items-center gap-2">
-                                <label class="block font-semibold text-sm text-[#22262A]">Q2: Who will use this AI system? <span class="text-[#F13D30]">*</span></label>
-                                <span class="font-normal text-xs text-[#565F6C]">Multiple selections allowed</span>
-                            </div>
-                            <div class="space-y-2">
-                                {% for option in system_users %}
-                                    {% if option != "Other:" and option != "Other" %}
-                                    <label class="flex items-start gap-3 cursor-pointer">
-                                        <input type="checkbox" name="system_users" value="{{ option }}" class="system-users-checkbox w-4 h-4 text-[#F13D30] border-[#B5BCC4] rounded focus:ring-[#F13D30] mt-0.5">
-                                        <span class="font-normal text-sm text-[#464E58]">{{ option }}</span>
-                                    </label>
-                                    {% endif %}
-                                {% endfor %}
-                                <!-- Other option with conditional input -->
-                                <div class="flex items-start gap-3">
-                                    <input type="checkbox" name="system_users" id="system-users-other-checkbox" value="Other" class="system-users-checkbox w-4 h-4 text-[#F13D30] border-[#B5BCC4] rounded focus:ring-[#F13D30] mt-0.5">
-                                    <div class="flex-1">
-                                        <label for="system-users-other-checkbox" class="font-normal text-sm text-[#464E58] cursor-pointer">
-                                            Other:
-                                        </label>
-                                        <input type="text" name="system_users_other" id="system-users-other-input" placeholder="Please specify" class="w-full mt-2 px-4 py-2.5 border border-[#B5BCC4] rounded-lg font-normal text-sm text-[#22262A] placeholder:text-[#B5BCC4] focus:outline-none focus:border-[#F13D30] focus:ring-2 focus:ring-[#FEEDEC] hidden">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Q3 -->
-                        <div class="space-y-3">
-                            <div class="flex items-center gap-2">
-                                <label class="block font-semibold text-sm text-[#22262A]">Q3: Who can be affected by the AI system's outputs? <span class="text-[#F13D30]">*</span></label>
-                                <span class="font-normal text-xs text-[#565F6C]">Multiple selections allowed</span>
-                            </div>
-                            <div class="space-y-2">
-                                {% for option in affected_outputs %}
-                                    {% if option != "Other:" and option != "Other" %}
-                                    <label class="flex items-start gap-3 cursor-pointer">
-                                        <input type="checkbox" name="affected_outputs" value="{{ option }}" class="affected-outputs-checkbox w-4 h-4 text-[#F13D30] border-[#B5BCC4] rounded focus:ring-[#F13D30] mt-0.5">
-                                        <span class="font-normal text-sm text-[#464E58]">{{ option }}</span>
-                                    </label>
-                                    {% endif %}
-                                {% endfor %}
-                                <!-- Other option with conditional input -->
-                                <div class="flex items-start gap-3">
-                                    <input type="checkbox" name="affected_outputs" id="affected-outputs-other-checkbox" value="Other" class="affected-outputs-checkbox w-4 h-4 text-[#F13D30] border-[#B5BCC4] rounded focus:ring-[#F13D30] mt-0.5">
-                                    <div class="flex-1">
-                                        <label for="affected-outputs-other-checkbox" class="font-normal text-sm text-[#464E58] cursor-pointer">
-                                            Other:
-                                        </label>
-                                        <input type="text" name="affected_outputs_other" id="affected-outputs-other-input" placeholder="Please specify" class="w-full mt-2 px-4 py-2.5 border border-[#B5BCC4] rounded-lg font-normal text-sm text-[#22262A] placeholder:text-[#B5BCC4] focus:outline-none focus:border-[#F13D30] focus:ring-2 focus:ring-[#FEEDEC] hidden">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Q4 -->
-                        <div class="space-y-2">
-                            <div class="flex items-center gap-2">
-                                <label class="block text-sm font-medium text-[#374151]">Q4: Does the AI system affect vulnerable persons? <span class="text-[#F13D30]">*</span></label>
-                                <span class="text-xs text-[#9CA3AF]">Multiple selections allowed</span>
-                            </div>
-                            <div class="space-y-2">
-                                {% for option in vulnerable_groups %}
-                                <label class="flex items-center gap-3 cursor-pointer">
-                                    <input type="checkbox" name="vulnerable_groups" value="{{ option }}" class="w-4 h-4">
-                                    <span class="text-sm text-[#374151]">{{ option }}</span>
-                                </label>
-                                {% endfor %}
-                            </div>
-                        </div>
-
-                        <!-- Action Buttons -->
-                        <div class="flex justify-end gap-3 pt-4">
-                            <button type="button" class="px-6 py-2 border border-[#F13D30] text-[#F13D30] rounded-lg font-medium hover:bg-[#F13D30] hover:text-white transition-colors">Cancel</button>
-                            <button type="button" onclick="saveSection()" class="px-6 py-2 bg-[#F13D30] text-white rounded-lg font-medium hover:bg-[#d63529] transition-colors">Confirm and Save</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Section 6: Workflow, Outputs & Decision Impact -->
-            <div class="bg-white rounded-lg border border-[#E5E7EB] shadow-sm">
-                <div class="p-6 border-b border-[#E5E7EB] cursor-pointer" onclick="toggleSection('section6')">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h2 class="text-lg font-semibold text-[#22262A]">6. Workflow, Outputs & Decision Impact</h2>
-                            <p class="text-sm text-[#6B7280] mt-1">Define how the system operates and its decision-making role</p>
-                        </div>
-                        <img src="{% static 'governance/img/chevron-up.svg' %}" alt="Toggle" class="w-5 h-5 section-toggle" id="section6-toggle">
-                    </div>
-                </div>
-                <div class="p-6 section-content" id="section6-content">
-                    <div class="space-y-6">
-                        <!-- Q1 -->
-                        <div class="space-y-2">
-                            <label class="block text-sm font-medium text-[#374151]">Q1: What does the AI system do in the workflow? <span class="text-[#F13D30]">*</span></label>
-                            <div class="space-y-2">
-                                {% for option in workflow_roles %}
-                                <label class="flex items-center gap-3 cursor-pointer">
-                                    <input type="radio" name="workflow_role" value="{{ option }}" class="w-4 h-4">
-                                    <span class="text-sm text-[#374151]">{{ option }}</span>
-                                </label>
-                                {% endfor %}
-                            </div>
-                        </div>
-
-                        <!-- Q2 -->
-                        <div class="space-y-2">
-                            <div class="flex items-center gap-2">
-                                <label class="block font-semibold text-sm text-[#22262A]">Q2: What type of output does the AI system produce? <span class="text-[#F13D30]">*</span></label>
-                                <span class="font-normal text-xs text-[#565F6C]">Select all that apply</span>
-                            </div>
-                            <div class="space-y-2">
-                                {% for option in output_types %}
-                                    {% if option != "Other:" and option != "Other" %}
-                                    <label class="flex items-start gap-3 cursor-pointer">
-                                        <input type="checkbox" name="output_types" value="{{ option }}" class="output-types-checkbox w-4 h-4 text-[#F13D30] border-[#B5BCC4] rounded focus:ring-[#F13D30] mt-0.5">
-                                        <span class="font-normal text-sm text-[#464E58]">{{ option }}</span>
-                                    </label>
-                                    {% endif %}
-                                {% endfor %}
-                                <!-- Other option with conditional input -->
-                                <div class="flex items-start gap-3">
-                                    <input type="checkbox" name="output_types" id="output-types-other-checkbox" value="Other" class="output-types-checkbox w-4 h-4 text-[#F13D30] border-[#B5BCC4] rounded focus:ring-[#F13D30] mt-0.5">
-                                    <div class="flex-1">
-                                        <label for="output-types-other-checkbox" class="font-normal text-sm text-[#464E58] cursor-pointer">
-                                            Other:
-                                        </label>
-                                        <input type="text" name="output_types_other" id="output-types-other-input" placeholder="Please specify" class="w-full mt-2 px-4 py-2.5 border border-[#B5BCC4] rounded-lg font-normal text-sm text-[#22262A] placeholder:text-[#B5BCC4] focus:outline-none focus:border-[#F13D30] focus:ring-2 focus:ring-[#FEEDEC] hidden">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Q3 -->
-                        <div class="space-y-2">
-                            <label class="block text-sm font-medium text-[#374151]">Q3: Is the AI output used to make or influence decisions about individuals (natural persons)? <span class="text-[#F13D30]">*</span></label>
-                            <div class="flex flex-wrap gap-4">
-                                {% for option in decision_influence %}
-                                <label class="flex items-center gap-2 cursor-pointer">
-                                    <input type="radio" name="decision_influence" value="{{ option }}" class="w-4 h-4">
-                                    <span class="text-sm text-[#374151]">{{ option }}</span>
-                                </label>
-                                {% endfor %}
-                            </div>
-                        </div>
-
-                        <!-- Q4 -->
-                        <div class="space-y-2">
-                            <label class="block text-sm font-medium text-[#374151]">Q4: Does the AI system automatically execute actions based on its output? <span class="text-[#F13D30]">*</span></label>
-                            <div class="flex flex-wrap gap-4">
-                                {% for option in auto_execute %}
-                                <label class="flex items-center gap-2 cursor-pointer">
-                                    <input type="radio" name="auto_execute" value="{{ option }}" class="w-4 h-4">
-                                    <span class="text-sm text-[#374151]">{{ option }}</span>
-                                </label>
-                                {% endfor %}
-                            </div>
-                        </div>
-
-                        <!-- Action Buttons -->
-                        <div class="flex justify-end gap-3 pt-4">
-                            <button type="button" class="px-6 py-2 border border-[#F13D30] text-[#F13D30] rounded-lg font-medium hover:bg-[#F13D30] hover:text-white transition-colors">Cancel</button>
-                            <button type="button" onclick="saveSection()" class="px-6 py-2 bg-[#F13D30] text-white rounded-lg font-medium hover:bg-[#d63529] transition-colors">Confirm and Save</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Section 7: Capabilities -->
-            <div class="bg-white rounded-lg border border-[#E5E7EB] shadow-sm">
-                <div class="p-6 border-b border-[#E5E7EB] cursor-pointer" onclick="toggleSection('section7')">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h2 class="text-lg font-semibold text-[#22262A]">7. Capabilities</h2>
-                            <p class="text-sm text-[#6B7280] mt-1">Identify specific capabilities and interaction modes</p>
-                        </div>
-                        <img src="{% static 'governance/img/chevron-up.svg' %}" alt="Toggle" class="w-5 h-5 section-toggle" id="section7-toggle">
-                    </div>
-                </div>
-                <div class="p-6 section-content" id="section7-content">
-                    <div class="space-y-6">
-                        <!-- Q1 -->
-                        <div class="space-y-2">
-                            <div class="flex items-center gap-2">
-                                <label class="block text-sm font-medium text-[#374151]">Q1: Does your AI system use any of the following capabilities or practices? <span class="text-[#F13D30]">*</span></label>
-                                <span class="text-xs text-[#9CA3AF]">Select all that apply</span>
-                            </div>
-                            <div class="space-y-2">
-                                {% for option in capability_practices %}
-                                <label class="flex items-center gap-3 cursor-pointer">
-                                    <input type="checkbox" name="capability_practices" value="{{ option }}" class="w-4 h-4">
-                                    <span class="text-sm text-[#374151]">{{ option }}</span>
-                                </label>
-                                {% endfor %}
-                            </div>
-                        </div>
-
-                        <!-- Q2 -->
-                        <div class="space-y-2">
-                            <label class="block text-sm font-medium text-[#374151]">Q2: Does the AI system interact directly with natural persons? (e.g., chatbot, voicebot, assistant) <span class="text-[#F13D30]">*</span></label>
-                            <div class="flex flex-wrap gap-4">
-                                {% for option in interacts_natural_persons %}
-                                <label class="flex items-center gap-2 cursor-pointer">
-                                    <input type="radio" name="interacts_persons" value="{{ option }}" class="w-4 h-4">
-                                    <span class="text-sm text-[#374151]">{{ option }}</span>
-                                </label>
-                                {% endfor %}
-                            </div>
-                        </div>
-
-                        <!-- Q3 -->
-                        <div class="space-y-2">
-                            <div class="flex items-center gap-2">
-                                <label class="block text-sm font-medium text-[#374151]">Q3: Does the AI system generate synthetic content that may be perceived as human-made? <span class="text-[#F13D30]">*</span></label>
-                                <span class="text-xs text-[#9CA3AF]">Multiple selections allowed</span>
-                            </div>
-                            <div class="space-y-2">
-                                {% for option in synthetic_content %}
-                                <label class="flex items-center gap-3 cursor-pointer">
-                                    <input type="checkbox" name="synthetic_content" value="{{ option }}" class="w-4 h-4">
-                                    <span class="text-sm text-[#374151]">{{ option }}</span>
-                                </label>
-                                {% endfor %}
-                            </div>
-                        </div>
-
-                        <!-- Action Buttons -->
-                        <div class="flex justify-end gap-3 pt-4">
-                            <button type="button" class="px-6 py-2 border border-[#F13D30] text-[#F13D30] rounded-lg font-medium hover:bg-[#F13D30] hover:text-white transition-colors">Cancel</button>
-                            <button type="button" onclick="saveSection()" class="px-6 py-2 bg-[#F13D30] text-white rounded-lg font-medium hover:bg-[#d63529] transition-colors">Confirm and Save</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Section 8: Technical Profile (Model & Data) -->
-            <div class="bg-white rounded-lg border border-[#E5E7EB] shadow-sm">
-                <div class="p-6 border-b border-[#E5E7EB] cursor-pointer" onclick="toggleSection('section8')">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h2 class="text-lg font-semibold text-[#22262A]">8. Technical Profile (Model & Data)</h2>
-                            <p class="text-sm text-[#6B7280] mt-1">Technical details about the AI model and data processing</p>
-                        </div>
-                        <img src="{% static 'governance/img/chevron-up.svg' %}" alt="Toggle" class="w-5 h-5 section-toggle" id="section8-toggle">
-                    </div>
-                </div>
-                <div class="p-6 section-content" id="section8-content">
-                    <div class="space-y-6">
-                        <!-- Q1 -->
-                        <div class="space-y-2">
-                            <label class="block text-sm font-medium text-[#374151]">Q1: What kind of AI is used? <span class="text-[#F13D30]">*</span></label>
-                            <div class="space-y-2">
-                                {% for option in ai_kinds %}
-                                <label class="flex items-center gap-3 cursor-pointer">
-                                    <input type="radio" name="ai_kind" value="{{ option }}" class="w-4 h-4">
-                                    <span class="text-sm text-[#374151]">{{ option }}</span>
-                                </label>
-                                {% endfor %}
-                            </div>
-                        </div>
-
-                        <!-- Q2 -->
-                        <div class="space-y-2">
-                            <label class="block font-semibold text-sm text-[#22262A]">
-                                Q2: Is this system provided as a general-purpose AI (GPAI) model / component or does it integrate one? <span class="text-[#F13D30]">*</span>
-                            </label>
-                            <div class="flex gap-4">
-                                {% for option in gpai_integration %}
-                                <label class="flex items-center gap-2 cursor-pointer">
-                                    <input type="radio" name="gpai_integration" value="{{ option }}" class="gpai-integration-radio w-4 h-4 text-[#F13D30] border-[#B5BCC4] focus:ring-[#F13D30]">
-                                    <span class="font-normal text-sm text-[#22262A]">{{ option }}</span>
-                                </label>
-                                {% endfor %}
-                            </div>
-                            <!-- Conditional input when Yes is selected -->
-                            <div id="gpai-provider-field" class="mt-3 hidden">
-                                <label class="block font-medium text-sm text-[#22262A] mb-2">
-                                    Which GPAI provider / model? (optional)
-                                </label>
-                                <input type="text" name="gpai_provider" id="gpai-provider-input" placeholder="e.g., OpenAI GPT-4, Google Gemini, etc." class="w-full px-4 py-2.5 border border-[#B5BCC4] rounded-lg font-normal text-sm text-[#22262A] placeholder:text-[#B5BCC4] focus:outline-none focus:border-[#F13D30] focus:ring-2 focus:ring-[#FEEDEC]">
-                            </div>
-                        </div>
-
-                        <!-- Q3 -->
-                        <div class="space-y-2">
-                            <label class="block text-sm font-medium text-[#374151]">Q3: What is the training source? <span class="text-[#F13D30]">*</span></label>
-                            <div class="space-y-2">
-                                {% for option in training_sources %}
-                                <label class="flex items-center gap-3 cursor-pointer">
-                                    <input type="radio" name="training_source" value="{{ option }}" class="w-4 h-4">
-                                    <span class="text-sm text-[#374151]">{{ option }}</span>
-                                </label>
-                                {% endfor %}
-                            </div>
-                        </div>
-
-                        <!-- Q4 -->
-                        <div class="space-y-2">
-                            <label class="block text-sm font-medium text-[#374151]">Q4: How often does the model / system update? <span class="text-[#F13D30]">*</span></label>
-                            <div class="space-y-2">
-                                {% for option in update_frequency %}
-                                <label class="flex items-center gap-3 cursor-pointer">
-                                    <input type="radio" name="update_frequency" value="{{ option }}" class="w-4 h-4">
-                                    <span class="text-sm text-[#374151]">{{ option }}</span>
-                                </label>
-                                {% endfor %}
-                            </div>
-                        </div>
-
-                        <!-- Q5 -->
-                        <div class="space-y-2">
-                            <div class="flex items-center gap-2">
-                                <label class="block text-sm font-medium text-[#374151]">Q5: What data types are processed? <span class="text-[#F13D30]">*</span></label>
-                                <span class="text-xs text-[#9CA3AF]">Multiple selections allowed</span>
-                            </div>
-                            <div class="space-y-2">
-                                {% for option in data_types %}
-                                <label class="flex items-center gap-3 cursor-pointer">
-                                    <input type="checkbox" name="data_types" value="{{ option }}" class="w-4 h-4">
-                                    <span class="text-sm text-[#374151]">{{ option }}</span>
-                                </label>
-                                {% endfor %}
-                            </div>
-                        </div>
-
-                        <!-- Action Buttons -->
-                        <div class="flex justify-end gap-3 pt-4">
-                            <button type="button" class="px-6 py-2 border border-[#F13D30] text-[#F13D30] rounded-lg font-medium hover:bg-[#F13D30] hover:text-white transition-colors">Cancel</button>
-                            <button type="button" onclick="saveSection()" class="px-6 py-2 bg-[#F13D30] text-white rounded-lg font-medium hover:bg-[#d63529] transition-colors">Confirm and Save</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-    <!-- Footer action -->
-    <div class="flex justify-end mt-8">
-        <button type="button" onclick="saveAllAndProceedToAssessment()" class="px-6 py-3 bg-[#F13D30] text-white text-base font-semibold rounded-xl shadow hover:bg-[#d63529] transition-colors">
-            Save all and proceed to Assessment
-        </button>
-    </div>
-
-    </div>
-
-    <!-- Tab Content: Assessment -->
-    <div id="content-assessment" class="tab-content hidden">
-        <div class="flex flex-col gap-6">
-            <!-- Info banner -->
-            <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-4">
-                <p class="font-normal text-sm text-[#464E58]">
-                    Assessment is based on the information provided in the Profile page. Please review the assessment below and confirm or update them using the legal references provided.
-                </p>
-            </div>
-
-            <!-- Assessment Blocks -->
-            <div class="space-y-6">
-                <!-- Block 1: Prohibited Practices -->
-                <div class="bg-white rounded-lg border border-[#F0F1F2] shadow-sm overflow-hidden" id="assessment-block-1">
-                    <button onclick="toggleAssessmentBlock(1)" class="w-full flex items-center justify-between px-6 py-4 hover:bg-[#FEFEFE] transition-colors">
-                        <h2 class="font-bold text-xl text-[#22262A]">Block 1 — Prohibited Practices Screening</h2>
-                        <div class="flex items-center gap-3">
-                            <span id="block-1-status" class="px-4 py-1.5 rounded-full font-semibold text-sm bg-[#F0F1F2] text-[#6B7280]">Not assessed</span>
-                            <img id="block-1-chevron" src="{% static 'governance/img/chevron-down.svg' %}" alt="Toggle" class="w-5 h-5 text-[#565F6C] shrink-0">
-                        </div>
-                    </button>
-                    <div id="block-1-content" class="hidden px-6 py-6 border-t border-[#F0F1F2]">
-                        <div id="block-1-content-inner">
-                            <!-- Content will be dynamically populated based on status -->
-                            <p class="text-sm text-[#464E58]">Calculating assessment status...</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Block 2: High-Risk Classification -->
-                <div class="bg-white rounded-lg border border-[#F0F1F2] shadow-sm overflow-hidden" id="assessment-block-2">
-                    <button onclick="toggleAssessmentBlock(2)" class="w-full flex items-center justify-between px-6 py-4 hover:bg-[#FEFEFE] transition-colors">
-                        <h2 class="font-bold text-xl text-[#22262A]">Block 2 — High-Risk Classification</h2>
-                        <div class="flex items-center gap-3">
-                            <span id="block-2-status" class="px-4 py-1.5 rounded-full font-semibold text-sm bg-[#F0F1F2] text-[#6B7280]">Not assessed</span>
-                            <img id="block-2-chevron" src="{% static 'governance/img/chevron-down.svg' %}" alt="Toggle" class="w-5 h-5 text-[#565F6C] shrink-0">
-                        </div>
-                    </button>
-                    <div id="block-2-content" class="hidden px-6 py-6 border-t border-[#F0F1F2]">
-                        <div id="block-2-content-inner">
-                            <p class="text-sm text-[#464E58]">Calculating assessment status...</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Block 3: Transparency Obligation -->
-                <div class="bg-white rounded-lg border border-[#F0F1F2] shadow-sm overflow-hidden" id="assessment-block-3">
-                    <button onclick="toggleAssessmentBlock(3)" class="w-full flex items-center justify-between px-6 py-4 hover:bg-[#FEFEFE] transition-colors">
-                        <h2 class="font-bold text-xl text-[#22262A]">Block 3 — Transparency Obligation</h2>
-                        <div class="flex items-center gap-3">
-                            <span id="block-3-status" class="px-4 py-1.5 rounded-full font-semibold text-sm bg-[#F0F1F2] text-[#6B7280]">Not assessed</span>
-                            <img id="block-3-chevron" src="{% static 'governance/img/chevron-down.svg' %}" alt="Toggle" class="w-5 h-5 text-[#565F6C] shrink-0">
-                        </div>
-                    </button>
-                    <div id="block-3-content" class="hidden px-6 py-6 border-t border-[#F0F1F2]">
-                        <div id="block-3-content-inner">
-                            <p class="text-sm text-[#464E58]">Calculating assessment status...</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Block 4: GPAI Applicability -->
-                <div class="bg-white rounded-lg border border-[#F0F1F2] shadow-sm overflow-hidden" id="assessment-block-4">
-                    <button onclick="toggleAssessmentBlock(4)" class="w-full flex items-center justify-between px-6 py-4 hover:bg-[#FEFEFE] transition-colors">
-                        <h2 class="font-bold text-xl text-[#22262A]">Block 4 — GPAI (General-Purpose AI) Applicability</h2>
-                        <div class="flex items-center gap-3">
-                            <span id="block-4-status" class="px-4 py-1.5 rounded-full font-semibold text-sm bg-[#F0F1F2] text-[#6B7280]">Not assessed</span>
-                            <img id="block-4-chevron" src="{% static 'governance/img/chevron-down.svg' %}" alt="Toggle" class="w-5 h-5 text-[#565F6C] shrink-0">
-                        </div>
-                    </button>
-                    <div id="block-4-content" class="hidden px-6 py-6 border-t border-[#F0F1F2]">
-                        <div id="block-4-content-inner">
-                            <p class="text-sm text-[#464E58]">Calculating assessment status...</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Footer buttons -->
-            <div class="flex justify-between items-center pt-2">
-                <button type="button" onclick="switchTab('profile')" class="px-5 py-2.5 border border-[#B5BCC4] text-[#464E58] rounded-lg font-semibold text-sm hover:bg-[#F0F1F2] transition-colors">
-                    Back to Profile
-                </button>
-                <button type="button" onclick="proceedToResult()" class="px-6 md:px-10 py-3 bg-[#F13D30] text-white font-semibold rounded-lg shadow hover:bg-[#DC180A] transition-colors">
-                    Proceed to Result
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Tab Content: Result -->
-    <div id="content-result" class="tab-content hidden">
-        <div class="flex flex-col gap-6">
-            <!-- Assessment Result Header -->
-            <div class="bg-[#F9FAFB] rounded-lg border border-[#E5E7EB] shadow-sm p-6">
-                <h2 class="text-xl font-bold text-[#111827] mb-2">Assessment Result</h2>
-                <p class="text-sm text-[#6B7280]">Summary of EU AI Act compliance assessment for this AI system</p>
-            </div>
-
-            <!-- Result Blocks -->
-            <div id="result-blocks-container" class="space-y-4">
-                {% for block in result_blocks %}
-                <div class="result-block bg-white rounded-lg border border-[#E5E7EB] shadow-sm p-6" data-block-id="{{ forloop.counter }}">
-                    <div class="flex items-start justify-between">
-                        <div class="flex-1">
-                            <h3 class="text-base font-semibold text-[#111827] mb-2">{{ block.title }}</h3>
-                            <p class="result-block-description text-sm text-[#6B7280]">{{ block.description|default:"" }}</p>
-                        </div>
-                        <span class="result-block-status px-3 py-1 text-sm font-medium rounded-full {{ block.status_class }}">
-                            {{ block.status }}
-                        </span>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-
-            <!-- Footer Button -->
-            <div class="flex justify-start pt-2">
-                <button type="button" onclick="switchTab('assessment')" class="px-5 py-2.5 border border-[#CBD5E1] text-[#374151] rounded-xl font-medium hover:bg-[#F3F4F6] transition-colors">
-                    Back to Assessment
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Share Link Modal -->
-<div id="share-link-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-  <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 relative">
-    <button type="button" class="absolute top-4 right-4 text-[#9CA3AF] hover:text-[#4B5563]" onclick="closeShareModal()">
-      <img src="{% static 'governance/img/x.svg' %}" alt="Close" class="w-4 h-4">
-    </button>
-    <h3 class="text-lg font-semibold text-[#111827] mb-2">Share Link</h3>
-    <p class="text-sm text-[#6B7280] mb-4">
-      Share link for: 
-      <span id="share-file-name" class="font-semibold text-[#111827]">File.pdf</span>
-    </p>
-    <div class="flex items-center gap-3">
-      <input id="share-link-input" type="text" readonly
-         class="flex-1 px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm text-[#111827] bg-[#F9FAFB] focus:outline-none">
-      <button type="button" id="share-link-copy-btn"
-         class="px-4 py-2 bg-[#F13D30] text-white text-sm font-medium rounded-lg hover:bg-[#d63529] transition-colors flex items-center gap-2">
-        <svg id="share-link-chain-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
-        </svg>
-        <span id="share-link-text">Copy</span>
-      </button>
-    </div>
-  </div>
-</div>
-
-<script>
 // Utility for notifications
 function showNotification(message, type = 'info') {
     // For now use alert, but could be replaced with a toast UI
@@ -1311,11 +170,8 @@ async function loadAISystemDetailData() {
                     block1State.prohibitedConfirmed = b1s.prohibited_confirmed || false;
                     block1State.claimingException = b1s.claiming_exception || '';
                     block1State.exceptionQualifies = b1s.exception_qualifies || '';
-                    block1State.exceptionQualifiesMap = b1s.exception_qualifies_map || {};
-                    block1State.exceptionEvidenceMap = b1s.exception_evidence_map || {};
                     block1State.exceptionEvidenceUploaded = b1s.exception_evidence_uploaded || false;
                     block1State.exceptionEvidenceSavedLink = b1s.exception_evidence_saved_link || '';
-                    block1State.exceptionEvidenceFiles = b1s.exception_evidence_files || [];
                     block1State.noExceptionConfirmed = b1s.no_exception_confirmed || false;
                 }
                 
@@ -1330,10 +186,6 @@ async function loadAISystemDetailData() {
                     block2State.profiling = b2s.profiling || '';
                     block2State.exemptionEvidenceUploaded = b2s.exemption_evidence_uploaded || false;
                     block2State.exemptionEvidenceSavedLink = b2s.exemption_evidence_saved_link || '';
-                    block2State.exemptionEvidenceExplanation = b2s.exemption_evidence_explanation || '';
-                    block2State.exemptionConfirmed = b2s.exemption_confirmed || false;
-                    block2State.exemptionEvidenceFileName = b2s.exemption_evidence_file_name || '';
-                    block2State.exemptionEvidenceFileUrl = b2s.exemption_evidence_file_url || '';
                 }
                 
                 if (result.data.assessment.block3) {
@@ -2199,7 +1051,6 @@ let block1State = {
     exceptionEvidenceSavedLink: '',
     exceptionEvidenceFiles: [], // Array of {name, url, path, size}
     noExceptionConfirmed: false,
-    exceptionConfirmed: false,
     be_assessment: null // Store BE assessment results for reference
 };
 
@@ -2211,10 +1062,6 @@ let block2State = {
     profiling: '', // 'Yes' | 'No' | 'Unknown' | ''
     exemptionEvidenceUploaded: false,
     exemptionEvidenceSavedLink: '',
-    exemptionEvidenceExplanation: '',
-    exemptionConfirmed: false,
-    exemptionEvidenceFileName: '',
-    exemptionEvidenceFileUrl: '',
     be_assessment: null // Store BE assessment results for reference
 };
 
@@ -2299,6 +1146,7 @@ function getProhibitedStatus() {
 }
 
 function getHighRiskStatus() {
+    // If Block 1 is Prohibited, Block 2 is de-activated
     if (isBlock1Prohibited()) {
         return 'De-activated';
     }
@@ -2311,6 +1159,7 @@ function getHighRiskStatus() {
 }
 
 function getTransparencyStatus() {
+    // If Block 1 is Prohibited, Block 3 is de-activated
     if (isBlock1Prohibited()) {
         return 'De-activated';
     }
@@ -2328,11 +1177,13 @@ function getGPAIStatus() {
         return 'De-activated';
     }
     
+    // Get integration from local input to handle immediate Profile changes
     const gpaiIntegration = document.querySelector('input[name="gpai_integration"]:checked')?.value || '';
     
     if (gpaiIntegration === 'Unknown') return 'Needs Review';
     if (gpaiIntegration === 'No') return 'Not Applicable';
     
+    // For "Yes" integration, handle optimistic confirmation and provider answer
     if (gpaiIntegration === 'Yes') {
         if (block4State.gpaiConfirmed) {
             if (block4State.gpaiProviderAnswer === 'Yes') return 'Applies';
@@ -2360,12 +1211,9 @@ function getStatusColorClass(status) {
         'Needs Review': 'bg-[#FFF9E6] text-[#F57C00]',
         'Not assessed': 'bg-[#F0F1F2] text-[#6B7280]',
         'De-activated': 'bg-[#F0F1F2] text-[#B5BCC4]',
-        'Awaiting Block 1': 'bg-[#FFF9E6] text-[#F57C00]',
         'Applies': 'bg-[#FFF3E0] text-[#E65100]',
         'Not Applicable': 'bg-[#E8F5E9] text-[#2E7D32]',
         'Not high-risk': 'bg-[#E8F5E9] text-[#2E7D32]',
-        'Exception': 'bg-[#E0F2F1] text-[#00695C]',
-        'Exemption': 'bg-[#E0F2F1] text-[#00695C]',
         'Pending': 'bg-[#FFF9E6] text-[#F57C00]'
     };
     return statusColors[status] || 'bg-[#F0F1F2] text-[#6B7280]';
@@ -2382,6 +1230,7 @@ function updateAssessmentBlock(blockNum) {
             content = renderBlock1Content(status);
             break;
         case 2:
+            // Try to get status from BE assessment first
             if (block2State.be_assessment) {
                 status = block2State.be_assessment.status || getHighRiskStatus();
                 details = block2State.be_assessment.details || null;
@@ -2391,6 +1240,7 @@ function updateAssessmentBlock(blockNum) {
             content = renderBlock2Content(status, details);
             break;
         case 3:
+            // Try to get status from BE assessment first
             if (block3State.be_assessment) {
                 status = block3State.be_assessment.status || getTransparencyStatus();
                 details = block3State.be_assessment.details || null;
@@ -2400,6 +1250,7 @@ function updateAssessmentBlock(blockNum) {
             content = renderBlock3Content(status, details);
             break;
         case 4:
+            // Try to get status from BE assessment first
             if (block4State.be_assessment) {
                 status = block4State.be_assessment.status || getGPAIStatus();
                 details = block4State.be_assessment.details || null;
@@ -2410,12 +1261,14 @@ function updateAssessmentBlock(blockNum) {
             break;
     }
     
+    // Update status badge
     const statusEl = document.getElementById(`block-${blockNum}-status`);
     if (statusEl) {
         statusEl.textContent = status;
         statusEl.className = `px-4 py-1.5 rounded-full font-semibold text-sm ${getStatusColorClass(status)}`;
     }
     
+    // Update content
     const contentEl = document.getElementById(`block-${blockNum}-content-inner`);
     if (contentEl) {
         contentEl.innerHTML = content;
@@ -2509,63 +1362,145 @@ function renderBlock1Content(status) {
     
     // For Triggered or Prohibited, we often use the detailed view components
     
-    // Base Stack
-    let html = '<div class="space-y-4">';
+    if (status === 'Triggered') {
+        if (!block1State.prohibitedConfirmed) {
+            // Not confirmed yet: Show Confirm UI with buttons
+            return `<div class="space-y-4">` + renderConfirmProfileInput(selectedPractices, practicesInfo, true) + `</div>`;
+        } else {
+            // Confirmed but still Triggered (likely waiting for Exception Claim answer)
+            // Show Read-only Input + Exception Flow
+            return `<div class="space-y-4">` + 
+                   renderConfirmProfileInput(selectedPractices, practicesInfo, false) + 
+                   renderBlock1ExceptionFlow(selectedPractices, practicesInfo) + 
+                   `</div>`;
+        }
+    }
     
-    // 1. Profile Trigger Box
-    const isConfirmed = block1State.prohibitedConfirmed;
-    html += renderConfirmProfileInput(selectedPractices, practicesInfo, !isConfirmed);
+    if (status === 'Exception claimed') {
+        const confirmedBanner = `
+            <div class="w-full bg-[#E8F5E9] border border-[#81C784] rounded-lg p-3 mb-4">
+                <p class="font-semibold text-sm text-[#2E7D32]">✓ Confirmed</p>
+            </div>
+        `;
+        
+        const practicesWithException = selectedPractices.filter(practice => {
+            const info = practicesInfo[practice] || prohibitedPracticesMap[practice];
+            return info && info.has_exception;
+        });
 
-    if (isConfirmed) {
-        // 2. Confirmed Banner
-        html += `
-            <div class="w-full bg-[#E8F5E9] border border-[#81C784] rounded-lg py-2.5 px-4 flex items-center gap-2">
+        const successItems = practicesWithException.map(p => {
+            const info = practicesInfo[p] || prohibitedPracticesMap[p];
+            const conditionText = info.exception_condition || info.exceptionCondition || 'Exception available';
+            return `
+                <div class="bg-[#E8F5E9] border border-[#81C784] rounded-lg p-4 mb-3">
+                    <p class="font-bold text-sm text-[#2E7D32] mb-1">✓ Exception Claimed: ${p}</p>
+                    <p class="text-xs text-[#464E58] mb-2">${conditionText}</p>
+                    <p class="font-normal text-sm text-[#464E58]">
+                        Your exception claim has been recorded with supporting evidence. This will be subject to regulatory review.
+                    </p>
+                </div>
+            `;
+        }).join('');
+
+        return `<div class="space-y-4">` + 
+               renderConfirmProfileInput(selectedPractices, practicesInfo, false) + 
+               confirmedBanner + 
+               successItems + 
+               `</div>`;
+    }
+    
+    if (status === 'Prohibited') {
+        const confirmedBanner = `
+            <div class="w-full bg-[#E8F5E9] border border-[#81C784] rounded-lg p-3 mb-4">
+                <p class="font-semibold text-sm text-[#2E7D32]">✓ Confirmed</p>
+            </div>
+        `;
+        
+        const prohibitedItems = selectedPractices.map(p => {
+             const info = practicesInfo[p] || prohibitedPracticesMap[p];
+             const hasException = info && info.has_exception;
+             const answer = block1State.exceptionQualifiesMap[p];
+             
+             let reasonText = "Your AI System is Prohibited under Art.5 because of this practice.";
+             let statusTitle = "Result: Prohibited Practice Detected";
+             
+             if (!hasException) {
+                 reasonText = "This practice does not allow any exceptions under the EU AI Act.";
+             } else if (answer === 'No') {
+                 reasonText = "You stated that the system does NOT fall under the allowed exception conditions for this practice.";
+             }
+
+             return `
+                <div class="bg-[#FFF5F5] border border-[#F13D30] rounded-lg p-4 mb-3">
+                    <p class="font-bold text-sm text-[#F13D30] mb-2">${statusTitle}</p>
+                    <p class="font-semibold text-sm text-[#22262A] mb-1">${p}</p>
+                    <p class="font-normal text-sm text-[#464E58]">
+                        ${reasonText} You need to redesign or remove this feature to ensure compliance.
+                    </p>
+                </div>
+            `;
+        }).join('');
+
+        if (selectedPractices.length > 0) {
+            return `<div class="space-y-4">` + 
+                   renderConfirmProfileInput(selectedPractices, practicesInfo, false) + 
+                   confirmedBanner + 
+                   prohibitedItems + 
+                   `</div>`;
+        }
+        
+        return `<div class="bg-[#FFF5F5] border border-[#F13D30] rounded-lg p-4">
+                <p class="font-bold text-sm text-[#F13D30] mb-2">Result: Prohibited</p>
+                <p class="font-normal text-sm text-[#464E58]">
+                    Your AI System is Prohibited under Art.5. You need to redesign or remove certain features to make it comply with the EU AI Act.
+                </p>
+            </div>`;
+    }
+    
+    if (status === 'Needs Review') {
+        const confirmedBanner = `
+            <div class="w-full bg-[#E8F5E9] border border-[#81C784] rounded-lg py-2.5 px-4 mb-4 flex items-center gap-2 shadow-sm">
                 <svg class="w-4 h-4 text-[#2E7D32]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
                 </svg>
                 <p class="font-semibold text-sm text-[#2E7D32]">Confirmed</p>
             </div>
         `;
-        
-        // 3. Follow-up Content (Exception Flow or Results)
-        if (status === 'Triggered' || status === 'Needs Review') {
-            html += renderBlock1ExceptionFlow(selectedPractices, practicesInfo);
-        } else if (status === 'Exception claimed') {
-            const practicesWithException = selectedPractices.filter(p => {
-                const info = practicesInfo[p] || prohibitedPracticesMap[p];
-                return info && info.has_exception;
-            });
-            html += practicesWithException.map(p => {
-                const info = practicesInfo[p] || prohibitedPracticesMap[p];
-                return `
-                    <div class="bg-[#E8F5E9] border border-[#81C784] rounded-lg p-4">
-                        <p class="font-bold text-sm text-[#2E7D32] mb-1">✓ Exception Claimed: ${p}</p>
-                        <p class="font-normal text-sm text-[#464E58]">
-                            Your exception claim has been recorded with supporting evidence.
-                        </p>
-                    </div>
-                `;
-            }).join('');
-        } else if (status === 'Prohibited') {
-            html += selectedPractices.map(p => `
-                <div class="bg-[#FFF5F5] border border-[#F13D30] rounded-lg p-4">
-                    <p class="font-bold text-sm text-[#F13D30] mb-2">Result: Prohibited Practice Detected</p>
-                    <p class="font-semibold text-sm text-[#22262A] mb-1">${p}</p>
-                    <p class="font-normal text-sm text-[#464E58]">
-                        This practice does not allow exceptions or your case does not qualify.
-                    </p>
-                </div>
-            `).join('');
+
+        const needsReviewBanner = `
+            <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-5 mb-4 shadow-sm">
+                <p class="font-bold text-sm text-[#F57C00] mb-2 uppercase tracking-wide">Result: Needs Review</p>
+                <p class="font-normal text-sm text-[#464E58] leading-relaxed">
+                    This system requires legal review to determine if the exception applies. Please consult with your legal team or compliance officer.
+                </p>
+            </div>
+        `;
+
+        if (selectedPractices.length > 0) {
+            return `<div class="space-y-4">` + 
+                   renderConfirmProfileInput(selectedPractices, practicesInfo, false) + 
+                   confirmedBanner +
+                   needsReviewBanner + 
+                   `</div>`;
         }
+        
+        return needsReviewBanner;
     }
     
-    html += '</div>';
-    return html;
+    return '<p class="text-sm text-[#464E58]">Status: ' + status + '</p>';
 }
 
 // Render exception flow content
 function renderBlock1ExceptionFlow(selectedPractices, practicesInfo = {}) {
-    // Note: Confirmed banner is now handled by the parent renderBlock1Content
+    // Confirmed state banner
+    const confirmedBanner = `
+        <div class="w-full bg-[#E8F5E9] border border-[#81C784] rounded-lg py-2.5 px-4 mb-4 flex items-center gap-2">
+            <svg class="w-4 h-4 text-[#2E7D32]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+            </svg>
+            <p class="font-semibold text-sm text-[#2E7D32]">Confirmed</p>
+        </div>
+    `;
 
     // 1. Check if ANY practice has NO exception available
     const practicesWithNoException = selectedPractices.filter(practice => {
@@ -2575,6 +1510,7 @@ function renderBlock1ExceptionFlow(selectedPractices, practicesInfo = {}) {
     
     if (practicesWithNoException.length > 0) {
         return `
+            ${confirmedBanner}
             <div class="bg-[#FFEBEE] border border-[#EF5350] rounded-lg p-4 shadow-sm">
                 <p class="font-bold text-sm text-[#C62828] mb-2">No exception available</p>
                 <p class="font-normal text-sm text-[#464E58] mb-4">
@@ -2615,7 +1551,7 @@ function renderBlock1ExceptionFlow(selectedPractices, practicesInfo = {}) {
             } else if (currentAnswer === 'No') {
                 statusBadge = '<span class="px-2 py-1 bg-[#FEEDEC] text-[#DC180A] text-[10px] font-bold rounded uppercase">No</span>';
             } else if (currentAnswer === 'Not sure') {
-                statusBadge = '<span class="px-2 py-1 bg-[#FFF9E6] text-[#F57C00] text-[10px] font-bold rounded uppercase border border-[#FFE59E]">Not sure</span>';
+                statusBadge = '<span class="px-2 py-1 bg-[#FFF9E6] text-[#F57C00] text-[10px] font-bold rounded uppercase">Not sure</span>';
             }
 
             let evidenceForm = '';
@@ -2680,19 +1616,15 @@ function renderBlock1ExceptionFlow(selectedPractices, practicesInfo = {}) {
             `;
         }).join('');
 
-        const prohibitedInPreview = selectedPractices.filter(p => 
-            block1State.exceptionQualifiesMap[p] === 'Not sure' || block1State.exceptionQualifiesMap[p] === 'No'
-        );
-        
-        const needsReviewBanner = prohibitedInPreview.length > 0 ? prohibitedInPreview.map(p => `
-            <div class="bg-[#FFF5F5] border border-[#F13D30] rounded-lg p-5 mb-4 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <p class="font-bold text-sm text-[#F13D30] mb-2 uppercase tracking-wide">Result: Prohibited Practice Detected</p>
-                <p class="font-semibold text-sm text-[#22262A] mb-1">${p}</p>
+        const hasNotSure = Object.values(block1State.exceptionQualifiesMap).includes('Not sure');
+        const needsReviewBanner = hasNotSure ? `
+            <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-5 mb-4 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <p class="font-bold text-sm text-[#F57C00] mb-2 uppercase tracking-wide">Result: Needs Review</p>
                 <p class="font-normal text-sm text-[#464E58] leading-relaxed">
-                    This practice does not allow exceptions or your case does not qualify.
+                    This system requires legal review to determine if the exception applies. Please consult with your legal team or compliance officer.
                 </p>
             </div>
-        `).join('') : '';
+        ` : '';
 
         const finalConfirmButton = `
             <div class="flex justify-end mt-4">
@@ -2703,6 +1635,7 @@ function renderBlock1ExceptionFlow(selectedPractices, practicesInfo = {}) {
         `;
 
         return `
+            ${confirmedBanner}
             ${exceptionBlocks}
             ${needsReviewBanner}
             ${finalConfirmButton}
@@ -2908,38 +1841,20 @@ async function confirmBlock1ExceptionClaim() {
     const mainContainer = document.querySelector('[data-agent-id]');
     const agentId = mainContainer ? parseInt(mainContainer.getAttribute('data-agent-id')) : 0;
 
-    // Validation: if any practice is "Yes", it must have at least some evidence basics (link or files or explanation)
-    for (const p in block1State.exceptionQualifiesMap) {
-        if (block1State.exceptionQualifiesMap[p] === 'Yes') {
-            const evidence = block1State.exceptionEvidenceMap[p] || {};
-            const hasLink = evidence.link && evidence.link.trim().length > 0;
-            const hasFiles = evidence.files && evidence.files.length > 0;
-            const hasExplanation = evidence.explanation && evidence.explanation.trim().length > 0;
-            
-            if (!hasLink && !hasFiles && !hasExplanation) {
-                showNotification(`Please provide evidence (link, file, or explanation) for your exception claim: ${p}`, 'warning');
-                return;
-            }
-        }
-    }
-
     try {
         const response = await fetch(`/api/ai-inventory/${agentId}/block1-state/`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
-                prohibited_confirmed: true,
-                exception_confirmed: true,
-                exception_qualifies_map: block1State.exceptionQualifiesMap,
                 exception_evidence_map: block1State.exceptionEvidenceMap
             })
         });
         const result = await response.json();
         
         if (result.success) {
-            block1State.exceptionConfirmed = true;
-            updateBlock1FromBE(result.assessment);
-            showNotification('Exception claim confirmed', 'success');
+            updateAssessmentBlocksFromBE(result.assessment);
+            updateAssessmentBlock(1);
+            showNotification('Exception claim documentation updated', 'success');
         }
     } catch (err) {
         console.error('Failed to confirm exception claim:', err);
@@ -3183,7 +2098,7 @@ function renderBlock2Content(status, block2Details = null) {
     
     if (status === 'Not high-risk') {
         return `
-            <div class="bg-[#E8F5E9] border border-[#81C784] rounded-lg p-6 font-normal">
+            <div class="bg-[#E8F5E9] border border-[#81C784] rounded-lg p-6">
                 <p class="font-semibold text-sm text-[#2E7D32]">✓ Not High-Risk</p>
                 <p class="font-normal text-sm text-[#464E58] mt-3 leading-relaxed">
                     ${block2Details?.reason || 'Based on your Profile inputs, this AI system does not appear to be classified as high-risk under the EU AI Act.'}
@@ -3200,100 +2115,140 @@ function renderBlock2Content(status, block2Details = null) {
                     ${block2Details?.reason || 'No high-risk conditions met.'}
                 </p>
             </div>
-        `;
-    }
+    const annexIIISteps = ['q1', 'q2', 'q3', 'evidence'];
+    const isAnnexIIIFlow = (status === 'Needs Review' || status === 'Needs review') && annexIIISteps.includes(block2Details?.step);
 
-    // Base Stack
-    const isConfirmed = block2State.highRiskConfirmed || block2State.uiConfirmedInSession;
-    const isCond1 = block2Details?.condition1 || isCondition1Met();
-    const isCond2 = block2Details?.condition2 || isCondition2Met();
-    
-    let html = '<div class="space-y-4">';
-
-    // 1. Profile Trigger Box
-    let condTexts = [];
-    if (isCond1) {
-        condTexts.push('<p class="font-normal text-sm text-[#464E58]">It is a safety component requiring third-party conformity assessment (Section 4, Q3)</p>');
-    }
-    if (isCond2) {
-        let sectors = block2Details?.selected_sectors || [];
-        if (sectors.length === 0) {
-            sectors = Array.from(document.querySelectorAll('input[name="sector_domain"]:checked'))
-                .map(cb => cb.value)
-                .filter(s => s && s !== 'Other / not listed' && s !== 'Other / not listed:');
-        }
-        sectors.forEach(sector => {
-            condTexts.push(`<p class="font-normal text-sm text-[#464E58]">It is used in high-risk sectors: ${sector} (Section 4, Q2)</p>`);
-        });
-    }
-
-    html += `
-        <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-6 shadow-sm">
-            <p class="font-bold text-sm text-[#22262A] mb-3">Confirm Profile input:</p>
-            <p class="font-normal text-sm text-[#464E58] mb-4 leading-relaxed">
-                Based on your Profile inputs, this AI system may be classified as high-risk because:
-            </p>
-            <div class="pl-6 mb-4 flex flex-col gap-3">
-                ${condTexts.join('')}
-            </div>
-    `;
-    
-    if (!isConfirmed) {
-        html += `
-            <p class="font-bold text-sm text-[#22262A] mb-4">Do you confirm?</p>
-            </div> <!-- End of trigger box -->
-            <div class="flex justify-end gap-3 mt-2 pr-1">
-                <button onclick="switchTab('profile')" class="px-6 py-2.5 bg-white border border-[#B5BCC4] text-[#464E58] rounded-lg font-bold text-sm hover:bg-[#F0F1F2] transition-colors shadow-sm">
-                    Edit Profile Info
-                </button>
-                <button onclick="confirmHighRisk()" class="px-8 py-2.5 bg-[#F13D30] text-white rounded-lg font-bold text-sm hover:bg-[#DC180A] transition-colors shadow-sm">
-                    Confirm
-                </button>
+    if ((status === 'Needs Review' || status === 'Needs review') && !isAnnexIIIFlow) {
+        return `
+            <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-6">
+                <p class="font-semibold text-sm text-[#F57C00]">⚠️ Needs Review</p>
+                <p class="font-normal text-sm text-[#464E58] mt-3 leading-relaxed">
+                    ${block2Details?.reason || 'This assessment requires manual review by the compliance team.'}
+                </p>
             </div>
         `;
-    } else {
-        html += `</div>`; // Close trigger box
+    }
+    
+    if (status === 'High-risk' || isAnnexIIIFlow) {
+        const trigger = block2Details?.trigger || getHighRiskTrigger();
+        const step = block2Details?.step;
         
-        // 2. Confirmed Banner
-        html += `
-            <div class="bg-[#E8F5E9] border border-[#81C784] rounded-lg px-4 py-3 shadow-sm flex items-center gap-2">
-                 <p class="font-bold text-sm text-[#2E7D32]">✓ Confirmed</p>
-            </div>
-        `;
-
-        // 3. Follow-up Content (Annex I Result or Annex III Test)
+        // 1. If NOT confirmed in this SESSION yet, show confirmation card (Image 1)
+        if (!block2State.uiConfirmedInSession) {
+            const isCond1 = block2Details?.condition1 || isCondition1Met();
+            const isCond2 = block2Details?.condition2 || isCondition2Met();
+            
+            let condTexts = [];
+            if (isCond1) {
+                condTexts.push('<p class="font-normal text-sm text-[#464E58]">It is a safety component requiring third-party conformity assessment (Section 4, Q3)</p>');
+            }
+            if (isCond2) {
+                let sectors = block2Details?.selected_sectors || [];
+                if (sectors.length === 0) {
+                    sectors = Array.from(document.querySelectorAll('input[name="sector_domain"]:checked'))
+                        .map(cb => cb.value)
+                        .filter(s => s && s !== 'Other / not listed' && s !== 'Other / not listed:');
+                }
+                sectors.forEach(sector => {
+                    condTexts.push(`<p class="font-normal text-sm text-[#464E58]">It is used in high-risk sectors: ${sector} (Section 4, Q2)</p>`);
+                });
+            }
+            
+            return `
+                <div class="space-y-4">
+                    <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-6 shadow-sm">
+                        <p class="font-bold text-sm text-[#22262A] mb-3">Confirm Profile input:</p>
+                        <p class="font-normal text-sm text-[#464E58] mb-4 leading-relaxed">
+                            Based on your Profile inputs, this AI system may be classified as high-risk because:
+                        </p>
+                        <div class="pl-6 mb-4 flex flex-col gap-3">
+                            ${condTexts.join('')}
+                        </div>
+                        <p class="font-bold text-sm text-[#22262A]">Do you confirm?</p>
+                    </div>
+                    <div class="flex justify-end gap-3 mt-2 pr-1">
+                        <button onclick="switchTab('profile')" class="px-6 py-2.5 bg-white border border-[#B5BCC4] text-[#464E58] rounded-lg font-bold text-sm hover:bg-[#F0F1F2] transition-colors shadow-sm">
+                            Edit Profile Info
+                        </button>
+                        <button onclick="confirmHighRisk()" class="px-8 py-2.5 bg-[#F13D30] text-white rounded-lg font-bold text-sm hover:bg-[#DC180A] transition-colors shadow-sm">
+                            Confirm
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // 2. After confirmation - Show Result (Condition 1) or Annex III (Condition 2)
+        const isCond1 = block2Details?.condition1 || isCondition1Met();
+        
+        // If it's Condition 1 (Annex I) - show confirmed result banner (Image 3)
+        // OR if it's both but we are at the end of the flow
         if (isCond1) {
-             html += `
-                <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-6">
-                    <p class="font-semibold text-sm text-[#F97316] mb-2">High-risk Classification Confirmed</p>
-                    <p class="font-normal text-sm text-[#464E58]">
-                        This AI system is classified as high-risk because it is a safety component of a product requiring third-party conformity assessment.
-                    </p>
+            return `
+                <div class="space-y-4">
+                    <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-6">
+                        <p class="font-semibold text-sm text-[#F97316] mb-2">High-risk Classification Confirmed</p>
+                        <p class="font-normal text-sm text-[#464E58] mb-4">
+                            This AI system is classified as high-risk because it is a safety component of a product requiring third-party conformity assessment.
+                        </p>
+                    </div>
                 </div>
             `;
         } else {
-            const step = block2Details?.step || 'q1';
-            html += renderBlock2AnnexIII(step, block2Details, status);
+            // Only Condition 2 (Annex III) - Show Exemption Test
+            // Need to reconstruct the "Confirm Profile input" box logic here to show it as "history"
+            const isCond2 = block2Details?.condition2 || isCondition2Met();
+            
+            let condTexts = [];
+            // We know it's not Condition 1 here, so only check Condition 2
+            if (isCond2) {
+                let sectors = block2Details?.selected_sectors || [];
+                if (sectors.length === 0) {
+                    sectors = Array.from(document.querySelectorAll('input[name="sector_domain"]:checked'))
+                        .map(cb => cb.value)
+                        .filter(s => s && s !== 'Other / not listed' && s !== 'Other / not listed:');
+                }
+                sectors.forEach(sector => {
+                    condTexts.push(`<p class="font-normal text-sm text-[#464E58]">It is used in high-risk sectors: ${sector} (Section 4, Q2)</p>`);
+                });
+            }
+
+            return `
+                <div class="space-y-4">
+                    <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-6 shadow-sm">
+                        <p class="font-bold text-sm text-[#22262A] mb-3">Confirm Profile input:</p>
+                        <p class="font-normal text-sm text-[#464E58] mb-4 leading-relaxed">
+                            Based on your Profile inputs, this AI system may be classified as high-risk because:
+                        </p>
+                        <div class="pl-6 flex flex-col gap-3">
+                            ${condTexts.join('')}
+                        </div>
+                    </div>
+
+                    <div class="bg-[#E8F5E9] border border-[#81C784] rounded-lg px-4 py-3">
+                         <p class="font-semibold text-sm text-[#2E7D32]">✓ Confirmed</p>
+                    </div>
+                    ${renderBlock2AnnexIII(step, block2Details)}
+                </div>
+            `;
         }
     }
     
-    html += '</div>';
-    return html;
+    // Fallback for other statuses
+    if (status === 'Triggered') {
+        // Redirection for legacy support if needed, but should be handled by High-risk now
+        return renderBlock2Content('High-risk', block2Details);
+    }
+    
+    return '<p class="text-sm text-[#464E58]">Status: ' + status + '</p>';
 }
 
 // Render Annex III Exemption Test flow
 
-function renderBlock2AnnexIII(step, block2Details, status = '') {
+function renderBlock2AnnexIII(step, block2Details) {
     const matInf = block2Details?.material_influence || block2State.materialInfluence;
     const narrowTasks = block2Details?.narrow_tasks || block2State.narrowTasks || [];
     const profVal = block2Details?.profiling || block2State.profiling;
-    
-    // File and Link info from details OR state
-    const fileName = block2Details?.exemption_evidence_file_name || block2State.exemptionEvidenceFileName;
-    const fileUrl = block2Details?.exemption_evidence_file_url || block2State.exemptionEvidenceFileUrl;
-    const savedLink = block2Details?.exemption_evidence_saved_link || block2State.exemptionEvidenceSavedLink;
-    const explanation = block2Details?.exemption_evidence_explanation || block2State.exemptionEvidenceExplanation;
-    
 
     // Helper functions for styling
     const getRadioStyle = (selected, val) => selected === val 
@@ -3317,9 +2272,6 @@ function renderBlock2AnnexIII(step, block2Details, status = '') {
         q1Banner = `
              <div class="mt-6 bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-6">
                 <p class="font-bold text-sm text-[#F97316]">Result: Needs Review</p>
-                <p class="font-normal text-sm text-[#464E58]">
-                    The classification of this AI system requires further review by a legal expert to determine if it qualifies as high-risk.
-                </p>
             </div>`;
     }
 
@@ -3338,10 +2290,10 @@ function renderBlock2AnnexIII(step, block2Details, status = '') {
                 </p>
                 
                 <div class="relative pl-2">
-                     <div class="left-2 top-2 bottom-4 w-0.5 bg-[#B5BCC4] rounded-full"></div>
+                     <div class="absolute left-2 top-2 bottom-4 w-0.5 bg-[#B5BCC4] rounded-full"></div>
 
                      <div class="relative pl-8 pb-4">
-                         <div class="left-0 top-3 w-6 h-0.5"></div>
+                         <div class="absolute left-0 top-3 w-6 h-0.5 border-t-2 border-[#B5BCC4]"></div>
                          <button onclick="setMaterialInfluence('Yes')" class="text-left w-full group flex items-center gap-3">
                             <div class="w-4 h-4 border ${getRadioStyle(matInf, 'Yes')} rounded-full flex items-center justify-center transition-colors bg-white">
                                 ${getRadioInner(matInf, 'Yes')}
@@ -3351,7 +2303,7 @@ function renderBlock2AnnexIII(step, block2Details, status = '') {
                      </div>
                      
                      <div class="relative pl-8 pb-4">
-                         <div class="left-0 top-3 w-6 h-0.5"></div>
+                         <div class="absolute left-0 top-3 w-6 h-0.5 border-t-2 border-[#B5BCC4]"></div>
                          <button onclick="setMaterialInfluence('No')" class="text-left w-full group flex items-center gap-3">
                             <div class="w-4 h-4 border ${getRadioStyle(matInf, 'No')} rounded-full flex items-center justify-center transition-colors bg-white">
                                 ${getRadioInner(matInf, 'No')}
@@ -3361,7 +2313,7 @@ function renderBlock2AnnexIII(step, block2Details, status = '') {
                      </div>
 
                      <div class="relative pl-8">
-                         <div class="left-0 top-3 w-6 h-0.5"></div>
+                         <div class="absolute left-0 top-3 w-6 h-0.5 border-t-2 border-[#B5BCC4]"></div>
                          <button onclick="setMaterialInfluence('Not sure')" class="text-left w-full group flex items-center gap-3">
                             <div class="w-4 h-4 border ${getRadioStyle(matInf, 'Not sure')} rounded-full flex items-center justify-center transition-colors bg-white">
                                 ${getRadioInner(matInf, 'Not sure')}
@@ -3403,7 +2355,7 @@ function renderBlock2AnnexIII(step, block2Details, status = '') {
         const checked = narrowTasks.includes(opt);
         return `
             <div class="relative pl-8 pb-4 last:pb-0">
-                <div class="left-0 top-3 w-6 h-0.5"></div>
+                <div class="absolute left-0 top-3 w-6 h-0.5 border-t-2 border-[#B5BCC4]"></div>
                 <label class="flex items-start gap-3 cursor-pointer group">
                     <input type="checkbox" value="${opt}" ${checked ? 'checked' : ''} 
                            onchange="updateNarrowTasks(this)"
@@ -3420,7 +2372,7 @@ function renderBlock2AnnexIII(step, block2Details, status = '') {
                 Q2. This AI system only does one of the following (select all that apply) <span class="text-[#F13D30]">*</span>
             </p>
             <div class="relative pl-2">
-                 <div class="left-2 top-2 bottom-4 w-0.5 bg-[#B5BCC4] rounded-full"></div>
+                 <div class="absolute left-2 top-2 bottom-4 w-0.5 bg-[#B5BCC4] rounded-full"></div>
                  ${q2Items}
             </div>
             ${q2Banner}
@@ -3437,17 +2389,11 @@ function renderBlock2AnnexIII(step, block2Details, status = '') {
         q3Banner = `
             <div class="mt-6 bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-6">
                 <p class="font-bold text-sm text-[#F97316] mb-2">Result: Exemption fails → High-Risk</p>
-                <p class="font-normal text-sm text-[#464E58]">
-                    This AI system is classified as high-risk under the EU AI Act and does not qualify for the Annex III exemption.
-                </p>
             </div>`;
     } else if (profVal === 'Unknown') {
         q3Banner = `
             <div class="mt-6 bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-6">
                 <p class="font-bold text-sm text-[#F97316]">Result: Needs Review</p>
-                <p class="font-normal text-sm text-[#464E58]">
-                    The classification of this AI system requires further review by a legal expert to determine if it qualifies as high-risk.
-                </p>
             </div>`;
     }
 
@@ -3457,10 +2403,10 @@ function renderBlock2AnnexIII(step, block2Details, status = '') {
                 Q3. Does the system perform profiling of natural persons? <span class="text-[#F13D30]">*</span>
             </p>
             <div class="relative pl-2">
-                 <div class="left-2 top-2 bottom-4 w-0.5 bg-[#B5BCC4] rounded-full"></div>
+                 <div class="absolute left-2 top-2 bottom-4 w-0.5 bg-[#B5BCC4] rounded-full"></div>
                  
                  <div class="relative pl-8 pb-4">
-                     <div class="left-0 top-3 w-6 h-0.5"></div>
+                     <div class="absolute left-0 top-3 w-6 h-0.5 border-t-2 border-[#B5BCC4]"></div>
                      <button onclick="setProfiling('Yes')" class="text-left w-full group flex items-center gap-3">
                         <div class="w-4 h-4 border ${getRadioStyle(profVal, 'Yes')} rounded-full flex items-center justify-center transition-colors bg-white">
                             ${getRadioInner(profVal, 'Yes')}
@@ -3470,7 +2416,7 @@ function renderBlock2AnnexIII(step, block2Details, status = '') {
                  </div>
                  
                  <div class="relative pl-8 pb-4">
-                     <div class="left-0 top-3 w-6 h-0.5"></div>
+                     <div class="absolute left-0 top-3 w-6 h-0.5 border-t-2 border-[#B5BCC4]"></div>
                      <button onclick="setProfiling('No')" class="text-left w-full group flex items-center gap-3">
                         <div class="w-4 h-4 border ${getRadioStyle(profVal, 'No')} rounded-full flex items-center justify-center transition-colors bg-white">
                             ${getRadioInner(profVal, 'No')}
@@ -3480,7 +2426,7 @@ function renderBlock2AnnexIII(step, block2Details, status = '') {
                  </div>
 
                  <div class="relative pl-8">
-                     <div class="left-0 top-3 w-6 h-0.5"></div>
+                     <div class="absolute left-0 top-3 w-6 h-0.5 border-t-2 border-[#B5BCC4]"></div>
                      <button onclick="setProfiling('Unknown')" class="text-left w-full group flex items-center gap-3">
                         <div class="w-4 h-4 border ${getRadioStyle(profVal, 'Unknown')} rounded-full flex items-center justify-center transition-colors bg-white">
                             ${getRadioInner(profVal, 'Unknown')}
@@ -3493,117 +2439,7 @@ function renderBlock2AnnexIII(step, block2Details, status = '') {
         </div>
     `;
 
-    // If Q3 is not 'No', stop here and return Q1-Q3
-    if (profVal !== 'No') return q1HTML + q2HTML + q3HTML;
-
-    // --- Exemption Passed and Evidence Flow (Q3 = No) ---
-    const isExemptionStatus = (status === 'Exemption') || block2State.exemptionConfirmed;
-    
-    // Status/Result banners based on Image 2
-    let evidenceConfirmedBanner = '';
-    let resultExemptionBanner = '';
-    
-    if (isExemptionStatus) {
-        evidenceConfirmedBanner = `
-            <div class="mt-6 bg-[#E8F5E9] border border-[#81C784] rounded-lg px-4 py-3 shadow-sm animate-in fade-in duration-500">
-                 <p class="font-semibold text-sm text-[#2E7D32]">✓ Evidence Confirmed</p>
-            </div>`;
-        
-        let evidenceSummary = '';
-        if (fileName) {
-            evidenceSummary += `
-                <div class="flex items-center gap-2 mt-2">
-                    <svg class="w-4 h-4 text-[#2E7D32]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    <span class="text-xs text-[#464E58]">File: <a href="${fileUrl}" target="_blank" class="text-blue-600 hover:underline">${fileName}</a></span>
-                </div>`;
-        }
-        if (savedLink) {
-             evidenceSummary += `
-                <div class="flex items-center gap-2 mt-1">
-                    <svg class="w-4 h-4 text-[#2E7D32]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
-                    <span class="text-xs text-[#464E58]">Link: <a href="${savedLink}" target="_blank" class="text-blue-600 hover:underline">${savedLink}</a></span>
-                </div>`;
-        }
-
-        resultExemptionBanner = `
-            <div class="mt-4 bg-[#E8F5E9] border border-[#81C784] rounded-lg p-5 shadow-sm">
-                <p class="font-bold text-sm text-[#2E7D32] mb-2 uppercase tracking-wide">Result: Exemption</p>
-                <p class="font-normal text-sm text-[#464E58] leading-relaxed">
-                    This AI system qualifies for the Annex III exemption and is classified as not high-risk.
-                </p>
-                ${evidenceSummary}
-            </div>`;
-    }
-
-    const evidenceHTML = `
-        <div class="mt-8 space-y-6">
-            <div class="bg-[#E8F5E9] border border-[#81C784] rounded-lg p-6 shadow-sm">
-                <p class="font-bold text-sm text-[#2E7D32] mb-2">Exemption Test Passed</p>
-                <p class="font-normal text-sm text-[#464E58]">
-                    This AI system qualifies for the Annex III exemption. Please provide evidence to confirm not high-risk classification.
-                </p>
-            </div>
-
-            <div class="space-y-4">
-                <p class="font-bold text-sm text-[#22262A]">Evidence / Documentation <span class="text-[#F13D30]">*</span></p>
-                <p class="text-xs text-[#464E58]">Paste a link or upload new document below.</p>
-                
-                <div class="flex gap-3">
-                    <input type="text" id="exemption-evidence-link" placeholder="Paste link here" 
-                           value="${block2State.exemptionEvidenceSavedLink || ''}"
-                           class="flex-1 px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm text-[#464E58] focus:outline-none focus:ring-1 focus:ring-[#F13D30]">
-                    <button onclick="saveExemptionEvidenceLinkOnly()" 
-                            class="px-6 py-2 bg-[#F13D30] text-white rounded-lg font-bold text-sm hover:bg-[#DC180A] transition-colors whitespace-nowrap">
-                        Save link
-                    </button>
-                </div>
-
-                <input type="file" id="exemption-evidence-upload" class="hidden" onchange="handleExemptionFileUpload(this)">
-                <button onclick="document.getElementById('exemption-evidence-upload').click()"
-                        class="w-full px-4 py-3 border-2 border-dashed border-[#D1D5DB] rounded-lg text-sm font-semibold text-[#464E58] hover:border-[#F13D30] hover:bg-[#FFF5F5] transition-colors flex items-center justify-center gap-2">
-                    <svg class="w-5 h-5 text-[#6B7280]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                    </svg>
-                    Upload Supporting Documents
-                </button>
-                
-                <div id="exemption-file-display" class="pt-1">
-                     ${fileName ? `
-                        <div class="flex items-center justify-between p-3 bg-white border border-[#E5E7EB] rounded-lg shadow-sm">
-                            <div class="flex items-center gap-3">
-                                <div class="w-8 h-8 rounded bg-[#F9FAFB] flex items-center justify-center">
-                                    <svg class="w-5 h-5 text-[#6B7280]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
-                                    </svg>
-                                </div>
-                                <div class="flex flex-col">
-                                    <span class="text-sm font-medium text-[#22262A] truncate max-w-[200px]">${fileName}</span>
-                                    <span class="text-xs text-[#6B7280]">Uploaded successfully</span>
-                                </div>
-                            </div>
-                            <a href="${fileUrl}" target="_blank" class="text-[#F13D30] text-xs font-bold hover:underline">View</a>
-                        </div>
-                     ` : ''}
-                </div>
-
-                <textarea id="exemption-evidence-explanation" rows="4" 
-                          placeholder="Provide details about why the exemption applies and supporting documentation."
-                          class="w-full px-4 py-3 border border-[#D1D5DB] rounded-lg text-sm text-[#464E58] focus:outline-none focus:ring-1 focus:ring-[#F13D30] resize-none">${explanation || ''}</textarea>
-            </div>
-
-            ${evidenceConfirmedBanner}
-            ${resultExemptionBanner}
-
-            <div class="flex justify-end pt-2">
-                <button onclick="confirmExemptionEvidence()" 
-                        class="px-8 py-3 bg-[#F13D30] text-white rounded-lg font-bold text-sm hover:bg-[#DC180A] transition-all shadow-md">
-                    Confirm Evidence
-                </button>
-            </div>
-        </div>
-    `;
-
-    return q1HTML + q2HTML + q3HTML + evidenceHTML;
+    return q1HTML + q2HTML + q3HTML;
 }
 
 // Block 2 API functions
@@ -3628,7 +2464,7 @@ async function confirmHighRisk() {
             block2State.highRiskConfirmed = true;
             block2State.uiConfirmedInSession = true; // Set session flag
             if (result.assessment && result.assessment.block2) {
-                updateBlock2FromBE(result.assessment);
+                updateAssessmentBlocksFromBE(result.assessment);
             } else {
                 updateAssessmentBlock(2);
             }
@@ -3661,7 +2497,7 @@ async function setMaterialInfluence(value) {
         if (result.success) {
             block2State.materialInfluence = value;
             if (result.assessment && result.assessment.block2) {
-                updateBlock2FromBE(result.assessment);
+                updateAssessmentBlocksFromBE(result.assessment);
             } else {
                 updateAssessmentBlock(2);
             }
@@ -3719,7 +2555,7 @@ async function confirmNarrowTasks() {
         
         if (result.success) {
             if (result.assessment && result.assessment.block2) {
-                updateBlock2FromBE(result.assessment);
+                updateAssessmentBlocksFromBE(result.assessment);
             } else {
                 updateAssessmentBlock(2);
             }
@@ -3749,7 +2585,7 @@ async function setProfiling(value) {
         if (result.success) {
             block2State.profiling = value;
             if (result.assessment && result.assessment.block2) {
-                updateBlock2FromBE(result.assessment);
+                updateAssessmentBlocksFromBE(result.assessment);
             } else {
                 updateAssessmentBlock(2);
             }
@@ -3765,11 +2601,30 @@ async function confirmExemptionEvidence() {
     
     const fileInput = document.getElementById('exemption-evidence-upload');
     const linkInput = document.getElementById('exemption-evidence-link');
-    const explanationInput = document.getElementById('exemption-evidence-explanation');
     
-    let evidenceUploaded = block2State.exemptionEvidenceUploaded;
+    let evidenceUploaded = false;
     let evidenceLink = '';
-    let evidenceExplanation = explanationInput ? explanationInput.value.trim() : '';
+    
+    // Check file upload
+    if (fileInput && fileInput.files && fileInput.files.length > 0) {
+        try {
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            formData.append('folder', 'governance/uploads');
+            
+            const uploadResponse = await fetch('/api/upload-file/', {
+                method: 'POST',
+                body: formData,
+            });
+            
+            const uploadResult = await uploadResponse.json();
+            if (uploadResult.success) {
+                evidenceUploaded = true;
+            }
+        } catch (error) {
+            console.error('Error uploading evidence file:', error);
+        }
+    }
     
     // Check link
     if (linkInput && linkInput.value && linkInput.value.trim()) {
@@ -3789,11 +2644,7 @@ async function confirmExemptionEvidence() {
             },
             body: JSON.stringify({
                 exemption_evidence_uploaded: evidenceUploaded,
-                exemption_evidence_saved_link: evidenceLink,
-                exemption_evidence_explanation: evidenceExplanation,
-                exemption_confirmed: true,
-                exemption_evidence_file_name: block2State.exemptionEvidenceFileName,
-                exemption_evidence_file_url: block2State.exemptionEvidenceFileUrl
+                exemption_evidence_saved_link: evidenceLink
             })
         });
         
@@ -3802,96 +2653,17 @@ async function confirmExemptionEvidence() {
         if (result.success) {
             block2State.exemptionEvidenceUploaded = evidenceUploaded;
             block2State.exemptionEvidenceSavedLink = evidenceLink;
-            block2State.exemptionEvidenceExplanation = evidenceExplanation;
             if (result.assessment && result.assessment.block2) {
-                updateBlock2FromBE(result.assessment);
+                updateAssessmentBlocksFromBE(result.assessment);
             } else {
                 updateAssessmentBlock(2);
             }
-            showNotification('Exemption evidence confirmed.', 'success');
         } else {
             alert('Error saving evidence: ' + (result.error || 'Unknown error'));
         }
     } catch (error) {
         console.error('Error confirming exemption evidence:', error);
         alert('Error saving evidence. Please try again.');
-    }
-}
-
-async function saveExemptionEvidenceLinkOnly() {
-    const linkInput = document.getElementById('exemption-evidence-link');
-    if (!linkInput || !linkInput.value.trim()) {
-        alert('Please paste a link first.');
-        return;
-    }
-    
-    const mainContainer = document.querySelector('[data-agent-id]');
-    const agentId = mainContainer ? parseInt(mainContainer.getAttribute('data-agent-id')) : 0;
-    
-    try {
-        const response = await fetch(`/api/ai-inventory/${agentId}/block2-state/`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                exemption_evidence_saved_link: linkInput.value.trim()
-            })
-        });
-        const result = await response.json();
-        if (result.success) {
-            block2State.exemptionEvidenceSavedLink = linkInput.value.trim();
-            showNotification('Link saved successfully', 'success');
-        }
-    } catch (e) {
-        console.error('Error saving link:', e);
-    }
-}
-
-async function handleExemptionFileUpload(input) {
-    if (!input.files || input.files.length === 0) return;
-    
-    const mainContainer = document.querySelector('[data-agent-id]');
-    const agentId = mainContainer ? parseInt(mainContainer.getAttribute('data-agent-id')) : 0;
-    
-    const formData = new FormData();
-    formData.append('file', input.files[0]);
-    formData.append('folder', 'governance/uploads');
-    
-    try {
-        const uploadResponse = await fetch('/api/upload-file/', {
-            method: 'POST',
-            body: formData,
-        });
-        const uploadResult = await uploadResponse.json();
-        if (uploadResult.success && uploadResult.files && uploadResult.files.length > 0) {
-            const fileInfo = uploadResult.files[0];
-            // Update BE state
-            const stateResponse = await fetch(`/api/ai-inventory/${agentId}/block2-state/`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    exemption_evidence_uploaded: true,
-                    exemption_evidence_file_name: fileInfo.name,
-                    exemption_evidence_file_url: fileInfo.url
-                })
-            });
-            const stateResult = await stateResponse.json();
-            if (stateResult.success) {
-                block2State.exemptionEvidenceUploaded = true;
-                block2State.exemptionEvidenceFileName = fileInfo.name;
-                block2State.exemptionEvidenceFileUrl = fileInfo.url;
-                
-                // Keep everything in sync by updating the whole block
-                if (stateResult.assessment) {
-                    updateBlock2FromBE(stateResult.assessment);
-                } else {
-                    updateAssessmentBlock(2);
-                }
-                
-                showNotification('File uploaded successfully', 'success');
-            }
-        }
-    } catch (e) {
-        console.error('Error uploading file:', e);
     }
 }
 
@@ -3911,71 +2683,77 @@ function renderBlock3Content(status, block3Details = null) {
             </div>
         `;
     }
+    
     if (status === 'Not Applicable') {
-        const reason = block3Details?.reason || 'Based on your Profile inputs, this AI system does not trigger transparency obligations under Article 50 of the EU AI Act.';
         return `
-            <div class="bg-[#F2F9F2] border border-[#D1EAD1] rounded-lg p-6 shadow-sm">
-                <p class="font-bold text-sm text-[#2D6A4F] mb-3 flex items-center gap-2">
-                    <span class="text-lg">✓</span> Transparency Obligation Not Applicable
-                </p>
-                <p class="font-normal text-sm text-[#464E58] leading-relaxed">
-                    ${reason}
+            <div class="bg-[#E8F5E9] border border-[#81C784] rounded-lg p-4">
+                <p class="font-semibold text-sm text-[#2E7D32]">✓ Not Applicable</p>
+                <p class="font-normal text-sm text-[#464E58] mt-2">
+                    ${block3Details?.reason || 'Transparency obligations do not apply (valid exceptions claimed with evidence).'}
                 </p>
             </div>
         `;
     }
     
-    if (status === 'Triggered' || status === 'Needs Review' || status === 'Applies' || status === 'Exception') {
+    if (status === 'Needs Review') {
+        return `
+            <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-4">
+                <p class="font-semibold text-sm text-[#F57C00]">⚠️ Needs Review</p>
+                <p class="font-normal text-sm text-[#464E58] mt-2">
+                    ${block3Details?.reason || 'This assessment requires manual review by the compliance team.'}
+                </p>
+            </div>
+        `;
+    }
+    
+    if (status === 'Applies') {
+        return `
+            <div class="bg-[#FFEBEE] border border-[#EF5350] rounded-lg p-4">
+                <p class="font-semibold text-sm text-[#C62828]">📋 Transparency Obligations Apply</p>
+                <p class="font-normal text-sm text-[#464E58] mt-2">
+                    ${block3Details?.reason || 'This AI system must comply with transparency obligations under EU AI Act Article 50.'}
+                </p>
+            </div>
+        `;
+    }
+    
+    // Status = 'Triggered' - Show confirmation or exception flow
+    if (status === 'Triggered') {
         const triggers = block3Details?.triggers || [];
         
-        if (triggers.length === 0) {
-            return `<p class="font-normal text-sm text-[#464E58]">${block3Details?.reason || 'Assessment in progress...'}</p>`;
-        }
-        
-        const triggerReasons = getTransparencyTriggerReasons(triggers);
-        const reasonsList = triggerReasons.map(reason => 
-            `<p class="font-normal text-sm text-[#464E58] mb-1 ml-4">• ${reason}</p>`
-        ).join('');
-        
-        const isConfirmed = block3State.transparencyConfirmed;
-        
-        let html = `<div class="space-y-4">`;
-        
-        // 1. Profile Input Reason Box
-        html += `
-            <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-6 shadow-sm">
-                <p class="font-bold text-sm text-[#22262A] mb-3">Confirm Profile input:</p>
-                <p class="font-normal text-sm text-[#464E58] mb-3 leading-relaxed">
-                     Based on your Profile inputs, transparency obligation applies to this AI system because:
-                </p>
-                <div class="${isConfirmed ? '' : 'mb-4'}">
-                    ${reasonsList}
-                </div>
-        `;
-
-        if (!isConfirmed) {
-            html += `
-                <p class="font-bold text-sm text-[#22262A] mb-4">Do you confirm?</p>
-                <div class="flex justify-end gap-3">
-                    <button onclick="switchTab('profile')" class="px-6 py-2 bg-white border border-[#B5BCC4] text-[#464E58] rounded-lg font-semibold text-sm hover:bg-[#F0F1F2] transition-colors">
-                        Edit Profile Info
-                    </button>
-                    <button onclick="confirmTransparency()" class="px-6 py-2 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A] transition-colors">
-                        Confirm
-                    </button>
+        // If not confirmed yet, show confirmation card
+        if (!block3State.transparencyConfirmed) {
+            const triggerReasons = getTransparencyTriggerReasons(triggers);
+            const reasonsList = triggerReasons.map(reason => 
+                `<li class="font-medium text-sm text-[#464E58] ml-2">${reason}</li>`
+            ).join('');
+            
+            return `
+                <div class="space-y-4">
+                    <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-4">
+                        <p class="font-semibold text-sm text-[#22262A] mb-2">Confirm Profile input:</p>
+                        <p class="font-normal text-sm text-[#464E58] mb-2">
+                            Based on your Profile inputs, transparency obligations may apply because:
+                        </p>
+                        <ul class="list-disc list-inside space-y-1 mb-4">
+                            ${reasonsList}
+                        </ul>
+                        <p class="font-semibold text-sm text-[#22262A]">Do you confirm?</p>
+                    </div>
+                    <div class="flex justify-end gap-3">
+                        <button onclick="switchTab('profile')" class="px-6 py-2.5 bg-white border border-[#B5BCC4] text-[#464E58] rounded-lg font-semibold text-sm hover:bg-[#F0F1F2] transition-colors">
+                            Edit Profile Info
+                        </button>
+                        <button onclick="confirmTransparency()" class="px-6 py-2.5 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A] transition-colors">
+                            Confirm
+                        </button>
+                    </div>
                 </div>
             `;
         }
         
-        html += `</div>`; // Close reasons box
-
-        if (isConfirmed) {
-            // No inner confirmed banner here because we handle it consistently in the flow
-            html += renderBlock3ExceptionFlow(triggers, block3Details);
-        }
-        
-        html += `</div>`;
-        return html;
+        // After confirmation - show exception selection flow
+        return renderBlock3ExceptionFlow(triggers, block3Details);
     }
     
     return '<p class="text-sm text-[#464E58]">Status: ' + status + '</p>';
@@ -3984,27 +2762,35 @@ function renderBlock3Content(status, block3Details = null) {
 // Get transparency trigger reasons for display
 function getTransparencyTriggerReasons(triggers) {
     const reasons = [];
+    const capabilityPractices = Array.from(document.querySelectorAll('input[name="capability_practices"]:checked')).map(cb => cb.value);
+    const interactsPersons = document.querySelector('input[name="interacts_persons"]:checked')?.value || '';
+    const syntheticContent = Array.from(document.querySelectorAll('input[name="synthetic_content"]:checked')).map(cb => cb.value);
+    const deploymentContext = document.querySelector('input[name="deployment_context"]:checked')?.value || '';
+    const affectedOutputs = Array.from(document.querySelectorAll('input[name="affected_outputs"]:checked')).map(cb => cb.value);
     
     if (triggers.includes('case1')) {
-        reasons.push('Biometric identification and categorisation (Section 4, Q2)');
+        reasons.push('Uses biometric identification and categorisation (Section 4, Q2)');
     }
     if (triggers.includes('case2')) {
-        reasons.push('General public / consumer-facing (Section 5, Q1)');
-    }
-    if (triggers.includes('case3')) {
-        reasons.push('Citizens / residents (Section 5, Q3)');
-    }
-    if (triggers.includes('case4')) {
         reasons.push('Emotion recognition in the workplace or in education settings (Section 7, Q1)');
     }
-    if (triggers.includes('case5')) {
+    if (triggers.includes('case3')) {
         reasons.push('Biometric categorisation that infers or predicts sensitive traits (Section 7, Q1)');
     }
-    if (triggers.includes('case6')) {
+    if (triggers.includes('case4')) {
         reasons.push('Interacts directly with natural persons (Section 7, Q2)');
     }
-    if (triggers.includes('case7')) {
+    if (triggers.includes('case5')) {
         reasons.push('Generates or manipulates synthetic content (Section 7, Q3)');
+    }
+    if (triggers.includes('case6')) {
+        if (affectedOutputs.includes('Citizens / residents') && deploymentContext === 'General public / consumer-facing') {
+            reasons.push('Affects citizens / residents and is general public / consumer-facing (Section 5, Q1 & Q3)');
+        } else if (affectedOutputs.includes('Citizens / residents')) {
+            reasons.push('Affects citizens / residents (Section 5, Q3)');
+        } else {
+            reasons.push('General public / consumer-facing deployment (Section 5, Q1)');
+        }
     }
     
     return reasons;
@@ -4012,213 +2798,153 @@ function getTransparencyTriggerReasons(triggers) {
 
 // Render exception selection flow
 function renderBlock3ExceptionFlow(triggers, block3Details) {
-    const groups = [];
-    // Note: Confirmed banner and container are handled by parent renderBlock3Content
+    const caseGroups = block3Details?.case_groups || [];
     
-    if (triggers.includes('case1') || triggers.includes('case4') || triggers.includes('case5')) {
-        const active = [];
-        if (triggers.includes('case1')) active.push('Biometric identification');
-        if (triggers.includes('case4')) active.push('Emotion recognition');
-        if (triggers.includes('case5')) active.push('Biometric categorisation');
+    // Map triggers to groups
+    const groups = [];
+    if (triggers.includes('case1') || triggers.includes('case2') || triggers.includes('case3')) {
         groups.push({
-            key: 'group_biometric_emotion',
-            label: `For ${active.join(', ')}:`,
+            key: 'group1_2_3',
+            label: 'For Biometric identification, Emotion recognition, Biometric categorisation:',
             options: [
                 'Permitted by law to detect, prevent or investigate criminal offences, as stated in Art. 50(3)',
                 'None of the above (no exception for biometric/emotion recognition cases)'
             ]
         });
     }
-    
-    if (triggers.includes('case6')) {
+    if (triggers.includes('case4')) {
         groups.push({
-            key: 'group_direct_interaction',
+            key: 'group4',
             label: 'For Direct interaction with persons:',
             options: [
                 '"Obvious to the user" exception (no notice needed), as stated in Art. 50(1)',
                 'Authorised by law to detect, prevent, investigate or prosecute criminal offences, as stated in Art. 50(1)',
-                'None of the above (no exception for direct interaction cases)'
+                'None of the above (no exception for direct interaction case)'
             ]
         });
     }
-    
-    if (triggers.includes('case7')) {
+    if (triggers.includes('case5')) {
         groups.push({
-            key: 'group_synthetic_content',
-            label: 'For Synthetic content:',
+            key: 'group5',
+            label: 'For Synthetic content generation / manipulation:',
             options: [
                 'Deepfake labelling exception (e.g., artistic / satire / fiction), as stated in Art. 50(4)',
-                'None of the above (no exception for synthetic content cases)'
+                'None of the above (no exception for synthetic content case)'
             ]
         });
     }
-    
-    if (triggers.includes('case2') || triggers.includes('case3')) {
+    if (triggers.includes('case6')) {
         groups.push({
-            key: 'group_public_exposure',
-            label: 'For Citizens / Public exposure:',
+            key: 'group6',
+            label: 'For Citizens / residents or General public facing:',
             options: [
                 'Authorised by law to detect, prevent, investigate or prosecute criminal offences, as stated in Art. 50(4)',
                 'Human review is in place or a natural or legal person holds editorial responsibility for the publication of the content, as stated in Art. 50(4)',
-                'None of the above (no exception for citizens/public exposure cases)'
+                'None of the above (no exception for citizens/public-facing case)'
             ]
         });
     }
-
-    const allGroupsAnswered = groups.every(group => 
-        block3State.exceptionOptions.some(opt => group.options.includes(opt))
-    );
-
-    let html = `
-        <div class="bg-[#E8F5E9] border border-[#81C784] rounded-lg p-3 px-4 shadow-sm flex items-center gap-2">
-             <p class="font-bold text-sm text-[#2E7D32] flex items-center gap-2">✓ Confirmed</p>
-        </div>
-        <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-6 shadow-sm">
-            <p class="font-bold text-sm text-[#22262A] mb-3">Exception Case Claim</p>
-            <p class="font-normal text-sm text-[#464E58] leading-relaxed mb-3">
-                You must select at least one exception for EACH triggered case below, or select "None of the above" for any case to confirm transparency obligation applies.
-            </p>
-            <div class="flex items-start gap-2">
-                <span class="text-[#E65100]">⚠️</span>
-                <p class="font-bold text-sm text-[#E65100]">All triggered cases must have exceptions to make transparency obligation not applicable.</p>
+    
+    // Check if all groups have exceptions selected
+    const allGroupsHaveException = groups.every(group => {
+        return block3State.exceptionOptions.some(opt => group.options.includes(opt));
+    });
+    
+    // Check if evidence is needed (all groups have valid exceptions, not "None of above")
+    const hasValidExceptionsForAll = groups.every(group => {
+        return block3State.exceptionOptions.some(opt => 
+            group.options.includes(opt) && !opt.includes('None of the above')
+        );
+    });
+    
+    const evidenceProvided = block3State.transparencyEvidenceUploaded || 
+                            (block3State.transparencyEvidenceSavedLink && block3State.transparencyEvidenceSavedLink.trim());
+    
+    // If all groups have valid exceptions and evidence provided, show success
+    if (hasValidExceptionsForAll && evidenceProvided) {
+        return `
+            <div class="bg-[#E8F5E9] border border-[#81C784] rounded-lg p-4">
+                <p class="font-semibold text-sm text-[#2E7D32]">✓ Not Applicable</p>
+                <p class="font-normal text-sm text-[#464E58] mt-2">
+                    Valid exceptions for all groups with evidence provided - transparency obligations do not apply.
+                </p>
             </div>
-        </div>
-    `;
-
-    groups.forEach(group => {
-        const selectedForThisGroup = block3State.exceptionOptions.find(opt => group.options.includes(opt));
-        
-        html += `
-            <div class="bg-white border border-[#E5E7EB] rounded-lg p-6 shadow-sm">
-                <p class="font-bold text-sm text-[#22262A] mb-4">${group.label} <span class="text-red-500">*</span></p>
-                <div class="space-y-4 ml-6">
-                    ${group.options.map(option => {
-                        const checked = block3State.exceptionOptions.includes(option) ? 'checked' : '';
-                        const isNone = option.includes('None of the above');
-                        return `
-                            <label class="flex items-start gap-3 cursor-pointer group">
-                                <input type="radio" name="${group.key}" value="${option}" ${checked} 
-                                       onchange="updateExceptionOption('${group.key}', '${option}')"
-                                       class="w-4 h-4 text-[#F13D30] border-[#B5BCC4] focus:ring-[#F13D30] mt-0.5">
-                                <span class="font-normal text-sm ${isNone ? 'text-[#E65100] font-semibold' : 'text-[#464E58]'} group-hover:text-[#111827]">${option}</span>
-                            </label>
-                        `;
-                    }).join('')}
+        `;
+    }
+    
+    // If all groups have valid exceptions but no evidence, show evidence section
+    if (hasValidExceptionsForAll && !evidenceProvided) {
+        return `
+            <div class="space-y-4">
+                <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-4">
+                    <p class="font-semibold text-sm text-[#22262A] mb-2">Evidence Required</p>
+                    <p class="font-normal text-sm text-[#464E58] mb-2">
+                        To claim exceptions, please provide evidence (upload document or paste link).
+                    </p>
+                    <div class="mt-4 space-y-3">
+                        <div>
+                            <label class="block text-sm font-medium text-[#374151] mb-2">Upload Evidence Document</label>
+                            <input type="file" id="transparency-evidence-upload" class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-[#374151] mb-2">Or Paste Link</label>
+                            <input type="text" id="transparency-evidence-link" placeholder="Paste link here" 
+                                   value="${block3State.transparencyEvidenceSavedLink || ''}"
+                                   class="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg">
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-end">
+                    <button onclick="confirmTransparencyEvidence()" class="px-6 py-2.5 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A] transition-colors">
+                        Confirm Evidence
+                    </button>
                 </div>
             </div>
         `;
-        
-        if (selectedForThisGroup) {
-            html += `
-                <div class="bg-[#E8F5E9] border border-[#81C784] rounded-lg p-3 px-4 shadow-sm">
-                     <p class="font-normal text-sm text-[#2E7D32] flex items-center gap-2"><span class="font-bold">✓ Exception(s) Selected:</span> ${selectedForThisGroup}</p>
-                </div>
-            `;
-        }
-    });
-
-    // Post-Selection Logic: Evidence Section
-    if (allGroupsAnswered) {
-        const hasNoneOfTheAbove = block3State.exceptionOptions.some(opt => opt.includes('None of the above'));
-        
-        if (hasNoneOfTheAbove) {
-            html += `
-                <div class="bg-[#E8F5E9] border border-[#81C784] rounded-lg p-3 px-4 shadow-sm flex items-center gap-2 mt-4">
-                     <p class="font-bold text-sm text-[#2E7D32] flex items-center gap-2">✓ No Exception for At Least One Case</p>
-                </div>
-                <div class="bg-[#FFF5F5] border border-[#FEB2B2] rounded-lg p-6 shadow-sm mt-4">
-                    <p class="font-bold text-sm text-[#C53030] mb-3">Result: Transparency Obligation Applies</p>
-                    <p class="font-normal text-sm text-[#464E58] leading-relaxed">
-                        Since not all triggered cases have valid exceptions, this AI system is subject to transparency requirements under Article 50 of the EU AI Act.
-                    </p>
-                </div>
-            `;
-            updateBlock3Badge('Applies', 'bg-red-100 text-red-700');
-        } else {
-            // Status stays 'Needs Review' until user clicks CONFIRM button
-            const isActuallyConfirmed = block3State.transparencyEvidenceConfirmed;
-            
-            const stagedLink = block3State.transparencyEvidenceSavedLink || '';
-            const stagedFileName = block3State.tempFileName || '';
-
-            html += `
-                <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-6 shadow-sm mt-4">
-                    <p class="font-bold text-sm text-[#22262A] mb-2">Evidence Required</p>
-                    <p class="font-normal text-sm text-[#464E58] mb-6">
-                        Please provide evidence to support your exception claim.
-                    </p>
-                    
-                    <div class="space-y-4">
-                        <p class="font-bold text-sm text-[#22262A] flex items-center gap-1">Evidence / Documentation <span class="text-red-500">*</span></p>
-                        <p class="font-normal text-sm text-[#6B7280] mb-2">Paste a link or upload new document below.</p>
-                        
-                        <div class="flex gap-2">
-                            <input type="text" id="transparency-evidence-link" placeholder="Paste link here" 
-                                   value="${stagedLink}"
-                                   class="flex-1 px-4 py-2.5 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F13D30]/20 focus:border-[#F13D30]">
-                            <button onclick="saveTransparencyEvidenceLink()" class="px-6 py-2.5 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A] transition-colors">
-                                Save link
-                            </button>
-                        </div>
-                        
-                        ${stagedLink ? `<p class="text-xs text-[#2E7D32] font-semibold mt-1 flex items-center gap-1">✓ Link staged: ${stagedLink}</p>` : ''}
-
-                        <div class="flex flex-col gap-2">
-                            <button onclick="document.getElementById('transparency-evidence-upload').click()" 
-                                    class="w-full flex items-center justify-center gap-2 py-3 border border-[#B5BCC4] rounded-lg text-sm font-medium text-[#464E58] hover:bg-gray-50 transition-colors">
-                                <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                                </svg>
-                                ${stagedFileName ? `<span class="text-[#2E7D32]">File selected: ${stagedFileName}</span>` : 'Upload Supporting Documents'}
-                            </button>
-                            <input type="file" id="transparency-evidence-upload" class="hidden" onchange="handleTransparencyFileUpload(this)">
-                        </div>
-
-                        <textarea id="transparency-explanation" rows="4" placeholder="Provide details about why the exception applies and supporting documentation."
-                                  class="w-full px-4 py-3 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F13D30]/20 focus:border-[#F13D30] resize-none"></textarea>
-                    </div>
-
-                    ${!isActuallyConfirmed ? `
-                    <div class="flex justify-end mt-6">
-                        <button onclick="confirmTransparencyEvidence()" class="px-8 py-3 bg-[#F13D30] text-white rounded-lg font-bold text-sm hover:bg-[#DC180A] shadow-md transition-all hover:-translate-y-0.5">
-                            Confirm Evidence
-                        </button>
-                    </div>
-                    ` : ''}
-                </div>
-            `;
-
-            if (isActuallyConfirmed) {
-                html += `
-                    <div class="bg-[#E8F5E9] border border-[#81C784] rounded-lg p-3 px-4 shadow-sm mt-4">
-                         <p class="font-bold text-sm text-[#2E7D32] flex items-center gap-2">✓ Evidence Confirmed for All Cases</p>
-                    </div>
-                    <div class="bg-[#E8F5E9] border border-[#81C784] rounded-lg p-6 shadow-sm mt-4 border-l-4">
-                        <p class="font-bold text-sm text-[#2E7D32] mb-3">Result: Transparency Obligation Not Applicable</p>
-                        <p class="font-normal text-sm text-[#464E58] leading-relaxed">
-                            All triggered cases have valid exceptions with supporting evidence. Transparency obligations do not apply to this AI system.
-                        </p>
-                    </div>
-                `;
-                updateBlock3Badge('Exception', 'bg-[#E0F2F1] text-[#00695C]');
-            } else {
-                updateBlock3Badge('Needs Review', 'bg-orange-100 text-orange-700');
-            }
-        }
     }
-
-    return html;
-}
-
-// Helper to update Block 3 badge status immediately
-function updateBlock3Badge(text, className) {
-    setTimeout(() => {
-        const badge = document.getElementById('block-3-status');
-        if (badge) {
-            badge.textContent = text;
-            badge.className = `px-4 py-1.5 rounded-full font-semibold text-sm ${className}`;
-        }
-    }, 100);
+    
+    // Show exception selection for each group
+    const groupsHTML = groups.map(group => {
+        const optionsHTML = group.options.map(option => {
+            const checked = block3State.exceptionOptions.includes(option) ? 'checked' : '';
+            return `
+                <label class="flex items-center space-x-2 cursor-pointer">
+                    <input type="radio" name="exception_${group.key}" value="${option}" ${checked} 
+                           onchange="updateExceptionOption('${group.key}', '${option}')" 
+                           class="w-4 h-4 text-[#F13D30] border-[#B5BCC4] focus:ring-[#F13D30]">
+                    <span class="font-normal text-sm text-[#464E58]">${option}</span>
+                </label>
+            `;
+        }).join('');
+        
+        return `
+            <div class="border-b border-[#E5E7EB] pb-4 mb-4">
+                <p class="font-semibold text-sm text-[#22262A] mb-3">${group.label}</p>
+                <div class="space-y-2">
+                    ${optionsHTML}
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    return `
+        <div class="space-y-4">
+            <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-4">
+                <p class="font-semibold text-sm text-[#22262A] mb-2">Exception Selection for Each Group</p>
+                <p class="font-normal text-sm text-[#464E58] mb-4">
+                    Select exception options for each triggered case group:
+                </p>
+                <div class="space-y-4">
+                    ${groupsHTML}
+                </div>
+            </div>
+            <div class="flex justify-end">
+                <button onclick="confirmExceptionOptions()" class="px-6 py-2.5 bg-[#F13D30] text-white rounded-lg font-semibold text-sm hover:bg-[#DC180A] transition-colors">
+                    Confirm Selections
+                </button>
+            </div>
+        </div>
+    `;
 }
 
 // Block 3 API functions
@@ -4242,7 +2968,7 @@ async function confirmTransparency() {
         if (result.success) {
             block3State.transparencyConfirmed = true;
             if (result.assessment && result.assessment.block3) {
-                updateBlock3FromBE(result.assessment);
+                updateAssessmentBlocksFromBE(result.assessment);
             } else {
                 updateAssessmentBlock(3);
             }
@@ -4255,28 +2981,6 @@ async function confirmTransparency() {
     }
 }
 
-function updateAggregatedExceptionOption(option) {
-    const isNoneOption = option.includes('None of the above');
-    
-    if (isNoneOption) {
-        if (block3State.exceptionOptions.includes(option)) {
-            block3State.exceptionOptions = block3State.exceptionOptions.filter(opt => opt !== option);
-        } else {
-            block3State.exceptionOptions = [option];
-        }
-    } else {
-        block3State.exceptionOptions = block3State.exceptionOptions.filter(opt => !opt.includes('None of the above'));
-        
-        if (block3State.exceptionOptions.includes(option)) {
-            block3State.exceptionOptions = block3State.exceptionOptions.filter(opt => opt !== option);
-        } else {
-            block3State.exceptionOptions.push(option);
-        }
-    }
-    
-    updateAssessmentBlock(3);
-}
-
 function updateExceptionOption(groupKey, option) {
     // Remove any existing option for this group
     const groupOptions = getGroupOptions(groupKey);
@@ -4287,29 +2991,29 @@ function updateExceptionOption(groupKey, option) {
         block3State.exceptionOptions.push(option);
     }
     
-    // Re-render UI to show the green banner below the correct group immediately
-    updateAssessmentBlock(3);
+    // Auto-save to BE when option changes
+    confirmExceptionOptions();
 }
 
 function getGroupOptions(groupKey) {
     const allOptions = {
-        'group_biometric_emotion': [
+        'group1_2_3': [
             'Permitted by law to detect, prevent or investigate criminal offences, as stated in Art. 50(3)',
             'None of the above (no exception for biometric/emotion recognition cases)'
         ],
-        'group_direct_interaction': [
+        'group4': [
             '"Obvious to the user" exception (no notice needed), as stated in Art. 50(1)',
             'Authorised by law to detect, prevent, investigate or prosecute criminal offences, as stated in Art. 50(1)',
-            'None of the above (no exception for direct interaction cases)'
+            'None of the above (no exception for direct interaction case)'
         ],
-        'group_synthetic_content': [
+        'group5': [
             'Deepfake labelling exception (e.g., artistic / satire / fiction), as stated in Art. 50(4)',
-            'None of the above (no exception for synthetic content cases)'
+            'None of the above (no exception for synthetic content case)'
         ],
-        'group_public_exposure': [
+        'group6': [
             'Authorised by law to detect, prevent, investigate or prosecute criminal offences, as stated in Art. 50(4)',
             'Human review is in place or a natural or legal person holds editorial responsibility for the publication of the content, as stated in Art. 50(4)',
-            'None of the above (no exception for citizens/public exposure cases)'
+            'None of the above (no exception for citizens/public-facing case)'
         ]
     };
     return allOptions[groupKey] || [];
@@ -4334,7 +3038,7 @@ async function confirmExceptionOptions() {
         
         if (result.success) {
             if (result.assessment && result.assessment.block3) {
-                updateBlock3FromBE(result.assessment);
+                updateAssessmentBlocksFromBE(result.assessment);
             } else {
                 updateAssessmentBlock(3);
             }
@@ -4342,31 +3046,6 @@ async function confirmExceptionOptions() {
     } catch (error) {
         console.error('Error confirming exception options:', error);
     }
-}
-
-async function saveTransparencyEvidenceLink() {
-    const linkInput = document.getElementById('transparency-evidence-link');
-    if (!linkInput) return;
-    
-    const link = linkInput.value.trim();
-    if (!link) {
-        alert('Please enter a link first.');
-        return;
-    }
-    
-    // Just stage it locally, don't update status to Exception yet
-    block3State.transparencyEvidenceSavedLink = link;
-    updateAssessmentBlock(3);
-}
-
-function handleTransparencyFileUpload(input) {
-    if (!input.files || input.files.length === 0) return;
-    
-    const file = input.files[0];
-    
-    // Just stage it locally for UI feedback, don't upload yet
-    block3State.tempFileName = file.name;
-    updateAssessmentBlock(3);
 }
 
 async function confirmTransparencyEvidence() {
@@ -4417,7 +3096,6 @@ async function confirmTransparencyEvidence() {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                exception_options: block3State.exceptionOptions,
                 transparency_evidence_uploaded: evidenceUploaded,
                 transparency_evidence_saved_link: evidenceLink
             })
@@ -4426,13 +3104,10 @@ async function confirmTransparencyEvidence() {
         const result = await response.json();
         
         if (result.success) {
-            block3State.transparencyEvidenceConfirmed = true; // Final confirmation flag
-            block3State.transparencyEvidenceUploaded = evidenceUploaded || block3State.transparencyEvidenceUploaded;
+            block3State.transparencyEvidenceUploaded = evidenceUploaded;
             block3State.transparencyEvidenceSavedLink = evidenceLink;
-            block3State.tempFileName = ''; // Clear staged file name
-            
             if (result.assessment && result.assessment.block3) {
-                updateBlock3FromBE(result.assessment);
+                updateAssessmentBlocksFromBE(result.assessment);
             } else {
                 updateAssessmentBlock(3);
             }
@@ -4494,51 +3169,97 @@ function renderBlock4Content(status, block4Details = null) {
         `;
     }
 
-    const isConfirmed = block4State.gpaiConfirmed;
-
+    // GPAI integration is "Yes"
     if (gpaiIntegration === 'Yes') {
+        // Triggered state
+        if (status === 'Triggered') {
+            return `
+                <div class="space-y-4">
+                    <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-6 shadow-sm">
+                        <p class="font-bold text-sm text-[#22262A] mb-3">Confirm Profile input:</p>
+                        <p class="font-normal text-sm text-[#464E58] mb-3">
+                            Based on your Profile inputs, GPAI obligations apply to this AI system because:
+                        </p>
+                        <div class="pl-8 mb-4">
+                             <p class="font-normal text-sm text-[#464E58] leading-relaxed">
+                                System is provided as or integrates a general-purpose AI (GPAI) model / component (Section 8, Q2)
+                             </p>
+                        </div>
+                        <p class="font-bold text-sm text-[#22262A]">Do you confirm?</p>
+                    </div>
+                    <div class="flex justify-end gap-3 mt-2 pr-1">
+                        <button onclick="switchTab('profile')" class="px-6 py-2.5 bg-white border border-[#B5BCC4] text-[#464E58] rounded-lg font-bold text-sm hover:bg-[#F0F1F2] transition-colors shadow-sm">
+                            Edit Profile Info
+                        </button>
+                        <button onclick="confirmGPAI()" class="px-8 py-2.5 bg-[#F13D30] text-white rounded-lg font-bold text-sm hover:bg-[#DC180A] transition-colors shadow-sm">
+                            Confirm
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Confirmed flow (status is 'Needs Review', 'Applies', or 'Not Applicable')
         let html = '<div class="space-y-4">';
         
-        // 1. Profile Trigger Box
+        // Static Profile Confirmation Box
         html += `
             <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-6 shadow-sm">
                 <p class="font-bold text-sm text-[#22262A] mb-3">Confirm Profile input:</p>
-                <p class="font-normal text-sm text-[#464E58] mb-3 leading-relaxed">
+                <p class="font-normal text-sm text-[#464E58] mb-3">
                     Based on your Profile inputs, GPAI obligations apply to this AI system because:
                 </p>
-                <div class="${isConfirmed ? '' : 'mb-4'} pl-8">
+                <div class="pl-8">
                      <p class="font-normal text-sm text-[#464E58] leading-relaxed">
                         System is provided as or integrates a general-purpose AI (GPAI) model / component (Section 8, Q2)
                      </p>
                 </div>
+            </div>
         `;
 
-        if (!isConfirmed) {
-            html += `
-                <p class="font-bold text-sm text-[#22262A] mb-4">Do you confirm?</p>
-                </div> <!-- End of trigger box -->
-                <div class="flex justify-end gap-3 mt-2 pr-1">
-                    <button onclick="switchTab('profile')" class="px-6 py-2.5 bg-white border border-[#B5BCC4] text-[#464E58] rounded-lg font-bold text-sm hover:bg-[#F0F1F2] transition-colors shadow-sm">
-                        Edit Profile Info
-                    </button>
-                    <button onclick="confirmGPAI()" class="px-8 py-2.5 bg-[#F13D30] text-white rounded-lg font-bold text-sm hover:bg-[#DC180A] transition-colors shadow-sm">
-                        Confirm
-                    </button>
+        // Initial assessment confirmation
+        html += `
+            <div class="bg-[#E8F5E9] border border-[#81C784] rounded-lg p-3 px-4 shadow-sm flex items-center gap-2">
+                 <p class="font-bold text-sm text-[#2E7D32]">✓ Confirmed</p>
+            </div>
+        `;
+
+        // Provider determination
+        html += `
+            <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-6 shadow-sm">
+                <p class="font-bold text-sm text-[#22262A] mb-3">Provider Status</p>
+                <p class="font-normal text-sm text-[#464E58] leading-relaxed">
+                    Please clarify your role in relation to the AI model:
+                </p>
+            </div>
+
+            <div class="space-y-4 px-2 pt-2">
+                <p class="font-bold text-sm text-[#22262A]">Are you the provider of the AI model (you develop it / release it under your name)? <span class="text-red-500">*</span></p>
+                <div class="space-y-4 ml-2">
+                    <label class="flex items-start gap-3 cursor-pointer group">
+                        <input type="radio" name="gpai_provider_answer" value="Yes" 
+                               ${block4State.gpaiProviderAnswer === 'Yes' ? 'checked' : ''}
+                               onchange="setGPAIProviderAnswer('Yes')" 
+                               class="w-4 h-4 text-[#F13D30] border-[#B5BCC4] focus:ring-[#F13D30] mt-0.5">
+                        <span class="font-normal text-sm text-[#464E58] group-hover:text-[#111827]">Yes - I am the provider of the AI model</span>
+                    </label>
+                    <label class="flex items-start gap-3 cursor-pointer group">
+                        <input type="radio" name="gpai_provider_answer" value="No" 
+                               ${block4State.gpaiProviderAnswer === 'No' ? 'checked' : ''}
+                               onchange="setGPAIProviderAnswer('No')" 
+                               class="w-4 h-4 text-[#F13D30] border-[#B5BCC4] focus:ring-[#F13D30] mt-0.5">
+                        <span class="font-normal text-sm text-[#464E58] group-hover:text-[#111827]">No - I am not the provider (e.g., I am a deployer / user of the model)</span>
+                    </label>
+                    <label class="flex items-start gap-3 cursor-pointer group">
+                        <input type="radio" name="gpai_provider_answer" value="Not sure" 
+                               ${block4State.gpaiProviderAnswer === 'Not sure' ? 'checked' : ''}
+                               onchange="setGPAIProviderAnswer('Not sure')" 
+                               class="w-4 h-4 text-[#F13D30] border-[#B5BCC4] focus:ring-[#F13D30] mt-0.5">
+                        <span class="font-normal text-sm text-[#464E58] group-hover:text-[#111827]">Not sure - Requires further review</span>
+                    </label>
                 </div>
-            `;
-        } else {
-            html += `</div>`; // Close trigger box
-            
-            // 2. Confirmed Banner
-            html += `
-                <div class="bg-[#E8F5E9] border border-[#81C784] rounded-lg p-3 px-4 shadow-sm flex items-center gap-2">
-                     <p class="font-bold text-sm text-[#2E7D32]">✓ Confirmed</p>
-                </div>
-            `;
-            
-            // 3. Provider Status Questions
-            html += renderBlock4ProviderQuestion(block4Details);
-        }
+            </div>
+        `;
 
         // Result banners
         if (status === 'Applies' && block4State.gpaiProviderAnswer === 'Yes') {
@@ -4559,13 +3280,12 @@ function renderBlock4Content(status, block4Details = null) {
                     </p>
                 </div>
             `;
-        } else if (status === 'Needs Review') {
-            const reason = block4Details?.reason || 'Your provider status needs to be clarified. Please consult with your legal team or compliance officer.';
+        } else if (status === 'Needs Review' && block4State.gpaiProviderAnswer === 'Not sure') {
             html += `
                 <div class="bg-[#FFF9E6] border border-[#FFE59E] rounded-lg p-6 shadow-sm mt-4">
                     <p class="font-bold text-sm text-[#F57C00] mb-2">Result: Needs Review</p>
                     <p class="font-normal text-sm text-[#464E58] leading-relaxed">
-                        ${reason}
+                        Your provider status needs to be clarified. Please consult with your legal team or compliance officer to determine whether you are the provider of the AI model.
                     </p>
                 </div>
             `;
@@ -4638,7 +3358,7 @@ async function confirmGPAI() {
         if (result.success) {
             block4State.gpaiConfirmed = true;
             if (result.assessment && result.assessment.block4) {
-                updateBlock4FromBE(result.assessment);
+                updateAssessmentBlocksFromBE(result.assessment);
             } else {
                 updateAssessmentBlock(4);
             }
@@ -4671,7 +3391,7 @@ async function setGPAIProviderAnswer(value) {
         if (result.success) {
             block4State.gpaiProviderAnswer = value;
             if (result.assessment && result.assessment.block4) {
-                updateBlock4FromBE(result.assessment);
+                updateAssessmentBlocksFromBE(result.assessment);
             } else {
                 updateAssessmentBlock(4);
             }
@@ -4719,157 +3439,133 @@ function updateAllAssessmentBlocks() {
     }
 }
 
-// Update assessment blocks from BE results - Refactored with dependencies
+// Update assessment blocks from BE results
 function updateAssessmentBlocksFromBE(assessmentResults) {
-    if (!assessmentResults) return;
-    
-    updateBlock1FromBE(assessmentResults);
-    updateBlock2FromBE(assessmentResults);
-    updateBlock3FromBE(assessmentResults);
-    updateBlock4FromBE(assessmentResults);
-    
+    // Update Block 1
     if (assessmentResults.block1) {
-        [2, 3, 4].forEach(num => {
-            if (!assessmentResults[`block${num}`]) {
-                updateAssessmentBlock(num);
-            }
-        });
-    }
-}
-
-function updateBlock1FromBE(assessmentResults) {
-    if (!assessmentResults || !assessmentResults.block1) return;
-    
-    const block1Status = assessmentResults.block1.status;
-    const beState = assessmentResults.block1_state;
-    
-    if (beState && Object.keys(beState).length > 0) {
-        block1State.prohibitedConfirmed = beState.prohibited_confirmed || false;
-        block1State.claimingException = beState.claiming_exception || '';
-        block1State.exceptionQualifies = beState.exception_qualifies || '';
-        block1State.exceptionQualifiesMap = beState.exception_qualifies_map || {};
-        block1State.exceptionEvidenceMap = beState.exception_evidence_map || {};
-        block1State.exceptionEvidenceUploaded = beState.exception_evidence_uploaded || false;
-        block1State.exceptionEvidenceSavedLink = beState.exception_evidence_saved_link || '';
-        block1State.exceptionEvidenceFiles = beState.exception_evidence_files || [];
-        block1State.noExceptionConfirmed = beState.no_exception_confirmed || false;
-        block1State.exceptionConfirmed = beState.exception_confirmed || false;
-    }
-    
-    block1State.be_assessment = assessmentResults.block1;
-    
-    const block1Content = renderBlock1Content(block1Status);
-    updateBlockStatus(1, block1Status, block1Content);
-}
-    
-function updateBlock2FromBE(assessmentResults) {
-    if (!assessmentResults || !assessmentResults.block2) return;
-    const block2Status = assessmentResults.block2.status;
-    const block2Details = assessmentResults.block2.details || {};
+        const block1Status = assessmentResults.block1.status;
         
-    const beState = assessmentResults.block2_state;
-    
-    if (beState && Object.keys(beState).length > 0) {
-        block2State.highRiskConfirmed = beState.high_risk_confirmed || false;
-        block2State.materialInfluence = beState.material_influence || '';
-        block2State.narrowTasks = beState.narrow_tasks || [];
-        block2State.profiling = beState.profiling || '';
-        block2State.exemptionEvidenceUploaded = beState.exemption_evidence_uploaded || false;
-        block2State.exemptionEvidenceSavedLink = beState.exemption_evidence_saved_link || '';
-        block2State.exemptionEvidenceExplanation = beState.exemption_evidence_explanation || '';
-        block2State.exemptionConfirmed = beState.exemption_confirmed || false;
-        block2State.exemptionEvidenceFileName = beState.exemption_evidence_file_name || '';
-        block2State.exemptionEvidenceFileUrl = beState.exemption_evidence_file_url || '';
-    }
-
-    block2State.be_assessment = assessmentResults.block2;
-    
-    const block2Content = renderBlock2Content(block2Status, block2Details);
-    updateBlockStatus(2, block2Status, block2Content);
-}
-    
-function updateBlock3FromBE(assessmentResults) {
-    if (!assessmentResults || !assessmentResults.block3) return;
-    
-    const beState = assessmentResults.block3_state;
-    if (beState && Object.keys(beState).length > 0) {
-        block3State.transparencyConfirmed = beState.transparency_confirmed || false;
-        block3State.exceptionOptions = beState.exception_options || [];
-        block3State.transparencyEvidenceUploaded = beState.transparency_evidence_uploaded || false;
-        block3State.transparencyEvidenceSavedLink = beState.transparency_evidence_saved_link || '';
-        // If evidence is already uploaded/linked in BE, we consider it confirmed in FE
-        block3State.transparencyEvidenceConfirmed = (beState.transparency_evidence_uploaded || (beState.transparency_evidence_saved_link && beState.transparency_evidence_saved_link.length > 0));
-    }
-    block3State.tempFileName = ''; 
-
-    block3State.be_assessment = assessmentResults.block3;
-    
-    const block3Status = assessmentResults.block3.status;
-    const block3Details = assessmentResults.block3.details || {};
-    const block3Content = renderBlock3Content(block3Status, block3Details);
-    updateBlockStatus(3, block3Status, block3Content);
-}
-    
-function updateBlock4FromBE(assessmentResults) {
-    if (!assessmentResults || !assessmentResults.block4) return;
-    
-    const block4Status = assessmentResults.block4.status;
-    const block4Details = assessmentResults.block4.details || {};
-    const beState = assessmentResults.block4_state;
-    
-    if (beState && Object.keys(beState).length > 0) {
-        block4State.gpaiConfirmed = beState.gpai_confirmed || false;
-        block4State.gpaiProviderAnswer = beState.gpai_provider_answer || '';
-    }
-    
-    block4State.be_assessment = assessmentResults.block4;
-    
-    const block4Content = renderBlock4Content(block4Status, block4Details);
-    updateBlockStatus(4, block4Status, block4Content);
-}
-
-
-function renderDeactivatedContent() {
-    return `
-        <div class="p-8 text-center bg-gray-50 rounded-lg border border-gray-200">
-            <div class="mb-4 inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 text-gray-400">
-                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.36 6.64a9 9 0 11-12.73 12.73 9 9 0 0112.73-12.73zM12 8v4m0 4h.01"></path>
-                </svg>
-            </div>
-            <h3 class="font-bold text-lg text-[#22262A] mb-2">Assessment De-activated</h3>
-            <p class="font-normal text-sm text-[#6B7280] max-w-sm mx-auto leading-relaxed">
-                This assessment has been de-activated because the AI system was identified as <strong>Prohibited</strong> under Article 5 of the EU AI Act in Block 1.
-            </p>
-        </div>
-    `;
-}
-function renderAwaitingBlock1Content() {
-    return `
-        <div class="p-8 text-center bg-[#FFFDF5] rounded-lg border border-[#FFE59E]">
-            <div class="mb-4 inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#FFF9E6] text-[#F57C00]">
-                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-            </div>
-            <h3 class="font-bold text-lg text-[#22262A] mb-2">Awaiting Block 1 Completion</h3>
-            <p class="font-normal text-sm text-[#6B7280] max-w-sm mx-auto leading-relaxed">
-                Please complete the <strong>Prohibited Practices Screening</strong> (Block 1) first. 
-                Other assessment flows will become available once the system is confirmed as non-prohibited.
-            </p>
-        </div>
-    `;
-}
-
-function updateBlockStatus(blockNum, status, content) {
-    const b1Status = getProhibitedStatus();
-    if (blockNum > 1) {
-        if (b1Status === 'Prohibited') {
-            status = 'De-activated';
-            content = renderDeactivatedContent();
+        // Sync state from backend
+        const backendHasState = assessmentResults.block1_state && Object.keys(assessmentResults.block1_state).length > 0;
+        
+        if (!backendHasState) {
+            // Fresh assessment from profile save - RESET all frontend state
+            block1State.prohibitedConfirmed = false;
+            block1State.claimingException = '';
+            block1State.exceptionQualifies = '';
+            block1State.exceptionQualifiesMap = {};
+            block1State.exceptionEvidenceMap = {};
+            block1State.exceptionEvidenceUploaded = false;
+            block1State.exceptionEvidenceSavedLink = '';
+            block1State.exceptionEvidenceFiles = [];
+            block1State.noExceptionConfirmed = false;
+        } else {
+            // SYNC frontend state from backend state
+            const beState = assessmentResults.block1_state;
+            block1State.prohibitedConfirmed = beState.prohibited_confirmed || false;
+            block1State.claimingException = beState.claiming_exception || '';
+            block1State.exceptionQualifies = beState.exception_qualifies || '';
+            block1State.exceptionQualifiesMap = beState.exception_qualifies_map || {};
+            block1State.exceptionEvidenceMap = beState.exception_evidence_map || {};
+            block1State.exceptionEvidenceUploaded = beState.exception_evidence_uploaded || false;
+            block1State.exceptionEvidenceSavedLink = beState.exception_evidence_saved_link || '';
+            block1State.exceptionEvidenceFiles = beState.exception_evidence_files || [];
+            block1State.noExceptionConfirmed = beState.no_exception_confirmed || false;
         }
+        
+        // Store BE assessment data for reference (needed for renderBlock1Content)
+        block1State.be_assessment = assessmentResults.block1;
+        
+        const block1Content = renderBlock1Content(block1Status);
+        updateBlockStatus(1, block1Status, block1Content);
     }
+    
+    // Update Block 2
+    if (assessmentResults.block2) {
+        const block2Status = assessmentResults.block2.status;
+        const block2Details = assessmentResults.block2.details || {};
+        
+        // Sync state from backend
+        const backendHasState = assessmentResults.block2_state && Object.keys(assessmentResults.block2_state).length > 0;
+        if (!backendHasState) {
+            block2State.highRiskConfirmed = false;
+            block2State.uiConfirmedInSession = false;
+            block2State.materialInfluence = '';
+            block2State.narrowTasks = [];
+            block2State.profiling = '';
+            block2State.exemptionEvidenceUploaded = false;
+            block2State.exemptionEvidenceSavedLink = '';
+        } else {
+            const beState = assessmentResults.block2_state;
+            block2State.highRiskConfirmed = beState.high_risk_confirmed || false;
+            block2State.materialInfluence = beState.material_influence || '';
+            block2State.narrowTasks = beState.narrow_tasks || [];
+            block2State.profiling = beState.profiling || '';
+            block2State.exemptionEvidenceUploaded = beState.exemption_evidence_uploaded || false;
+            block2State.exemptionEvidenceSavedLink = beState.exemption_evidence_saved_link || '';
+        }
 
+        // Store BE assessment data for reference
+        block2State.be_assessment = assessmentResults.block2;
+        
+        const block2Content = renderBlock2Content(block2Status, block2Details);
+        updateBlockStatus(2, block2Status, block2Content);
+    }
+    
+    // Update Block 3
+    if (assessmentResults.block3) {
+        const block3Status = assessmentResults.block3.status;
+        const block3Details = assessmentResults.block3.details || {};
+        
+        // Sync state from backend
+        const backendHasState = assessmentResults.block3_state && Object.keys(assessmentResults.block3_state).length > 0;
+        if (!backendHasState) {
+            block3State.transparencyConfirmed = false;
+            block3State.exceptionOptions = [];
+            block3State.transparencyEvidenceUploaded = false;
+            block3State.transparencyEvidenceSavedLink = '';
+        } else {
+            const beState = assessmentResults.block3_state;
+            block3State.transparencyConfirmed = beState.transparency_confirmed || false;
+            block3State.exceptionOptions = beState.exception_options || [];
+            block3State.transparencyEvidenceUploaded = beState.transparency_evidence_uploaded || false;
+            block3State.transparencyEvidenceSavedLink = beState.transparency_evidence_saved_link || '';
+        }
+
+        // Store BE assessment data for reference
+        block3State.be_assessment = assessmentResults.block3;
+        
+        const block3Content = renderBlock3Content(block3Status, block3Details);
+        updateBlockStatus(3, block3Status, block3Content);
+    }
+    
+    // Update Block 4
+    if (assessmentResults.block4) {
+        const block4Status = assessmentResults.block4.status;
+        const block4Details = assessmentResults.block4.details || {};
+        
+        // Sync state from backend
+        const backendHasState = assessmentResults.block4_state && Object.keys(assessmentResults.block4_state).length > 0;
+        if (!backendHasState) {
+            block4State.gpaiConfirmed = false;
+            block4State.gpaiProviderAnswer = '';
+        } else {
+            const beState = assessmentResults.block4_state;
+            block4State.gpaiConfirmed = beState.gpai_confirmed || false;
+            block4State.gpaiProviderAnswer = beState.gpai_provider_answer || '';
+        }
+        
+        // Store BE assessment data for reference
+        block4State.be_assessment = assessmentResults.block4;
+        
+        const block4Content = renderBlock4Content(block4Status, block4Details);
+        updateBlockStatus(4, block4Status, block4Content);
+    }
+}
+
+
+// Helper function to update block status and content
+function updateBlockStatus(blockNum, status, content) {
     const statusEl = document.getElementById(`block-${blockNum}-status`);
     const contentEl = document.getElementById(`block-${blockNum}-content-inner`);
     
@@ -5690,91 +4386,3 @@ function initOtherOptionsLogic() {
     if (systemUsersOtherCheckbox && systemUsersOtherInput) {
         systemUsersOtherCheckbox.addEventListener('change', function() {
             if (this.checked) {
-                systemUsersOtherInput.classList.remove('hidden');
-            } else {
-                systemUsersOtherInput.classList.add('hidden');
-                systemUsersOtherInput.value = '';
-            }
-        });
-    }
-    
-    // Section 5, Q3: Affected Outputs - Other
-    const affectedOutputsOtherCheckbox = document.getElementById('affected-outputs-other-checkbox');
-    const affectedOutputsOtherInput = document.getElementById('affected-outputs-other-input');
-    
-    if (affectedOutputsOtherCheckbox && affectedOutputsOtherInput) {
-        affectedOutputsOtherCheckbox.addEventListener('change', function() {
-            if (this.checked) {
-                affectedOutputsOtherInput.classList.remove('hidden');
-            } else {
-                affectedOutputsOtherInput.classList.add('hidden');
-                affectedOutputsOtherInput.value = '';
-            }
-        });
-    }
-    
-    // Section 6, Q2: Output Types - Other
-    const outputTypesOtherCheckbox = document.getElementById('output-types-other-checkbox');
-    const outputTypesOtherInput = document.getElementById('output-types-other-input');
-    
-    if (outputTypesOtherCheckbox && outputTypesOtherInput) {
-        outputTypesOtherCheckbox.addEventListener('change', function() {
-            if (this.checked) {
-                outputTypesOtherInput.classList.remove('hidden');
-            } else {
-                outputTypesOtherInput.classList.add('hidden');
-                outputTypesOtherInput.value = '';
-            }
-        });
-    }
-}
-
-// GPAI Integration Logic Functions (Section 9, Q2)
-function initGPAIIntegrationLogic() {
-    const gpaiIntegrationRadios = document.querySelectorAll('.gpai-integration-radio');
-    const gpaiProviderField = document.getElementById('gpai-provider-field');
-    const gpaiProviderInput = document.getElementById('gpai-provider-input');
-    
-    function handleGPAIIntegrationChange() {
-        const selectedValue = document.querySelector('input[name="gpai_integration"]:checked')?.value;
-        
-        if (selectedValue === 'Yes') {
-            // Show GPAI provider input field
-            gpaiProviderField?.classList.remove('hidden');
-        } else {
-            // Hide GPAI provider input field and clear value
-            gpaiProviderField?.classList.add('hidden');
-            if (gpaiProviderInput) gpaiProviderInput.value = '';
-        }
-    }
-    
-    gpaiIntegrationRadios.forEach(radio => {
-        radio.addEventListener('change', handleGPAIIntegrationChange);
-    });
-    
-    // Initialize state
-    handleGPAIIntegrationChange();
-}
-</script>
-
-<style>
-/* Date picker calendar styling */
-#date-picker-dropdown {
-    font-family: 'Montserrat', sans-serif;
-}
-
-#date-picker-calendar button {
-    font-family: 'Montserrat', sans-serif;
-}
-
-#go-live-date-wrapper:focus-within {
-    border-color: #F13D30;
-    box-shadow: 0 0 0 2px rgba(241, 61, 48, 0.1);
-}
-
-#go-live-date-display {
-    pointer-events: auto;
-    cursor: pointer;
-}
-</style>
-{% endblock %}

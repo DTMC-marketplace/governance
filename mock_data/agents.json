@@ -41,27 +41,35 @@
       },
       "intended_purpose": {
         "intended_purpose": "",
-        "sector_domain": [],
+        "sector_domain": [
+          "Biometric identification and categorisation"
+        ],
         "sector_other": "",
-        "safety_component": "",
+        "safety_component": "No",
         "third_party_conformity": ""
       },
-      "deployment_context": "",
+      "deployment_context": "General public / consumer-facing",
       "deployment_other": "",
       "system_users": [],
       "system_users_other": "",
-      "affected_outputs": [],
+      "affected_outputs": [
+        "Customers / consumers"
+      ],
       "affected_outputs_other": "",
       "vulnerable_groups": [],
       "workflow_role": "",
       "output_types": [],
       "decision_influence": "",
       "auto_execute": "",
-      "capability_practices": [],
-      "interacts_persons": "",
-      "synthetic_content": [],
+      "capability_practices": [
+        "Biometric categorisation that infers or predicts sensitive traits (e.g., race, political opinions, religion, trade union membership, sexual orientation)"
+      ],
+      "interacts_persons": "Yes",
+      "synthetic_content": [
+        "Text"
+      ],
       "ai_kind": [],
-      "gpai_integration": "No",
+      "gpai_integration": "Yes",
       "gpai_provider": "",
       "training_source": "",
       "update_frequency": "",
@@ -69,34 +77,57 @@
     },
     "assessment": {
       "block1": {
-        "status": "Not assessed",
-        "selected_practices": [],
+        "status": "Prohibited",
+        "selected_practices": [
+          "Biometric categorisation that infers or predicts sensitive traits (e.g., race, political opinions, religion, trade union membership, sexual orientation)"
+        ],
+        "practices_info": {
+          "Biometric categorisation that infers or predicts sensitive traits (e.g., race, political opinions, religion, trade union membership, sexual orientation)": {
+            "label": "Biometric categorisation (sensitive traits)",
+            "article": "5(1)(g)",
+            "has_exception": true,
+            "exception_condition": "AI system is for labelling or filtering of lawfully acquired biometric datasets, such as images, based on biometric data or categorizing of biometric data in the area of law enforcement. (Art.5(1)(g))"
+          }
+        },
         "details": {
-          "reason": "No capabilities selected"
+          "reason": "One or more exception claims were denied or uncertain (answered \"No\" or \"Not sure\")",
+          "has_exception_available": true,
+          "has_no_exception": false
         }
       },
       "block2": {
-        "status": "Not assessed",
+        "status": "De-activated",
         "details": {
-          "reason": "Section 4 not answered (Q2 Sector, Q3 Safety)"
+          "reason": "Block 1 Prohibited - High-risk classification assessment not applicable"
         }
       },
       "block3": {
-        "status": "Not assessed",
+        "status": "De-activated",
         "details": {
-          "reason": "Capabilities not answered (Section 7, Q1)"
+          "reason": "Block 1 Prohibited - Transparency obligation assessment not applicable"
         }
       },
       "block4": {
-        "status": "Not Applicable",
+        "status": "De-activated",
         "details": {
-          "reason": "Based on your Profile inputs, this AI system does not qualify as a general-purpose AI model, so GPAI obligations under Chapter V of the EU AI Act do not apply.",
-          "gpai_integration": "No"
+          "reason": "Block 1 Prohibited - GPAI obligation assessment not applicable"
         }
       },
-      "block4_state": {
-        "gpai_confirmed": true,
-        "gpai_provider_answer": "No"
+      "block1_state": {
+        "prohibited_confirmed": true,
+        "claiming_exception": "Yes",
+        "exception_qualifies": "",
+        "exception_evidence_uploaded": false,
+        "exception_evidence_saved_link": "",
+        "no_exception_confirmed": false,
+        "exception_qualifies_map": {
+          "Biometric categorisation that infers or predicts sensitive traits (e.g., race, political opinions, religion, trade union membership, sexual orientation)": "No"
+        },
+        "exception_conditions": [
+          "AI system is for labelling or filtering of lawfully acquired biometric datasets, such as images, based on biometric data or categorizing of biometric data in the area of law enforcement. (Art.5(1)(g))"
+        ],
+        "exception_evidence_map": {},
+        "exception_confirmed": true
       }
     }
   }
