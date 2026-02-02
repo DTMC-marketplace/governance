@@ -13,13 +13,24 @@
         <button class="w-6 h-6 bg-transparent border-none cursor-pointer p-0 flex items-center justify-center" onclick="history.forward()">
             <img src="{% static 'governance/img/arrow-right-gray.svg' %}" alt="Forward" class="w-3.5 h-3.5">
         </button>
-        <span class="text-sm font-semibold text-[#F13D30]">Compliance</span>
+        {% for crumb in breadcrumbs %}
+            {% if not forloop.first %}
+                <span class="text-[#B5BCC4] text-sm">/</span>
+            {% endif %}
+            {% if forloop.last %}
+                <span class="text-sm font-semibold text-[#F13D30]">{{ crumb.name }}</span>
+            {% else %}
+                <a href="{{ crumb.url }}" class="text-sm font-semibold text-[#6B7280] hover:text-[#111827] transition-colors">{{ crumb.name }}</a>
+            {% endif %}
+        {% endfor %}
     </div>
 
-    <!-- Page Header -->
+    <!-- Page Header (Framework Specific) -->
     <div class="flex justify-between items-start">
         <div>
-            <h1 class="text-2xl font-bold text-[#22262A] mb-1">Active Projects</h1>
+            <h1 class="text-2xl font-bold text-[#22262A] mb-1">
+                {% if framework == 'eu_ai_act' %}EU AI Act Compliance Projects{% else %}Active Projects{% endif %}
+            </h1>
             <p class="text-sm text-[#6B7280]">Monitor and manage compliance assessments for your AI systems</p>
         </div>
         <button type="button" id="new-compliance-project-btn" class="flex items-center gap-2 px-4 py-2 rounded-full bg-[#F13D30] text-white text-sm font-semibold shadow hover:bg-[#DC180A] transition-colors">
@@ -160,9 +171,9 @@
             
             <!-- Archived Toggle -->
             {% if view_status == 'archived' %}
-                <a href="?view=active" class="text-[#F13D30] text-sm font-semibold hover:underline">← Back to Active Projects</a>
+                <a href="?view=active{% if framework %}&framework={{ framework }}{% endif %}" class="text-[#F13D30] text-sm font-semibold hover:underline">← Back to Active Projects</a>
             {% else %}
-                <a href="?view=archived" class="text-[#6B7280] text-sm hover:text-[#374151] font-medium hover:underline">View Archived Projects</a>
+                <a href="?view=archived{% if framework %}&framework={{ framework }}{% endif %}" class="text-[#6B7280] text-sm hover:text-[#374151] font-medium hover:underline">View Archived Projects</a>
             {% endif %}
         </div>
         

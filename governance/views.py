@@ -4243,23 +4243,42 @@ def _ai_systems_for_compliance_modal():
     return out
 
 
-def compliance(request):
+def compliance_hub(request):
     """
-    Compliance page - Active projects overview (UI based on design).
-    Data loaded from mock_data/compliance_projects.json.
-    Supports ?view=archived query param.
+    Compliance page - Digital Regulation Hubs.
     """
     ensure_governance_platform(request)
-
     company = MockCompany()
+    
+    breadcrumbs = [
+        {"name": "Compliance", "url": request.build_absolute_uri()},
+    ]
+    return render(request, 'governance/pages/compliance_hub.html', {
+        'company': company,
+        'subpage': 'compliance',
+        'breadcrumbs': breadcrumbs,
+    })
+
+
+def compliance(request):
+    """
+    Compliance Projects view.
+    """
+    ensure_governance_platform(request)
+    company = MockCompany()
+    
+    framework = request.GET.get('framework')
     
     # Check if viewing archived
     view_status = request.GET.get('view', 'active')
     show_archived = (view_status == 'archived')
     
     breadcrumbs = [
-        {"name": "Compliance", "url": request.build_absolute_uri(request.path)}, # Base URL 
+        {"name": "Compliance", "url": "/compliance/"},
     ]
+    if framework == 'eu_ai_act':
+        breadcrumbs.append({"name": "EU AI Act", "url": request.build_absolute_uri()})
+    
     if show_archived:
         breadcrumbs.append({"name": "Archived", "url": request.build_absolute_uri()})
 
@@ -4282,7 +4301,8 @@ def compliance(request):
         'active_projects': active_projects,
         'not_compliant_count': not_compliant_count,
         'ai_systems_for_modal': ai_systems_for_modal,
-        'view_status': view_status, # Pass status to template
+        'view_status': view_status,
+        'framework': framework,
     })
 
 
@@ -4301,6 +4321,7 @@ def compliance_detail(request, project_id):
     
     breadcrumbs = [
         {"name": "Compliance", "url": "/compliance/"},
+        {"name": "EU AI Act", "url": "/compliance/projects/?framework=eu_ai_act"},
         {"name": project.get('name', 'Detail'), "url": request.build_absolute_uri()},
     ]
     return render(request, 'governance/pages/compliance_detail.html', {

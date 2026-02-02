@@ -30,7 +30,8 @@ urlpatterns = [
     path("api/ai-inventory/<int:agent_id>/block4-state/", views.api_update_block4_state, name="api_update_block4_state"),
     
     # Compliance Projects
-    path("compliance/", views.compliance, name="compliance"),
+    path("compliance/", views.compliance_hub, name="compliance"),
+    path("compliance/projects/", views.compliance, name="compliance_projects"),
     path("compliance/<int:project_id>/", views.compliance_detail, name="compliance_detail"),
     path("api/compliance/update-task-status/", views.update_task_status_view, name="api_update_task_status"),
     path("api/compliance/notes/get/", views.get_task_notes_view, name="api_get_task_notes"),
