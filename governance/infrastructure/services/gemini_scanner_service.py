@@ -25,6 +25,11 @@ class GeminiScannerService:
     Uses instructions and artifacts from AI Act skills packages.
     """
     
+    # Class-level cache for discovered skills (shared across instances)
+    _skills_cache = None
+    _cache_timestamp = None
+    _cache_ttl = 300  # Cache for 5 minutes
+    
     def __init__(self):
         self.api_key = getattr(settings, 'GEMINI_API_KEY', '') or os.environ.get('GEMINI_API_KEY', '')
         self.model_name = getattr(settings, 'AI_ACT_MODEL_NAME', 'gemini-2.5-flash')
@@ -38,12 +43,34 @@ class GeminiScannerService:
         self.checklist_path = self.skills_dir / "compliance_checklist_high_risk.yaml"
 
     def _discover_skills(self) -> Dict[str, str]:
-        """Dynamically discover all SKILL.md files and their relative paths."""
+        """Dynamically discover all SKILL.md files and their relative paths (with caching)."""
+        import time
+        
+        # Check if cache is valid
+        current_time = time.time()
+        if (self._skills_cache is not None and 
+            self._cache_timestamp is not None and 
+            (current_time - self._cache_timestamp) < self._cache_ttl):
+            logger.debug("Returning cached skills")
+            return self._skills_cache
+        
+        logger.info("Discovering skills (cache miss or expired)")
         skills = {}
         if not self.skills_dir.exists():
             return skills
-            
+        
+        # Limit depth to avoid scanning too deep (max 3 levels)
+        max_depth = 3
+        base_depth = str(self.skills_dir).count(os.sep)
+        
         for root, dirs, files in os.walk(self.skills_dir):
+            current_depth = str(root).count(os.sep) - base_depth
+            
+            # Limit depth
+            if current_depth >= max_depth:
+                dirs[:] = []  # Don't recurse deeper
+                continue
+            
             for file in files:
                 if file.endswith("SKILL.md"):
                     full_path = Path(root) / file
@@ -55,7 +82,12 @@ class GeminiScannerService:
                     else:
                         skill_id = parent_name
                     skills[skill_id] = str(rel_path)
-                    
+        
+        # Update cache
+        GeminiScannerService._skills_cache = skills
+        GeminiScannerService._cache_timestamp = current_time
+        logger.info(f"Discovered {len(skills)} skills")
+        
         return skills
 
     def _load_skill_content(self, tool_id: str) -> str:

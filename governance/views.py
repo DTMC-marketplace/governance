@@ -4287,11 +4287,12 @@ def compliance(request):
 def api_compliance_skills(request):
     """
     Get a list of available AI Act compliance skills from the artifacts.
+    Uses caching to avoid slow file system scans on every request.
     """
     try:
         from .infrastructure.services.gemini_scanner_service import GeminiScannerService
         scanner = GeminiScannerService()
-        skills = scanner._discover_skills()
+        skills = scanner._discover_skills()  # Now cached for 5 minutes
         
         # Format for frontend
         skills_list = []
@@ -4307,6 +4308,9 @@ def api_compliance_skills(request):
             'skills': skills_list
         })
     except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error in api_compliance_skills: {str(e)}", exc_info=True)
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 

@@ -665,6 +665,27 @@ async function selectRiskTool(toolKey) {
     riskState.scanReport = null;
     if (riskState.scanInterval) clearInterval(riskState.scanInterval);
 
+    // Switch views first
+    document.getElementById('risk-eval-main-view').classList.add('hidden');
+    document.getElementById('risk-eval-tool-view').classList.remove('hidden');
+    
+    // Show loading state
+    const container = document.getElementById('risk-eval-tool-view-content');
+    if (container) {
+        container.innerHTML = `
+            <div class="bg-white rounded-lg border border-[#F0F1F2] shadow-sm h-full flex flex-col items-center justify-center p-12">
+                <div class="w-16 h-16 rounded-full bg-[#F13D30] bg-opacity-10 flex items-center justify-center mb-4 animate-pulse">
+                    <svg class="w-8 h-8 text-[#F13D30] animate-spin" viewBox="0 0 24 24" fill="none">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </div>
+                <h3 class="font-bold text-lg text-[#22262A] mb-2">Discovering Available Skills...</h3>
+                <p class="text-sm text-[#464E58]">Scanning AI Act skills packages</p>
+            </div>
+        `;
+    }
+
     // Fetch available skills from BE to ensure connection
     try {
         const response = await fetch('/api/compliance/skills/');
@@ -674,13 +695,29 @@ async function selectRiskTool(toolKey) {
         }
     } catch (e) {
         console.error("Failed to fetch skills:", e);
+        // Show error state
+        if (container) {
+            container.innerHTML = `
+                <div class="bg-white rounded-lg border border-[#F0F1F2] shadow-sm h-full flex flex-col items-center justify-center p-12">
+                    <div class="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mb-4">
+                        <svg class="w-8 h-8 text-red-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="15" y1="9" x2="9" y2="15"></line>
+                            <line x1="9" y1="9" x2="15" y2="15"></line>
+                        </svg>
+                    </div>
+                    <h3 class="font-bold text-lg text-[#22262A] mb-2">Failed to Load Skills</h3>
+                    <p class="text-sm text-[#464E58] mb-4">Could not connect to skills package</p>
+                    <button onclick="selectRiskTool('${toolKey}')" class="px-4 py-2 bg-[#F13D30] text-white rounded-lg font-medium hover:bg-[#D92D20] transition-colors">
+                        Retry
+                    </button>
+                </div>
+            `;
+        }
+        return;
     }
 
     renderRiskToolView();
-
-    // Switch views
-    document.getElementById('risk-eval-main-view').classList.add('hidden');
-    document.getElementById('risk-eval-tool-view').classList.remove('hidden');
 }
 
 function closeRiskTool() {
