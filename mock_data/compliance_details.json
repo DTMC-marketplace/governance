@@ -965,5 +965,61 @@
                 "description": "Ensure transparency in AI systems that interact with natural persons, detect emotions, generate/manipulate content"
             }
         ]
+    },
+    "5": {
+        "id": 5,
+        "name": "Fraud_Detection_Review",
+        "ai_system": "Fraud Detection System",
+        "role": "Provider",
+        "regulatory_profile": [
+            "EU AI Act - Limited Risk"
+        ],
+        "overall_progress": 20,
+        "stats": {
+            "todo": 4,
+            "in_progress": 1,
+            "blocked": 0,
+            "done": 1
+        },
+        "tasks": [
+            {
+                "id": 1,
+                "original_task_id": "1",
+                "name": "Risk Management System",
+                "category": "Risk",
+                "category_class": "bg-[#FEF6EE] text-[#B93815]",
+                "status": "In Progress",
+                "status_class": "bg-[#F4EBFF] text-[#6941C6]",
+                "linked_articles": [
+                    "Art. 9"
+                ],
+                "evidence": "In Review",
+                "evidence_status": "In Review",
+                "evidence_class": "text-[#6941C6]",
+                "assignee": "Sarah Chen",
+                "assignee_initials": "SC",
+                "assignee_class": "bg-[#F04438] text-white",
+                "description": "Establish continuous risk management system"
+            },
+            {
+                "id": 2,
+                "original_task_id": "3",
+                "name": "Technical Documentation",
+                "category": "Legal",
+                "category_class": "bg-[#F9F5FF] text-[#6941C6]",
+                "status": "Done",
+                "status_class": "bg-[#ECFDF3] text-[#027A48]",
+                "linked_articles": [
+                    "Art. 11"
+                ],
+                "evidence": "Uploaded",
+                "evidence_status": "Uploaded",
+                "evidence_class": "text-[#027A48]",
+                "assignee": "James Park",
+                "assignee_initials": "JP",
+                "assignee_class": "bg-[#F04438] text-white",
+                "description": "Prepare technical documentation"
+            }
+        ]
     }
 }

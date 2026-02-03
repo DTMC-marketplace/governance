@@ -34,5 +34,14 @@
         "risk_label": "Minimal",
         "risk_class": "bg-[#ECFDF3] text-[#027A48]",
         "progress": 100
+    },
+    {
+        "id": 5,
+        "name": "Fraud_Detection_Review",
+        "updated": "Updated Now",
+        "source_system": "Fraud Detection System",
+        "risk_label": "Minimal",
+        "risk_class": "bg-[#ECFDF3] text-[#027A48]",
+        "progress": 20
     }
 ]
