@@ -3,146 +3,798 @@
         "id": 1,
         "name": "Credit_Scorer_v2.0",
         "ai_system": "Credit Scoring AI",
-        "role": "Provider",
+        "role": "Provider, Deployer, Product manufacturer, Distributor, Importer",
         "regulatory_profile": [
-            "High-Risk",
-            "Biometrics"
+            "EU AI Act - High-Risk System",
+            "GDPR - Data Processing",
+            "Consumer Credit Directive"
         ],
         "overall_progress": 65,
         "stats": {
-            "todo": 4,
-            "in_progress": 5,
+            "todo": 5,
+            "in_progress": 1,
             "blocked": 2,
-            "done": 5
+            "done": 13
         },
         "tasks": [
             {
                 "id": 1,
-                "name": "Data Governance Checklist",
+                "original_task_id": "1",
+                "name": "Risk Management System",
+                "category": "Risk",
+                "category_class": "bg-[#FEF6EE] text-[#B93815]",
+                "status": "Done",
+                "status_class": "bg-[#ECFDF3] text-[#027A48]",
+                "linked_articles": [
+                    "Art. 9"
+                ],
+                "evidence": "Uploaded",
+                "evidence_status": "Uploaded",
+                "evidence_class": "text-[#027A48]",
+                "assignee": "James Park",
+                "assignee_initials": "JP",
+                "assignee_class": "bg-[#F04438] text-white",
+                "description": "Establish and document continuous risk management system throughout AI system lifecycle"
+            },
+            {
+                "id": 2,
+                "original_task_id": "2",
+                "name": "Data Governance",
                 "category": "Data",
                 "category_class": "bg-[#EFF8FF] text-[#175CD3]",
                 "status": "Done",
                 "status_class": "bg-[#ECFDF3] text-[#027A48]",
                 "linked_articles": [
-                    "Art. 10",
-                    "Art. 12"
-                ],
-                "evidence": "Uploaded",
-                "evidence_status": "Uploaded",
-                "evidence_class": "text-[#027A48]",
-                "assignee": "Not assigned yet",
-                "assignee_initials": null,
-                "assignee_class": "bg-[#F2F4F7] text-[#475467]"
-            },
-            {
-                "id": 2,
-                "name": "Technical File Generator",
-                "category": "Legal",
-                "category_class": "bg-[#F9F5FF] text-[#6941C6]",
-                "status": "In Progress",
-                "status_class": "bg-[#EFF8FF] text-[#175CD3]",
-                "linked_articles": [
-                    "Art. 11",
-                    "Art. 53"
+                    "Art. 10"
                 ],
                 "evidence": "Uploaded",
                 "evidence_status": "Uploaded",
                 "evidence_class": "text-[#027A48]",
                 "assignee": "Michael Torres",
                 "assignee_initials": "MT",
-                "assignee_class": "bg-[#F04438] text-white"
+                "assignee_class": "bg-[#F04438] text-white",
+                "description": "Implement data governance practices for training, validation, and testing datasets"
             },
             {
                 "id": 3,
-                "name": "Compliance Roadmap",
+                "original_task_id": "3",
+                "name": "Technical documentation",
+                "category": "Legal",
+                "category_class": "bg-[#F9F5FF] text-[#6941C6]",
+                "status": "Done",
+                "status_class": "bg-[#ECFDF3] text-[#027A48]",
+                "linked_articles": [
+                    "Art. 11",
+                    "Annex IV"
+                ],
+                "evidence": "Uploaded",
+                "evidence_status": "Uploaded",
+                "evidence_class": "text-[#027A48]",
+                "assignee": "James Park",
+                "assignee_initials": "JP",
+                "assignee_class": "bg-[#F04438] text-white",
+                "description": "Prepare technical documentation before placing AI system on market"
+            },
+            {
+                "id": 4,
+                "original_task_id": "4",
+                "name": "Version Control",
+                "category": "Data",
+                "category_class": "bg-[#EFF8FF] text-[#175CD3]",
+                "status": "Done",
+                "status_class": "bg-[#ECFDF3] text-[#027A48]",
+                "linked_articles": [
+                    "Art. 12"
+                ],
+                "evidence": "Uploaded",
+                "evidence_status": "Uploaded",
+                "evidence_class": "text-[#027A48]",
+                "assignee": "James Park",
+                "assignee_initials": "JP",
+                "assignee_class": "bg-[#F04438] text-white",
+                "description": "Maintain record-keeping and automatic recording of events (logs)"
+            },
+            {
+                "id": 5,
+                "original_task_id": "5",
+                "name": "Event log (immutable)",
+                "category": "Data",
+                "category_class": "bg-[#EFF8FF] text-[#175CD3]",
+                "status": "Done",
+                "status_class": "bg-[#ECFDF3] text-[#027A48]",
+                "linked_articles": [
+                    "Art. 12",
+                    "Art. 19"
+                ],
+                "evidence": "Uploaded",
+                "evidence_status": "Uploaded",
+                "evidence_class": "text-[#027A48]",
+                "assignee": "Sarah Chen",
+                "assignee_initials": "SC",
+                "assignee_class": "bg-[#F04438] text-white",
+                "description": "Keep automatically generated logs secure and immutable"
+            },
+            {
+                "id": 6,
+                "original_task_id": "6",
+                "name": "Instructions for Use (IFU)",
+                "category": "Legal",
+                "category_class": "bg-[#F9F5FF] text-[#6941C6]",
+                "status": "Done",
+                "status_class": "bg-[#ECFDF3] text-[#027A48]",
+                "linked_articles": [
+                    "Art. 13"
+                ],
+                "evidence": "Uploaded",
+                "evidence_status": "Uploaded",
+                "evidence_class": "text-[#027A48]",
+                "assignee": "Emma Wilson",
+                "assignee_initials": "EW",
+                "assignee_class": "bg-[#F04438] text-white",
+                "description": "Draw up instructions for use in appropriate digital format or otherwise"
+            },
+            {
+                "id": 7,
+                "original_task_id": "7",
+                "name": "Human Oversight",
+                "category": "Governance",
+                "category_class": "bg-[#F9F5FF] text-[#6941C6]",
+                "status": "Done",
+                "status_class": "bg-[#ECFDF3] text-[#027A48]",
+                "linked_articles": [
+                    "Art. 14",
+                    "Art. 26"
+                ],
+                "evidence": "Uploaded",
+                "evidence_status": "Uploaded",
+                "evidence_class": "text-[#027A48]",
+                "assignee": "James Park",
+                "assignee_initials": "JP",
+                "assignee_class": "bg-[#F04438] text-white",
+                "description": "Design system to enable effective oversight by natural persons"
+            },
+            {
+                "id": 8,
+                "original_task_id": "8",
+                "name": "Accuracy, Robustness & Cybersecurity",
+                "category": "Security",
+                "category_class": "bg-[#EFF8FF] text-[#175CD3]",
+                "status": "Done",
+                "status_class": "bg-[#ECFDF3] text-[#027A48]",
+                "linked_articles": [
+                    "Art. 15"
+                ],
+                "evidence": "Uploaded",
+                "evidence_status": "Uploaded",
+                "evidence_class": "text-[#027A48]",
+                "assignee": "Michael Torres",
+                "assignee_initials": "MT",
+                "assignee_class": "bg-[#F04438] text-white",
+                "description": "Design to achieve appropriate level of accuracy, robustness and cybersecurity"
+            },
+            {
+                "id": 9,
+                "original_task_id": "9",
+                "name": "Quality Management System (QMS)",
+                "category": "Governance",
+                "category_class": "bg-[#F9F5FF] text-[#6941C6]",
+                "status": "Done",
+                "status_class": "bg-[#ECFDF3] text-[#027A48]",
+                "linked_articles": [
+                    "Art. 17"
+                ],
+                "evidence": "Uploaded",
+                "evidence_status": "Uploaded",
+                "evidence_class": "text-[#027A48]",
+                "assignee": "James Park",
+                "assignee_initials": "JP",
+                "assignee_class": "bg-[#F04438] text-white",
+                "description": "Put quality management system in place ensuring compliance with EU AI Act"
+            },
+            {
+                "id": 10,
+                "original_task_id": "11",
+                "name": "Obligations of Importer",
+                "category": "Legal",
+                "category_class": "bg-[#F9F5FF] text-[#6941C6]",
+                "status": "Done",
+                "status_class": "bg-[#ECFDF3] text-[#027A48]",
+                "linked_articles": [
+                    "Art. 23"
+                ],
+                "evidence": "Uploaded",
+                "evidence_status": "Uploaded",
+                "evidence_class": "text-[#027A48]",
+                "assignee": "James Park",
+                "assignee_initials": "JP",
+                "assignee_class": "bg-[#F04438] text-white",
+                "description": "Ensure imported high-risk AI system complies with EU AI Act requirements"
+            },
+            {
+                "id": 11,
+                "original_task_id": "12",
+                "name": "Obligations of Distributor",
+                "category": "Legal",
+                "category_class": "bg-[#F9F5FF] text-[#6941C6]",
+                "status": "Done",
+                "status_class": "bg-[#ECFDF3] text-[#027A48]",
+                "linked_articles": [
+                    "Art. 24"
+                ],
+                "evidence": "Uploaded",
+                "evidence_status": "Uploaded",
+                "evidence_class": "text-[#027A48]",
+                "assignee": "Michael Torres",
+                "assignee_initials": "MT",
+                "assignee_class": "bg-[#F04438] text-white",
+                "description": "Verify AI system bears CE marking and is accompanied by required documentation"
+            },
+            {
+                "id": 12,
+                "original_task_id": "13",
+                "name": "Obligations of Deployer",
+                "category": "Legal",
+                "category_class": "bg-[#F9F5FF] text-[#6941C6]",
+                "status": "Done",
+                "status_class": "bg-[#ECFDF3] text-[#027A48]",
+                "linked_articles": [
+                    "Art. 26"
+                ],
+                "evidence": "Uploaded",
+                "evidence_status": "Uploaded",
+                "evidence_class": "text-[#027A48]",
+                "assignee": "Emma Wilson",
+                "assignee_initials": "EW",
+                "assignee_class": "bg-[#F04438] text-white",
+                "description": "Take appropriate technical and organisational measures to use high-risk AI systems in accordance with instructions"
+            },
+            {
+                "id": 13,
+                "original_task_id": "14",
+                "name": "Fundamental Rights Impact Assessment",
                 "category": "Risk",
                 "category_class": "bg-[#FEF6EE] text-[#B93815]",
-                "status": "In Progress",
-                "status_class": "bg-[#EFF8FF] text-[#175CD3]",
+                "status": "Done",
+                "status_class": "bg-[#ECFDF3] text-[#027A48]",
                 "linked_articles": [
-                    "Art. 9"
+                    "Art. 27"
+                ],
+                "evidence": "Uploaded",
+                "evidence_status": "Uploaded",
+                "evidence_class": "text-[#027A48]",
+                "assignee": "Michael Torres",
+                "assignee_initials": "MT",
+                "assignee_class": "bg-[#F04438] text-white",
+                "description": "Carry out fundamental rights impact assessment before deploying high-risk AI system"
+            },
+            {
+                "id": 14,
+                "original_task_id": "15",
+                "name": "Declaration of conformity Archive",
+                "category": "Legal",
+                "category_class": "bg-[#F9F5FF] text-[#6941C6]",
+                "status": "Blocked",
+                "status_class": "bg-[#FEE4E2] text-[#B42318]",
+                "linked_articles": [
+                    "Art. 47",
+                    "Annex V"
+                ],
+                "evidence": "Missing",
+                "evidence_status": "Missing",
+                "evidence_class": "text-[#D92D20]",
+                "assignee": "Michael Torres",
+                "assignee_initials": "MT",
+                "assignee_class": "bg-[#F04438] text-white",
+                "description": "Draw up EU declaration of conformity and keep it at disposal of national authorities"
+            },
+            {
+                "id": 15,
+                "original_task_id": "16",
+                "name": "CE marking",
+                "category": "Legal",
+                "category_class": "bg-[#F9F5FF] text-[#6941C6]",
+                "status": "Blocked",
+                "status_class": "bg-[#FEE4E2] text-[#B42318]",
+                "linked_articles": [
+                    "Art. 48"
                 ],
                 "evidence": "Missing",
                 "evidence_status": "Missing",
                 "evidence_class": "text-[#D92D20]",
                 "assignee": "Sarah Chen",
                 "assignee_initials": "SC",
-                "assignee_class": "bg-[#F79009] text-white"
+                "assignee_class": "bg-[#F04438] text-white",
+                "description": "Affix CE marking to high-risk AI system or on packaging/accompanying documentation"
             },
             {
-                "id": 4,
-                "name": "Version History (Traceability)",
-                "category": "Data",
-                "category_class": "bg-[#EFF8FF] text-[#175CD3]",
-                "status": "Blocked",
-                "status_class": "bg-[#FEE4E2] text-[#B42318]",
+                "id": 16,
+                "original_task_id": "17",
+                "name": "Public authority (or deployer registration)",
+                "category": "Legal",
+                "category_class": "bg-[#F9F5FF] text-[#6941C6]",
+                "status": "In Progress",
+                "status_class": "bg-[#EFF8FF] text-[#175CD3]",
                 "linked_articles": [
-                    "Art. 12",
-                    "Art. 19"
+                    "Art. 49(3)"
+                ],
+                "evidence": "In Review",
+                "evidence_status": "In Review",
+                "evidence_class": "text-[#F79009]",
+                "assignee": "Sarah Chen",
+                "assignee_initials": "SC",
+                "assignee_class": "bg-[#F04438] text-white",
+                "description": "Register use of high-risk AI system in EU database for public authorities and bodies"
+            },
+            {
+                "id": 17,
+                "original_task_id": "18",
+                "name": "Registration",
+                "category": "Legal",
+                "category_class": "bg-[#F9F5FF] text-[#6941C6]",
+                "status": "To-Do",
+                "status_class": "bg-[#F2F4F7] text-[#344054]",
+                "linked_articles": [
+                    "Art. 49",
+                    "Annex VIII"
                 ],
                 "evidence": "Missing",
                 "evidence_status": "Missing",
                 "evidence_class": "text-[#D92D20]",
-                "assignee": "Emma Wilson",
-                "assignee_initials": "EW",
-                "assignee_class": "bg-[#F04438] text-white"
+                "assignee": "Not assigned yet",
+                "assignee_initials": null,
+                "assignee_class": "bg-[#F2F4F7] text-[#475467]",
+                "description": "Register high-risk AI system in EU database before placing on market"
             },
             {
-                "id": 5,
-                "name": "Log Archive (Immutable)",
-                "category": "Data",
-                "category_class": "bg-[#EFF8FF] text-[#175CD3]",
+                "id": 18,
+                "original_task_id": "19",
+                "name": "Post-market monitoring plan",
+                "category": "Risk",
+                "category_class": "bg-[#FEF6EE] text-[#B93815]",
+                "status": "To-Do",
+                "status_class": "bg-[#F2F4F7] text-[#344054]",
+                "linked_articles": [
+                    "Art. 72"
+                ],
+                "evidence": "Missing",
+                "evidence_status": "Missing",
+                "evidence_class": "text-[#D92D20]",
+                "assignee": "Not assigned yet",
+                "assignee_initials": null,
+                "assignee_class": "bg-[#F2F4F7] text-[#475467]",
+                "description": "Establish and document post-market monitoring system proportionate to nature of AI technologies"
+            },
+            {
+                "id": 19,
+                "original_task_id": "20",
+                "name": "Reporting of Serious Incidents",
+                "category": "Risk",
+                "category_class": "bg-[#FEF6EE] text-[#B93815]",
+                "status": "To-Do",
+                "status_class": "bg-[#F2F4F7] text-[#344054]",
+                "linked_articles": [
+                    "Art. 73"
+                ],
+                "evidence": "Missing",
+                "evidence_status": "Missing",
+                "evidence_class": "text-[#D92D20]",
+                "assignee": "Not assigned yet",
+                "assignee_initials": null,
+                "assignee_class": "bg-[#F2F4F7] text-[#475467]",
+                "description": "Report serious incidents to market surveillance authorities within specified timeframes"
+            },
+            {
+                "id": 20,
+                "original_task_id": "21",
+                "name": "Post-incident investigation",
+                "category": "Risk",
+                "category_class": "bg-[#FEF6EE] text-[#B93815]",
+                "status": "To-Do",
+                "status_class": "bg-[#F2F4F7] text-[#344054]",
+                "linked_articles": [
+                    "Art. 73.6"
+                ],
+                "evidence": "Missing",
+                "evidence_status": "Missing",
+                "evidence_class": "text-[#D92D20]",
+                "assignee": "Not assigned yet",
+                "assignee_initials": null,
+                "assignee_class": "bg-[#F2F4F7] text-[#475467]",
+                "description": "Upon request, provide market surveillance authorities with all documentation and information necessary to investigate serious incident"
+            },
+            {
+                "id": 21,
+                "original_task_id": "22",
+                "name": "Transparency obligations",
+                "category": "Legal",
+                "category_class": "bg-[#F9F5FF] text-[#6941C6]",
+                "status": "To-Do",
+                "status_class": "bg-[#F2F4F7] text-[#344054]",
+                "linked_articles": [
+                    "Art. 50",
+                    "Art. 52"
+                ],
+                "evidence": "Missing",
+                "evidence_status": "Missing",
+                "evidence_class": "text-[#D92D20]",
+                "assignee": "Not assigned yet",
+                "assignee_initials": null,
+                "assignee_class": "bg-[#F2F4F7] text-[#475467]",
+                "description": "Ensure transparency in AI systems that interact with natural persons, detect emotions, generate/manipulate content"
+            }
+        ]
+    },
+    "2": {
+        "id": 2,
+        "name": "Resume_Screener_Compliance",
+        "ai_system": "Resume Screening AI",
+        "role": "Deployer",
+        "regulatory_profile": [
+            "EU AI Act - High-Risk System",
+            "GDPR - Data Processing",
+            "Employment Equality Directive"
+        ],
+        "overall_progress": 45,
+        "stats": {
+            "todo": 0,
+            "in_progress": 0,
+            "blocked": 3,
+            "done": 2
+        },
+        "tasks": [
+            {
+                "id": 1,
+                "original_task_id": "7",
+                "name": "Human Oversight",
+                "category": "Governance",
+                "category_class": "bg-[#F9F5FF] text-[#6941C6]",
                 "status": "Done",
                 "status_class": "bg-[#ECFDF3] text-[#027A48]",
                 "linked_articles": [
-                    "Art. 12",
-                    "Art. 20"
+                    "Art. 14",
+                    "Art. 26"
                 ],
                 "evidence": "Uploaded",
                 "evidence_status": "Uploaded",
                 "evidence_class": "text-[#027A48]",
                 "assignee": "Michael Torres",
                 "assignee_initials": "MT",
-                "assignee_class": "bg-[#F04438] text-white"
+                "assignee_class": "bg-[#F04438] text-white",
+                "description": "Design system to enable effective oversight by natural persons"
             },
             {
-                "id": 6,
-                "name": "Instructions for Use (IFU)",
+                "id": 2,
+                "original_task_id": "13",
+                "name": "Obligations of Deployer",
                 "category": "Legal",
                 "category_class": "bg-[#F9F5FF] text-[#6941C6]",
-                "status": "To-Do",
-                "status_class": "bg-[#F2F4F7] text-[#344054]",
+                "status": "Done",
+                "status_class": "bg-[#ECFDF3] text-[#027A48]",
                 "linked_articles": [
-                    "Art. 13"
+                    "Art. 26"
+                ],
+                "evidence": "Uploaded",
+                "evidence_status": "Uploaded",
+                "evidence_class": "text-[#027A48]",
+                "assignee": "James Park",
+                "assignee_initials": "JP",
+                "assignee_class": "bg-[#F04438] text-white",
+                "description": "Take appropriate technical and organisational measures to use high-risk AI systems in accordance with instructions"
+            },
+            {
+                "id": 3,
+                "original_task_id": "14",
+                "name": "Fundamental Rights Impact Assessment",
+                "category": "Risk",
+                "category_class": "bg-[#FEF6EE] text-[#B93815]",
+                "status": "Blocked",
+                "status_class": "bg-[#FEE4E2] text-[#B42318]",
+                "linked_articles": [
+                    "Art. 27"
+                ],
+                "evidence": "Missing",
+                "evidence_status": "Missing",
+                "evidence_class": "text-[#D92D20]",
+                "assignee": "Michael Torres",
+                "assignee_initials": "MT",
+                "assignee_class": "bg-[#F04438] text-white",
+                "description": "Carry out fundamental rights impact assessment before deploying high-risk AI system"
+            },
+            {
+                "id": 4,
+                "original_task_id": "17",
+                "name": "Public authority (or deployer registration)",
+                "category": "Legal",
+                "category_class": "bg-[#F9F5FF] text-[#6941C6]",
+                "status": "Blocked",
+                "status_class": "bg-[#FEE4E2] text-[#B42318]",
+                "linked_articles": [
+                    "Art. 49(3)"
+                ],
+                "evidence": "Missing",
+                "evidence_status": "Missing",
+                "evidence_class": "text-[#D92D20]",
+                "assignee": "Sarah Chen",
+                "assignee_initials": "SC",
+                "assignee_class": "bg-[#F04438] text-white",
+                "description": "Register use of high-risk AI system in EU database for public authorities and bodies"
+            },
+            {
+                "id": 5,
+                "original_task_id": "22",
+                "name": "Transparency obligations",
+                "category": "Legal",
+                "category_class": "bg-[#F9F5FF] text-[#6941C6]",
+                "status": "Blocked",
+                "status_class": "bg-[#FEE4E2] text-[#B42318]",
+                "linked_articles": [
+                    "Art. 50",
+                    "Art. 52"
                 ],
                 "evidence": "Missing",
                 "evidence_status": "Missing",
                 "evidence_class": "text-[#D92D20]",
                 "assignee": "James Park",
                 "assignee_initials": "JP",
-                "assignee_class": "bg-[#667085] text-white"
+                "assignee_class": "bg-[#F04438] text-white",
+                "description": "Ensure transparency in AI systems that interact with natural persons, detect emotions, generate/manipulate content"
+            }
+        ]
+    },
+    "3": {
+        "id": 3,
+        "name": "ChatBot_Transparency_Check",
+        "ai_system": "Customer Service Chatbot",
+        "role": "Deployer",
+        "regulatory_profile": [
+            "EU AI Act - Transparency Obligations",
+            "GDPR - Data Processing"
+        ],
+        "overall_progress": 90,
+        "stats": {
+            "todo": 0,
+            "in_progress": 1,
+            "blocked": 0,
+            "done": 4
+        },
+        "tasks": [
+            {
+                "id": 1,
+                "original_task_id": "7",
+                "name": "Human Oversight",
+                "category": "Governance",
+                "category_class": "bg-[#F9F5FF] text-[#6941C6]",
+                "status": "Done",
+                "status_class": "bg-[#ECFDF3] text-[#027A48]",
+                "linked_articles": [
+                    "Art. 14",
+                    "Art. 26"
+                ],
+                "evidence": "Uploaded",
+                "evidence_status": "Uploaded",
+                "evidence_class": "text-[#027A48]",
+                "assignee": "Sarah Chen",
+                "assignee_initials": "SC",
+                "assignee_class": "bg-[#F04438] text-white",
+                "description": "Design system to enable effective oversight by natural persons"
+            },
+            {
+                "id": 2,
+                "original_task_id": "13",
+                "name": "Obligations of Deployer",
+                "category": "Legal",
+                "category_class": "bg-[#F9F5FF] text-[#6941C6]",
+                "status": "Done",
+                "status_class": "bg-[#ECFDF3] text-[#027A48]",
+                "linked_articles": [
+                    "Art. 26"
+                ],
+                "evidence": "Uploaded",
+                "evidence_status": "Uploaded",
+                "evidence_class": "text-[#027A48]",
+                "assignee": "James Park",
+                "assignee_initials": "JP",
+                "assignee_class": "bg-[#F04438] text-white",
+                "description": "Take appropriate technical and organisational measures to use high-risk AI systems in accordance with instructions"
+            },
+            {
+                "id": 3,
+                "original_task_id": "14",
+                "name": "Fundamental Rights Impact Assessment",
+                "category": "Risk",
+                "category_class": "bg-[#FEF6EE] text-[#B93815]",
+                "status": "Done",
+                "status_class": "bg-[#ECFDF3] text-[#027A48]",
+                "linked_articles": [
+                    "Art. 27"
+                ],
+                "evidence": "Uploaded",
+                "evidence_status": "Uploaded",
+                "evidence_class": "text-[#027A48]",
+                "assignee": "Sarah Chen",
+                "assignee_initials": "SC",
+                "assignee_class": "bg-[#F04438] text-white",
+                "description": "Carry out fundamental rights impact assessment before deploying high-risk AI system"
+            },
+            {
+                "id": 4,
+                "original_task_id": "17",
+                "name": "Public authority (or deployer registration)",
+                "category": "Legal",
+                "category_class": "bg-[#F9F5FF] text-[#6941C6]",
+                "status": "Done",
+                "status_class": "bg-[#ECFDF3] text-[#027A48]",
+                "linked_articles": [
+                    "Art. 49(3)"
+                ],
+                "evidence": "Uploaded",
+                "evidence_status": "Uploaded",
+                "evidence_class": "text-[#027A48]",
+                "assignee": "Emma Wilson",
+                "assignee_initials": "EW",
+                "assignee_class": "bg-[#F04438] text-white",
+                "description": "Register use of high-risk AI system in EU database for public authorities and bodies"
+            },
+            {
+                "id": 5,
+                "original_task_id": "22",
+                "name": "Transparency obligations",
+                "category": "Legal",
+                "category_class": "bg-[#F9F5FF] text-[#6941C6]",
+                "status": "In Progress",
+                "status_class": "bg-[#EFF8FF] text-[#175CD3]",
+                "linked_articles": [
+                    "Art. 50",
+                    "Art. 52"
+                ],
+                "evidence": "In Review",
+                "evidence_status": "In Review",
+                "evidence_class": "text-[#F79009]",
+                "assignee": "Michael Torres",
+                "assignee_initials": "MT",
+                "assignee_class": "bg-[#F04438] text-white",
+                "description": "Ensure transparency in AI systems that interact with natural persons, detect emotions, generate/manipulate content"
+            }
+        ]
+    },
+    "4": {
+        "id": 4,
+        "name": "Predictive_Maintenance_Review",
+        "ai_system": "Predictive Maintenance System",
+        "role": "Provider",
+        "regulatory_profile": [
+            "EU AI Act - Minimal Risk"
+        ],
+        "overall_progress": 100,
+        "stats": {
+            "todo": 0,
+            "in_progress": 0,
+            "blocked": 0,
+            "done": 15
+        },
+        "tasks": [
+            {
+                "id": 1,
+                "original_task_id": "1",
+                "name": "Risk Management System",
+                "category": "Risk",
+                "category_class": "bg-[#FEF6EE] text-[#B93815]",
+                "status": "Done",
+                "status_class": "bg-[#ECFDF3] text-[#027A48]",
+                "linked_articles": [
+                    "Art. 9"
+                ],
+                "evidence": "Uploaded",
+                "evidence_status": "Uploaded",
+                "evidence_class": "text-[#027A48]",
+                "assignee": "Sarah Chen",
+                "assignee_initials": "SC",
+                "assignee_class": "bg-[#F04438] text-white",
+                "description": "Establish and document continuous risk management system throughout AI system lifecycle"
+            },
+            {
+                "id": 2,
+                "original_task_id": "2",
+                "name": "Data Governance",
+                "category": "Data",
+                "category_class": "bg-[#EFF8FF] text-[#175CD3]",
+                "status": "Done",
+                "status_class": "bg-[#ECFDF3] text-[#027A48]",
+                "linked_articles": [
+                    "Art. 10"
+                ],
+                "evidence": "Uploaded",
+                "evidence_status": "Uploaded",
+                "evidence_class": "text-[#027A48]",
+                "assignee": "James Park",
+                "assignee_initials": "JP",
+                "assignee_class": "bg-[#F04438] text-white",
+                "description": "Implement data governance practices for training, validation, and testing datasets"
+            },
+            {
+                "id": 3,
+                "original_task_id": "3",
+                "name": "Technical documentation",
+                "category": "Legal",
+                "category_class": "bg-[#F9F5FF] text-[#6941C6]",
+                "status": "Done",
+                "status_class": "bg-[#ECFDF3] text-[#027A48]",
+                "linked_articles": [
+                    "Art. 11",
+                    "Annex IV"
+                ],
+                "evidence": "Uploaded",
+                "evidence_status": "Uploaded",
+                "evidence_class": "text-[#027A48]",
+                "assignee": "Emma Wilson",
+                "assignee_initials": "EW",
+                "assignee_class": "bg-[#F04438] text-white",
+                "description": "Prepare technical documentation before placing AI system on market"
+            },
+            {
+                "id": 4,
+                "original_task_id": "4",
+                "name": "Version Control",
+                "category": "Data",
+                "category_class": "bg-[#EFF8FF] text-[#175CD3]",
+                "status": "Done",
+                "status_class": "bg-[#ECFDF3] text-[#027A48]",
+                "linked_articles": [
+                    "Art. 12"
+                ],
+                "evidence": "Uploaded",
+                "evidence_status": "Uploaded",
+                "evidence_class": "text-[#027A48]",
+                "assignee": "Michael Torres",
+                "assignee_initials": "MT",
+                "assignee_class": "bg-[#F04438] text-white",
+                "description": "Maintain record-keeping and automatic recording of events (logs)"
+            },
+            {
+                "id": 5,
+                "original_task_id": "5",
+                "name": "Event log (immutable)",
+                "category": "Data",
+                "category_class": "bg-[#EFF8FF] text-[#175CD3]",
+                "status": "Done",
+                "status_class": "bg-[#ECFDF3] text-[#027A48]",
+                "linked_articles": [
+                    "Art. 12",
+                    "Art. 19"
+                ],
+                "evidence": "Uploaded",
+                "evidence_status": "Uploaded",
+                "evidence_class": "text-[#027A48]",
+                "assignee": "Michael Torres",
+                "assignee_initials": "MT",
+                "assignee_class": "bg-[#F04438] text-white",
+                "description": "Keep automatically generated logs secure and immutable"
+            },
+            {
+                "id": 6,
+                "original_task_id": "7",
+                "name": "Human Oversight",
+                "category": "Governance",
+                "category_class": "bg-[#F9F5FF] text-[#6941C6]",
+                "status": "Done",
+                "status_class": "bg-[#ECFDF3] text-[#027A48]",
+                "linked_articles": [
+                    "Art. 14",
+                    "Art. 26"
+                ],
+                "evidence": "Uploaded",
+                "evidence_status": "Uploaded",
+                "evidence_class": "text-[#027A48]",
+                "assignee": "Emma Wilson",
+                "assignee_initials": "EW",
+                "assignee_class": "bg-[#F04438] text-white",
+                "description": "Design system to enable effective oversight by natural persons"
             },
             {
                 "id": 7,
-                "name": "Human Oversight",
-                "category": "Risk",
-                "category_class": "bg-[#FEF6EE] text-[#B93815]",
-                "status": "To-Do",
-                "status_class": "bg-[#FEE4E2] text-[#B42318]",
-                "linked_articles": [
-                    "Art. 14"
-                ],
-                "evidence": "Missing",
-                "evidence_status": "Missing",
-                "evidence_class": "text-[#D92D20]",
-                "assignee": "Sarah Chen",
-                "assignee_initials": "SC",
-                "assignee_class": "bg-[#F79009] text-white"
-            },
-            {
-                "id": 8,
-                "name": "Test Result Repository",
-                "category": "Data",
+                "original_task_id": "8",
+                "name": "Accuracy, Robustness & Cybersecurity",
+                "category": "Security",
                 "category_class": "bg-[#EFF8FF] text-[#175CD3]",
                 "status": "Done",
                 "status_class": "bg-[#ECFDF3] text-[#027A48]",
@@ -154,12 +806,14 @@
                 "evidence_class": "text-[#027A48]",
                 "assignee": "Emma Wilson",
                 "assignee_initials": "EW",
-                "assignee_class": "bg-[#F04438] text-white"
+                "assignee_class": "bg-[#F04438] text-white",
+                "description": "Design to achieve appropriate level of accuracy, robustness and cybersecurity"
             },
             {
-                "id": 9,
-                "name": "QMS Policy Manager",
-                "category": "Legal",
+                "id": 8,
+                "original_task_id": "9",
+                "name": "Quality Management System (QMS)",
+                "category": "Governance",
                 "category_class": "bg-[#F9F5FF] text-[#6941C6]",
                 "status": "Done",
                 "status_class": "bg-[#ECFDF3] text-[#027A48]",
@@ -169,238 +823,147 @@
                 "evidence": "Uploaded",
                 "evidence_status": "Uploaded",
                 "evidence_class": "text-[#027A48]",
-                "assignee": "Michael Torres",
-                "assignee_initials": "MT",
-                "assignee_class": "bg-[#F04438] text-white"
-            }
-        ]
-    },
-    "2": {
-        "id": 2,
-        "name": "Resume_Screener_Compliance",
-        "ai_system": "Resume Screening AI",
-        "role": "Deployer",
-        "regulatory_profile": [
-            "High-Risk",
-            "Employment"
-        ],
-        "overall_progress": 45,
-        "stats": {
-            "todo": 8,
-            "in_progress": 4,
-            "blocked": 5,
-            "done": 3
-        },
-        "tasks": [
-            {
-                "id": 1,
-                "name": "Fundamental Rights Impact Assessment",
-                "category": "Risk",
-                "category_class": "bg-[#FEF6EE] text-[#B93815]",
-                "status": "Blocked",
-                "status_class": "bg-[#FEE4E2] text-[#B42318]",
-                "linked_articles": [
-                    "Art. 27",
-                    "Art. 29"
-                ],
-                "evidence": "Missing",
-                "evidence_status": "Missing",
-                "evidence_class": "text-[#D92D20]",
                 "assignee": "Sarah Chen",
                 "assignee_initials": "SC",
-                "assignee_class": "bg-[#F79009] text-white"
+                "assignee_class": "bg-[#F04438] text-white",
+                "description": "Put quality management system in place ensuring compliance with EU AI Act"
             },
             {
-                "id": 2,
-                "name": "Worker Consultation Protocol",
+                "id": 9,
+                "original_task_id": "15",
+                "name": "Declaration of conformity Archive",
                 "category": "Legal",
                 "category_class": "bg-[#F9F5FF] text-[#6941C6]",
-                "status": "To-Do",
-                "status_class": "bg-[#F2F4F7] text-[#344054]",
+                "status": "Done",
+                "status_class": "bg-[#ECFDF3] text-[#027A48]",
                 "linked_articles": [
-                    "Art. 26"
+                    "Art. 47",
+                    "Annex V"
                 ],
-                "evidence": "Missing",
-                "evidence_status": "Missing",
-                "evidence_class": "text-[#D92D20]",
+                "evidence": "Uploaded",
+                "evidence_status": "Uploaded",
+                "evidence_class": "text-[#027A48]",
                 "assignee": "Emma Wilson",
                 "assignee_initials": "EW",
-                "assignee_class": "bg-[#F04438] text-white"
-            }
-        ]
-    },
-    "3": {
-        "id": 3,
-        "name": "ChatBot_Transparency_Check",
-        "ai_system": "Customer Service Chatbot",
-        "role": "Deployer",
-        "regulatory_profile": [
-            "Limited transparency"
-        ],
-        "overall_progress": 50,
-        "stats": {
-            "todo": 0,
-            "in_progress": 0,
-            "blocked": 1,
-            "done": 1
-        },
-        "tasks": [
+                "assignee_class": "bg-[#F04438] text-white",
+                "description": "Draw up EU declaration of conformity and keep it at disposal of national authorities"
+            },
             {
-                "id": 1,
-                "name": "User Notification Design",
+                "id": 10,
+                "original_task_id": "16",
+                "name": "CE marking",
                 "category": "Legal",
                 "category_class": "bg-[#F9F5FF] text-[#6941C6]",
                 "status": "Done",
                 "status_class": "bg-[#ECFDF3] text-[#027A48]",
                 "linked_articles": [
-                    "Art. 52"
+                    "Art. 48"
                 ],
                 "evidence": "Uploaded",
                 "evidence_status": "Uploaded",
                 "evidence_class": "text-[#027A48]",
-                "assignee": "aaa",
-                "assignee_initials": "A",
-                "assignee_class": "bg-[#7F56D9] text-white",
-                "notes": [
-                    {
-                        "id": 1,
-                        "content": "Completed initial review of data governance requirements",
-                        "author": "Sarah Chen",
-                        "timestamp": "2 days ago"
-                    },
-                    {
-                        "id": 2,
-                        "content": "All checklist items verified and approved",
-                        "author": "Michael Torres",
-                        "timestamp": "1 day ago"
-                    },
-                    {
-                        "id": 3,
-                        "content": "test",
-                        "author": "Current User",
-                        "timestamp": "Just now"
-                    },
-                    {
-                        "id": 4,
-                        "content": "test2",
-                        "author": "Current User",
-                        "timestamp": "Just now"
-                    }
-                ]
+                "assignee": "James Park",
+                "assignee_initials": "JP",
+                "assignee_class": "bg-[#F04438] text-white",
+                "description": "Affix CE marking to high-risk AI system or on packaging/accompanying documentation"
             },
             {
-                "id": 2,
-                "name": "Interaction Disclosure",
+                "id": 11,
+                "original_task_id": "18",
+                "name": "Registration",
                 "category": "Legal",
                 "category_class": "bg-[#F9F5FF] text-[#6941C6]",
-                "status": "Blocked",
-                "status_class": "bg-[#FEE4E2] text-[#B42318]",
+                "status": "Done",
+                "status_class": "bg-[#ECFDF3] text-[#027A48]",
                 "linked_articles": [
-                    "Art. 52"
+                    "Art. 49",
+                    "Annex VIII"
                 ],
                 "evidence": "Uploaded",
                 "evidence_status": "Uploaded",
                 "evidence_class": "text-[#027A48]",
                 "assignee": "Michael Torres",
                 "assignee_initials": "MT",
-                "assignee_class": "bg-[#F04438] text-white"
-            }
-        ],
-        "custom_assignees": [
+                "assignee_class": "bg-[#F04438] text-white",
+                "description": "Register high-risk AI system in EU database before placing on market"
+            },
             {
-                "name": "aaa",
-                "email": "asd2@gmail.com",
-                "initials": "A",
-                "class": "bg-[#7F56D9] text-white"
-            }
-        ]
-    },
-    "4": {
-        "id": 4,
-        "name": "Predictive_Maintenance_Review",
-        "ai_system": "Predictive Maintenance System",
-        "role": "Provider",
-        "regulatory_profile": [
-            "Minimal"
-        ],
-        "overall_progress": 100,
-        "stats": {
-            "todo": 0,
-            "in_progress": 0,
-            "blocked": 0,
-            "done": 12
-        },
-        "tasks": [
-            {
-                "id": 1,
-                "name": "Risk Documentation",
+                "id": 12,
+                "original_task_id": "19",
+                "name": "Post-market monitoring plan",
                 "category": "Risk",
                 "category_class": "bg-[#FEF6EE] text-[#B93815]",
                 "status": "Done",
                 "status_class": "bg-[#ECFDF3] text-[#027A48]",
                 "linked_articles": [
-                    "Art. 2"
+                    "Art. 72"
+                ],
+                "evidence": "Uploaded",
+                "evidence_status": "Uploaded",
+                "evidence_class": "text-[#027A48]",
+                "assignee": "James Park",
+                "assignee_initials": "JP",
+                "assignee_class": "bg-[#F04438] text-white",
+                "description": "Establish and document post-market monitoring system proportionate to nature of AI technologies"
+            },
+            {
+                "id": 13,
+                "original_task_id": "20",
+                "name": "Reporting of Serious Incidents",
+                "category": "Risk",
+                "category_class": "bg-[#FEF6EE] text-[#B93815]",
+                "status": "Done",
+                "status_class": "bg-[#ECFDF3] text-[#027A48]",
+                "linked_articles": [
+                    "Art. 73"
+                ],
+                "evidence": "Uploaded",
+                "evidence_status": "Uploaded",
+                "evidence_class": "text-[#027A48]",
+                "assignee": "Sarah Chen",
+                "assignee_initials": "SC",
+                "assignee_class": "bg-[#F04438] text-white",
+                "description": "Report serious incidents to market surveillance authorities within specified timeframes"
+            },
+            {
+                "id": 14,
+                "original_task_id": "21",
+                "name": "Post-incident investigation",
+                "category": "Risk",
+                "category_class": "bg-[#FEF6EE] text-[#B93815]",
+                "status": "Done",
+                "status_class": "bg-[#ECFDF3] text-[#027A48]",
+                "linked_articles": [
+                    "Art. 73.6"
                 ],
                 "evidence": "Uploaded",
                 "evidence_status": "Uploaded",
                 "evidence_class": "text-[#027A48]",
                 "assignee": "Michael Torres",
                 "assignee_initials": "MT",
-                "assignee_class": "bg-[#F04438] text-white"
-            }
-        ]
-    },
-    "5": {
-        "id": 5,
-        "name": "test agent Project",
-        "ai_system": "test agent",
-        "role": "Deployer",
-        "regulatory_profile": [
-            "High-Risk"
-        ],
-        "overall_progress": 0,
-        "stats": {
-            "todo": 2,
-            "in_progress": 0,
-            "blocked": 0,
-            "done": 0
-        },
-        "tasks": [
-            {
-                "id": 1,
-                "name": "Initial Risk Assessment",
-                "category": "Risk",
-                "category_class": "bg-[#FEF6EE] text-[#B93815]",
-                "status": "To-Do",
-                "status_class": "bg-[#F2F4F7] text-[#344054]",
-                "linked_articles": [
-                    "Art. 9"
-                ],
-                "evidence": "Missing",
-                "evidence_status": "Missing",
-                "evidence_class": "text-[#D92D20]",
-                "assignee": "Not assigned yet",
-                "assignee_initials": null,
-                "assignee_class": "bg-[#F2F4F7] text-[#475467]"
+                "assignee_class": "bg-[#F04438] text-white",
+                "description": "Upon request, provide market surveillance authorities with all documentation and information necessary to investigate serious incident"
             },
             {
-                "id": 2,
-                "name": "Data Governance Setup",
-                "category": "Data",
-                "category_class": "bg-[#EFF8FF] text-[#175CD3]",
-                "status": "To-Do",
-                "status_class": "bg-[#F2F4F7] text-[#344054]",
+                "id": 15,
+                "original_task_id": "22",
+                "name": "Transparency obligations",
+                "category": "Legal",
+                "category_class": "bg-[#F9F5FF] text-[#6941C6]",
+                "status": "Done",
+                "status_class": "bg-[#ECFDF3] text-[#027A48]",
                 "linked_articles": [
-                    "Art. 10"
+                    "Art. 50",
+                    "Art. 52"
                 ],
-                "evidence": "Missing",
-                "evidence_status": "Missing",
-                "evidence_class": "text-[#D92D20]",
-                "assignee": "Not assigned yet",
-                "assignee_initials": null,
-                "assignee_class": "bg-[#F2F4F7] text-[#475467]"
+                "evidence": "Uploaded",
+                "evidence_status": "Uploaded",
+                "evidence_class": "text-[#027A48]",
+                "assignee": "Sarah Chen",
+                "assignee_initials": "SC",
+                "assignee_class": "bg-[#F04438] text-white",
+                "description": "Ensure transparency in AI systems that interact with natural persons, detect emotions, generate/manipulate content"
             }
-        ],
-        "custom_assignees": []
+        ]
     }
 }

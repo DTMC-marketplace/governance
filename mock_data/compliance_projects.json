@@ -5,7 +5,8 @@
         "updated": "Updated Jan 25",
         "source_system": "Credit Scoring AI",
         "risk_label": "High-Risk",
-        "risk_class": "bg-[#FEE4E2] text-[#B42318]"
+        "risk_class": "bg-[#FEE4E2] text-[#B42318]",
+        "progress": 65
     },
     {
         "id": 2,
@@ -13,7 +14,8 @@
         "updated": "Updated Jan 26",
         "source_system": "Resume Screening AI",
         "risk_label": "High-Risk",
-        "risk_class": "bg-[#FEE4E2] text-[#B42318]"
+        "risk_class": "bg-[#FEE4E2] text-[#B42318]",
+        "progress": 45
     },
     {
         "id": 3,
@@ -22,7 +24,7 @@
         "source_system": "Customer Service Chatbot",
         "risk_label": "Limited transparency",
         "risk_class": "bg-[#FEF0C7] text-[#B54708]",
-        "archived": true
+        "progress": 90
     },
     {
         "id": 4,
@@ -30,6 +32,7 @@
         "updated": "Updated Jan 20",
         "source_system": "Predictive Maintenance System",
         "risk_label": "Minimal",
-        "risk_class": "bg-[#ECFDF3] text-[#027A48]"
+        "risk_class": "bg-[#ECFDF3] text-[#027A48]",
+        "progress": 100
     }
 ]
