@@ -126,4 +126,8 @@ urlpatterns = [
     # Risk Registry & MRA
     path("mra/", views.mra, name="mra"),
     path("risk-overview/", views.risk_overview, name="risk_overview"),
+    
+    # AI Scan & Skills API
+    path("api/compliance/ai-scan/", views.api_ai_scan, name="api_ai_scan"),
+    path("api/compliance/skills/", views.api_compliance_skills, name="api_compliance_skills"),
 ]

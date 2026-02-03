@@ -441,13 +441,22 @@ const skillAssessments = {
 // State
 let riskState = {
     selectedToolId: null,
+    projectId: (function() {
+        const parts = window.location.pathname.split('/').filter(p => p);
+        if (parts.length >= 2) {
+            return parts[parts.length - 1];
+        }
+        return null;
+    })(),
     mode: 'choice', // 'choice', 'ai-scan', 'questionnaire'
     currentSectionIndex: 0,
     answers: {},
     expandedQuestions: {},
     scanProgress: 0,
     scanComplete: false,
-    scanInterval: null
+    scanInterval: null,
+    scanReport: null,
+    discoveredSkills: []
 };
 
 // Initialize Risk Evaluations Tab
@@ -644,15 +653,28 @@ function renderRiskEvaluationsTools() {
 // CORE REFRACTOR: Skill Assessment Logic
 // ==========================================
 
-function selectRiskTool(toolKey) {
+async function selectRiskTool(toolKey) {
     riskState.selectedToolId = toolKey;
+    riskState.projectId = window.location.pathname.split('/').filter(p => p).pop(); // Get project_id from URL
     riskState.mode = 'choice';
     riskState.currentSectionIndex = 0;
     riskState.answers = {};
     riskState.expandedQuestions = {};
     riskState.scanProgress = 0;
     riskState.scanComplete = false;
+    riskState.scanReport = null;
     if (riskState.scanInterval) clearInterval(riskState.scanInterval);
+
+    // Fetch available skills from BE to ensure connection
+    try {
+        const response = await fetch('/api/compliance/skills/');
+        const data = await response.json();
+        if (data.success) {
+            riskState.discoveredSkills = data.skills;
+        }
+    } catch (e) {
+        console.error("Failed to fetch skills:", e);
+    }
 
     renderRiskToolView();
 
@@ -736,7 +758,7 @@ function renderChoiceMode() {
                          <div class="flex justify-between items-start mb-4 w-full">
                             <h3 class="font-bold text-xl text-[#22262A]">AI Agent Scan</h3>
                             <div class="w-10 h-10 rounded-full bg-[#F13D30] border border-[#E5E7EB] flex items-center justify-center shrink-0">
-                                <img src="/static/governance/img/aiassistant.svg" alt="Sparkle" class="w-5 h-5 text-white">
+                                <img src="/static/governance/img/aiassistant.svg" alt="Sparkle" class="w-5 h-5 brightness-0 invert">
                             </div>
                          </div>
                          <p class="text-sm text-[#464E58] mb-6 leading-relaxed">Let our AI agents automatically scan and analyze your system to provide instant compliance insights.</p>
@@ -835,46 +857,104 @@ function renderAIScanReadyMode() {
             </div>
             <div class="flex-grow flex flex-col items-center justify-center p-12 text-center">
                  <div class="w-20 h-20 rounded-full bg-[#F13D30] flex items-center justify-center mb-6 shadow-md">
-                    <img src="/static/governance/img/aiassistant.svg" alt="Start Scan" class="w-10 h-10 text-white">
+                    <img src="/static/governance/img/aiassistant.svg" alt="Start Scan" class="w-10 h-10 brightness-0 invert">
                 </div>
                 <h2 class="font-bold text-2xl text-[#22262A] mb-4">Ready to Scan</h2>
-                <p class="text-[#464E58] max-w-lg mx-auto mb-10 leading-relaxed">
-                    Our AI agents will analyze your system configuration, data flows, and compliance posture to generate a comprehensive assessment report.
+                <p class="text-[#464E58] max-w-lg mx-auto mb-6 leading-relaxed">
+                    Our AI agents will analyze your system configuration, data flows, and compliance posture using the **${tool.name}** methodology.
                 </p>
                 
-                <button onclick="startActualAIScan()" class="bg-[#F13D30] hover:bg-[#D92D20] text-white px-8 py-3 rounded-lg font-bold shadow-lg shadow-red-200 transition-all flex items-center gap-3">
-                    <img src="/static/governance/img/aiassistant.svg" alt="" class="w-5 h-5 brightness-0 invert">
-                    Start AI Scan
-                </button>
+                ${riskState.discoveredSkills.some(s => s.id === riskState.selectedToolId || riskState.selectedToolId.includes(s.id)) ? `
+                    <div class="mb-10 px-4 py-2 bg-[#F0FDF4] border border-[#DCFCE7] rounded-lg inline-flex items-center gap-2">
+                        <svg class="w-4 h-4 text-[#16A34A]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                        <span class="text-xs font-semibold text-[#166534]">Intelligence Source Connected: AI Act Skills Package</span>
+                    </div>
+                ` : ''}
+                
+                <div class="mb-10 w-full">
+                    <button onclick="startActualAIScan()" class="bg-[#F13D30] hover:bg-[#D92D20] text-white px-8 py-3 rounded-lg font-bold shadow-lg shadow-red-200 transition-all flex items-center gap-3 mx-auto">
+                        <img src="/static/governance/img/aiassistant.svg" alt="" class="w-5 h-5 brightness-0 invert">
+                        Start AI Scan
+                    </button>
+                </div>
             </div>
         </div>
     `;
 }
 
 // RENDER: AI Scan Mode
-function startAIScan() {
+async function startAIScan() {
     riskState.scanProgress = 0;
     riskState.scanComplete = false;
+    riskState.scanReport = null;
     
-    // Simulate scan
+    // Start visual progress simulation
     if (riskState.scanInterval) clearInterval(riskState.scanInterval);
     riskState.scanInterval = setInterval(() => {
-        riskState.scanProgress += 5;
-        if (riskState.scanProgress >= 100) {
+        if (riskState.scanProgress < 90) {
+            riskState.scanProgress += Math.floor(Math.random() * 5) + 1;
+            renderRiskToolView();
+        }
+    }, 400);
+
+    try {
+        const response = await fetch('/api/compliance/ai-scan/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                project_id: riskState.projectId,
+                tool_id: riskState.selectedToolId
+            })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+            riskState.scanReport = data.report;
             riskState.scanProgress = 100;
             riskState.scanComplete = true;
-            clearInterval(riskState.scanInterval);
+        } else {
+            showNotification('Scan failed: ' + data.error, 'error');
+            setRiskMode('choice');
         }
-        renderRiskToolView(); // Re-render to show progress
-    }, 200);
+    } catch (error) {
+        console.error('Scan Error:', error);
+        showNotification('An error occurred during scan', 'error');
+        setRiskMode('choice');
+    } finally {
+        if (riskState.scanInterval) clearInterval(riskState.scanInterval);
+        renderRiskToolView();
+    }
+}
+
+// Helper to get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
 }
 
 function renderAIScanMode() {
     const progress = riskState.scanProgress;
     const complete = riskState.scanComplete;
     const tool = getToolInfo();
+    const report = riskState.scanReport;
     
-    if (complete) {
+    if (complete && report) {
+        const scoreColor = report.score >= 80 ? '#10B981' : (report.score >= 50 ? '#F59E0B' : '#F13D30');
+        
         return `
             <div class="bg-white rounded-lg border border-[#F0F1F2] shadow-sm">
                  <div class="p-6 border-b border-[#F0F1F2]">
@@ -882,69 +962,65 @@ function renderAIScanMode() {
                         <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
                         Back
                     </button>
-                    <h1 class="font-bold text-2xl text-[#22262A] mb-2">${tool.name} • Report</h1>
+                    <div class="flex justify-between items-center">
+                        <h1 class="font-bold text-2xl text-[#22262A]">${tool.name} • Report</h1>
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-medium text-[#464E58]">Compliance Score:</span>
+                            <div class="px-3 py-1 rounded-full font-bold text-white" style="background-color: ${scoreColor}">
+                                ${report.score}%
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="p-8 max-w-4xl mx-auto">
                     <div class="text-center mb-10">
-                        <div class="w-16 h-16 rounded-full bg-[#10B981] flex items-center justify-center mx-auto mb-4">
+                        <div class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style="background-color: ${scoreColor}">
                             <svg class="w-8 h-8 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
                         </div>
                         <h2 class="font-bold text-2xl text-[#22262A] mb-2">Scan Complete</h2>
-                        <p class="text-sm text-[#464E58]">Analysis complete. Review your results below.</p>
+                        <p class="text-sm text-[#464E58]">Status: <span class="font-bold">${report.compliance_status}</span></p>
                     </div>
 
                     <!-- AI Analysis Summary -->
                     <div class="mb-10">
                         <h3 class="font-bold text-lg text-[#22262A] mb-4">AI Analysis Summary</h3>
-                        <div class="bg-[#F9FAFB] rounded-2xl border border-[#F0F1F2] p-6 space-y-4">
-                            <!-- Compliance Status -->
-                            <div class="bg-white p-4 rounded-xl border border-[#F0F1F2] shadow-sm flex gap-4">
-                                <div class="w-2.5 h-2.5 rounded-full bg-[#10B981] mt-1.5 shrink-0"></div>
-                                <div>
-                                    <h4 class="font-bold text-sm text-[#22262A] mb-1">Compliance Status</h4>
-                                    <p class="text-sm text-[#464E58]">Your system demonstrates good alignment with ${tool.category} requirements. Article 10 compliance is at 85%.</p>
-                                </div>
-                            </div>
-                            <!-- Areas for Improvement -->
-                            <div class="bg-white p-4 rounded-xl border border-[#F0F1F2] shadow-sm flex gap-4">
-                                <div class="w-2.5 h-2.5 rounded-full bg-[#F59E0B] mt-1.5 shrink-0"></div>
-                                <div>
-                                    <h4 class="font-bold text-sm text-[#22262A] mb-1">Areas for Improvement</h4>
-                                    <p class="text-sm text-[#464E58]">3 areas identified that require attention to achieve full compliance. Detailed recommendations provided in the output below.</p>
-                                </div>
-                            </div>
-                            <!-- Next Steps -->
-                            <div class="bg-white p-4 rounded-xl border border-[#F0F1F2] shadow-sm flex gap-4">
-                                <div class="w-2.5 h-2.5 rounded-full bg-[#2563EB] mt-1.5 shrink-0"></div>
-                                <div>
-                                    <h4 class="font-bold text-sm text-[#22262A] mb-1">Next Steps</h4>
-                                    <p class="text-sm text-[#464E58]">Review the detailed output and implement recommended controls to enhance your compliance posture.</p>
-                                </div>
-                            </div>
+                        <div class="bg-[#F9FAFB] rounded-2xl border border-[#F0F1F2] p-6">
+                            <p class="text-[#464E58] leading-relaxed">${report.summary}</p>
                         </div>
                     </div>
 
-                    <!-- Detailed Output -->
+                    <!-- Detailed Findings -->
                     <div class="mb-10">
-                        <h3 class="font-bold text-lg text-[#22262A] mb-4">Detailed Output</h3>
-                        <div class="bg-white rounded-2xl border border-[#E5E7EB] p-6 font-medium text-sm text-[#464E58] leading-relaxed">
-                            <div class="space-y-1 mb-6">
-                                <p>Documentation: 75%</p>
-                                <p>Monitoring: 85%</p>
-                                <p>Risk Management: 90%</p>
-                            </div>
-                            
-                            <div class="mb-6">
-                                <p class="font-bold text-[#22262A] mb-3">=== NEXT STEPS ===</p>
-                                <ol class="list-decimal list-inside space-y-1">
-                                    <li>Review detailed findings above</li>
-                                    <li>Prioritize recommendations based on risk</li>
-                                    <li>Create implementation timeline</li>
-                                    <li>Schedule follow-up assessment</li>
-                                </ol>
-                            </div>
-                            
-                            <p>For questions or detailed guidance, consult with compliance team.</p>
+                        <h3 class="font-bold text-lg text-[#22262A] mb-4">Detailed Findings</h3>
+                        <div class="space-y-4">
+                            ${report.detailed_output.map(item => `
+                                <div class="bg-white p-5 rounded-xl border border-[#F0F1F2] shadow-sm">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <span class="px-2 py-0.5 bg-[#F3F4F6] text-[#4B5563] text-xs font-bold rounded uppercase">${item.category}</span>
+                                        <span class="text-xs text-[#9CA3AF] font-medium">${item.id}</span>
+                                    </div>
+                                    <h4 class="font-bold text-[#22262A] mb-2">${item.finding}</h4>
+                                    <div class="flex gap-3 items-start mt-3 pt-3 border-t border-[#F9FAFB]">
+                                        <svg class="w-4 h-4 text-[#10B981] mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                        <p class="text-sm text-[#464E58]"><span class="font-bold text-[#10B981]">Recommendation:</span> ${item.recommendation}</p>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- Next Steps -->
+                    <div class="mb-10">
+                        <h3 class="font-bold text-lg text-[#22262A] mb-4">Recommended Next Steps</h3>
+                        <div class="bg-[#EFF6FF] rounded-2xl border border-[#DBEAFE] p-6">
+                            <ul class="space-y-3">
+                                ${report.next_steps.map(step => `
+                                    <li class="flex items-center gap-3">
+                                        <div class="w-1.5 h-1.5 rounded-full bg-[#3B82F6]"></div>
+                                        <span class="text-sm text-[#1E40AF] font-medium">${step}</span>
+                                    </li>
+                                `).join('')}
+                            </ul>
                         </div>
                     </div>
                     

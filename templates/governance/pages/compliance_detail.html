@@ -351,10 +351,7 @@
                 <button onclick="handleAssessmentChoice('ai-scan-ready')" class="relative bg-white border border-[#E5E7EB] rounded-3xl p-10 text-left hover:border-[#F13D30] hover:shadow-2xl transition-all group flex flex-col h-full">
                     <div class="absolute top-5 right-10">
                         <div class="w-14 h-14 rounded-2xl bg-[#F13D30] flex items-center justify-center shadow-lg shadow-[#F13D30]/20 group-hover:scale-110 transition-transform">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-7 h-7 text-white">
-                                <path d="M9.5 2L11 6.5L15.5 8L11 9.5L9.5 14L8 9.5L3.5 8L8 6.5L9.5 2Z" fill="white" stroke="none"></path>
-                                <path d="M18 12L19 15L22 16L19 17L18 20L17 17L14 16L17 15L18 12Z" fill="white" stroke="none" opacity="0.6"></path>
-                            </svg>
+                            <img src="/static/governance/img/aiassistant.svg" alt="Start Scan" class="w-10 h-10 brightness-0 invert">
                         </div>
                     </div>
 
@@ -1293,9 +1290,7 @@
                         class="group relative bg-white border-2 border-[#E5E7EB] rounded-2xl p-6 text-left hover:border-[#F13D30] hover:shadow-xl transition-all flex items-center gap-5 w-full ${!hasFramework ? 'cursor-default' : ''}">
                     <div class="flex-shrink-0">
                         <div class="w-12 h-12 rounded-xl ${hasFramework ? 'bg-[#F13D30]' : 'bg-[#D1D5DB]'} flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-6 h-6 text-white">
-                                <path d="M12 3L14.5 9L21 12L14.5 15L12 21L9.5 15L3 12L9.5 9L12 3Z" fill="${hasFramework ? 'white' : 'currentColor'}"></path>
-                            </svg>
+                            <img src="/static/governance/img/aiassistant.svg" alt="Start Scan" class="w-10 h-10 brightness-0 invert">
                         </div>
                     </div>
                     <div class="flex-grow min-w-0">
@@ -1389,6 +1384,7 @@
 
         if (typeof riskState !== 'undefined') {
             riskState.selectedToolId = skillId;
+            riskState.projectId = window.location.pathname.split('/').filter(p => p).pop();
             riskState.mode = 'choice';
             riskState.currentSectionIndex = 0;
             if (riskState.scanInterval) clearInterval(riskState.scanInterval);

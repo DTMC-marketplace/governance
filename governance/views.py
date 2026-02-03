@@ -4282,7 +4282,78 @@ def compliance(request):
     })
 
 
+@csrf_exempt
+@require_http_methods(["GET"])
+def api_compliance_skills(request):
+    """
+    Get a list of available AI Act compliance skills from the artifacts.
+    """
+    try:
+        from .infrastructure.services.gemini_scanner_service import GeminiScannerService
+        scanner = GeminiScannerService()
+        skills = scanner._discover_skills()
+        
+        # Format for frontend
+        skills_list = []
+        for skill_id, path in skills.items():
+            skills_list.append({
+                'id': skill_id,
+                'path': path,
+                'name': skill_id.replace('-', ' ').title()
+            })
+            
+        return JsonResponse({
+            'success': True,
+            'skills': skills_list
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def api_ai_scan(request):
+    """
+    Perform an AI Agent Scan for a compliance project.
+    Expects JSON: { "project_id": "...", "tool_id": "..." }
+    """
+    try:
+        body = json.loads(request.body)
+        project_id = body.get('project_id')
+        tool_id = body.get('tool_id', 'ai-governance')
+        
+        if not project_id:
+            return JsonResponse({'success': False, 'error': 'project_id is required'}, status=400)
+            
+        # Get project detail
+        from .mock_data import get_compliance_detail
+        project = get_compliance_detail(project_id)
+        if not project:
+            return JsonResponse({'success': False, 'error': f'Project {project_id} not found'}, status=404)
+            
+        # Initialize scanner service
+        from .infrastructure.services.gemini_scanner_service import GeminiScannerService
+        scanner = GeminiScannerService()
+        
+        # Run scan using the discovered skills and checklist
+        report = scanner.run_scan(project, tool_id)
+        
+        return JsonResponse({
+            'success': True,
+            'report': report
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Invalid JSON'}, status=400)
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error in api_ai_scan: {str(e)}", exc_info=True)
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
 def compliance_detail(request, project_id):
+
     """
     Compliance Project Detail page.
     Data loaded from mock_data/compliance_details.json.

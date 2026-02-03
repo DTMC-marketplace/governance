@@ -1,0 +1,787 @@
+# EU AI Act High-Risk System Compliance Checklist
+# Based on Regulation (EU) 2024/1689
+# For use with high-risk AI systems classified under Annex III
+
+metadata:
+  document_version: "1.0"
+  last_updated: "2025-01-07"
+  applicable_regulation: "EU AI Act (Regulation 2024/1689)"
+  system_name: ""  # Fill in your AI system name
+  system_version: ""  # Fill in version
+  assessment_date: ""  # Fill in assessment date
+  responsible_party: ""  # Fill in organization/person
+  target_compliance_date: ""  # Fill in target date
+
+# Article 9: Risk Management System
+risk_management:
+  article: "Article 9"
+  description: "Continuous risk management process throughout AI system lifecycle"
+
+  tasks:
+    - id: "RM-01"
+      requirement: "Establish continuous risk management system"
+      status: "pending"  # pending | in_progress | completed | not_applicable
+      article_reference: "Article 9(1)"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: ""
+
+    - id: "RM-02"
+      requirement: "Identify and analyze known and foreseeable risks"
+      status: "pending"
+      article_reference: "Article 9(2)(a)"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: "Include risks to health, safety, fundamental rights"
+
+    - id: "RM-03"
+      requirement: "Estimate and evaluate risks that may emerge during AI system use"
+      status: "pending"
+      article_reference: "Article 9(2)(b)"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: ""
+
+    - id: "RM-04"
+      requirement: "Evaluate risks from reasonably foreseeable misuse"
+      status: "pending"
+      article_reference: "Article 9(2)(b)"
+      priority: "high"
+      evidence_location: ""
+      completion_date: ""
+      notes: ""
+
+    - id: "RM-05"
+      requirement: "Adopt appropriate risk management measures"
+      status: "pending"
+      article_reference: "Article 9(2)(c)"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: "Must address identified risks"
+
+    - id: "RM-06"
+      requirement: "Implement testing to identify appropriate risk management measures"
+      status: "pending"
+      article_reference: "Article 9(4)"
+      priority: "high"
+      evidence_location: ""
+      completion_date: ""
+      notes: "Testing must be against defined metrics"
+
+    - id: "RM-07"
+      requirement: "Test with representative data"
+      status: "pending"
+      article_reference: "Article 9(4)"
+      priority: "high"
+      evidence_location: ""
+      completion_date: ""
+      notes: ""
+
+    - id: "RM-08"
+      requirement: "Document risk management decisions and rationale"
+      status: "pending"
+      article_reference: "Article 9(5)"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: "Maintain comprehensive documentation"
+
+# Article 10: Data and Data Governance
+data_governance:
+  article: "Article 10"
+  description: "Training, validation and testing data quality and governance"
+
+  tasks:
+    - id: "DG-01"
+      requirement: "Implement data governance and management practices"
+      status: "pending"
+      article_reference: "Article 10(1)"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: "Applies to training, validation, and testing datasets"
+
+    - id: "DG-02"
+      requirement: "Ensure training data is relevant, sufficiently representative, and free of errors"
+      status: "pending"
+      article_reference: "Article 10(2)"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: "Must be appropriate for intended purpose"
+
+    - id: "DG-03"
+      requirement: "Document data design choices for training/validation/testing"
+      status: "pending"
+      article_reference: "Article 10(2)"
+      priority: "high"
+      evidence_location: ""
+      completion_date: ""
+      notes: ""
+
+    - id: "DG-04"
+      requirement: "Examine training data for possible biases"
+      status: "pending"
+      article_reference: "Article 10(2)(f)"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: "Especially for risks to health, safety, fundamental rights"
+
+    - id: "DG-05"
+      requirement: "Implement appropriate bias detection and correction measures"
+      status: "pending"
+      article_reference: "Article 10(2)(f)"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: ""
+
+    - id: "DG-06"
+      requirement: "Ensure data quality throughout system lifecycle"
+      status: "pending"
+      article_reference: "Article 10(3)"
+      priority: "high"
+      evidence_location: ""
+      completion_date: ""
+      notes: "Including for retraining and updates"
+
+    - id: "DG-07"
+      requirement: "Document handling of special categories of personal data (if applicable)"
+      status: "pending"
+      article_reference: "Article 10(5)"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: "Only if strictly necessary for bias detection/correction"
+
+# Article 11: Technical Documentation
+technical_documentation:
+  article: "Article 11"
+  description: "Technical documentation per Annex IV requirements"
+
+  tasks:
+    - id: "TD-01"
+      requirement: "Prepare technical documentation before market placement"
+      status: "pending"
+      article_reference: "Article 11(1)"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: "Must demonstrate conformity with requirements"
+
+    - id: "TD-02"
+      requirement: "Include general description of AI system"
+      status: "pending"
+      article_reference: "Annex IV, Section 1(a)"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: ""
+
+    - id: "TD-03"
+      requirement: "Document detailed description of system elements"
+      status: "pending"
+      article_reference: "Annex IV, Section 1(b)"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: "Methods, design specs, architecture, data requirements"
+
+    - id: "TD-04"
+      requirement: "Document intended purpose and reasonably foreseeable misuse"
+      status: "pending"
+      article_reference: "Annex IV, Section 1(c)"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: ""
+
+    - id: "TD-05"
+      requirement: "Document system architecture and computational resources"
+      status: "pending"
+      article_reference: "Annex IV, Section 1(d)"
+      priority: "high"
+      evidence_location: ""
+      completion_date: ""
+      notes: ""
+
+    - id: "TD-06"
+      requirement: "Describe training, validation, and testing methodologies"
+      status: "pending"
+      article_reference: "Annex IV, Section 2"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: "Include data sets, metrics, techniques used"
+
+    - id: "TD-07"
+      requirement: "Document risk management system and testing"
+      status: "pending"
+      article_reference: "Annex IV, Section 3"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: "Reference Article 9 risk management"
+
+    - id: "TD-08"
+      requirement: "Document changes made through lifecycle"
+      status: "pending"
+      article_reference: "Annex IV, Section 4"
+      priority: "high"
+      evidence_location: ""
+      completion_date: ""
+      notes: "Maintain modification log"
+
+    - id: "TD-09"
+      requirement: "Document conformity assessment procedures followed"
+      status: "pending"
+      article_reference: "Annex IV, Section 5"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: ""
+
+    - id: "TD-10"
+      requirement: "Keep documentation up to date for 10 years"
+      status: "pending"
+      article_reference: "Article 11(2)"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: "After market placement"
+
+# Article 12: Record-Keeping and Logging
+record_keeping:
+  article: "Article 12"
+  description: "Automatic logging capabilities for high-risk AI systems"
+
+  tasks:
+    - id: "RK-01"
+      requirement: "Design system to automatically log events (logging capability)"
+      status: "pending"
+      article_reference: "Article 12(1)"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: "Capability must be built into system design"
+
+    - id: "RK-02"
+      requirement: "Log operations throughout AI system's lifetime"
+      status: "pending"
+      article_reference: "Article 12(1)"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: ""
+
+    - id: "RK-03"
+      requirement: "Enable traceability of AI system functioning"
+      status: "pending"
+      article_reference: "Article 12(1)"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: ""
+
+    - id: "RK-04"
+      requirement: "Log time and date of each use"
+      status: "pending"
+      article_reference: "Article 12(2)"
+      priority: "high"
+      evidence_location: ""
+      completion_date: ""
+      notes: ""
+
+    - id: "RK-05"
+      requirement: "Log reference database against which input data has been checked"
+      status: "pending"
+      article_reference: "Article 12(2)"
+      priority: "high"
+      evidence_location: ""
+      completion_date: ""
+      notes: "If applicable to system type"
+
+    - id: "RK-06"
+      requirement: "Log input data or reference to stored input data"
+      status: "pending"
+      article_reference: "Article 12(2)"
+      priority: "high"
+      evidence_location: ""
+      completion_date: ""
+      notes: ""
+
+    - id: "RK-07"
+      requirement: "Log identification of natural persons involved in verification"
+      status: "pending"
+      article_reference: "Article 12(2)"
+      priority: "high"
+      evidence_location: ""
+      completion_date: ""
+      notes: "If applicable; consider GDPR compliance"
+
+    - id: "RK-08"
+      requirement: "Define appropriate log retention period"
+      status: "pending"
+      article_reference: "Article 12(1)"
+      priority: "high"
+      evidence_location: ""
+      completion_date: ""
+      notes: "Considering intended purpose and legal obligations"
+
+# Article 13: Transparency and Information to Users
+transparency:
+  article: "Article 13"
+  description: "Transparency and provision of information to users/deployers"
+
+  tasks:
+    - id: "TR-01"
+      requirement: "Design system to be sufficiently transparent for users to interpret output"
+      status: "pending"
+      article_reference: "Article 13(1)"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: "Enable appropriate use of system"
+
+    - id: "TR-02"
+      requirement: "Provide instructions for use with the AI system"
+      status: "pending"
+      article_reference: "Article 13(3)"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: "Concise, complete, correct, and clear"
+
+    - id: "TR-03"
+      requirement: "Include provider identity and contact details in instructions"
+      status: "pending"
+      article_reference: "Article 13(3)(b)(i)"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: ""
+
+    - id: "TR-04"
+      requirement: "Describe system characteristics, capabilities and performance"
+      status: "pending"
+      article_reference: "Article 13(3)(b)(ii)"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: "Including degree of accuracy for specific groups"
+
+    - id: "TR-05"
+      requirement: "Describe known limitations, circumstances leading to risks to health/safety"
+      status: "pending"
+      article_reference: "Article 13(3)(b)(iii)"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: ""
+
+    - id: "TR-06"
+      requirement: "Document expected lifetime and maintenance requirements"
+      status: "pending"
+      article_reference: "Article 13(3)(b)(v)"
+      priority: "high"
+      evidence_location: ""
+      completion_date: ""
+      notes: ""
+
+    - id: "TR-07"
+      requirement: "Describe human oversight measures"
+      status: "pending"
+      article_reference: "Article 13(3)(b)(vi)"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: "Including technical measures for human oversight"
+
+    - id: "TR-08"
+      requirement: "Provide information on cybersecurity measures"
+      status: "pending"
+      article_reference: "Article 13(3)(b)(vii)"
+      priority: "high"
+      evidence_location: ""
+      completion_date: ""
+      notes: ""
+
+# Article 14: Human Oversight
+human_oversight:
+  article: "Article 14"
+  description: "Human oversight measures for high-risk AI systems"
+
+  tasks:
+    - id: "HO-01"
+      requirement: "Design system for effective human oversight"
+      status: "pending"
+      article_reference: "Article 14(1)"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: "Oversight must be built into system design"
+
+    - id: "HO-02"
+      requirement: "Ensure oversight is proportionate to risks and autonomy level"
+      status: "pending"
+      article_reference: "Article 14(1)"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: ""
+
+    - id: "HO-03"
+      requirement: "Enable humans to understand AI system capabilities and limitations"
+      status: "pending"
+      article_reference: "Article 14(4)(a)"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: ""
+
+    - id: "HO-04"
+      requirement: "Enable monitoring of AI system operation"
+      status: "pending"
+      article_reference: "Article 14(4)(b)"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: ""
+
+    - id: "HO-05"
+      requirement: "Enable detection of signs of anomalies, dysfunctions, unexpected performance"
+      status: "pending"
+      article_reference: "Article 14(4)(c)"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: ""
+
+    - id: "HO-06"
+      requirement: "Enable interpretation of AI system outputs"
+      status: "pending"
+      article_reference: "Article 14(4)(d)"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: "Account for output characteristics and interpretation methods"
+
+    - id: "HO-07"
+      requirement: "Enable decision to not use AI system or disregard/override output"
+      status: "pending"
+      article_reference: "Article 14(4)(e)"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: "Humans must be able to override"
+
+    - id: "HO-08"
+      requirement: "Enable intervention or interruption of system through stop button"
+      status: "pending"
+      article_reference: "Article 14(4)(f)"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: "Or similar procedure"
+
+    - id: "HO-09"
+      requirement: "Assign oversight to competent individuals"
+      status: "pending"
+      article_reference: "Article 14(5)"
+      priority: "high"
+      evidence_location: ""
+      completion_date: ""
+      notes: "Ensure appropriate competence, training, authority"
+
+# Article 15: Accuracy, Robustness and Cybersecurity
+accuracy_robustness_security:
+  article: "Article 15"
+  description: "Requirements for accuracy, robustness and cybersecurity"
+
+  tasks:
+    - id: "AR-01"
+      requirement: "Achieve appropriate level of accuracy"
+      status: "pending"
+      article_reference: "Article 15(1)"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: "As declared in instructions for use"
+
+    - id: "AR-02"
+      requirement: "Achieve appropriate level of robustness"
+      status: "pending"
+      article_reference: "Article 15(1)"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: "Technical and organizational measures needed"
+
+    - id: "AR-03"
+      requirement: "Ensure consistent performance throughout lifecycle"
+      status: "pending"
+      article_reference: "Article 15(2)"
+      priority: "high"
+      evidence_location: ""
+      completion_date: ""
+      notes: ""
+
+    - id: "AR-04"
+      requirement: "Ensure resilience against errors, faults, and inconsistencies"
+      status: "pending"
+      article_reference: "Article 15(3)"
+      priority: "high"
+      evidence_location: ""
+      completion_date: ""
+      notes: "Within system or environment"
+
+    - id: "AR-05"
+      requirement: "Ensure resilience against attempts to alter use or performance"
+      status: "pending"
+      article_reference: "Article 15(3)"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: "Including adversarial attacks"
+
+    - id: "AR-06"
+      requirement: "Implement technical solutions addressing AI-specific vulnerabilities"
+      status: "pending"
+      article_reference: "Article 15(4)"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: "E.g., data poisoning, model evasion, membership inference"
+
+    - id: "AR-07"
+      requirement: "Conduct security testing and validation"
+      status: "pending"
+      article_reference: "Article 15(4)"
+      priority: "high"
+      evidence_location: ""
+      completion_date: ""
+      notes: ""
+
+# Conformity Assessment and CE Marking
+conformity_assessment:
+  article: "Articles 43-48"
+  description: "Conformity assessment and CE marking requirements"
+
+  tasks:
+    - id: "CA-01"
+      requirement: "Determine applicable conformity assessment procedure"
+      status: "pending"
+      article_reference: "Article 43"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: "Annex VI (internal control) or Annex VII (quality management + assessment)"
+
+    - id: "CA-02"
+      requirement: "Complete conformity assessment before market placement"
+      status: "pending"
+      article_reference: "Article 43(1)"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: ""
+
+    - id: "CA-03"
+      requirement: "Draw up EU declaration of conformity"
+      status: "pending"
+      article_reference: "Article 47"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: "Per Annex V template"
+
+    - id: "CA-04"
+      requirement: "Affix CE marking to AI system or accompanying documentation"
+      status: "pending"
+      article_reference: "Article 48"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: "If physical product allows; otherwise in documentation"
+
+    - id: "CA-05"
+      requirement: "Keep declaration of conformity available for 10 years"
+      status: "pending"
+      article_reference: "Article 47(2)"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: "After market placement"
+
+# Registration and Transparency
+registration:
+  article: "Article 49"
+  description: "Registration in EU database for high-risk AI systems"
+
+  tasks:
+    - id: "REG-01"
+      requirement: "Register high-risk AI system in EU database before market placement"
+      status: "pending"
+      article_reference: "Article 49(1)"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: "Applies to most high-risk systems"
+
+    - id: "REG-02"
+      requirement: "Provide required registration information"
+      status: "pending"
+      article_reference: "Article 49(2)"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: "Provider details, system details, conformity info"
+
+    - id: "REG-03"
+      requirement: "Keep registration information up to date"
+      status: "pending"
+      article_reference: "Article 49(3)"
+      priority: "high"
+      evidence_location: ""
+      completion_date: ""
+      notes: "Update for substantial modifications"
+
+# Post-Market Monitoring
+post_market_monitoring:
+  article: "Article 72"
+  description: "Post-market monitoring system for high-risk AI"
+
+  tasks:
+    - id: "PM-01"
+      requirement: "Establish and document post-market monitoring system"
+      status: "pending"
+      article_reference: "Article 72(1)"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: "Proportionate to nature of AI and risks"
+
+    - id: "PM-02"
+      requirement: "Actively and systematically collect and analyze data"
+      status: "pending"
+      article_reference: "Article 72(1)"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: "On performance throughout lifecycle"
+
+    - id: "PM-03"
+      requirement: "Report serious incidents and malfunctions"
+      status: "pending"
+      article_reference: "Article 73"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: "To market surveillance authorities without delay"
+
+    - id: "PM-04"
+      requirement: "Take corrective actions for non-conformity"
+      status: "pending"
+      article_reference: "Article 72(3)"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: "Including recalls, warnings, or modifications"
+
+# Additional Requirements for Specific High-Risk Categories
+biometric_systems:
+  article: "Articles 26-27"
+  description: "Additional requirements for biometric systems (if applicable)"
+  applicable: false  # Set to true if system involves biometrics
+
+  tasks:
+    - id: "BIO-01"
+      requirement: "Conduct fundamental rights impact assessment"
+      status: "not_applicable"
+      article_reference: "Article 27"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: "Required before deployment of certain biometric systems"
+
+    - id: "BIO-02"
+      requirement: "Register in EU database with extended information"
+      status: "not_applicable"
+      article_reference: "Article 49"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: "Additional fields for biometric systems"
+
+# Quality Management System (if using Annex VII procedure)
+quality_management:
+  article: "Annex VII"
+  description: "Quality management system requirements (if applicable)"
+  applicable: false  # Set to true if using Annex VII conformity assessment
+
+  tasks:
+    - id: "QM-01"
+      requirement: "Establish documented quality management system"
+      status: "not_applicable"
+      article_reference: "Annex VII, Section 2"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: "Only if using quality management conformity procedure"
+
+    - id: "QM-02"
+      requirement: "Undergo third-party quality management assessment"
+      status: "not_applicable"
+      article_reference: "Annex VII, Section 4"
+      priority: "critical"
+      evidence_location: ""
+      completion_date: ""
+      notes: "By notified body"
+
+# Summary Statistics (auto-calculated)
+summary:
+  total_tasks: 91
+  critical_tasks: 68
+  high_priority_tasks: 21
+  medium_priority_tasks: 2
+
+  status_breakdown:
+    pending: 0
+    in_progress: 0
+    completed: 0
+    not_applicable: 5
+
+# Notes and Guidance
+implementation_notes: |
+  COMPLIANCE TIMELINE GUIDANCE:
+  - Prohibited AI practices: Effective from 2 February 2025
+  - High-risk AI systems: Phased implementation Aug 2026 - Aug 2027
+  - Existing systems may have transition periods until Aug 2030
+
+  PRIORITY GUIDANCE:
+  - Critical: Must be completed for conformity - compliance blockers
+  - High: Important for compliance and best practice
+  - Medium: Supporting activities and documentation
+
+  STATUS DEFINITIONS:
+  - pending: Not started
+  - in_progress: Work underway
+  - completed: Finished with evidence
+  - not_applicable: Does not apply to this system
+
+  EVIDENCE REQUIREMENTS:
+  - Document all evidence locations (file paths, document IDs, etc.)
+  - Include completion dates for audit trail
+  - Add notes explaining approach or deviations
+
+  RECOMMENDED APPROACH:
+  1. Complete critical tasks first (Articles 9-15)
+  2. Build technical documentation as you implement
+  3. Establish quality/governance processes early
+  4. Plan conformity assessment timeline
+  5. Budget 6-24 months for full implementation
