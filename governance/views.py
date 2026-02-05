@@ -12,6 +12,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods, require_POST
 from django.views.decorators.csrf import csrf_exempt
 import json
+from django.conf import settings
 
 # Try to import Clean Architecture views (will override legacy functions below)
 try:
@@ -4287,20 +4288,21 @@ def compliance(request):
 def api_compliance_skills(request):
     """
     Get a list of available AI Act compliance skills from the artifacts.
-    Uses caching to avoid slow file system scans on every request.
+    Uses GovernanceAgentService which handles discovery and metadata.
     """
     try:
-        from .infrastructure.services.gemini_scanner_service import GeminiScannerService
-        scanner = GeminiScannerService()
-        skills = scanner._discover_skills()  # Now cached for 5 minutes
+        from .infrastructure.services.governance_agent_service import get_governance_agent_service
+        agent = get_governance_agent_service()
         
         # Format for frontend
         skills_list = []
-        for skill_id, path in skills.items():
+        for skill_id in agent.list_available_skills():
+            meta = agent.skills.get(skill_id)
             skills_list.append({
                 'id': skill_id,
-                'path': path,
-                'name': skill_id.replace('-', ' ').title()
+                'name': skill_id.replace('-', ' ').title(),
+                'description': meta.description if meta else "",
+                'path': meta.path if meta else ""
             })
             
         return JsonResponse({
@@ -4354,6 +4356,45 @@ def api_ai_scan(request):
         logger = logging.getLogger(__name__)
         logger.error(f"Error in api_ai_scan: {str(e)}", exc_info=True)
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+def serve_scan_report(request, filename):
+    """
+    Serve a scan report MD file for download or inline viewing.
+    GET ?download=true → download as .md file
+    GET → return JSON with markdown content for rendering in UI
+    """
+    from pathlib import Path
+
+    reports_dir = Path(settings.BASE_DIR) / "scan_reports"
+    file_path = reports_dir / filename
+
+    # Security: prevent path traversal
+    try:
+        file_path = file_path.resolve()
+        if not str(file_path).startswith(str(reports_dir.resolve())):
+            return JsonResponse({'success': False, 'error': 'Invalid path'}, status=403)
+    except Exception:
+        return JsonResponse({'success': False, 'error': 'Invalid path'}, status=403)
+
+    if not file_path.exists():
+        return JsonResponse({'success': False, 'error': 'Report not found'}, status=404)
+
+    content = file_path.read_text(encoding='utf-8')
+
+    # Download mode
+    if request.GET.get('download') == 'true':
+        from django.http import HttpResponse
+        response = HttpResponse(content, content_type='text/markdown; charset=utf-8')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
+
+    # Inline mode: return MD content as JSON for frontend rendering
+    return JsonResponse({
+        'success': True,
+        'filename': filename,
+        'content': content
+    })
 
 
 def compliance_detail(request, project_id):
@@ -4937,3 +4978,63 @@ def ai_system_detail(request, agent_id):
         'assessment_blocks': assessment_blocks,
         'result_blocks': result_blocks,
     })
+
+@csrf_exempt
+@require_POST
+def governance_autofill_api(request):
+    """
+    API endpoint for AI-assisted form autofill from documents.
+    Accepts: { 'file_paths': [...], 'form_type': 'organization'|'ai_system' }
+    """
+    try:
+        data = json.loads(request.body)
+        file_paths = data.get('file_paths', [])
+        form_type = data.get('form_type', 'organization')
+        
+        if not file_paths:
+            return JsonResponse({'success': False, 'error': 'No file paths provided'})
+            
+        from .infrastructure.services.autofill.autofill_service import AutofillService
+        service = AutofillService()
+        
+        # Define fields metadata based on form_type
+        fields_metadata = []
+        if form_type == 'organization':
+            fields_metadata = [
+                {"name": "entity_name", "type": "text"},
+                {"name": "registration_number", "type": "text"},
+                {"name": "headquarter_address", "type": "text"},
+                {"name": "country", "type": "select", "options": ["United Kingdom", "United States", "France", "Germany", "Vietnam", "Other"]},
+                {"name": "postal_code", "type": "text"},
+                {"name": "legal_representative", "type": "text"},
+                {"name": "contact_email", "type": "email"},
+                {"name": "contact_phone", "type": "phone"},
+                {"name": "public_authority", "type": "radio", "options": ["Yes", "No"]},
+                {"name": "compliance_owner_name", "type": "text"},
+                {"name": "compliance_owner_email", "type": "email"},
+                {"name": "department", "type": "text"}
+            ]
+        elif form_type == 'ai_system':
+            fields_metadata = [
+                {"name": "ai_system_name", "type": "text"},
+                {"name": "internal_system_id", "type": "text"},
+                {"name": "commercial_name", "type": "text"},
+                {"name": "owner_name", "type": "text"},
+                {"name": "owner_email", "type": "email"},
+                {"name": "owner_department", "type": "text"},
+                {"name": "system_status", "type": "select", "options": ["Planned", "In development", "Testing / Pilot", "In use (production)", "Retired"]},
+                {"name": "go_live_date", "type": "date"},
+                {"name": "part_of_product", "type": "radio", "options": ["Yes", "No"]},
+                {"name": "product_service_name", "type": "text"},
+                {"name": "vendor", "type": "text"},
+                {"name": "business_unit", "type": "text"},
+                {"name": "purpose", "type": "text"}
+            ]
+            
+        result = service.run_bulk_autofill(file_paths, fields_metadata)
+        return JsonResponse(result)
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error in governance_autofill_api: {str(e)}", exc_info=True)
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)

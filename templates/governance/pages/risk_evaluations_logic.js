@@ -991,7 +991,13 @@ function renderAIScanMode() {
     
     if (complete && report) {
         const scoreColor = report.score >= 80 ? '#10B981' : (report.score >= 50 ? '#F59E0B' : '#F13D30');
-        
+        const hasMarkdown = report.report_md && report.report_md.length > 0;
+        const reportFile = report.report_file || '';
+        const activeTab = riskState.reportTab || 'summary';
+
+        // Convert markdown to simple HTML for rendering
+        const mdHtml = hasMarkdown ? convertMarkdownToHtml(report.report_md) : '';
+
         return `
             <div class="bg-white rounded-lg border border-[#F0F1F2] shadow-sm">
                  <div class="p-6 border-b border-[#F0F1F2]">
@@ -1008,7 +1014,18 @@ function renderAIScanMode() {
                             </div>
                         </div>
                     </div>
+                    <!-- Tab Switcher -->
+                    <div class="flex gap-1 mt-4 bg-[#F3F4F6] rounded-lg p-1">
+                        <button onclick="switchReportTab('summary')" class="flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'summary' ? 'bg-white text-[#22262A] shadow-sm' : 'text-[#6B7280] hover:text-[#22262A]'}">
+                            Summary View
+                        </button>
+                        <button onclick="switchReportTab('markdown')" class="flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'markdown' ? 'bg-white text-[#22262A] shadow-sm' : 'text-[#6B7280] hover:text-[#22262A]'}" ${!hasMarkdown ? 'disabled' : ''}>
+                            Full Report (MD)
+                        </button>
+                    </div>
                 </div>
+
+                ${activeTab === 'summary' ? `
                 <div class="p-8 max-w-4xl mx-auto">
                     <div class="text-center mb-10">
                         <div class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style="background-color: ${scoreColor}">
@@ -1016,6 +1033,7 @@ function renderAIScanMode() {
                         </div>
                         <h2 class="font-bold text-2xl text-[#22262A] mb-2">Scan Complete</h2>
                         <p class="text-sm text-[#464E58]">Status: <span class="font-bold">${report.compliance_status}</span></p>
+                        ${report.risk_classification ? `<p class="text-xs text-[#9CA3AF] mt-1">Risk: <span class="font-bold">${typeof report.risk_classification === 'object' ? (report.risk_classification.category || JSON.stringify(report.risk_classification)) : report.risk_classification}</span></p>` : ''}
                     </div>
 
                     <!-- AI Analysis Summary -->
@@ -1030,7 +1048,7 @@ function renderAIScanMode() {
                     <div class="mb-10">
                         <h3 class="font-bold text-lg text-[#22262A] mb-4">Detailed Findings</h3>
                         <div class="space-y-4">
-                            ${report.detailed_output.map(item => `
+                            ${(report.detailed_output || []).map(item => `
                                 <div class="bg-white p-5 rounded-xl border border-[#F0F1F2] shadow-sm">
                                     <div class="flex justify-between items-start mb-2">
                                         <span class="px-2 py-0.5 bg-[#F3F4F6] text-[#4B5563] text-xs font-bold rounded uppercase">${item.category}</span>
@@ -1046,12 +1064,24 @@ function renderAIScanMode() {
                         </div>
                     </div>
 
+                    <!-- Recommended Skills -->
+                    ${(report.recommended_skills && report.recommended_skills.length > 0) ? `
+                    <div class="mb-10">
+                        <h3 class="font-bold text-lg text-[#22262A] mb-4">Recommended Skills</h3>
+                        <div class="flex flex-wrap gap-2">
+                            ${report.recommended_skills.map(skill => `
+                                <span class="px-3 py-1.5 bg-[#FEF2F2] text-[#991B1B] text-sm font-medium rounded-full border border-[#FECACA]">${typeof skill === 'string' ? skill : skill.skill || skill}</span>
+                            `).join('')}
+                        </div>
+                    </div>
+                    ` : ''}
+
                     <!-- Next Steps -->
                     <div class="mb-10">
                         <h3 class="font-bold text-lg text-[#22262A] mb-4">Recommended Next Steps</h3>
                         <div class="bg-[#EFF6FF] rounded-2xl border border-[#DBEAFE] p-6">
                             <ul class="space-y-3">
-                                ${report.next_steps.map(step => `
+                                ${(report.next_steps || []).map(step => `
                                     <li class="flex items-center gap-3">
                                         <div class="w-1.5 h-1.5 rounded-full bg-[#3B82F6]"></div>
                                         <span class="text-sm text-[#1E40AF] font-medium">${step}</span>
@@ -1060,17 +1090,34 @@ function renderAIScanMode() {
                             </ul>
                         </div>
                     </div>
-                    
+
                     <div class="flex gap-4">
                          <button onclick="setRiskMode('ai-scan')" class="flex-1 px-6 py-3.5 bg-white border border-[#B5BCC4] text-[#464E58] rounded-xl font-bold text-base hover:bg-[#F9FAFB] transition-colors">Rescan</button>
-                         <button onclick="saveRiskToolOutput()" class="flex-1 px-6 py-3.5 bg-[#F13D30] text-white rounded-xl font-bold text-base hover:bg-[#DC180A] transition-colors flex items-center justify-center gap-2 shadow-lg shadow-red-100">
+                         <button onclick="downloadScanReport()" class="flex-1 px-6 py-3.5 bg-[#F13D30] text-white rounded-xl font-bold text-base hover:bg-[#DC180A] transition-colors flex items-center justify-center gap-2 shadow-lg shadow-red-100">
                              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
                              </svg>
-                             Export Report
+                             Export Report (.md)
                          </button>
                     </div>
                 </div>
+                ` : `
+                <!-- Full Markdown Report Tab -->
+                <div class="p-8 max-w-4xl mx-auto">
+                    <div class="prose prose-sm max-w-none scan-report-md" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                        ${mdHtml}
+                    </div>
+                    <div class="flex gap-4 mt-8 pt-6 border-t border-[#F0F1F2]">
+                         <button onclick="setRiskMode('ai-scan')" class="flex-1 px-6 py-3.5 bg-white border border-[#B5BCC4] text-[#464E58] rounded-xl font-bold text-base hover:bg-[#F9FAFB] transition-colors">Rescan</button>
+                         <button onclick="downloadScanReport()" class="flex-1 px-6 py-3.5 bg-[#F13D30] text-white rounded-xl font-bold text-base hover:bg-[#DC180A] transition-colors flex items-center justify-center gap-2 shadow-lg shadow-red-100">
+                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                             </svg>
+                             Export Report (.md)
+                         </button>
+                    </div>
+                </div>
+                `}
             </div>
         `;
     }
@@ -1262,6 +1309,141 @@ function finishQuestionnaire() {
 }
 
 function saveRiskToolOutput() {
-    showNotification('Assessment report exported successfully!', 'success');
+    downloadScanReport();
+}
+
+// Switch between Summary and Markdown report tabs
+function switchReportTab(tab) {
+    riskState.reportTab = tab;
+    renderRiskToolView();
+}
+
+// Download scan report as .md file
+function downloadScanReport() {
+    const report = riskState.scanReport;
+    if (!report) {
+        showNotification('No report available to download', 'error');
+        return;
+    }
+
+    // If server saved a file, download from server URL
+    if (report.report_file) {
+        const link = document.createElement('a');
+        link.href = report.report_file + '?download=true';
+        link.download = report.report_file.split('/').pop();
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showNotification('Report downloaded successfully!', 'success');
+        return;
+    }
+
+    // Fallback: generate MD from report_md content or build from JSON
+    const mdContent = report.report_md || buildMarkdownFromReport(report);
+    const blob = new Blob([mdContent], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `scan_report_${riskState.selectedToolId || 'unknown'}_${new Date().toISOString().slice(0,10)}.md`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    showNotification('Report downloaded successfully!', 'success');
+}
+
+// Build markdown from JSON report (fallback if report_md not available)
+function buildMarkdownFromReport(report) {
+    let md = `# AI Act Compliance Scan Report\n\n`;
+    md += `**Score:** ${report.score || 0}/100\n`;
+    md += `**Status:** ${report.compliance_status || 'Unknown'}\n`;
+    if (report.risk_classification) md += `**Risk:** ${report.risk_classification}\n`;
+    md += `\n---\n\n## Summary\n\n${report.summary || 'No summary.'}\n`;
+    md += `\n---\n\n## Detailed Findings\n\n`;
+    if (report.detailed_output && report.detailed_output.length) {
+        md += '| ID | Category | Finding | Recommendation |\n';
+        md += '|----|----------|---------|----------------|\n';
+        report.detailed_output.forEach(item => {
+            md += `| ${item.id} | ${item.category} | ${item.finding} | ${item.recommendation} |\n`;
+        });
+    }
+    md += `\n---\n\n## Next Steps\n\n`;
+    if (report.next_steps) {
+        report.next_steps.forEach((step, i) => { md += `${i+1}. ${step}\n`; });
+    }
+    return md;
+}
+
+// Convert Markdown to HTML for inline rendering (lightweight, no external lib)
+function convertMarkdownToHtml(md) {
+    if (!md) return '';
+    let html = md;
+
+    // Escape HTML entities first
+    html = html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+    // Headers
+    html = html.replace(/^### (.+)$/gm, '<h3 class="text-lg font-bold text-[#22262A] mt-6 mb-3">$1</h3>');
+    html = html.replace(/^## (.+)$/gm, '<h2 class="text-xl font-bold text-[#22262A] mt-8 mb-4 pb-2 border-b border-[#F0F1F2]">$1</h2>');
+    html = html.replace(/^# (.+)$/gm, '<h1 class="text-2xl font-bold text-[#22262A] mb-6">$1</h1>');
+
+    // Bold and italic
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+
+    // Horizontal rules
+    html = html.replace(/^---$/gm, '<hr class="my-6 border-[#F0F1F2]">');
+
+    // Tables - handle more robustly
+    html = html.replace(/^\|(.+)\|$/gm, function(match) {
+        const cells = match.split('|').filter((c, i, a) => i > 0 && i < a.length - 1);
+        if (cells.every(c => /^[\s\-:]+$/.test(c))) {
+            return '<!--table-separator-->';
+        }
+        const row = cells.map(c => `<td class="px-4 py-3 border border-[#E5E7EB] text-sm align-top leading-relaxed">${c.trim()}</td>`).join('');
+        return `<tr>${row}</tr>`;
+    });
+
+    // Wrap table rows
+    html = html.replace(/((<tr>.*<\/tr>\n?)+)/g, function(match) {
+        const cleaned = match.replace(/<!--table-separator-->\n?/g, '');
+        if (!cleaned.trim()) return '';
+        
+        const rows = cleaned.trim().split('\n').filter(r => r.trim());
+        if (rows.length > 0) {
+            let tableHtml = '<div class="overflow-x-auto my-6 border border-[#E5E7EB] rounded-xl shadow-sm">';
+            tableHtml += '<table class="w-full border-collapse text-sm table-auto">';
+            
+            // First row as header
+            const headerRow = rows[0].replace(/<td class="[^"]*"/g, '<th class="px-4 py-3 bg-[#F9FAFB] border-b border-[#E5E7EB] font-bold text-[#22262A] text-left"')
+                                      .replace(/<\/td>/g, '</th>');
+            tableHtml += `<thead>${headerRow}</thead>`;
+            tableHtml += `<tbody>${rows.slice(1).join('\n')}</tbody>`;
+            tableHtml += '</table></div>';
+            return tableHtml;
+        }
+        return match;
+    });
+    html = html.replace(/<!--table-separator-->\n?/g, '');
+
+    // Ordered lists
+    html = html.replace(/^(\d+)\. (.+)$/gm, '<li class="ml-6 mb-2 list-decimal text-sm text-[#464E58]">$2</li>');
+
+    // Unordered lists
+    html = html.replace(/^- (.+)$/gm, '<li class="ml-6 mb-2 list-disc text-sm text-[#464E58]">$1</li>');
+
+    // Wrap consecutive <li> elements
+    html = html.replace(/((<li[^>]*>.*<\/li>\n?)+)/g, '<ul class="mb-4 space-y-1">$1</ul>');
+
+    // Blockquotes
+    html = html.replace(/^&gt; (.+)$/gm, '<blockquote class="pl-4 border-l-4 border-[#F59E0B] bg-[#FFFBEB] p-4 rounded-r-lg my-6 text-sm text-[#92400E] italic shadow-sm">$1</blockquote>');
+
+    // Paragraphs (lines that are not already wrapped)
+    html = html.replace(/^(?!<(h[123]|ul|table|hr|block|div|li))(.+)$/gm, '<p class="text-sm text-[#464E58] leading-relaxed mb-4">$2</p>');
+
+    // Clean empty paragraphs or nested tags
+    html = html.replace(/<p[^>]*>\s*<\/p>/g, '');
+
+    return html;
 }
 

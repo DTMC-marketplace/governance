@@ -66,10 +66,9 @@ class GeminiAIActService(AIActService):
         
         # Initialize client (timeout is not supported in Client constructor)
         self.client = genai.Client(api_key=self.api_key)
-        # Default to gemini-2.5-flash for free tier (gemini-1.5-flash is deprecated)
-        # Free tier options: gemini-2.5-flash, gemini-2.5-flash-lite, gemini-3-flash-preview
-        # Note: gemini-1.5-flash and gemini-1.5-pro are no longer available
-        self.model_name = getattr(settings, 'AI_ACT_MODEL_NAME', 'gemini-2.5-flash')
+        # Default to gemini-3-pro-preview (aligned with ai_act_cli.py for best accuracy)
+        # Alternative options: gemini-2.5-flash (faster/cheaper), gemini-3-flash-preview
+        self.model_name = getattr(settings, 'AI_ACT_MODEL_NAME', 'gemini-3-pro-preview')
         self.use_file_search = getattr(settings, 'AI_ACT_USE_FILE_SEARCH', False)
         self.api_timeout = getattr(settings, 'AI_ACT_API_TIMEOUT', 30)
         self.articles_dir = getattr(settings, 'AI_ACT_ARTICLES_DIR', None)
@@ -77,6 +76,7 @@ class GeminiAIActService(AIActService):
         
         # Load full text sections for fallback
         self._full_text_sections = None
+        self._full_text = None  # Full text content for long context injection (like CLI)
         self._gdpr_sections = None
         
         # Chat session storage: {chat_history_id: chat_session}
@@ -129,6 +129,27 @@ class GeminiAIActService(AIActService):
             self._full_text_sections = []
             return []
     
+    def _load_full_text(self) -> str:
+        """Load the complete EU AI Act full text for long context injection."""
+        if self._full_text is not None:
+            return self._full_text
+
+        if not self.articles_dir:
+            self._full_text = ""
+            return ""
+
+        full_text_path = self.articles_dir / "EU_AI_Act_Full_Text.txt"
+        if not full_text_path.exists():
+            self._full_text = ""
+            return ""
+
+        try:
+            self._full_text = full_text_path.read_text(encoding='utf-8')
+            return self._full_text
+        except Exception:
+            self._full_text = ""
+            return ""
+
     def _load_gdpr_sections(self) -> List[Dict[str, str]]:
         """Load GDPR article files."""
         if self._gdpr_sections is not None:
@@ -307,19 +328,13 @@ class GeminiAIActService(AIActService):
             chat_history_id = str(uuid.uuid4())
             logger.info(f"Creating new chat session: {chat_history_id}")
             
-            # Build system prompt
+            # Build system prompt (aligned with ai_act_cli.py)
             store_name = self.get_store_name() if self.use_file_search else None
-            base_system_prompt = (
-                "You are an expert on the EU AI Act (Regulation 2024/1689) and the GDPR (Regulation 2016/679).\n"
-                "Provide accurate, well-cited answers. When quoting provisions, mention "
-                "the regulation and article number. Be precise and refer to the exact text "
-                "of the regulations whenever possible."
-            )
-            
+
             # Try File Search first if store is available
             tools = None
-            system_instruction = base_system_prompt
-            
+            system_instruction = None
+
             if store_name and self.use_file_search:
                 try:
                     logger.info("Setting up File Search for chat session...")
@@ -332,33 +347,86 @@ class GeminiAIActService(AIActService):
                     ]
                     uses_file_search = True
                     system_instruction = (
-                        base_system_prompt
-                        + "\nUse the File Search tool to find relevant information from the regulations."
+                        "You are an expert legal assistant on the EU AI Act (Regulation 2024/1689) and GDPR.\n\n"
+                        "IMPORTANT - EU AI Act Article 50 Compliance:\n"
+                        "You are an AI assistant. Users have been informed they are interacting with an AI system.\n"
+                        "Your responses must be helpful but include appropriate disclaimers about verification and legal counsel.\n\n"
+                        "Use the File Search tool to find relevant information from the regulations.\n\n"
+                        "Your goal is to provide accurate, comprehensive answers based on the regulations.\n\n"
+                        "Guidelines:\n"
+                        "1. ALWAYS cite specific Articles and paragraphs (e.g., \"Article 5(1)\").\n"
+                        "2. If the answer is not in the document, state that clearly.\n"
+                        "3. Be precise with legal definitions.\n"
+                        "4. Use structured formatting (bullet points, bold text).\n"
+                        "5. Remind users when appropriate that AI-generated responses should be verified with legal counsel.\n"
+                        "6. For compliance-critical questions, emphasize the importance of professional legal advice."
                     )
                 except Exception as e:
                     logger.warning(f"Failed to setup File Search: {e}, using manual context")
                     tools = None
                     uses_file_search = False
-            
-            # If no File Search, use manual context in system prompt
+
+            # If no File Search, use full text injection (Long Context approach like CLI)
             if not tools:
-                logger.info("Using manual context in system prompt...")
-                context_sections = self._build_manual_context(request.question)
-                if context_sections:
-                    context_block = "\n\n".join(
-                        f"### {section['title']}\n{section['text']}" for section in context_sections
-                    )
+                full_text = self._load_full_text()
+
+                if full_text:
+                    # Full text injection - same strategy as ai_act_cli.py
+                    logger.info(f"Using full text injection ({len(full_text)} characters)...")
                     system_instruction = (
-                        base_system_prompt
-                        + "\n\nUse the following excerpts from the EU AI Act and GDPR as context:\n"
-                        + context_block
-                        + "\n\nIf the answer is not covered, explain that explicitly."
+                        "You are an expert legal assistant on the EU AI Act (Regulation 2024/1689) and GDPR.\n\n"
+                        "IMPORTANT - EU AI Act Article 50 Compliance:\n"
+                        "You are an AI assistant. Users have been informed they are interacting with an AI system.\n"
+                        "Your responses must be helpful but include appropriate disclaimers about verification and legal counsel.\n\n"
+                        "CONTEXT DOCUMENT (Full Text of the Regulation):\n"
+                        "================================================================================\n"
+                        f"{full_text}\n"
+                        "================================================================================\n\n"
+                        "Your goal is to provide accurate, comprehensive answers based ONLY on the provided context document above.\n\n"
+                        "Guidelines:\n"
+                        "1. ALWAYS cite specific Articles and paragraphs (e.g., \"Article 5(1)\").\n"
+                        "2. If the answer is not in the document, state that clearly.\n"
+                        "3. Be precise with legal definitions.\n"
+                        "4. Use structured formatting (bullet points, bold text).\n"
+                        "5. Remind users when appropriate that AI-generated responses should be verified with legal counsel.\n"
+                        "6. For compliance-critical questions, emphasize the importance of professional legal advice."
                     )
-            
-            # Create chat session
+                else:
+                    # Fallback to manual context snippets if full text not available
+                    logger.info("Full text not available, using manual context snippets...")
+                    context_sections = self._build_manual_context(request.question)
+                    base_system_prompt = (
+                        "You are an expert legal assistant on the EU AI Act (Regulation 2024/1689) and GDPR.\n\n"
+                        "IMPORTANT - EU AI Act Article 50 Compliance:\n"
+                        "You are an AI assistant. Users have been informed they are interacting with an AI system.\n"
+                        "Your responses must be helpful but include appropriate disclaimers about verification and legal counsel.\n\n"
+                        "Your goal is to provide accurate, comprehensive answers based ONLY on the provided context.\n\n"
+                        "Guidelines:\n"
+                        "1. ALWAYS cite specific Articles and paragraphs (e.g., \"Article 5(1)\").\n"
+                        "2. If the answer is not in the document, state that clearly.\n"
+                        "3. Be precise with legal definitions.\n"
+                        "4. Use structured formatting (bullet points, bold text).\n"
+                        "5. Remind users when appropriate that AI-generated responses should be verified with legal counsel.\n"
+                        "6. For compliance-critical questions, emphasize the importance of professional legal advice."
+                    )
+                    if context_sections:
+                        context_block = "\n\n".join(
+                            f"### {section['title']}\n{section['text']}" for section in context_sections
+                        )
+                        system_instruction = (
+                            base_system_prompt
+                            + "\n\nUse the following excerpts from the EU AI Act and GDPR as context:\n"
+                            + context_block
+                            + "\n\nIf the answer is not covered, explain that explicitly."
+                        )
+                    else:
+                        system_instruction = base_system_prompt
+
+            # Create chat session with temperature=0.3 (aligned with CLI)
             generate_config = types.GenerateContentConfig(
                 system_instruction=system_instruction,
-                tools=tools
+                tools=tools,
+                temperature=0.3,
             )
             
             try:

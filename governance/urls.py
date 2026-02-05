@@ -130,4 +130,6 @@ urlpatterns = [
     # AI Scan & Skills API
     path("api/compliance/ai-scan/", views.api_ai_scan, name="api_ai_scan"),
     path("api/compliance/skills/", views.api_compliance_skills, name="api_compliance_skills"),
+    path("scan-reports/<str:filename>", views.serve_scan_report, name="serve_scan_report"),
+    path("api/governance/autofill/", views.governance_autofill_api, name="api_governance_autofill"),
 ]

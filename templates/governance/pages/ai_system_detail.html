@@ -2219,8 +2219,109 @@ document.querySelectorAll('.ai-read-toggle').forEach(btn => {
         if (icon) {
             icon.style.filter = 'brightness(0) invert(1)';
         }
+
+        // Trigger autofill automatically when option is selected
+        const option = this.getAttribute('data-option');
+        triggerAutofill(option, 'ai_system');
     });
 });
+
+async function triggerAutofill(option, formType) {
+    console.log(`Triggering autofill: option=${option}, formType=${formType}`);
+    
+    // 1. Collect file paths
+    let filePaths = [];
+    if (option === 'all') {
+        const docItems = document.querySelectorAll('#uploaded-documents div[data-file-path]');
+        docItems.forEach(item => {
+            filePaths.push(item.getAttribute('data-file-path'));
+        });
+    } else {
+        const checkedBoxes = document.querySelectorAll('.file-checkbox:checked');
+        checkedBoxes.forEach(cb => {
+            const item = cb.closest('div[data-file-path]');
+            if (item) {
+                filePaths.push(item.getAttribute('data-file-path'));
+            }
+        });
+    }
+
+    if (filePaths.length === 0) {
+        if (option === 'selected') {
+            alert('Please select at least one document to use for auto-fill.');
+        }
+        return;
+    }
+
+    // 2. Show loading state
+    const activeBtn = document.querySelector(`.ai-read-toggle[data-option="${option}"]`);
+    const originalText = activeBtn.innerHTML;
+    activeBtn.disabled = true;
+    activeBtn.innerHTML = `<span>⏳ Reading...</span>`;
+
+    try {
+        // 3. Call API
+        const response = await fetch('/api/governance/autofill/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                file_paths: filePaths,
+                form_type: formType
+            })
+        });
+
+        const result = await response.json();
+        if (result.success && result.data) {
+            console.log('Autofill data received:', result.data);
+            
+            // 4. Map data to form fields
+            const data = result.data;
+            let filledCount = 0;
+            
+            for (const [key, value] of Object.entries(data)) {
+                if (!value) continue;
+                
+                // Try multiple patterns to find the input (name, id, data-field)
+                let input = document.querySelector(`[name="${key}"]`) || 
+                            document.getElementById(key) || 
+                            document.getElementById(key.replace(/_/g, '-'));
+                
+                if (input) {
+                    if (input.type === 'radio') {
+                        const radio = document.querySelector(`input[name="${key}"][value="${value}"]`) ||
+                                      document.querySelector(`input[name="${key}"][value*="${value}"]`);
+                        if (radio) {
+                            radio.checked = true;
+                            radio.dispatchEvent(new Event('change'));
+                            filledCount++;
+                        }
+                    } else if (input.tagName === 'SELECT') {
+                        input.value = value;
+                        input.dispatchEvent(new Event('change'));
+                        filledCount++;
+                    } else {
+                        input.value = value;
+                        input.dispatchEvent(new Event('input'));
+                        filledCount++;
+                    }
+                }
+            }
+            
+            console.log(`Successfully autofilled ${filledCount} fields.`);
+        } else {
+            console.error('Autofill failed:', result.error);
+            alert('AI was unable to extract information: ' + (result.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error during autofill:', error);
+        alert('An error occurred during AI reading.');
+    } finally {
+        activeBtn.disabled = false;
+        activeBtn.innerHTML = originalText;
+    }
+}
 
 // Generate link function
 function generateLink(fileName) {

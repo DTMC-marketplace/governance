@@ -504,6 +504,36 @@ document.addEventListener('DOMContentLoaded', function () {
                 </button>
             </div>
             
+            <div class="p-6 border-b border-[#E5E7EB]">
+                <h3 class="text-sm font-semibold text-[#22262A] mb-3">Document & Evidence Upload (for AI Auto-fill)</h3>
+                <!-- File Upload Zone -->
+                <div id="modal-file-drop-zone" class="border-2 border-dashed border-[#D1D5DB] rounded-lg p-6 text-center mb-4 transition-colors">
+                    <p class="text-xs text-[#6B7280] mb-2">Click or drag and drop to add evidence document...</p>
+                    <input type="file" id="modal-file-upload" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.xls,.xlsx,.csv" class="hidden">
+                    <button type="button" onclick="document.getElementById('modal-file-upload').click()" class="bg-[#F13D30] text-white px-4 py-1.5 rounded-lg text-sm font-medium hover:bg-[#d63529] transition-colors flex items-center gap-2 mx-auto">
+                        <span>📎</span> Choose File
+                    </button>
+                </div>
+
+                <!-- Uploaded Documents List -->
+                <div id="modal-uploaded-documents" class="space-y-2 mb-4 max-h-40 overflow-y-auto">
+                    <!-- Documents will be added here dynamically -->
+                </div>
+
+                <!-- AI Read & Auto-fill options -->
+                <div class="flex gap-3 items-center">
+                    <span class="text-xs text-[#6B7280]">AI Auto-fill from:</span>
+                    <button type="button" class="modal-ai-read-toggle px-3 py-1.5 rounded-lg border border-[#F13D30] text-[#F13D30] text-xs font-medium bg-white flex items-center gap-2" data-option="all">
+                        <img src="{% static 'governance/img/sparkle.svg' %}" alt="Sparkle" class="w-3 h-3" style="filter: brightness(0) saturate(100%) invert(32%) sepia(98%) saturate(1500%) hue-rotate(344deg) brightness(98%) contrast(95%);">
+                        <span>All files</span>
+                    </button>
+                    <button type="button" class="modal-ai-read-toggle px-3 py-1.5 rounded-lg border border-[#F13D30] text-[#F13D30] text-xs font-medium bg-white flex items-center gap-2" data-option="selected">
+                        <img src="{% static 'governance/img/sparkle.svg' %}" alt="Sparkle" class="w-3 h-3" style="filter: brightness(0) saturate(100%) invert(32%) sepia(98%) saturate(1500%) hue-rotate(344deg) brightness(98%) contrast(95%);">
+                        <span>Selected files</span>
+                    </button>
+                </div>
+            </div>
+
             <form id="addAgentForm" class="p-6 space-y-4">
                 <div>
                     <label class="block text-sm font-medium text-[#374151] mb-2">Agent Name *</label>
@@ -599,7 +629,122 @@ document.addEventListener('DOMContentLoaded', function () {
         function closeAddAgentModal() {
             document.getElementById('addAgentModal').classList.add('hidden');
             document.getElementById('addAgentForm').reset();
+            // Clear uploaded documents in modal
+            const docContainer = document.getElementById('modal-uploaded-documents');
+            if (docContainer) docContainer.innerHTML = '';
         }
+
+        // Modal File Upload Handling
+        document.getElementById('modal-file-upload')?.addEventListener('change', async function(e) {
+            const files = Array.from(e.target.files);
+            const container = document.getElementById('modal-uploaded-documents');
+            if (!container || !files?.length) return;
+            
+            try {
+                const formData = new FormData();
+                files.forEach(file => formData.append('file', file));
+                formData.append('folder', 'governance/uploads');
+                
+                const response = await fetch('/api/upload-file/', {
+                    method: 'POST',
+                    body: formData,
+                });
+                
+                const result = await response.json();
+                if (!response.ok || !result.success) throw new Error(result.error || 'Upload failed');
+                
+                result.files.forEach(fileInfo => {
+                    const fileId = 'modal-file-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'flex items-center justify-between p-2 bg-gray-50 rounded border border-gray-200';
+                    fileItem.setAttribute('data-file-path', fileInfo.path);
+                    fileItem.innerHTML = `
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" class="modal-file-checkbox w-4 h-4 text-[#F13D30] rounded" data-file-id="${fileId}" checked>
+                            <span class="text-xs font-medium text-gray-700 truncate max-w-[150px]">${fileInfo.name}</span>
+                        </div>
+                        <span class="text-[10px] text-gray-400">Just now</span>
+                    `;
+                    container.appendChild(fileItem);
+                });
+                
+                e.target.value = '';
+            } catch (error) {
+                console.error('Modal upload error:', error);
+                alert(`Error: ${error.message}`);
+            }
+        });
+
+        // Modal AI Autofill
+        document.querySelectorAll('.modal-ai-read-toggle').forEach(btn => {
+            btn.addEventListener('click', async function() {
+                const option = this.getAttribute('data-option');
+                
+                // Collect file paths
+                let filePaths = [];
+                if (option === 'all') {
+                    document.querySelectorAll('#modal-uploaded-documents div[data-file-path]').forEach(item => {
+                        filePaths.push(item.getAttribute('data-file-path'));
+                    });
+                } else {
+                    document.querySelectorAll('.modal-file-checkbox:checked').forEach(cb => {
+                        const item = cb.closest('div[data-file-path]');
+                        if (item) filePaths.push(item.getAttribute('data-file-path'));
+                    });
+                }
+
+                if (filePaths.length === 0) {
+                    if (option === 'selected') alert('Please select documents.');
+                    return;
+                }
+
+                const originalText = this.innerHTML;
+                this.innerHTML = '<span>⏳ Processing...</span>';
+                this.disabled = true;
+
+                try {
+                    const response = await fetch('/api/governance/autofill/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ file_paths: filePaths, form_type: 'ai_system' })
+                    });
+
+                    const result = await response.json();
+                    if (result.success && result.data) {
+                        const data = result.data;
+                        const form = document.getElementById('addAgentForm');
+                        
+                        // Map fields to modal
+                        if (data.ai_system_name) form.elements['name'].value = data.ai_system_name;
+                        if (data.business_unit) form.elements['business_unit'].value = data.business_unit;
+                        if (data.vendor) form.elements['vendor'].value = data.vendor;
+                        if (data.ai_act_role) form.elements['ai_act_role'].value = data.ai_act_role.toLowerCase();
+                        
+                        // Map Status
+                        if (data.system_status) {
+                            const statusMap = {
+                                'Planned': 'assessing',
+                                'In development': 'assessing',
+                                'Testing': 'reviewing',
+                                'Pilot': 'reviewing',
+                                'In use': 'cleared'
+                            };
+                            for (let [key, val] of Object.entries(statusMap)) {
+                                if (data.system_status.toLowerCase().includes(key.toLowerCase())) {
+                                    form.elements['compliance_status'].value = val;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.error('Autofill error:', e);
+                } finally {
+                    this.innerHTML = originalText;
+                    this.disabled = false;
+                }
+            });
+        });
         
         document.getElementById('addAgentForm').addEventListener('submit', async function(e) {
             e.preventDefault();

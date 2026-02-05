@@ -1,10 +1,12 @@
 """
-Service for AI Act Scanning and Skill Discovery using Gemini
+Service for AI Act Scanning and Skill Discovery using Gemini.
+Integrates GovernanceAgentService for comprehensive risk assessment and skill recommendation.
 """
 import os
 import json
 import logging
 import yaml
+from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 
@@ -19,28 +21,60 @@ from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
+# Document extraction imports
+try:
+    import pypdf
+except ImportError:
+    pypdf = None
+
+try:
+    import docx
+except ImportError:
+    docx = None
+
+
 class GeminiScannerService:
     """
     Service to perform AI Act compliance scans using Gemini.
-    Uses instructions and artifacts from AI Act skills packages.
+    Uses GovernanceAgentService for risk classification, skill recommendation,
+    and governance plan generation.
     """
-    
+
     # Class-level cache for discovered skills (shared across instances)
     _skills_cache = None
     _cache_timestamp = None
     _cache_ttl = 300  # Cache for 5 minutes
-    
+
     def __init__(self):
         self.api_key = getattr(settings, 'GEMINI_API_KEY', '') or os.environ.get('GEMINI_API_KEY', '')
-        self.model_name = getattr(settings, 'AI_ACT_MODEL_NAME', 'gemini-2.5-flash')
-        
+        self.model_name = getattr(settings, 'AI_ACT_MODEL_NAME', 'gemini-3-pro-preview')
+
         if genai and self.api_key:
             self.client = genai.Client(api_key=self.api_key)
         else:
             self.client = None
-            
-        self.skills_dir = Path(settings.BASE_DIR) / "AI Act skills packages"
-        self.checklist_path = self.skills_dir / "compliance_checklist_high_risk.yaml"
+
+        self.skills_dir = Path(settings.BASE_DIR) / "skills"
+        # Fallback to "AI Act skills packages" if "skills/" doesn't exist
+        if not self.skills_dir.exists():
+            self.skills_dir = Path(settings.BASE_DIR) / "AI Act skills packages"
+        self.checklist_path = Path(settings.BASE_DIR) / "skills" / "compliance_checklist_high_risk.yaml"
+        if not self.checklist_path.exists():
+            self.checklist_path = Path(settings.BASE_DIR) / "AI Act skills packages" / "compliance_checklist_high_risk.yaml"
+
+        # Initialize GovernanceAgentService (lazy - created on first use)
+        self._governance_agent = None
+
+    def _get_governance_agent(self):
+        """Get or create GovernanceAgentService singleton."""
+        if self._governance_agent is None:
+            try:
+                from .governance_agent_service import get_governance_agent_service
+                self._governance_agent = get_governance_agent_service()
+                logger.info(f"GovernanceAgentService loaded with {len(self._governance_agent.skills)} skills")
+            except Exception as e:
+                logger.warning(f"Could not initialize GovernanceAgentService: {e}")
+        return self._governance_agent
 
     def _discover_skills(self) -> Dict[str, str]:
         """Dynamically discover all SKILL.md files and their relative paths (with caching)."""
@@ -93,20 +127,8 @@ class GeminiScannerService:
     def _load_skill_content(self, tool_id: str) -> str:
         """Load content for a specific tool by searching discovered skills."""
         skills_map = self._discover_skills()
-        
-        # Hardcoded overrides for common mappings if discovery naming varies
-        overrides = {
-            'fria-assessment': 'AI Act package/risk-assessment/SKILL.md',
-            'ai-governance': 'AI Act package/ai-governance/SKILL.md',
-            'ai-safety': 'AI Act package/ai-safety-SKILL.md',
-            'ai-ethics-advisor': 'AI Act package/ai-ethics-advisor/SKILL.md',
-            'transparency-instructions': 'AI Act package/transparency-instructions/SKILL.md',
-            'prompt-injection-detector': 'AI Act package/ai-safety-planning/SKILL.md',
-            'privacy-preservation-scanner': 'AI Act package/ai-ethics-advisor/modules/technical-safeguards/privacy-preserving.py',
-            'ai-bias-detector': 'AI Act package/ai-ethics-advisor/modules/technical-safeguards/bias-monitoring.py',
-        }
-        
-        skill_rel_path = overrides.get(tool_id) or skills_map.get(tool_id)
+
+        skill_rel_path = skills_map.get(tool_id)
         
         if not skill_rel_path:
             # Fallback fuzzy matching
@@ -119,10 +141,13 @@ class GeminiScannerService:
             full_path = self.skills_dir / skill_rel_path
             if full_path.exists():
                 try:
-                    return full_path.read_text(encoding='utf-8')
+                    content = full_path.read_text(encoding='utf-8')
+                    logger.info(f"Loaded Skill Content from: {full_path} (Length: {len(content)} chars)")
+                    return content
                 except Exception as e:
                     logger.error(f"Error reading skill file {full_path}: {e}")
         
+        logger.warning(f"No skill content found for tool_id: {tool_id}")
         return ""
 
     def _load_checklist(self) -> str:
@@ -137,22 +162,84 @@ class GeminiScannerService:
 
     def run_scan(self, project_data: Dict[str, Any], tool_id: str) -> Dict[str, Any]:
         """
-        Run a compliance scan for a project using a specific tool and the full skills toolkit.
+        Run a compliance scan for a project using a specific tool.
+
+        Flow:
+        1. Use GovernanceAgentService to assess the project and get risk/skill recommendations
+        2. Load skill content for the specific tool_id
+        3. Load compliance checklist as reference
+        4. Send enriched prompt to Gemini for detailed scan
+        5. Return structured JSON report
         """
-        if not self.client:
-            return self._generate_mock_scan(project_data, tool_id, "Gemini API not configured")
+        # Step 1: Get governance agent assessment (enriches context)
+        governance_context = ""
+        agent = self._get_governance_agent()
+        if agent:
+            try:
+                # Build description from project data
+                system_desc = project_data.get('description', '') or project_data.get('name', '')
+                if not system_desc:
+                    system_desc = json.dumps(project_data, indent=2)[:500]
 
+                assessment = agent.assess_ai_system(system_desc)
+                risk_info = assessment.get('risk_classification', {})
+                regulations = assessment.get('applicable_regulations', [])
+                recommended = assessment.get('recommended_skills', [])
+                
+                # Get compulsory skills for the current tool
+                compulsory = agent.get_compulsory_skills_for_tool(tool_id)
+                article_id = agent.get_article_for_tool(tool_id)
+
+                governance_context = f"""
+--- GOVERNANCE AGENT ASSESSMENT ---
+Risk Classification: {risk_info.get('category', 'Unknown')} (confidence: {risk_info.get('confidence', 'N/A')})
+Reasoning: {risk_info.get('reasoning', 'N/A')}
+
+Applicable Regulations:
+{chr(10).join(f"- {r['name']}: {r['reason']}" for r in regulations)}
+
+Recommended Skills ({len(recommended)} total):
+{chr(10).join(f"- {r['skill']}: {r['reason']}" for r in recommended[:10])}
+
+"""
+                if article_id and compulsory:
+                    governance_context += f"""
+Compulsory Skills for {article_id}:
+{chr(10).join(f"- {s}" for s in compulsory)}
+"""
+                
+                logger.info(f"Governance assessment: {risk_info.get('category')} risk, "
+                           f"{len(regulations)} regulations, {len(recommended)} skills recommended")
+
+                # Also try to load additional skill content from governance agent
+                agent_skill_content = agent.get_skill_content(tool_id)
+                if agent_skill_content:
+                    governance_context += f"\n--- SKILL CONTENT (via Governance Agent) ---\n{agent_skill_content[:5000]}\n"
+
+            except Exception as e:
+                logger.warning(f"GovernanceAgentService assessment failed: {e}")
+
+        # Step 2: Load skill content (from scanner's own discovery)
         skill_instructions = self._load_skill_content(tool_id)
+
+        # Step 3: Load compliance checklist
         checklist_reference = self._load_checklist()
-        
-        # Prepare prompt parts
-        short_system_instruction = "You are an expert AI Act Compliance Auditor. Your task is to perform an 'AI Agent Scan'. You must return ONLY a valid JSON object following the requested schema."
-        
-        # Truncate checklist if it's massive
-        if len(checklist_reference) > 15000:
-            checklist_reference = checklist_reference[:15000] + "... [truncated for brevity]"
+
+        if not self.client:
+            # No Gemini API — use governance agent to generate mock with real assessment
+            return self._generate_mock_scan(project_data, tool_id, "Gemini API not configured",
+                                            governance_context=governance_context)
+
+        # Step 4: Build enriched prompt matching premium cli.py / governance_agent.py structure
+        short_system_instruction = (
+            "You are an expert AI Act Compliance Auditor. "
+            "Your task is to perform a deep-dive 'AI Agent Scan' and generate a professional Safety Plan. "
+            "You must return ONLY a valid JSON object matching the requested schema."
+        )
 
         main_prompt = f"""
+{governance_context}
+
 --- KNOWLEDGE BASE: SKILL GUIDELINES ---
 {skill_instructions}
 
@@ -160,25 +247,78 @@ class GeminiScannerService:
 {checklist_reference}
 
 ANALYSIS REQUIREMENTS:
-1. Evaluate the system against the specific Skill Guidelines above using the tool: {tool_id}.
-2. Cross-reference with the Compliance Checklist to identify missing controls.
-3. Provide a realistic, evidence-based assessment of compliance.
-4. If project data is insufficient for a clear determination, flag it as a finding with a requirement for documentation.
+1. Perform a deep assessment of the project using the Skill Guidelines for tool: {tool_id}.
+2. Use the GOVERNANCE AGENT ASSESSMENT for risk context.
+3. Generate a comprehensive Safety Plan encompassing NIST AI RMF profiles, risk factors, controls, and guardrails.
+4. For "safety_controls", identify specific line numbers or mechanisms in the project if possible.
+5. Provide actionable code snippets for recommended guardrails.
 
 RESPONSE FORMAT (JSON ONLY):
 {{
   "compliance_status": "Compliant | Partially Compliant | Non-Compliant",
   "score": 0-100,
-  "summary": "High-level audit summary",
-  "detailed_output": [
+  "skill_applied": "{tool_id}",
+  "nist_profile": {{
+    "function": "Primary business function",
+    "type": "AI architecture type",
+    "deployment": "Deployment model used"
+  }},
+  "factors": {{
+    "autonomy": "Level of system autonomy description",
+    "impact": "Impact on human stakeholders description",
+    "sensitivity": "Data sensitivity assessment",
+    "vulnerability": "Target user vulnerability assessment",
+    "reversibility": "Decision reversibility description"
+  }},
+  "identified_risks": [
     {{
-      "id": "A unique finding ID (e.g. AUDIT-01)",
-      "category": "The specific requirement category",
-      "finding": "Description of what was found or what is missing",
-      "recommendation": "Specific actionable advice to fix the issue"
+      "id": "R-001",
+      "desc": "**Title** - Concise description",
+      "like": "High|Medium|Low",
+      "imp": "High|Medium|Low",
+      "sev": "High|Medium|Low",
+      "mit": "Specific mitigation step"
     }}
   ],
-  "next_steps": ["Action 1", "Action 2", ...]
+  "safety_controls": {{
+    "Transparency (Art. 50)": [
+      {{ "implemented": true, "name": "AI Notice", "details": "Found in [ref]" }}
+    ],
+    "System Prompt Safety": [
+       {{ "implemented": true, "name": "Context Constraints", "details": "Ref: [ref]" }}
+    ]
+  }},
+  "missing_controls": {{
+    "Input Guards": [
+      {{ "name": "Injection Detection", "reason": "Not found in analysis" }}
+    ]
+  }},
+  "guardrails_recommendations": [
+    {{
+      "title": "Input Guardrail",
+      "priority": "High|Medium|Low",
+      "code": "python code snippet"
+    }}
+  ],
+  "testing_plan": {{
+    "red_teaming": ["Scenario 1", "Scenario 2"],
+    "bias_testing": ["Testing strategy 1"]
+  }},
+  "monitoring_plan": {{
+    "metrics": [
+      {{ "name": "Accuracy", "target": ">95%", "current": "unknown" }}
+    ]
+  }},
+  "compliance": {{
+    "disclosure": "Compliant|Pending",
+    "disclosure_ref": "Implementation details",
+    "labeling": "Compliant|Pending",
+    "labeling_ref": "Implementation details"
+  }},
+  "action_items": {{
+    "immediate": ["Fix 1", "Fix 2"]
+  }},
+  "summary": "Executive summary of safety plan"
 }}
 
 PROJECT TO ANALYZE:
@@ -187,50 +327,8 @@ PROJECT TO ANALYZE:
 Return ONLY the JSON object.
 """
 
-        # Prepare prompt parts
-        short_system_instruction = "You are an expert AI Act Compliance Auditor. Your task is to perform an 'AI Agent Scan'. You must return ONLY a valid JSON object following the requested schema."
-        
-        # Truncate checklist if it's massive
-        if len(checklist_reference) > 15000:
-            checklist_reference = checklist_reference[:15000] + "... [truncated for brevity]"
-
-        main_prompt = f"""
---- KNOWLEDGE BASE: SKILL GUIDELINES ---
-{skill_instructions}
-
---- REFERENCE: COMPLIANCE CHECKLIST ---
-{checklist_reference}
-
-ANALYSIS REQUIREMENTS:
-1. Evaluate the system against the specific Skill Guidelines above using the tool: {tool_id}.
-2. Cross-reference with the Compliance Checklist to identify missing controls.
-3. Provide a realistic, evidence-based assessment of compliance.
-4. If project data is insufficient for a clear determination, flag it as a finding with a requirement for documentation.
-
-RESPONSE FORMAT (JSON ONLY):
-{{
-  "compliance_status": "Compliant | Partially Compliant | Non-Compliant",
-  "score": 0-100,
-  "summary": "High-level audit summary",
-  "detailed_output": [
-    {{
-      "id": "A unique finding ID (e.g. AUDIT-01)",
-      "category": "The specific requirement category",
-      "finding": "Description of what was found or what is missing",
-      "recommendation": "Specific actionable advice to fix the issue"
-    }}
-  ],
-  "next_steps": ["Action 1", "Action 2", ...]
-}}
-
-PROJECT TO ANALYZE:
-{json.dumps(project_data, indent=2)}
-
-Return ONLY the JSON object.
-"""
-
+        # Step 5: Call Gemini API
         try:
-            # Using 60s timeout for complex scans
             response = self.client.models.generate_content(
                 model=self.model_name,
                 contents=main_prompt,
@@ -240,31 +338,120 @@ Return ONLY the JSON object.
                     temperature=0.1
                 )
             )
-            
+
             if not response or not response.text:
                 logger.error("Empty response from Gemini API.")
-                return self._generate_mock_scan(project_data, tool_id, "Empty response from API")
-                
+                return self._generate_mock_scan(project_data, tool_id, "Empty response from API",
+                                                governance_context=governance_context)
+
             report = json.loads(response.text)
-            return report
+
+            # Step 6: Generate professional report using GovernanceAgentService formatter
+            if agent:
+                # Merge data for the professional template
+                report['system_description'] = system_desc
+                assessment = agent.assess_ai_system(system_desc)
+                report['risk_classification'] = assessment.get('risk_classification', {}).get('category', 'Unclassified')
+                report['applicable_regulations'] = assessment.get('applicable_regulations', [])
+                
+                # Use GovernanceAgentService's premium formatting logic (same as cli.py)
+                md_report = agent.export_assessment(report, fmt='markdown')
+            else:
+                # Basic fallback if no agent
+                md_report = f"# AI Scan Report: {tool_id}\n\n{report.get('summary', '')}"
+
+            # Step 7: Save report to file
+            now = datetime.now()
+            reports_dir = Path(settings.BASE_DIR) / "scan_reports"
+            reports_dir.mkdir(exist_ok=True)
+            filename = f"scan_{tool_id}_{now.strftime('%Y%m%d_%H%M%S')}.md"
+            file_path = reports_dir / filename
+            file_path.write_text(md_report, encoding='utf-8')
+
+            report['report_md'] = md_report
+            report['report_file'] = f"/scan-reports/{filename}"
+            report['report_filename'] = filename
+
+            # Step 8: Compatibility mapping for legacy frontend summary view
+            report['detailed_output'] = [
+                {
+                    "id": r.get("id", "R"), 
+                    "category": "Risk", 
+                    "finding": r.get("desc", ""), 
+                    "recommendation": r.get("mit", "")
+                } for r in report.get("identified_risks", [])
+            ]
+            report['next_steps'] = report.get('action_items', {}).get('immediate', [])
             
+            return report
+
         except Exception as e:
             logger.error(f"Error during Gemini scan: {str(e)}", exc_info=True)
-            return self._generate_mock_scan(project_data, tool_id, f"Error: {str(e)}")
+            return self._generate_mock_scan(project_data, tool_id, f"Error: {str(e)}",
+                                            governance_context=governance_context)
 
-    def _generate_mock_scan(self, project_data: Dict[str, Any], tool_id: str, error_msg: str = "") -> Dict[str, Any]:
-        """Generate a realistic mock scan result if Gemini is unavailable."""
-        return {
+    def _generate_mock_scan(self, project_data: Dict[str, Any], tool_id: str,
+                            error_msg: str = "", governance_context: str = "") -> Dict[str, Any]:
+        """Generate a mock scan result, enriched with governance agent assessment."""
+        agent = self._get_governance_agent()
+        system_desc = project_data.get('description', '') or project_data.get('name', '')
+        
+        # Base mock structure that matches the premium template
+        mock_report = {
             "compliance_status": "Needs Review",
-            "score": 65,
-            "summary": f"Automated scan for {tool_id} completed with warnings. {error_msg}",
-            "detailed_output": [
-                {
-                    "id": "GAP-01",
-                    "category": "Technical Documentation",
-                    "finding": "Annex IV section on 'methods used to design the system' is incomplete.",
-                    "recommendation": "Use the 'technical_documentation_template_annex_iv.md' from the skills packages to update your docs."
-                }
+            "score": 50,
+            "skill_applied": tool_id,
+            "system_description": system_desc,
+            "summary": f"Initial automated scan for {tool_id} (Mock). {error_msg}",
+            "nist_profile": {"function": "Inquiry handling", "type": "Mock AI", "deployment": "Testing"},
+            "identified_risks": [
+                {"id": "MOCK-01", "desc": "**Incomplete Analysis** - Scan ran in mock mode", "like": "Low", "imp": "Medium", "sev": "Low", "mit": "Configure API and rerun"}
             ],
-            "next_steps": ["Identify missing documentation", "Run full risk classifier script"]
+            "action_items": {"immediate": ["Configure Gemini API Key", "Review system documentation"]},
+            "recommended_skills": ["risk-assessment", "ai-governance"]
+        }
+
+        # Add agent assessment if available
+        if agent:
+            try:
+                assessment = agent.assess_ai_system(system_desc)
+                mock_report['risk_classification'] = assessment.get('risk_classification', {})
+                mock_report['applicable_regulations'] = assessment.get('applicable_regulations', [])
+            except Exception:
+                pass
+
+        # Generate and save MD report using centralized logic
+        md_result = self._generate_and_save_md_report(mock_report, tool_id)
+        mock_report['report_md'] = md_result.get('content', '')
+        mock_report['report_file'] = md_result.get('file_path', '')
+        mock_report['report_filename'] = md_result.get('filename', '')
+
+        return mock_report
+
+    def _generate_and_save_md_report(self, report: Dict[str, Any], tool_id: str) -> Dict[str, Any]:
+        """
+        Centrally generate and save a Markdown report using GovernanceAgentService formatter.
+        """
+        agent = self._get_governance_agent()
+        
+        if agent:
+            # Use GovernanceAgentService's premium formatting logic (same as cli.py)
+            md_report = agent.export_assessment(report, fmt='markdown')
+        else:
+            # Basic fallback if no agent
+            md_report = f"# AI Scan Report: {tool_id}\n\n{report.get('summary', '')}"
+
+        # Save to file
+        now = datetime.now()
+        reports_dir = Path(settings.BASE_DIR) / "scan_reports"
+        reports_dir.mkdir(exist_ok=True)
+        
+        filename = f"scan_{tool_id}_{now.strftime('%Y%m%d_%H%M%S')}.md"
+        file_path = reports_dir / filename
+        file_path.write_text(md_report, encoding='utf-8')
+
+        return {
+            "content": md_report,
+            "file_path": f"/scan-reports/{filename}",
+            "filename": filename
         }
