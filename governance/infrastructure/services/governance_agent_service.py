@@ -720,7 +720,10 @@ Next Steps:
         from datetime import datetime
 
         risk = data.get('risk_classification', {})
-        risk_category = risk.get('category', 'Unknown')
+        if isinstance(risk, str):
+            risk_category = risk
+        else:
+            risk_category = risk.get('category', 'Unknown')
         
         # Calculate internal risk score
         risk_score = 4 if risk_category == 'High-Risk' else 2 if risk_category == 'Limited Risk' else 1
