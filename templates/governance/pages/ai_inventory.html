@@ -1743,7 +1743,7 @@ function closeAddSystemModal() {
     if (dcInput) dcInput.value = '';
 }
 
-function aiReadAndAutoFill() {
+async function aiReadAndAutoFill() {
     const fileInput = document.getElementById('add-system-file-input');
     const file = fileInput.files[0];
     
@@ -1752,8 +1752,139 @@ function aiReadAndAutoFill() {
         return;
     }
     
-    // TODO: Implement AI read and auto-fill logic
-    alert('AI Read & Auto-fill functionality coming soon');
+    const aiReadBtn = document.getElementById('ai-read-btn');
+    const originalBtnText = aiReadBtn.innerHTML;
+    
+    try {
+        // Disable button and show loading state
+        aiReadBtn.disabled = true;
+        aiReadBtn.innerHTML = `
+            <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span>Processing...</span>
+        `;
+        
+        // Step 1: Upload file
+        const uploadFormData = new FormData();
+        uploadFormData.append('file', file);
+        uploadFormData.append('folder', 'governance/uploads');
+        
+        const uploadResponse = await fetch('/api/upload-file/', {
+            method: 'POST',
+            body: uploadFormData
+        });
+        
+        const uploadResult = await uploadResponse.json();
+        
+        if (!uploadResult.success || !uploadResult.files || uploadResult.files.length === 0) {
+            throw new Error('File upload failed: ' + (uploadResult.error || 'Unknown error'));
+        }
+        
+        const uploadedFile = uploadResult.files[0];
+        console.log('File uploaded:', uploadedFile);
+        
+        // Step 2: Call autofill API
+        const autofillResponse = await fetch('/api/governance/autofill/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                file_paths: [uploadedFile.path],
+                form_type: 'ai_system_quick'
+            })
+        });
+        
+        const autofillResult = await autofillResponse.json();
+        console.log('Autofill result:', autofillResult);
+        
+        if (!autofillResult.success) {
+            throw new Error('Autofill failed: ' + (autofillResult.error || 'Unknown error'));
+        }
+        
+        // Step 3: Fill form fields with extracted data
+        const data = autofillResult.data;
+        const form = document.getElementById('add-system-form');
+        
+        // Fill text inputs
+        if (data.system_name) {
+            form.querySelector('input[name="system_name"]').value = data.system_name;
+        }
+        if (data.owner) {
+            form.querySelector('input[name="owner"]').value = data.owner;
+        }
+        if (data.deployment_context) {
+            form.querySelector('input[name="deployment_context"]').value = data.deployment_context;
+        }
+        
+        // Fill select dropdowns
+        if (data.status) {
+            const statusSelect = form.querySelector('select[name="status"]');
+            const statusOption = Array.from(statusSelect.options).find(opt => 
+                opt.value.toLowerCase() === data.status.toLowerCase()
+            );
+            if (statusOption) statusSelect.value = statusOption.value;
+        }
+        
+        if (data.provider_type) {
+            const providerSelect = form.querySelector('select[name="provider_type"]');
+            const providerOption = Array.from(providerSelect.options).find(opt => 
+                opt.value.toLowerCase() === data.provider_type.toLowerCase()
+            );
+            if (providerOption) providerSelect.value = providerOption.value;
+        }
+        
+        if (data.risk_classification) {
+            const riskSelect = form.querySelector('select[name="risk_classification"]');
+            const riskOption = Array.from(riskSelect.options).find(opt => 
+                opt.value.toLowerCase() === data.risk_classification.toLowerCase()
+            );
+            if (riskOption) riskSelect.value = riskOption.value;
+        }
+        
+        if (data.compliance_status) {
+            const complianceSelect = form.querySelector('select[name="compliance_status"]');
+            const complianceOption = Array.from(complianceSelect.options).find(opt => 
+                opt.value.toLowerCase() === data.compliance_status.toLowerCase()
+            );
+            if (complianceOption) complianceSelect.value = complianceOption.value;
+        }
+        
+        // Fill role checkboxes (handle comma-separated values)
+        if (data.role) {
+            // Uncheck all first
+            form.querySelectorAll('input[name="role"]').forEach(cb => cb.checked = false);
+            
+            // Parse role value (could be string or array)
+            let roles = [];
+            if (typeof data.role === 'string') {
+                roles = data.role.split(',').map(r => r.trim());
+            } else if (Array.isArray(data.role)) {
+                roles = data.role;
+            }
+            
+            // Check matching checkboxes
+            roles.forEach(role => {
+                const checkbox = Array.from(form.querySelectorAll('input[name="role"]')).find(cb => 
+                    cb.value.toLowerCase() === role.toLowerCase()
+                );
+                if (checkbox) checkbox.checked = true;
+            });
+        }
+        
+        // Show success message
+        alert('✅ Form auto-filled successfully!');
+        
+    } catch (error) {
+        console.error('Error in aiReadAndAutoFill:', error);
+        alert('❌ Error: ' + error.message);
+    } finally {
+        // Restore button state
+        aiReadBtn.disabled = false;
+        aiReadBtn.innerHTML = originalBtnText;
+    }
 }
 
 async function createAISystem() {

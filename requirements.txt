@@ -8,3 +8,5 @@ PyYAML>=6.0
 
 # Production (Azure Web App, etc.)
 gunicorn>=21.0
+pypdf>=3.17.0
+python-docx>=1.1.0

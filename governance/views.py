@@ -5001,6 +5001,7 @@ def governance_autofill_api(request):
         fields_metadata = []
         if form_type == 'organization':
             fields_metadata = [
+                # Section 2: Organization Profile
                 {"name": "entity_name", "type": "text"},
                 {"name": "registration_number", "type": "text"},
                 {"name": "headquarter_address", "type": "text"},
@@ -5012,7 +5013,31 @@ def governance_autofill_api(request):
                 {"name": "public_authority", "type": "radio", "options": ["Yes", "No"]},
                 {"name": "compliance_owner_name", "type": "text"},
                 {"name": "compliance_owner_email", "type": "email"},
-                {"name": "department", "type": "text"}
+                {"name": "department", "type": "text"},
+                
+                # Section 3: Scope / Applicability Screening
+                {"name": "scope_use_default_roles", "type": "radio", "options": ["Yes", "No"]},
+                {"name": "scope_typical_roles", "type": "checkbox", "options": ["Provider", "Deployer", "Importer", "Distributor"]},
+                {"name": "scope_place_on_eu_market", "type": "radio", "options": ["Yes", "No"]},
+                {"name": "scope_deployed_in_eu", "type": "radio", "options": ["Yes", "No"]},
+                {"name": "scope_affects_eu_persons", "type": "radio", "options": ["Yes", "No"]},
+                
+                # Section 4: Governance Setup (Internal Controls)
+                {"name": "governance_has_policies", "type": "radio", "options": ["Yes", "No", "In progress"]},
+                {"name": "governance_policy_link", "type": "text"},
+                {"name": "governance_has_escalation_path", "type": "radio", "options": ["Yes", "No"]},
+                {"name": "governance_has_register", "type": "radio", "options": ["Yes", "No"]},
+                {"name": "governance_register_link", "type": "text"},
+                {"name": "governance_has_version_history", "type": "radio", "options": ["Yes (You will be asked to provide evidence per system)", "No"]},
+                {"name": "governance_has_vendor_assessment", "type": "radio", "options": ["Yes", "No", "Not Applicable"]},
+                
+                # Section 5: AI Literacy (Mandatory Requirement)
+                {"name": "literacy_teams_using_ai", "type": "checkbox", "options": ["Product / Engineering", "Data / ML team", "Operations / Analysts", "HR / Recruitment", "Compliance / Legal", "Customer support", "Sales / Marketing", "Senior management", "External contractors / service providers", "Other"]},
+                {"name": "literacy_number_of_users", "type": "number"},
+                {"name": "literacy_has_training", "type": "radio", "options": ["Yes [implemented]", "Partly implemented", "No", "Planned"]},
+                {"name": "literacy_training_content", "type": "checkbox", "options": ["Understanding AI limitations and errors", "Bias and discrimination risks", "Proper human oversight / how to challenge AI outputs", "Security and misuse risks", "Reporting issues or incidents", "Role-specific guidance (e.g., HR / compliance / operations)"]},
+                {"name": "literacy_has_evidence", "type": "radio", "options": ["Yes", "No"]},
+                {"name": "literacy_training_refreshed", "type": "radio", "options": ["Yes", "No", "Not sure"]},
             ]
         elif form_type == 'ai_system':
             fields_metadata = [
@@ -5029,6 +5054,91 @@ def governance_autofill_api(request):
                 {"name": "vendor", "type": "text"},
                 {"name": "business_unit", "type": "text"},
                 {"name": "purpose", "type": "text"}
+            ]
+        elif form_type == 'ai_system_quick':
+            # Quick add modal for AI Inventory page
+            # This form type is FULLY SYNCHRONIZED with AI System Detail > Profile tab
+            # Supports autofill from New_AI_System.pdf which contains ALL 8 sections
+            fields_metadata = [
+                # ============================================================
+                # SECTION 2: System Identity
+                # ============================================================
+                {"name": "system_name", "type": "text"},  # Maps to ai_system_name
+                {"name": "ai_system_name", "type": "text"},  # Direct mapping
+                {"name": "internal_system_id", "type": "text"},
+                {"name": "commercial_name", "type": "text"},
+                {"name": "owner", "type": "text"},  # Maps to owner_name
+                {"name": "owner_name", "type": "text"},  # Direct mapping
+                {"name": "owner_email", "type": "email"},
+                {"name": "owner_department", "type": "text"},
+                {"name": "status", "type": "select", "options": ["Planned", "In development", "Testing / Pilot", "In use (production)", "Retired"]},  # Maps to system_status
+                {"name": "system_status", "type": "select", "options": ["Planned", "In development", "Testing / Pilot", "In use (production)", "Retired"]},  # Direct mapping
+                {"name": "go_live_date", "type": "date"},
+                {"name": "part_of_product", "type": "radio", "options": ["Yes", "No"]},
+                {"name": "product_service_name", "type": "text"},
+                
+                # ============================================================
+                # SECTION 3: Source & Operator Role
+                # ============================================================
+                {"name": "default_role_apply", "type": "radio", "options": ["Yes", "No"]},
+                {"name": "role", "type": "checkbox", "options": ["Provider", "Deployer", "Distributor", "Importer"]},  # Maps to roles[]
+                {"name": "roles", "type": "checkbox", "options": ["Provider", "Deployer", "Distributor", "Importer"]},  # Direct mapping
+                {"name": "provider_type", "type": "select", "options": ["In-house", "Vendor / Third-party", "Mixed", "Unknown"]},  # Maps to system_source
+                {"name": "system_source", "type": "radio", "options": ["In-house", "Vendor / Third-party", "Mixed", "Unknown"]},  # Direct mapping
+                {"name": "vendor", "type": "text"},  # Vendor name
+                {"name": "vendor_name", "type": "text"},  # Direct mapping
+                {"name": "modify_customize", "type": "radio", "options": ["Yes", "No", "Unknown"]},
+                {"name": "eu_usage", "type": "radio", "options": ["Yes", "No", "Planned", "Unknown"]},
+                {"name": "eu_effect", "type": "radio", "options": ["Yes", "No", "Planned", "Unknown"]},
+                
+                # ============================================================
+                # SECTION 4: Intended Purpose & Decision Use
+                # ============================================================
+                {"name": "purpose", "type": "text"},  # Maps to intended_purpose
+                {"name": "intended_purpose", "type": "text"},  # Direct mapping
+                {"name": "sector_domain", "type": "checkbox", "options": ["Biometric identification and categorisation", "Critical infrastructure management", "Education & vocational training", "Employment & workforce management", "Access to essential private or public services & benefits", "Law enforcement", "Migration, asylum & border control", "Justice & democratic processes"]},
+                {"name": "safety_component", "type": "radio", "options": ["Yes", "No"]},
+                {"name": "third_party_conformity", "type": "radio", "options": ["Yes", "No"]},
+                
+                # ============================================================
+                # SECTION 5: Deployment & Stakeholders
+                # ============================================================
+                {"name": "deployment_context", "type": "text"},
+                {"name": "system_users", "type": "checkbox", "options": ["Internal employees", "External contractors / service providers", "Customers / consumers", "Students", "Patients", "Public authority staff"]},
+                {"name": "affected_outputs", "type": "checkbox", "options": ["Employees", "Job applicants", "Students", "Patients", "Customers / consumers", "Citizens / residents"]},
+                {"name": "vulnerable_groups", "type": "checkbox", "options": ["Children / minors", "Persons with disabilities", "Persons in socio-economic vulnerability", "None / not applicable", "Unknown"]},
+                
+                # ============================================================
+                # SECTION 6: Workflow, Outputs & Decision Impact
+                # ============================================================
+                {"name": "workflow_role", "type": "radio", "options": ["Provides insights / recommendations only (human decides)", "Supports decisions (human approval required)", "Automatically makes decisions / actions (no human approval)", "Mixed / depends on case", "Unknown"]},
+                {"name": "output_types", "type": "checkbox", "options": ["Score / rating", "Ranking", "Recommendation", "Classification / label", "Prediction / forecasting", "Matching (e.g., job matching, content matching)", "Detection (e.g., fraud detection)", "Identification / verification", "Generated content (text / image / audio / video)", "Automated decision (system executes action)"]},
+                {"name": "decision_influence", "type": "radio", "options": ["Yes", "No", "Not sure"]},
+                {"name": "auto_execute", "type": "radio", "options": ["No (advisory only)", "Yes (automatic actions)", "Mixed", "Unknown"]},
+                
+                # ============================================================
+                # SECTION 7: Capabilities
+                # ============================================================
+                {"name": "capability_practices", "type": "checkbox", "options": ["Subliminal / manipulative / deceptive techniques that materially distort behaviour and are likely to cause significant harm", "Exploitation of vulnerabilities (age, disability, or social / economic situation) to distort behaviour likely causing significant harm", "Social scoring leading to detrimental / unfavourable treatment (esp. unjustified / disproportionate)", "Criminal offence risk assessment / prediction based solely on profiling or personality traits (individual predictive policing)", "Untargeted scraping of facial images from the internet or CCTV to build / expand facial recognition databases", "Emotion recognition in the workplace or in education settings", "Biometric categorisation that infers or predicts sensitive traits (e.g., race, political opinions, religion, trade union membership, sexual orientation)", "Real-time remote biometric identification (RBI) in publicly accessible spaces for law enforcement purposes", "None of the above"]},
+                {"name": "interacts_persons", "type": "radio", "options": ["Yes", "No", "Unknown"]},
+                {"name": "synthetic_content", "type": "checkbox", "options": ["Text", "Image", "Audio", "Video", "No", "Unknown"]},
+                
+                # ============================================================
+                # SECTION 8: Technical Profile (Model & Data)
+                # ============================================================
+                {"name": "ai_kind", "type": "radio", "options": ["Rules-based automation", "Machine learning", "Deep learning", "Generative AI", "Hybrid", "Unknown"]},
+                {"name": "gpai_integration", "type": "radio", "options": ["Yes", "No", "Unknown"]},
+                {"name": "gpai_provider", "type": "text"},
+                {"name": "training_source", "type": "radio", "options": ["In-house training", "Vendor-trained model (no training by us)", "Fine-tuned by us", "Unknown / not applicable"]},
+                {"name": "update_frequency", "type": "radio", "options": ["Static / never", "Periodic retraining", "Continuous learning", "Unknown"]},
+                {"name": "data_types", "type": "checkbox", "options": ["Personal data", "Sensitive data (health, biometric, etc.)", "Employee data", "Children / minors data", "Public web data", "Non-personal / industrial data", "Unknown"]},
+                
+                # ============================================================
+                # Assessment-related fields (for modal display only)
+                # ============================================================
+                {"name": "risk_classification", "type": "select", "options": ["Not assessed", "Prohibited", "High-risk", "Limited transparency", "Minimal", "Not in scope"]},
+                {"name": "compliance_status", "type": "select", "options": ["Not started", "In progress", "Compliant", "Non-compliant"]},
+                {"name": "business_unit", "type": "text"},  # Additional field for organization context
             ]
             
         result = service.run_bulk_autofill(file_paths, fields_metadata)

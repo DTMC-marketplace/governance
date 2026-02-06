@@ -24,7 +24,7 @@ class AutofillService:
     Independent tool for autofilling form data using Gemini and document analysis.
     """
     
-    def __init__(self, model_name: str = "gemini-1.5-pro"):
+    def __init__(self, model_name: str = "gemini-3-pro-preview"):
         self.model_name = model_name
         self.client = None
         if genai and hasattr(settings, 'GEMINI_API_KEY'):
@@ -51,7 +51,11 @@ class AutofillService:
         # 1. Extract context
         context_text = self._extract_text(file_paths)
         if not context_text.strip():
+            logger.warning("No text content found in documents")
             return {"success": False, "error": "No text content found in documents"}
+        
+        logger.info(f"Extracted text from {len(file_paths)} files, total length: {len(context_text)} characters")
+        logger.debug(f"First 500 chars of extracted text: {context_text[:500]}")
 
         # 2. Process each field
         results = {}
@@ -67,6 +71,9 @@ class AutofillService:
                 # Build prompt using FormAnalyzer logic
                 prompt = FormAnalyzer.build_structured_prompt(field, context_text)
                 
+                logger.info(f"Processing field: {field_name} (type: {field_type_str})")
+                logger.debug(f"Prompt for {field_name}: {prompt[:300]}...")
+                
                 # Call Gemini
                 response = self.client.models.generate_content(
                     model=self.model_name,
@@ -80,11 +87,13 @@ class AutofillService:
                 if response and response.text:
                     parsed_value = FormAnalyzer.parse_response(response.text, ft)
                     results[field_name] = parsed_value
+                    logger.info(f"Field {field_name}: extracted value = '{parsed_value}'")
                 else:
                     results[field_name] = ""
+                    logger.warning(f"Field {field_name}: no response from Gemini")
                     
             except Exception as e:
-                logger.error(f"Error extracting field {field_name}: {e}")
+                logger.error(f"Error extracting field {field_name}: {e}", exc_info=True)
                 results[field_name] = ""
 
         return {"success": True, "data": results}
@@ -103,11 +112,25 @@ class AutofillService:
 
         for path_str in file_paths:
             path = Path(path_str)
+            
+            # Try multiple path resolution strategies
             if not path.is_absolute():
-                path = Path(settings.BASE_DIR) / path_str
+                # Strategy 1: Relative to BASE_DIR
+                candidate1 = Path(settings.BASE_DIR) / path_str
+                # Strategy 2: Relative to static folder
+                static_dir = settings.STATICFILES_DIRS[0] if settings.STATICFILES_DIRS else Path(settings.BASE_DIR) / 'static'
+                candidate2 = static_dir / path_str
+                
+                # Use whichever exists
+                if candidate1.exists():
+                    path = candidate1
+                elif candidate2.exists():
+                    path = candidate2
+                else:
+                    path = candidate1  # Default to BASE_DIR for error message
 
             if not path.exists():
-                logger.warning(f"File not found: {path}")
+                logger.warning(f"File not found: {path} (original: {path_str})")
                 continue
 
             try:
