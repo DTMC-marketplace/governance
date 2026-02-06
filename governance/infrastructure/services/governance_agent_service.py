@@ -743,7 +743,7 @@ Next Steps:
 ### EU AI Act Category: **{risk_category}**
 
 - **Applicable Article:** {"Annex III (High-Risk)" if risk_category == 'High-Risk' else "Article 50 (Transparency Obligations)" if risk_category == 'Limited Risk' else "Article 6 (Minimal Risk)"}
-- **Justification:** {risk.get('reasoning', 'N/A')}
+- **Justification:** {risk.get('reasoning', 'N/A') if isinstance(risk, dict) else 'Check full assessment details'}
 - **Classification Date:** {datetime.now().strftime('%Y-%m-%d')}
 
 ### NIST AI RMF Profile
@@ -892,7 +892,10 @@ Next Steps:
         from datetime import datetime
         profile = data.get('system_profile', {})
         risk = data.get('risk_assessment', {})
-        risk_category = risk.get('category', 'Unknown')
+        if isinstance(risk, str):
+            risk_category = risk
+        else:
+            risk_category = risk.get('category', 'Unknown')
 
         md = f"""# 📋 Comprehensive AI Governance Plan
 
