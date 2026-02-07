@@ -5,7 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     {% load static %}
-    <title>{% block title %}{{ company.name }} - Governance{% endblock %}</title>
+    <link rel="icon" type="image/svg+xml" href="{% static 'governance/img/logored.svg' %}">
+    <title>{% block title %}{{ company.name }} - Governance Platform{% endblock %}</title>
+    <meta name="description" content="AI Governance Platform - Comprehensive EU AI Act compliance and risk management system. Developed for the Gemini 3 Hackathon.">
+    <meta name="keywords" content="AI Governance, EU AI Act, Compliance, Risk Management, AI Safety, Gemini 3">
+    <meta name="robots" content="index, follow">
+    <meta name="author" content="DTMC-marketplace">
+    
     {% block extra_head %}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -189,8 +195,8 @@
             <main class="flex-1 relative ml-60 min-h-screen bg-white font-['Montserrat',sans-serif]" id="main-content" style="transition: margin-left 0.3s ease;">
                 <!-- Dashboard Content -->
                 <div class="overflow-y-auto h-full p-6 w-full">
-                    {% block dashboard_content %}
-                    {% endblock %}
+                        {% block dashboard_content %}
+                        {% endblock %}
                 </div>
             </main>
         </div>

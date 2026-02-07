@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Sitemap: https://governance-fbcsergtb2h9cscy.francecentral-01.azurewebsites.net/sitemap.xml
