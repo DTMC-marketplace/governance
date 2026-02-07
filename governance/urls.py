@@ -51,6 +51,7 @@ urlpatterns = [
     path("ai-assistant/", views.ai_assistant, name="ai_assistant"),
     # AI Assistant Chat API (must be before parameterized path)
     path("ai-assistant/chat", views.ai_act_chat_api, name="ai_assistant_chat_api"),
+    path("ai-assistant/chat/stream", views.ai_act_chat_stream_api, name="ai_assistant_chat_stream_api"),
     path("ai-assistant/chat/delete/<str:chat_id>/", views.api_delete_chat_history, name="api_delete_chat_history"),
     path("ai-assistant/chat/clear_history/<str:agent_id>/", views.api_clear_chat_history, name="api_clear_chat_history"),
     path("ai-assistant/chat/<str:id>/", views.ai_assistant, name="ai_assistant_chat"),
@@ -63,9 +64,7 @@ urlpatterns = [
     path("api/ai-systems/datasets/", views.api_create_dataset, name="api_create_dataset"),
     
     # File Upload API
-    path("api/upload/", views.api_upload, name="api_upload"),  # For AI Act chat (Gemini File Search Store)
     path("api/upload-file/", views.api_upload_file, name="api_upload_file"),  # For general file uploads (static folder)
-    path("api/check-store-info/", views.api_check_store_info, name="api_check_store_info"),
     
     # Use Case Details API
     path("api/use-cases/<int:use_case_id>/evidences/", views.api_use_case_evidences, name="api_use_case_evidences"),

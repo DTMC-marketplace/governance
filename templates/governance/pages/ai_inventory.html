@@ -873,6 +873,32 @@
 .styled-select-wrapper svg {
     pointer-events: none;
 }
+
+/* AI Managed Fields Styling */
+.ai-managed {
+    background-color: #FDF4F3 !important;
+    border-color: #F13D30 !important;
+    position: relative;
+}
+
+.ai-managed-badge {
+    position: absolute;
+    right: 8px;
+    top: -10px;
+    background: #F13D30;
+    color: white;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.ai-filling {
+    opacity: 0.7;
+    cursor: not-allowed !important;
+}
 </style>
 
 <script>
@@ -991,14 +1017,14 @@ function handleFileSelect(file) {
     
     // Validate file type
     if (!file.name.toLowerCase().endsWith('.csv')) {
-        alert('Please upload a CSV file');
+        showNotification('Please upload a CSV file', 'warning');
         return;
     }
     
     // Validate file size (10MB max)
     const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
-        alert('File size exceeds 10MB limit');
+        showNotification('File size exceeds 10MB limit', 'error');
         return;
     }
     
@@ -1027,7 +1053,7 @@ function removeCsvFile() {
 
 async function importCsvFile() {
     if (!selectedCsvFile) {
-        alert('Please select a CSV file first');
+        showNotification('Please select a CSV file first', 'warning');
         return;
     }
     
@@ -1045,7 +1071,7 @@ async function importCsvFile() {
         const uploadResult = await uploadResponse.json();
         
         if (!uploadResult.success || !uploadResult.files || uploadResult.files.length === 0) {
-            alert('Error uploading CSV file: ' + (uploadResult.error || 'Unknown error'));
+            showNotification('Error uploading CSV file: ' + (uploadResult.error || 'Unknown error'), 'error');
             return;
         }
         
@@ -1067,15 +1093,17 @@ async function importCsvFile() {
         const importResult = await importResponse.json();
         
         if (importResult.success) {
-            alert('AI Systems imported successfully!');
+            showNotification('AI Systems imported successfully!', 'success');
             closeImportModal();
-            location.reload(); // Reload page to show new data
+            setTimeout(() => {
+                location.reload(); // Reload page to show new data
+            }, 1000);
         } else {
-            alert('Error importing: ' + (importResult.error || 'Unknown error'));
+            showNotification('Error importing: ' + (importResult.error || 'Unknown error'), 'error');
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('Error importing CSV file: ' + error.message);
+        showNotification('Error importing CSV file: ' + error.message, 'error');
     }
 }
 
@@ -1171,7 +1199,7 @@ async function downloadExport() {
         closeExportModal();
     } catch (error) {
         console.error('Error:', error);
-        alert('Error exporting AI systems: ' + error.message);
+        showNotification('Error exporting AI systems: ' + error.message, 'error');
     }
 }
 
@@ -1748,12 +1776,14 @@ async function aiReadAndAutoFill() {
     const file = fileInput.files[0];
     
     if (!file) {
-        alert('Please select a file first');
+        showNotification('Please select a file first', 'warning');
         return;
     }
     
     const aiReadBtn = document.getElementById('ai-read-btn');
     const originalBtnText = aiReadBtn.innerHTML;
+    const form = document.getElementById('add-system-form');
+    const allInputs = form.querySelectorAll('input, select, textarea');
     
     try {
         // Disable button and show loading state
@@ -1765,6 +1795,12 @@ async function aiReadAndAutoFill() {
             </svg>
             <span>Processing...</span>
         `;
+
+        // Disable all inputs during process
+        allInputs.forEach(input => {
+            input.disabled = true;
+            input.classList.add('ai-filling');
+        });
         
         // Step 1: Upload file
         const uploadFormData = new FormData();
@@ -1806,17 +1842,37 @@ async function aiReadAndAutoFill() {
         
         // Step 3: Fill form fields with extracted data
         const data = autofillResult.data;
-        const form = document.getElementById('add-system-form');
         
+        const markAsAI = (el) => {
+            el.classList.add('ai-managed');
+            el.readOnly = true;
+            const parent = el.parentElement;
+            if (parent && !parent.querySelector('.ai-managed-badge')) {
+                parent.style.position = 'relative';
+                const badge = document.createElement('span');
+                badge.className = 'ai-managed-badge';
+                badge.textContent = '✦ AI';
+                parent.appendChild(badge);
+            }
+        };
+
         // Fill text inputs
         if (data.system_name) {
-            form.querySelector('input[name="system_name"]').value = data.system_name;
+            const el = form.querySelector('input[name="system_name"]');
+            el.value = data.system_name;
+            markAsAI(el);
         }
         if (data.owner) {
-            form.querySelector('input[name="owner"]').value = data.owner;
+            const el = form.querySelector('input[name="owner"]');
+            el.value = data.owner;
+            markAsAI(el);
         }
         if (data.deployment_context) {
-            form.querySelector('input[name="deployment_context"]').value = data.deployment_context;
+            const el = document.getElementById('add-system-deployment-context');
+            if (el) {
+                el.value = data.deployment_context;
+                markAsAI(el);
+            }
         }
         
         // Fill select dropdowns
@@ -1825,7 +1881,10 @@ async function aiReadAndAutoFill() {
             const statusOption = Array.from(statusSelect.options).find(opt => 
                 opt.value.toLowerCase() === data.status.toLowerCase()
             );
-            if (statusOption) statusSelect.value = statusOption.value;
+            if (statusOption) {
+                statusSelect.value = statusOption.value;
+                statusSelect.classList.add('ai-managed');
+            }
         }
         
         if (data.provider_type) {
@@ -1833,7 +1892,10 @@ async function aiReadAndAutoFill() {
             const providerOption = Array.from(providerSelect.options).find(opt => 
                 opt.value.toLowerCase() === data.provider_type.toLowerCase()
             );
-            if (providerOption) providerSelect.value = providerOption.value;
+            if (providerOption) {
+                providerSelect.value = providerOption.value;
+                providerSelect.classList.add('ai-managed');
+            }
         }
         
         if (data.risk_classification) {
@@ -1841,7 +1903,10 @@ async function aiReadAndAutoFill() {
             const riskOption = Array.from(riskSelect.options).find(opt => 
                 opt.value.toLowerCase() === data.risk_classification.toLowerCase()
             );
-            if (riskOption) riskSelect.value = riskOption.value;
+            if (riskOption) {
+                riskSelect.value = riskOption.value;
+                riskSelect.classList.add('ai-managed');
+            }
         }
         
         if (data.compliance_status) {
@@ -1849,7 +1914,10 @@ async function aiReadAndAutoFill() {
             const complianceOption = Array.from(complianceSelect.options).find(opt => 
                 opt.value.toLowerCase() === data.compliance_status.toLowerCase()
             );
-            if (complianceOption) complianceSelect.value = complianceOption.value;
+            if (complianceOption) {
+                complianceSelect.value = complianceOption.value;
+                complianceSelect.classList.add('ai-managed');
+            }
         }
         
         // Fill role checkboxes (handle comma-separated values)
@@ -1870,20 +1938,30 @@ async function aiReadAndAutoFill() {
                 const checkbox = Array.from(form.querySelectorAll('input[name="role"]')).find(cb => 
                     cb.value.toLowerCase() === role.toLowerCase()
                 );
-                if (checkbox) checkbox.checked = true;
+                if (checkbox) {
+                    checkbox.checked = true;
+                    const wrapper = checkbox.closest('label');
+                    if (wrapper) wrapper.classList.add('ai-managed');
+                }
             });
         }
         
         // Show success message
-        alert('✅ Form auto-filled successfully!');
+        showNotification('✅ Form auto-filled successfully!', 'success');
         
     } catch (error) {
         console.error('Error in aiReadAndAutoFill:', error);
-        alert('❌ Error: ' + error.message);
+        showNotification('❌ Error: ' + error.message, 'error');
     } finally {
         // Restore button state
         aiReadBtn.disabled = false;
         aiReadBtn.innerHTML = originalBtnText;
+
+        // Re-enable inputs
+        allInputs.forEach(input => {
+            input.disabled = false;
+            input.classList.remove('ai-filling');
+        });
     }
 }
 
@@ -1894,7 +1972,7 @@ async function createAISystem() {
     // Validate required field
     const systemName = formData.get('system_name');
     if (!systemName || !systemName.trim()) {
-        alert('AI System Name is required');
+        showNotification('AI System Name is required', 'error');
         return;
     }
     
@@ -1967,15 +2045,17 @@ async function createAISystem() {
         const data = await response.json();
         
         if (data.success) {
-            alert('AI System created successfully!');
+            showNotification('AI System created successfully!', 'success');
             closeAddSystemModal();
-            location.reload(); // Reload page to show new system
+            setTimeout(() => {
+                location.reload(); // Reload page to show new system
+            }, 1000);
         } else {
-            alert('Error creating AI System: ' + (data.error || 'Unknown error'));
+            showNotification('Error creating AI System: ' + (data.error || 'Unknown error'), 'error');
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('Error creating AI System');
+        showNotification('Error creating AI System', 'error');
     }
 }
 
@@ -2228,7 +2308,7 @@ async function deleteSelectedSystems() {
     const systemIdsInt = selectedSystemIds.map(id => parseInt(id, 10)).filter(id => !isNaN(id));
     
     if (systemIdsInt.length === 0) {
-        alert('No valid system IDs found');
+        showNotification('No valid system IDs found', 'warning');
         return;
     }
     
@@ -2246,14 +2326,16 @@ async function deleteSelectedSystems() {
         const data = await response.json();
         
         if (data.success) {
-            alert(`${data.deleted_count || systemIdsInt.length} system${(data.deleted_count || systemIdsInt.length) > 1 ? 's' : ''} deleted successfully!`);
-            location.reload();
+            showNotification(`${data.deleted_count || systemIdsInt.length} system${(data.deleted_count || systemIdsInt.length) > 1 ? 's' : ''} deleted successfully!`, 'success');
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
         } else {
-            alert('Error deleting systems: ' + (data.error || 'Unknown error'));
+            showNotification('Error deleting systems: ' + (data.error || 'Unknown error'), 'error');
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('Error deleting systems: ' + error.message);
+        showNotification('Error deleting systems: ' + error.message, 'error');
     }
 }
 

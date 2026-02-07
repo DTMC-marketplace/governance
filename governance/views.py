@@ -6,7 +6,6 @@ Note: This file maintains backward compatibility. New views using Clean Architec
 are in governance/presentation/views/
 """
 import os
-import tempfile
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods, require_POST
@@ -28,8 +27,8 @@ try:
 except ImportError:
     USE_CLEAN_ARCHITECTURE = False
 
-# Import AI Act Chat API view
-from .presentation.views.ai_act_chat_view import ai_act_chat_api
+# Import AI Act Chat API views (standard + streaming)
+from .presentation.views.ai_act_chat_view import ai_act_chat_api, ai_act_chat_stream_api
 
 from .mock_data import (
     get_mock_agents, get_mock_use_cases, get_mock_models, get_mock_datasets,
@@ -1184,241 +1183,6 @@ def api_use_case_review_comments(request, use_case_id):
         })
 
 
-@require_http_methods(["POST"])
-def api_upload(request):
-    """
-    Upload files to Gemini File Search Store for RAG processing.
-    
-    Expected form data:
-    - file_url: File(s) to upload (can be multiple)
-    - data_type: Type of data (e.g., 'ai_input_ai_act')
-    
-    Returns JSON response with success status and message.
-    """
-    import logging
-    from pathlib import Path
-    from django.conf import settings
-    
-    logger = logging.getLogger(__name__)
-    
-    try:
-        # Check if data_type is for AI Act
-        data_type = request.POST.get('data_type', '')
-        if data_type != 'ai_input_ai_act':
-            return JsonResponse({
-                'success': False,
-                'error': f'Unsupported data_type: {data_type}'
-            }, status=400)
-        
-        # Get files from request
-        files = request.FILES.getlist('file_url')
-        if not files:
-            return JsonResponse({
-                'success': False,
-                'error': 'No files provided'
-            }, status=400)
-        
-        # Initialize Gemini client
-        try:
-            from google import genai
-        except ImportError:
-            return JsonResponse({
-                'success': False,
-                'error': 'google-genai package not installed'
-            }, status=503)
-        
-        api_key = getattr(settings, 'GEMINI_API_KEY', '') or os.environ.get('GEMINI_API_KEY', '')
-        if not api_key:
-            return JsonResponse({
-                'success': False,
-                'error': 'GEMINI_API_KEY not configured'
-            }, status=503)
-        
-        client = genai.Client(api_key=api_key)
-        
-        # Get store name
-        store_name = getattr(settings, 'AI_ACT_STORE_NAME', '') or os.environ.get('AI_ACT_STORE_NAME', '')
-        if not store_name:
-            # Try to load from store info file
-            store_info_path = getattr(settings, 'AI_ACT_STORE_INFO_PATH', None)
-            if store_info_path and Path(store_info_path).exists():
-                try:
-                    with open(store_info_path, 'r', encoding='utf-8') as f:
-                        for line in f:
-                            if line.startswith('store_name='):
-                                store_name = line.split('=', 1)[1].strip()
-                                break
-                except Exception as e:
-                    logger.warning(f"Could not read store info file: {e}")
-        
-        if not store_name:
-            return JsonResponse({
-                'success': False,
-                'error': 'AI Act store not configured. Please run setup_ai_act_store.py first.'
-            }, status=503)
-        
-        # Ensure store name is in the correct format (fileSearchStores/{id})
-        # The store.name from the API is already in this format, but if stored without prefix, add it
-        if not store_name.startswith('fileSearchStores/'):
-            # If it's just an ID, add the prefix
-            if '/' not in store_name:
-                store_name = f"fileSearchStores/{store_name}"
-            else:
-                # Try to find store by display name if store_name looks like a display name
-                logger.info(f"Store name '{store_name}' doesn't match expected format, trying to find by display name...")
-                try:
-                    stores = list(client.file_search_stores.list())
-                    store_display_name = store_name
-                    found_store = None
-                    for store in stores:
-                        if store.display_name == store_display_name:
-                            found_store = store
-                            break
-                    
-                    if found_store:
-                        store_name = found_store.name
-                        logger.info(f"Found store by display name: {store_name}")
-                    else:
-                        return JsonResponse({
-                            'success': False,
-                            'error': f'Store not found. Please verify the store name or run setup_ai_act_store.py to create a new store.'
-                        }, status=404)
-                except Exception as e:
-                    logger.error(f"Error listing stores: {e}")
-                    return JsonResponse({
-                        'success': False,
-                        'error': f'Could not verify store: {str(e)}'
-                    }, status=503)
-        
-        # Verify store exists and is accessible
-        try:
-            logger.info(f"Verifying store access: {store_name}")
-            # Try to list documents in the store to verify access
-            list(client.file_search_stores.documents.list(parent=store_name, page_size=1))
-        except Exception as e:
-            logger.error(f"Store verification failed: {e}")
-            # If verification fails, try to find store by listing all stores
-            try:
-                logger.info("Attempting to find store by listing all stores...")
-                stores = list(client.file_search_stores.list())
-                if not stores:
-                    return JsonResponse({
-                        'success': False,
-                        'error': 'No file search stores found. Please run setup_ai_act_store.py to create a store.'
-                    }, status=404)
-                
-                # Try to find a store with matching name or use the first one
-                found_store = None
-                for store in stores:
-                    if store.name == store_name or store.name.endswith(store_name.split('/')[-1]):
-                        found_store = store
-                        break
-                
-                if not found_store:
-                    # Use the first available store as fallback
-                    found_store = stores[0]
-                    logger.warning(f"Store '{store_name}' not found, using first available store: {found_store.name}")
-                
-                store_name = found_store.name
-            except Exception as list_error:
-                error_msg = f'Could not access file search store "{store_name}". '
-                if '403' in str(e) or 'PERMISSION_DENIED' in str(e):
-                    error_msg += 'Permission denied. The store may have been created with a different API key, or the API key may not have the required permissions. '
-                error_msg += f'Original error: {str(e)}'
-                if str(list_error) != str(e):
-                    error_msg += f' List error: {str(list_error)}'
-                return JsonResponse({
-                    'success': False,
-                    'error': error_msg
-                }, status=503)
-        
-        # Upload files to store
-        uploaded_count = 0
-        errors = []
-        
-        for file in files:
-            temp_file_path = None
-            try:
-                # Generate a display name from the file name
-                display_name = f"user_uploaded/{file.name}"
-                
-                # Determine MIME type
-                mime_type = 'text/plain'  # Default
-                if file.name.endswith('.pdf'):
-                    mime_type = 'application/pdf'
-                elif file.name.endswith(('.doc', '.docx')):
-                    mime_type = 'application/msword'
-                elif file.name.endswith('.txt'):
-                    mime_type = 'text/plain'
-                
-                logger.info(f"Uploading file: {file.name} to store: {store_name}")
-                
-                # Save uploaded file to temporary file (Gemini API expects a file path or file handle)
-                # Reset file pointer to beginning in case it was read
-                file.seek(0)
-                
-                # Create temporary file
-                with tempfile.NamedTemporaryFile(delete=False, suffix=Path(file.name).suffix) as temp_file:
-                    temp_file_path = temp_file.name
-                    # Write uploaded file content to temp file
-                    for chunk in file.chunks():
-                        temp_file.write(chunk)
-                    temp_file.flush()
-                
-                # Upload to file search store using the temporary file
-                with open(temp_file_path, 'rb') as f:
-                    client.file_search_stores.upload_to_file_search_store(
-                        file_search_store_name=store_name,
-                        file=f,
-                        config={'display_name': display_name, 'mime_type': mime_type}
-                    )
-                
-                uploaded_count += 1
-                logger.info(f"Successfully uploaded: {file.name}")
-                
-            except Exception as e:
-                error_msg = f"Error uploading {file.name}: {str(e)}"
-                # Provide more helpful error messages for common issues
-                if '403' in str(e) or 'PERMISSION_DENIED' in str(e):
-                    error_msg += f" (Permission denied - the store '{store_name}' may have been created with a different API key)"
-                elif '404' in str(e) or 'NOT_FOUND' in str(e):
-                    error_msg += f" (Store '{store_name}' not found)"
-                logger.error(error_msg, exc_info=True)
-                errors.append(error_msg)
-            finally:
-                # Clean up temporary file
-                if temp_file_path and Path(temp_file_path).exists():
-                    try:
-                        Path(temp_file_path).unlink()
-                    except Exception as e:
-                        logger.warning(f"Could not delete temp file {temp_file_path}: {e}")
-        
-        if uploaded_count == 0:
-            return JsonResponse({
-                'success': False,
-                'error': 'Failed to upload any files',
-                'errors': errors
-            }, status=500)
-        
-        response_data = {
-            'success': True,
-            'message': f'Successfully uploaded {uploaded_count} file(s)',
-            'uploaded_count': uploaded_count
-        }
-        
-        if errors:
-            response_data['warnings'] = errors
-        
-        return JsonResponse(response_data)
-        
-    except Exception as e:
-        logger.error(f"Error in api_upload: {str(e)}", exc_info=True)
-        return JsonResponse({
-            'success': False,
-            'error': f'An error occurred: {str(e)}'
-        }, status=500)
-
-
 @require_http_methods(["DELETE"])
 def api_delete_chat_history(request, chat_id):
     """
@@ -1493,73 +1257,6 @@ def api_clear_chat_history(request, agent_id):
             'success': False,
             'error': f'An error occurred: {str(e)}'
         }, status=500)
-
-
-@require_http_methods(["GET"])
-def api_check_store_info(request):
-    """
-    Check and display store information and model configuration.
-    Useful for debugging and verification.
-    """
-    import logging
-    from pathlib import Path
-    from django.conf import settings
-    
-    logger = logging.getLogger(__name__)
-    
-    info = {
-        'store_info_file': {
-            'path': str(getattr(settings, 'AI_ACT_STORE_INFO_PATH', None)),
-            'exists': False,
-            'content': {}
-        },
-        'settings': {
-            'AI_ACT_STORE_NAME': getattr(settings, 'AI_ACT_STORE_NAME', '') or 'Not set',
-            'AI_ACT_MODEL_NAME': getattr(settings, 'AI_ACT_MODEL_NAME', 'Not set'),
-            'AI_ACT_USE_FILE_SEARCH': getattr(settings, 'AI_ACT_USE_FILE_SEARCH', False),
-            'GEMINI_API_KEY': 'Set' if getattr(settings, 'GEMINI_API_KEY', '') else 'Not set',
-        },
-        'environment': {
-            'AI_ACT_STORE_NAME': os.environ.get('AI_ACT_STORE_NAME', 'Not set'),
-            'AI_ACT_MODEL_NAME': os.environ.get('AI_ACT_MODEL_NAME', 'Not set'),
-        },
-        'resolved_store_name': None,
-        'service_status': 'Not initialized'
-    }
-    
-    # Check store info file
-    store_info_path = getattr(settings, 'AI_ACT_STORE_INFO_PATH', None)
-    if store_info_path:
-        path_obj = Path(store_info_path)
-        info['store_info_file']['exists'] = path_obj.exists()
-        if path_obj.exists():
-            try:
-                with open(store_info_path, 'r', encoding='utf-8') as f:
-                    for line in f:
-                        line = line.strip()
-                        if '=' in line:
-                            key, value = line.split('=', 1)
-                            info['store_info_file']['content'][key] = value
-            except Exception as e:
-                info['store_info_file']['error'] = str(e)
-    
-    # Try to get resolved store name from service
-    try:
-        from .infrastructure.services.gemini_ai_act_service import get_ai_act_service
-        try:
-            ai_act_service = get_ai_act_service()
-            info['resolved_store_name'] = ai_act_service.get_store_name()
-            info['service_status'] = 'Initialized'
-            info['service_model'] = ai_act_service.model_name
-        except (ValueError, ImportError) as e:
-            info['service_status'] = f'Error: {str(e)}'
-    except Exception as e:
-        info['service_status'] = f'Failed to initialize: {str(e)}'
-    
-        return JsonResponse({
-            'success': True,
-            'info': info
-        })
 
 
 def organization(request):
@@ -5039,8 +4736,11 @@ def governance_autofill_api(request):
                 {"name": "literacy_has_evidence", "type": "radio", "options": ["Yes", "No"]},
                 {"name": "literacy_training_refreshed", "type": "radio", "options": ["Yes", "No", "Not sure"]},
             ]
-        elif form_type == 'ai_system':
+        elif form_type == 'ai_system' or form_type == 'ai_system_full':
+            # Full profile autofill for AI System Detail page
+            # Includes all 8 sections for comprehensive document analysis
             fields_metadata = [
+                # Section 2: System Identity
                 {"name": "ai_system_name", "type": "text"},
                 {"name": "internal_system_id", "type": "text"},
                 {"name": "commercial_name", "type": "text"},
@@ -5051,94 +4751,57 @@ def governance_autofill_api(request):
                 {"name": "go_live_date", "type": "date"},
                 {"name": "part_of_product", "type": "radio", "options": ["Yes", "No"]},
                 {"name": "product_service_name", "type": "text"},
-                {"name": "vendor", "type": "text"},
+                {"name": "vendor_name", "type": "text"},
                 {"name": "business_unit", "type": "text"},
-                {"name": "purpose", "type": "text"}
-            ]
-        elif form_type == 'ai_system_quick':
-            # Quick add modal for AI Inventory page
-            # This form type is FULLY SYNCHRONIZED with AI System Detail > Profile tab
-            # Supports autofill from New_AI_System.pdf which contains ALL 8 sections
-            fields_metadata = [
-                # ============================================================
-                # SECTION 2: System Identity
-                # ============================================================
-                {"name": "system_name", "type": "text"},  # Maps to ai_system_name
-                {"name": "ai_system_name", "type": "text"},  # Direct mapping
-                {"name": "internal_system_id", "type": "text"},
-                {"name": "commercial_name", "type": "text"},
-                {"name": "owner", "type": "text"},  # Maps to owner_name
-                {"name": "owner_name", "type": "text"},  # Direct mapping
-                {"name": "owner_email", "type": "email"},
-                {"name": "owner_department", "type": "text"},
-                {"name": "status", "type": "select", "options": ["Planned", "In development", "Testing / Pilot", "In use (production)", "Retired"]},  # Maps to system_status
-                {"name": "system_status", "type": "select", "options": ["Planned", "In development", "Testing / Pilot", "In use (production)", "Retired"]},  # Direct mapping
-                {"name": "go_live_date", "type": "date"},
-                {"name": "part_of_product", "type": "radio", "options": ["Yes", "No"]},
-                {"name": "product_service_name", "type": "text"},
+                {"name": "intended_purpose", "type": "text"},
                 
-                # ============================================================
-                # SECTION 3: Source & Operator Role
-                # ============================================================
+                # Section 3: Source & Operator Role
                 {"name": "default_role_apply", "type": "radio", "options": ["Yes", "No"]},
-                {"name": "role", "type": "checkbox", "options": ["Provider", "Deployer", "Distributor", "Importer"]},  # Maps to roles[]
-                {"name": "roles", "type": "checkbox", "options": ["Provider", "Deployer", "Distributor", "Importer"]},  # Direct mapping
-                {"name": "provider_type", "type": "select", "options": ["In-house", "Vendor / Third-party", "Mixed", "Unknown"]},  # Maps to system_source
-                {"name": "system_source", "type": "radio", "options": ["In-house", "Vendor / Third-party", "Mixed", "Unknown"]},  # Direct mapping
-                {"name": "vendor", "type": "text"},  # Vendor name
-                {"name": "vendor_name", "type": "text"},  # Direct mapping
+                {"name": "roles", "type": "checkbox", "options": ["Provider", "Deployer", "Distributor", "Importer"]},
+                {"name": "system_source", "type": "radio", "options": ["In-house", "Vendor / Third-party", "Mixed", "Unknown"]},
                 {"name": "modify_customize", "type": "radio", "options": ["Yes", "No", "Unknown"]},
                 {"name": "eu_usage", "type": "radio", "options": ["Yes", "No", "Planned", "Unknown"]},
                 {"name": "eu_effect", "type": "radio", "options": ["Yes", "No", "Planned", "Unknown"]},
                 
-                # ============================================================
-                # SECTION 4: Intended Purpose & Decision Use
-                # ============================================================
-                {"name": "purpose", "type": "text"},  # Maps to intended_purpose
-                {"name": "intended_purpose", "type": "text"},  # Direct mapping
+                # Section 4: Intended Purpose
                 {"name": "sector_domain", "type": "checkbox", "options": ["Biometric identification and categorisation", "Critical infrastructure management", "Education & vocational training", "Employment & workforce management", "Access to essential private or public services & benefits", "Law enforcement", "Migration, asylum & border control", "Justice & democratic processes"]},
                 {"name": "safety_component", "type": "radio", "options": ["Yes", "No"]},
                 {"name": "third_party_conformity", "type": "radio", "options": ["Yes", "No"]},
                 
-                # ============================================================
-                # SECTION 5: Deployment & Stakeholders
-                # ============================================================
+                # Sections 5-6: Deployment & Workflow
                 {"name": "deployment_context", "type": "text"},
                 {"name": "system_users", "type": "checkbox", "options": ["Internal employees", "External contractors / service providers", "Customers / consumers", "Students", "Patients", "Public authority staff"]},
                 {"name": "affected_outputs", "type": "checkbox", "options": ["Employees", "Job applicants", "Students", "Patients", "Customers / consumers", "Citizens / residents"]},
                 {"name": "vulnerable_groups", "type": "checkbox", "options": ["Children / minors", "Persons with disabilities", "Persons in socio-economic vulnerability", "None / not applicable", "Unknown"]},
-                
-                # ============================================================
-                # SECTION 6: Workflow, Outputs & Decision Impact
-                # ============================================================
                 {"name": "workflow_role", "type": "radio", "options": ["Provides insights / recommendations only (human decides)", "Supports decisions (human approval required)", "Automatically makes decisions / actions (no human approval)", "Mixed / depends on case", "Unknown"]},
                 {"name": "output_types", "type": "checkbox", "options": ["Score / rating", "Ranking", "Recommendation", "Classification / label", "Prediction / forecasting", "Matching (e.g., job matching, content matching)", "Detection (e.g., fraud detection)", "Identification / verification", "Generated content (text / image / audio / video)", "Automated decision (system executes action)"]},
                 {"name": "decision_influence", "type": "radio", "options": ["Yes", "No", "Not sure"]},
                 {"name": "auto_execute", "type": "radio", "options": ["No (advisory only)", "Yes (automatic actions)", "Mixed", "Unknown"]},
                 
-                # ============================================================
-                # SECTION 7: Capabilities
-                # ============================================================
+                # Section 7: Capabilities
                 {"name": "capability_practices", "type": "checkbox", "options": ["Subliminal / manipulative / deceptive techniques that materially distort behaviour and are likely to cause significant harm", "Exploitation of vulnerabilities (age, disability, or social / economic situation) to distort behaviour likely causing significant harm", "Social scoring leading to detrimental / unfavourable treatment (esp. unjustified / disproportionate)", "Criminal offence risk assessment / prediction based solely on profiling or personality traits (individual predictive policing)", "Untargeted scraping of facial images from the internet or CCTV to build / expand facial recognition databases", "Emotion recognition in the workplace or in education settings", "Biometric categorisation that infers or predicts sensitive traits (e.g., race, political opinions, religion, trade union membership, sexual orientation)", "Real-time remote biometric identification (RBI) in publicly accessible spaces for law enforcement purposes", "None of the above"]},
                 {"name": "interacts_persons", "type": "radio", "options": ["Yes", "No", "Unknown"]},
                 {"name": "synthetic_content", "type": "checkbox", "options": ["Text", "Image", "Audio", "Video", "No", "Unknown"]},
                 
-                # ============================================================
-                # SECTION 8: Technical Profile (Model & Data)
-                # ============================================================
+                # Section 8: Technical Profile
                 {"name": "ai_kind", "type": "radio", "options": ["Rules-based automation", "Machine learning", "Deep learning", "Generative AI", "Hybrid", "Unknown"]},
                 {"name": "gpai_integration", "type": "radio", "options": ["Yes", "No", "Unknown"]},
                 {"name": "gpai_provider", "type": "text"},
                 {"name": "training_source", "type": "radio", "options": ["In-house training", "Vendor-trained model (no training by us)", "Fine-tuned by us", "Unknown / not applicable"]},
                 {"name": "update_frequency", "type": "radio", "options": ["Static / never", "Periodic retraining", "Continuous learning", "Unknown"]},
                 {"name": "data_types", "type": "checkbox", "options": ["Personal data", "Sensitive data (health, biometric, etc.)", "Employee data", "Children / minors data", "Public web data", "Non-personal / industrial data", "Unknown"]},
-                
-                # ============================================================
-                # Assessment-related fields (for modal display only)
-                # ============================================================
+            ]
+        elif form_type == 'ai_system_quick':
+            # Quick add modal for AI Inventory page - Minimal fields only
+            fields_metadata = [
+                {"name": "system_name", "type": "text"},
+                {"name": "owner", "type": "text"},
+                {"name": "status", "type": "select", "options": ["Planned", "Testing", "In production", "Retired"]},
+                {"name": "role", "type": "checkbox", "options": ["Provider", "Deployer", "Distributor", "Importer"]},
+                {"name": "provider_type", "type": "select", "options": ["In-house", "External", "Mixed", "Unknown"]},
                 {"name": "risk_classification", "type": "select", "options": ["Not assessed", "Prohibited", "High-risk", "Limited transparency", "Minimal", "Not in scope"]},
                 {"name": "compliance_status", "type": "select", "options": ["Not started", "In progress", "Compliant", "Non-compliant"]},
-                {"name": "business_unit", "type": "text"},  # Additional field for organization context
+                {"name": "deployment_context", "type": "text"},
             ]
             
         result = service.run_bulk_autofill(file_paths, fields_metadata)

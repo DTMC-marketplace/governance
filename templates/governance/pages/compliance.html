@@ -806,16 +806,19 @@
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                window.location.reload();
+                showNotification('Projects restored successfully!', 'success');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
             } else {
-                alert('Failed to restore: ' + data.error);
+                showNotification('Failed to restore: ' + data.error, 'error');
                 btn.innerText = originalText;
                 btn.disabled = false;
             }
         })
         .catch(err => {
             console.error(err);
-            alert('Error restoring projects');
+            showNotification('Error restoring projects', 'error');
             btn.innerText = originalText;
             btn.disabled = false;
         });
@@ -840,20 +843,19 @@
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                // UI: Reset defaults (No archived shown) and reload to reflect changes
-                // If "Show Archived" is No, archived projects will disappear
-                // If "Show Archived" is Yes, they might stay but we need to know their status?
-                // For valid refresh, simplest is reload
-                window.location.reload();
+                showNotification('Projects archived successfully!', 'success');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
             } else {
-                alert('Failed to archive: ' + data.error);
+                showNotification('Failed to archive: ' + data.error, 'error');
                 btn.innerText = originalText;
                 btn.disabled = false;
             }
         })
         .catch(err => {
             console.error(err);
-            alert('Error archiving projects');
+            showNotification('Error archiving projects', 'error');
             btn.innerText = originalText;
             btn.disabled = false;
         });
@@ -879,16 +881,19 @@
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                window.location.reload();
+                showNotification('Projects deleted successfully!', 'success');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
             } else {
-                alert('Failed to delete: ' + data.error);
+                showNotification('Failed to delete: ' + data.error, 'error');
                 btn.innerText = originalText;
                 btn.disabled = false;
             }
         })
         .catch(err => {
             console.error(err);
-            alert('Error deleting projects');
+            showNotification('Error deleting projects', 'error');
             btn.innerText = originalText;
             btn.disabled = false;
         });
@@ -937,7 +942,7 @@
         const selected = Array.from(document.querySelectorAll('input[name="new-compliance-ai-system"]:checked')).map(cb => cb.value);
         
         if (selected.length === 0) {
-            alert('Please select at least one AI system.');
+            showNotification('Please select at least one AI system.', 'warning');
             return;
         }
         
@@ -960,17 +965,20 @@
         .then(res => res.json())
         .then(data => {
             if (data.success) {
+                showNotification('Compliance project created successfully!', 'success');
                 closeNewComplianceProjectModal();
-                window.location.reload();
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
             } else {
-                alert('Failed to create project: ' + data.error);
+                showNotification('Failed to create project: ' + data.error, 'error');
                 btn.innerText = originalText;
                 btn.disabled = false;
             }
         })
         .catch(err => {
             console.error(err);
-            alert('Error creating project');
+            showNotification('Error creating project', 'error');
             btn.innerText = originalText;
             btn.disabled = false;
         });

@@ -49,10 +49,14 @@ class GeminiScannerService:
         self.api_key = getattr(settings, 'GEMINI_API_KEY', '') or os.environ.get('GEMINI_API_KEY', '')
         self.model_name = getattr(settings, 'AI_ACT_MODEL_NAME', 'gemini-3-pro-preview')
 
+        self.client = None
         if genai and self.api_key:
-            self.client = genai.Client(api_key=self.api_key)
-        else:
-            self.client = None
+            try:
+                self.client = genai.Client(api_key=self.api_key)
+            except Exception as e:
+                logger.error(f"Failed to initialize Gemini client in ScannerService: {e}")
+        elif not self.api_key:
+            logger.warning("GEMINI_API_KEY not configured — ScannerService will use mock mode")
 
         self.skills_dir = Path(settings.BASE_DIR) / "skills"
         # Fallback to "AI Act skills packages" if "skills/" doesn't exist
@@ -335,7 +339,10 @@ Return ONLY the JSON object.
                 config=types.GenerateContentConfig(
                     system_instruction=short_system_instruction,
                     response_mime_type="application/json",
-                    temperature=0.1
+                    temperature=0.1,
+                    thinking_config=types.ThinkingConfig(
+                        thinking_level=types.ThinkingLevel.HIGH
+                    ),
                 )
             )
 
@@ -344,7 +351,16 @@ Return ONLY the JSON object.
                 return self._generate_mock_scan(project_data, tool_id, "Empty response from API",
                                                 governance_context=governance_context)
 
-            report = json.loads(response.text)
+            try:
+                report = json.loads(response.text)
+            except json.JSONDecodeError as json_err:
+                logger.error(f"Failed to parse Gemini response as JSON: {json_err}")
+                logger.debug(f"Raw response text (first 500 chars): {response.text[:500]}")
+                return self._generate_mock_scan(
+                    project_data, tool_id,
+                    f"Invalid JSON response from Gemini: {json_err}",
+                    governance_context=governance_context
+                )
 
             # Step 6: Generate professional report using GovernanceAgentService formatter
             if agent:

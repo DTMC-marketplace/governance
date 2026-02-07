@@ -940,7 +940,7 @@
             if (model.system_card_url) {
                 window.open(model.system_card_url, '_blank');
             } else {
-                alert(`Model: ${model.name}\nProvider: ${model.provider}\n\nRAI Status: ${model.rai.has_rai ? 'Yes' : 'No'}\nTransparency: ${model.transparency}\n\nNo system card available for this model.`);
+                showNotification(`Model: ${model.name} (Provider: ${model.provider}). No system card available.`, 'info');
             }
         }
     }
@@ -949,19 +949,19 @@
     function assessModel(modelId) {
         const model = modelDatabase.find(m => m.id == modelId);
         if (model) {
-            alert(`Start EU AI Act Assessment\n\nModel: ${model.name}\nProvider: ${model.provider}\n\nThis would open the assessment workflow for Article 50 & 52 transparency requirements.`);
+            showNotification('Starting EU AI Act Assessment workflow...', 'info');
         }
     }
 
     // Add new model
     function addNewModel() {
-        alert('Add New Model\n\nThis would open a form to register a new GAI model for EU AI Act assessment.');
+        showNotification('Opening form to register new GAI model...', 'info');
     }
 
     // Export model cards
     function exportModelCards() {
         const modelsWithCards = modelDatabase.filter(m => m.system_card_url).length;
-        alert(`Export Model Cards\n\n${modelDatabase.length} models would be exported to Excel with:\n- Model details\n- RAI status\n- EU AI Act classification\n- Transparency levels\n- System card URLs (${modelsWithCards} models have system cards)`);
+        showNotification(`Exporting ${modelDatabase.length} models to Excel...`, 'info');
     }
 
     // Initialize page

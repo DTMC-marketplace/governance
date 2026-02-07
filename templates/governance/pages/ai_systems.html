@@ -671,7 +671,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 e.target.value = '';
             } catch (error) {
                 console.error('Modal upload error:', error);
-                alert(`Error: ${error.message}`);
+                showNotification(`Error: ${error.message}`, 'error');
             }
         });
 
@@ -694,7 +694,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
 
                 if (filePaths.length === 0) {
-                    if (option === 'selected') alert('Please select documents.');
+                    if (option === 'selected') showNotification('Please select documents.', 'warning');
                     return;
                 }
 
@@ -762,14 +762,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 
                 const result = await response.json();
                 if (result.success) {
-                    alert('Agent created successfully!');
+                    showNotification('Agent created successfully!', 'success');
                     closeAddAgentModal();
-                    location.reload();
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1000);
                 } else {
-                    alert('Error: ' + result.error);
+                    showNotification('Error: ' + result.error, 'error');
                 }
             } catch (error) {
-                alert('Error: ' + error.message);
+                showNotification('Error: ' + error.message, 'error');
                 }
         });
     </script>

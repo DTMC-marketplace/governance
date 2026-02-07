@@ -17,8 +17,8 @@ BASE_DIR = Path(__file__).resolve().parent
 SECRET_KEY = os.environ.get("SECRET_KEY", "hackathon-demo-only-not-for-production")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# Set DEBUG=False in Azure Application Settings for production.
-DEBUG = os.environ.get("DEBUG", "True").lower() in ("true", "1", "yes")
+# Set DEBUG=True in local .env for development only.
+DEBUG = os.environ.get("DEBUG", "False").lower() in ("true", "1", "yes")
 
 # In production, set ALLOWED_HOSTS as comma-separated list in env, e.g. your-app.azurewebsites.net
 _allowed = os.environ.get("ALLOWED_HOSTS", "*")
@@ -78,16 +78,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # SECURITY: API keys should be loaded from environment variables in production
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
 AI_ACT_ARTICLES_DIR = BASE_DIR / 'ai_act_articles'
-AI_ACT_STORE_INFO_PATH = BASE_DIR / 'ai_act_store_info.txt'
-AI_ACT_STORE_NAME = os.environ.get('AI_ACT_STORE_NAME', '')
-# Free tier models: gemini-2.5-flash, gemini-2.5-flash-lite, gemini-3-flash-preview
-# Note: gemini-1.5-* models are deprecated
-AI_ACT_MODEL_NAME = os.environ.get('AI_ACT_MODEL_NAME', 'gemini-2.5-flash')
-# Use File Search (slower but more accurate) or manual context (faster)
-# Set to False to skip File Search and use manual context directly for faster responses
-# Used in: governance/infrastructure/services/gemini_ai_act_service.py (self.use_file_search)
-#          governance/views.py api_check_store_info (for debug display)
-AI_ACT_USE_FILE_SEARCH = os.environ.get('AI_ACT_USE_FILE_SEARCH', 'False').lower() == 'true'
+# Gemini model: gemini-3-pro-preview (default, recommended for hackathon)
+# Alternative: gemini-2.5-flash (faster/cheaper), gemini-3-flash-preview
+AI_ACT_MODEL_NAME = os.environ.get('AI_ACT_MODEL_NAME', 'gemini-3-pro-preview')
 # API timeout in seconds
 AI_ACT_API_TIMEOUT = int(os.environ.get('AI_ACT_API_TIMEOUT', '30'))
 

@@ -5,6 +5,7 @@ Adapted from geminihackathon/autofill logic for the Governance platform.
 import logging
 import asyncio
 import json
+import time
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple
 
@@ -57,44 +58,55 @@ class AutofillService:
         logger.info(f"Extracted text from {len(file_paths)} files, total length: {len(context_text)} characters")
         logger.debug(f"First 500 chars of extracted text: {context_text[:500]}")
 
-        # 2. Process each field
+        # 2. Process each field in chunks of 10 to avoid rate limits
         results = {}
-        for field_data in fields_metadata:
-            field_name = field_data.get('name')
-            field_type_str = field_data.get('type', 'text')
-            options = field_data.get('options', [])
-            
-            try:
-                ft = FieldType(field_type_str)
-                field = FormField(field_name, ft, options=options)
+        chunk_size = 10
+        
+        for i in range(0, len(fields_metadata), chunk_size):
+            chunk = fields_metadata[i:i + chunk_size]
+            for field_data in chunk:
+                field_name = field_data.get('name')
+                field_type_str = field_data.get('type', 'text')
+                options = field_data.get('options', [])
                 
-                # Build prompt using FormAnalyzer logic
-                prompt = FormAnalyzer.build_structured_prompt(field, context_text)
-                
-                logger.info(f"Processing field: {field_name} (type: {field_type_str})")
-                logger.debug(f"Prompt for {field_name}: {prompt[:300]}...")
-                
-                # Call Gemini
-                response = self.client.models.generate_content(
-                    model=self.model_name,
-                    contents=prompt,
-                    config=types.GenerateContentConfig(
-                        temperature=0.1,
-                        max_output_tokens=2048
-                    )
-                )
-                
-                if response and response.text:
-                    parsed_value = FormAnalyzer.parse_response(response.text, ft)
-                    results[field_name] = parsed_value
-                    logger.info(f"Field {field_name}: extracted value = '{parsed_value}'")
-                else:
-                    results[field_name] = ""
-                    logger.warning(f"Field {field_name}: no response from Gemini")
+                try:
+                    ft = FieldType(field_type_str)
+                    field = FormField(field_name, ft, options=options)
                     
-            except Exception as e:
-                logger.error(f"Error extracting field {field_name}: {e}", exc_info=True)
-                results[field_name] = ""
+                    # Build prompt using FormAnalyzer logic
+                    prompt = FormAnalyzer.build_structured_prompt(field, context_text)
+                    
+                    logger.info(f"Processing field: {field_name} (type: {field_type_str})")
+                    
+                    # Call Gemini
+                    response = self.client.models.generate_content(
+                        model=self.model_name,
+                        contents=prompt,
+                        config=types.GenerateContentConfig(
+                            temperature=0.1,
+                            max_output_tokens=2048,
+                            thinking_config=types.ThinkingConfig(
+                                thinking_level=types.ThinkingLevel.HIGH
+                            ),
+                        )
+                    )
+                    
+                    if response and response.text:
+                        parsed_value = FormAnalyzer.parse_response(response.text, ft)
+                        results[field_name] = parsed_value
+                        logger.info(f"Field {field_name}: extracted value = '{parsed_value}'")
+                    else:
+                        results[field_name] = ""
+                        logger.warning(f"Field {field_name}: no response from Gemini")
+                        
+                except Exception as e:
+                    logger.error(f"Error extracting field {field_name}: {e}")
+                    results[field_name] = ""
+            
+            # Rate limit mitigation: wait 2 seconds between chunks
+            if i + chunk_size < len(fields_metadata):
+                logger.info(f"Rate limiting: waiting 2 seconds before next chunk of {chunk_size} fields...")
+                time.sleep(2)
 
         return {"success": True, "data": results}
 
@@ -104,7 +116,11 @@ class AutofillService:
         
         # We can reuse extraction logic from GeminiScannerService or implement a clean version here
         # For simplicity and independence, implementing a clean version
-        import pypdf
+        try:
+            import pypdf
+        except ImportError:
+            pypdf = None
+            logger.warning("pypdf not installed — PDF extraction disabled. Run: pip install pypdf")
         try:
             import docx
         except ImportError:
@@ -134,11 +150,13 @@ class AutofillService:
                 continue
 
             try:
-                if path.suffix.lower() == '.pdf':
+                if path.suffix.lower() == '.pdf' and pypdf:
                     with open(path, 'rb') as f:
                         reader = pypdf.PdfReader(f)
                         text = "\n".join([page.extract_text() or "" for page in reader.pages])
                         all_text.append(f"--- DOCUMENT: {path.name} ---\n{text}")
+                elif path.suffix.lower() == '.pdf' and not pypdf:
+                    logger.warning(f"Skipping PDF {path.name}: pypdf not installed")
                 elif path.suffix.lower() in ['.docx', '.doc'] and docx:
                     doc = docx.Document(path)
                     text = "\n".join([p.text for p in doc.paragraphs])

@@ -1,13 +1,18 @@
 """
 Presentation View for AI Act Chat API
-Handles HTTP requests for AI Act chat functionality
+Handles HTTP requests for AI Act chat functionality.
+
+Supports both standard JSON responses and Server-Sent Events (SSE) streaming.
 """
 import json
-from django.http import JsonResponse
+import logging
+from django.http import JsonResponse, StreamingHttpResponse
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from ...application.use_cases.ai_act_chat_use_case import AIActChatUseCase
-from ...domain.services.ai_act_service import AIActService
+from ...domain.services.ai_act_service import AIActService, AIActQueryRequest
+
+logger = logging.getLogger(__name__)
 
 
 @csrf_exempt  # TODO: Add proper CSRF protection in production
@@ -94,10 +99,84 @@ def ai_act_chat_api(request):
         }, status=400)
     except Exception as e:
         # Log error in production
-        import logging
-        logger = logging.getLogger(__name__)
         logger.error(f"Error in AI Act chat API: {str(e)}", exc_info=True)
-        
+
         return JsonResponse({
             'error': 'An error occurred processing your request'
         }, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def ai_act_chat_stream_api(request):
+    """
+    Streaming API endpoint for AI Act chat using Server-Sent Events (SSE).
+
+    Streams response chunks as they arrive from Gemini 3.
+    Supports function calling (tool use notifications sent inline).
+
+    Expected JSON payload (same as ai_act_chat_api):
+    {
+        "message": "What are prohibited AI practices?",
+        "agent_id": "agent_ai_act",
+        "chat_type": "Company",
+        "chat_history_id": "optional-uuid"
+    }
+
+    Returns:
+        StreamingHttpResponse with SSE events:
+        data: {"chat_history_id": "uuid", "chunk": "", "done": false}
+        data: {"chunk": "Some text...", "done": false}
+        data: {"chunk": "", "tool_use": ["classify_ai_system_risk"], "done": false}
+        data: {"chunk": "", "done": true, "chat_history_id": "uuid"}
+    """
+    try:
+        body = json.loads(request.body)
+        message = body.get('message', '').strip()
+        agent_id = body.get('agent_id')
+        chat_type = body.get('chat_type', 'Company')
+        chat_history_id = body.get('chat_history_id')
+
+        logger.info(f"Streaming chat request: message='{message[:50]}...', agent_id={agent_id}")
+
+        if not message:
+            return JsonResponse({'error': 'Message is required'}, status=400)
+
+        from ...infrastructure.services.gemini_ai_act_service import get_ai_act_service
+
+        try:
+            ai_act_service = get_ai_act_service()
+        except (ValueError, ImportError) as e:
+            logger.error(f"AI Act service error: {str(e)}")
+            return JsonResponse({'error': str(e)}, status=503)
+
+        # Build request
+        query_request = AIActQueryRequest(
+            question=message,
+            agent_id=agent_id,
+            chat_type=chat_type,
+            chat_history_id=chat_history_id
+        )
+
+        # Return SSE streaming response
+        def event_stream():
+            try:
+                for chunk in ai_act_service.query_stream(query_request):
+                    yield chunk
+            except Exception as e:
+                logger.error(f"Stream error: {e}")
+                yield f'data: {json.dumps({"error": str(e), "done": True})}\n\n'
+
+        response = StreamingHttpResponse(
+            event_stream(),
+            content_type='text/event-stream'
+        )
+        response['Cache-Control'] = 'no-cache'
+        response['X-Accel-Buffering'] = 'no'  # Disable nginx buffering
+        return response
+
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON in request body'}, status=400)
+    except Exception as e:
+        logger.error(f"Error in streaming chat API: {str(e)}", exc_info=True)
+        return JsonResponse({'error': 'An error occurred'}, status=500)

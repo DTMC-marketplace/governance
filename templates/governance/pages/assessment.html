@@ -782,7 +782,7 @@
     
     async function handleEvidenceUpload(files) {
         if (!currentUseCaseId) {
-            alert('Please select a use case first');
+            showNotification('Please select a use case first', 'warning');
             return;
         }
         
@@ -813,13 +813,14 @@
                 
                 const result = await response.json();
                 if (result.success) {
-                    location.reload();
+                    showNotification('Evidence uploaded successfully!', 'success');
+                    setTimeout(() => location.reload(), 1000);
                 } else {
-                    alert('Error uploading evidence: ' + (result.error || 'Unknown error'));
+                    showNotification('Error uploading evidence: ' + (result.error || 'Unknown error'), 'error');
                 }
             } catch (error) {
                 console.error('Upload error:', error);
-                alert('Error: ' + error.message);
+                showNotification('Error: ' + error.message, 'error');
             }
         }
     }
@@ -832,7 +833,7 @@
         }
         
         if (!useCaseId) {
-            alert('Please select a use case first');
+            showNotification('Please select a use case first', 'warning');
             return;
         }
         
@@ -857,13 +858,14 @@
             
             const result = await response.json();
             if (result.success) {
-                location.reload();
+                showNotification('Evidence deleted successfully!', 'success');
+                setTimeout(() => location.reload(), 1000);
             } else {
-                alert('Error deleting evidence: ' + (result.error || 'Unknown error'));
+                showNotification('Error deleting evidence: ' + (result.error || 'Unknown error'), 'error');
             }
         } catch (error) {
             console.error('Delete error:', error);
-            alert('Error: ' + error.message);
+            showNotification('Error: ' + error.message, 'error');
         }
     }
     {% endif %}
@@ -897,7 +899,7 @@
         if (!file) return;
         
         if (!currentUseCaseIdForReports) {
-            alert('Please select a use case first');
+            showNotification('Please select a use case first', 'warning');
             return;
         }
         
@@ -916,13 +918,14 @@
             
             const result = await response.json();
             if (result.success) {
-                location.reload();
+                showNotification('Report uploaded successfully!', 'success');
+                setTimeout(() => location.reload(), 1000);
             } else {
-                alert('Error uploading report: ' + (result.error || 'Unknown error'));
+                showNotification('Error uploading report: ' + (result.error || 'Unknown error'), 'error');
             }
         } catch (error) {
             console.error('Upload error:', error);
-            alert('Error: ' + error.message);
+            showNotification('Error: ' + error.message, 'error');
         }
     }
     
@@ -978,7 +981,7 @@
                     if (allowedExtensions.includes(fileExtension)) {
                         await handleReportUpload(file, reportType);
                     } else {
-                        alert('Please upload .xlsx, .json, or .csv files only');
+                        showNotification('Please upload .xlsx, .json, or .csv files only', 'warning');
                     }
                 }
             });
@@ -1015,12 +1018,12 @@
         const content = textarea.value.trim();
         
         if (!content) {
-            alert('Please enter a comment');
+            showNotification('Please enter a comment', 'warning');
             return;
         }
         
         if (!currentUseCaseIdForComments) {
-            alert('Please select a use case first');
+            showNotification('Please select a use case first', 'warning');
             return;
         }
         
@@ -1035,13 +1038,14 @@
             
             const result = await response.json();
             if (result.success) {
-                location.reload();
+                showNotification('Comment submitted successfully!', 'success');
+                setTimeout(() => location.reload(), 1000);
             } else {
-                alert('Error submitting comment: ' + (result.error || 'Unknown error'));
+                showNotification('Error submitting comment: ' + (result.error || 'Unknown error'), 'error');
             }
         } catch (error) {
             console.error('Comment submit error:', error);
-            alert('Error: ' + error.message);
+            showNotification('Error: ' + error.message, 'error');
         }
     }
     
@@ -1071,12 +1075,12 @@
         const content = textarea.value.trim();
         
         if (!content) {
-            alert('Please enter a reply');
+            showNotification('Please enter a reply', 'warning');
             return;
         }
         
         if (!currentUseCaseIdForComments) {
-            alert('Please select a use case first');
+            showNotification('Please select a use case first', 'warning');
             return;
         }
         
@@ -1091,13 +1095,14 @@
             
             const result = await response.json();
             if (result.success) {
-                location.reload();
+                showNotification('Reply submitted successfully!', 'success');
+                setTimeout(() => location.reload(), 1000);
             } else {
-                alert('Error submitting reply: ' + (result.error || 'Unknown error'));
+                showNotification('Error submitting reply: ' + (result.error || 'Unknown error'), 'error');
             }
         } catch (error) {
             console.error('Reply submit error:', error);
-            alert('Error: ' + error.message);
+            showNotification('Error: ' + error.message, 'error');
         }
     }
     
@@ -1109,7 +1114,7 @@
         }
         
         if (!useCaseId) {
-            alert('Please select a use case first');
+            showNotification('Please select a use case first', 'warning');
             return;
         }
         
@@ -1120,13 +1125,14 @@
             
             const result = await response.json();
             if (result.success) {
-                location.reload();
+                showNotification('Report deleted successfully!', 'success');
+                setTimeout(() => location.reload(), 1000);
             } else {
-                alert('Error deleting report: ' + (result.error || 'Unknown error'));
+                showNotification('Error deleting report: ' + (result.error || 'Unknown error'), 'error');
             }
         } catch (error) {
             console.error('Delete error:', error);
-            alert('Error: ' + error.message);
+            showNotification('Error: ' + error.message, 'error');
         }
     }
     {% endif %}

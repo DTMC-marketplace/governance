@@ -8,6 +8,34 @@
 
 {% block extra_head %}
 {{ block.super }}
+<style>
+    /* Fix streaming cursor to show dots and prevent black box appearance */
+    .streaming-cursor {
+        display: inline-block;
+        color: #9CA3AF;
+        font-weight: bold;
+        letter-spacing: 2px;
+        margin-left: 4px;
+        vertical-align: middle;
+    }
+    
+    .loading-dots div {
+        width: 4px;
+        height: 4px;
+        background-color: #000;
+        border-radius: 50%;
+        display: inline-block;
+        animation: bounce 1.4s infinite ease-in-out both;
+    }
+    
+    .loading-dots .dot1 { animation-delay: -0.32s; }
+    .loading-dots .dot2 { animation-delay: -0.16s; }
+    
+    @keyframes bounce {
+        0%, 80%, 100% { transform: scale(0); }
+        40% { transform: scale(1.0); }
+    }
+</style>
 {% endblock %}
 
 {% block dashboard_content %}
@@ -553,29 +581,166 @@
             }
         }
 
-        // Send message to backend
+        // Send message to backend using streaming (SSE) for AI Act agent, fallback to standard for others
         async function sendMessageToBackend(messageInput) {
+            const payload = {
+                message: messageInput,
+                chat_type: chat_type,
+                agent_id: agent_id
+            };
+
+            // Use streaming for AI Act agent, standard for others
+            const useStreaming = (agent_id === 'agent_ai_act');
+
+            if (useStreaming) {
+                await sendMessageStreaming(messageInput, payload);
+            } else {
+                await sendMessageStandard(messageInput, payload);
+            }
+        }
+
+        // Streaming response handler (SSE) for real-time text display
+        async function sendMessageStreaming(messageInput, payload) {
             try {
                 // Show loading message
                 addMessage('', false, true);
 
-                const payload = {
-                        message: messageInput,
-                        chat_type: chat_type,
-                        agent_id: agent_id
-                };
+                const response = await fetch('/ai-assistant/chat/stream', {
+                    method: "POST",
+                    body: JSON.stringify(payload),
+                    headers: { "Content-Type": "application/json" },
+                });
 
-                // Use simplified endpoint for hackathon demo
-                const chatEndpoint = agent_id === 'agent_ai_act' 
-                    ? '/ai-assistant/chat' 
-                    : `/${requestPlatform}/dashboard/${companyId}/governance/ai-assistant/chat`;
-                
+                if (!response.ok) {
+                    throw new Error('Failed to send message to backend');
+                }
+
+                removeLoadingMessage();
+
+                // Create a placeholder AI message element for streaming
+                const streamDiv = document.createElement('div');
+                streamDiv.className = 'bg-white w-fit min-h-14 p-4 pb-10 rounded-lg rounded-ss-none overflow-hidden border border-[#E5E7EB] shadow-sm mr-auto relative';
+                streamDiv.setAttribute('data-user-question', messageInput);
+
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'streaming-content prose prose-sm max-w-none';
+                contentDiv.innerHTML = '<span class="streaming-cursor animate-pulse">...</span>';
+                streamDiv.appendChild(contentDiv);
+
+                const chatContainer = document.getElementById('chat-container');
+                if (chatContainer) {
+                    chatContainer.appendChild(streamDiv);
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                }
+
+                // Read the SSE stream
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let fullText = '';
+                let chatHistoryId = null;
+                let buffer = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+
+                    // Process complete SSE messages
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop() || ''; // Keep incomplete line in buffer
+
+                    for (const line of lines) {
+                        if (!line.startsWith('data: ')) continue;
+
+                        try {
+                            const data = JSON.parse(line.slice(6));
+
+                            // Store chat history ID
+                            if (data.chat_history_id) {
+                                chatHistoryId = data.chat_history_id;
+                            }
+
+                            // Show tool use notification
+                            if (data.tool_use) {
+                                const toolNames = data.tool_use.join(', ');
+                                contentDiv.innerHTML = `<div class="text-xs text-blue-600 mb-2">🔧 Using tools: ${toolNames}...</div><span class="streaming-cursor animate-pulse">...</span>`;
+                            }
+
+                            // Append text chunk
+                            if (data.chunk) {
+                                fullText += data.chunk;
+                                const formatted = formatMessageContent(fullText);
+                                contentDiv.innerHTML = '';
+                                contentDiv.appendChild(formatted);
+                                // Add cursor at end
+                                if (!data.done) {
+                                    const cursor = document.createElement('span');
+                                    cursor.className = 'streaming-cursor animate-pulse';
+                                    cursor.textContent = '...';
+                                    contentDiv.appendChild(cursor);
+                                }
+                                chatContainer.scrollTop = chatContainer.scrollHeight;
+                            }
+
+                            // Handle errors
+                            if (data.error) {
+                                console.error('[STREAM] Error:', data.error);
+                                fullText = data.error;
+                            }
+
+                            // Stream complete
+                            if (data.done) {
+                                // Remove cursor
+                                const cursor = contentDiv.querySelector('.streaming-cursor');
+                                if (cursor) cursor.remove();
+                            }
+                        } catch (parseErr) {
+                            console.warn('[STREAM] Parse error:', parseErr);
+                        }
+                    }
+                }
+
+                // Remove the streaming placeholder and add the final message properly
+                if (streamDiv.parentNode) {
+                    streamDiv.remove();
+                }
+
+                const finalResponse = fullText || "No response generated.";
+                const messageElement = addMessage(finalResponse, false, false, [], messageInput, chatHistoryId);
+
+                // Update chat history ID
+                if (messageElement && chatHistoryId) {
+                    const actionBarId = messageElement.getAttribute('data-action-bar-id');
+                    if (actionBarId) {
+                        updateMessageChatHistoryIdByActionBar(actionBarId, chatHistoryId);
+                        actionBarToChatHistoryMap.set(actionBarId, chatHistoryId);
+                        console.log('[STREAM] ✅ Updated chatHistoryId:', chatHistoryId);
+                    }
+                }
+
+                // Update chat history sidebar
+                updateChatHistory(messageInput, finalResponse, [], chatHistoryId);
+
+            } catch (error) {
+                console.error('[STREAM] Error:', error);
+                removeLoadingMessage();
+                addMessage("Please try again later.", false);
+            }
+        }
+
+        // Standard (non-streaming) response handler for non-AI-Act agents
+        async function sendMessageStandard(messageInput, payload) {
+            try {
+                // Show loading message
+                addMessage('', false, true);
+
+                const chatEndpoint = `/${requestPlatform}/dashboard/${companyId}/governance/ai-assistant/chat`;
+
                 const response = await fetch(chatEndpoint, {
                     method: "POST",
                     body: JSON.stringify(payload),
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
+                    headers: { "Content-Type": "application/json" },
                 });
 
                 if (!response.ok) {
@@ -584,51 +749,24 @@
 
                 responseData = await response.json();
                 console.log('[CHAT] Response data:', responseData);
-                console.log('[CHAT] ChatHistory ID from backend:', responseData.id);
-                console.log('[CHAT] Full responseData keys:', Object.keys(responseData));
-                console.log('[CHAT] responseData.id type:', typeof responseData.id, 'value:', responseData.id);
                 removeLoadingMessage();
-                
-                // Handle references - check both lowercase and uppercase
+
                 const references = responseData.data["references"] || responseData.data["REFERENCES"] || [];
-                // Try multiple possible keys for message
-                const aiResponse = responseData.data["message"] || responseData.data.message || responseData.data[messageInput] || "No response available";
-                console.log('[CHAT] AI Response:', aiResponse);
-                
-                // Get chat history ID - it's at the root level of responseData
+                const aiResponse = responseData.data["message"] || responseData.data.message || "No response available";
                 const chatHistoryId = responseData.id || null;
-                console.log('[CHAT] Extracted chatHistoryId:', chatHistoryId);
-                
-                    // Add AI response to chat (pass user question for feedback and chat history ID)
-                    console.log('[CHAT] Adding message with chatHistoryId:', chatHistoryId);
-                    const messageElement = addMessage(aiResponse, false, false, references, messageInput, chatHistoryId);
-                
-                    // Always try to update chatHistoryId after message is created - use responseData.id directly
-                    if (messageElement && responseData.id) {
-                        const actionBarId = messageElement.getAttribute('data-action-bar-id');
-                        console.log('[CHAT] messageElement actionBarId:', actionBarId, 'responseData.id:', responseData.id);
-                        if (actionBarId) {
-                            // Always update to ensure ID is stored, even if it was passed to addMessage
-                            console.log('[CHAT] Updating chatHistoryId for actionBarId:', actionBarId, 'with ID:', responseData.id);
-                            const updated = updateMessageChatHistoryIdByActionBar(actionBarId, responseData.id);
-                            if (updated) {
-                                // Also store in map for future reference
-                                actionBarToChatHistoryMap.set(actionBarId, responseData.id);
-                                console.log('[CHAT] ✅ Updated and stored in map. Map now has:', Array.from(actionBarToChatHistoryMap.entries()));
-                            } else {
-                                console.error('[CHAT] ❌ Failed to update chatHistoryId');
-                            }
-                        } else {
-                            console.warn('[CHAT] ⚠️ No actionBarId found on messageElement');
-                        }
-                    } else {
-                        console.warn('[CHAT] ⚠️ Cannot update - messageElement:', messageElement, 'responseData.id:', responseData.id);
+
+                const messageElement = addMessage(aiResponse, false, false, references, messageInput, chatHistoryId);
+
+                if (messageElement && responseData.id) {
+                    const actionBarId = messageElement.getAttribute('data-action-bar-id');
+                    if (actionBarId) {
+                        updateMessageChatHistoryIdByActionBar(actionBarId, responseData.id);
+                        actionBarToChatHistoryMap.set(actionBarId, responseData.id);
+                    }
                 }
-                
-                // Update chat history with chatHistoryId
-                const finalChatHistoryId = responseData.id || chatHistoryId;
-                updateChatHistory(messageInput, aiResponse, references, finalChatHistoryId);
-                
+
+                updateChatHistory(messageInput, aiResponse, references, responseData.id || chatHistoryId);
+
             } catch (error) {
                 console.error('Error sending message to backend:', error);
                 removeLoadingMessage();
@@ -646,49 +784,8 @@
                     addMessage('No files selected for upload', false);
                     return;
                 }
-                
-                // Agent AI Act: dùng API upload riêng (BE đã xử lý RAG)
-                if (agent_id === 'agent_ai_act') {
-                    addMessage('', false, true); // Loading message
-                    
-                    const formData = new FormData();
-                    // Append all files to FormData
-                    for (let i = 0; i < files.length; i++) {
-                        formData.append('file_url', files[i]);
-                    }
-                    
-                        formData.append('data_type', 'ai_input_ai_act');
-                    
-                        // Data hub upload not implemented in hackathon demo
-                        const response = await fetch(`/api/upload/`, {
-                        method: 'POST',
-                        body: formData,
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest',
-                        },
-                    });
 
-                    const result = await response.json();
-                    removeLoadingMessage();
-                    
-                    if (!response.ok || !result.success) {
-                        throw new Error(result.message || result.error || 'Upload failed');
-                    }
-                    
-                    // Show success message
-                    if (files.length === 1) {
-                        const sizeInfo = ` (${(files[0].size / 1024 / 1024).toFixed(2)} MB)`;
-                        addMessage(`✅ ${files[0].name}${sizeInfo} - File uploaded and processing with RAG...`, true);
-                    } else {
-                        const totalSize = Array.from(files).reduce((sum, file) => sum + file.size, 0);
-                        const summaryMessage = `📎 Uploaded ${files.length} files (${(totalSize / 1024 / 1024).toFixed(2)} MB total) - Processing with RAG...`;
-                        addMessage(summaryMessage, true);
-                    }
-                    
-                    return; // Done for agent_ai_act
-                }
-                
-                // For other agents, just show file names
+                // Show file names for all agents
                 if (files && files.length > 0) {
                     const fileNames = Array.from(files).map(f => f.name).join(', ');
                     const fileMessage = `📎 Files: ${fileNames}`;
@@ -705,38 +802,8 @@
 
         async function handleFileUpload(file) {
             try {
-                // Agent AI Act: dùng API upload riêng (BE đã xử lý RAG)
-                if (agent_id === 'agent_ai_act') {
-                    addMessage('', false, true); // Loading message
-                    
-                    const formData = new FormData();
-                    formData.append('file_url', file);
-                        formData.append('data_type', 'ai_input_ai_act');
-                    
-                        // Data hub upload not implemented in hackathon demo
-                        const response = await fetch(`/api/upload/`, {
-                        method: 'POST',
-                        body: formData,
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest',
-                        },
-                    });
-
-                    const result = await response.json();
-                    removeLoadingMessage();
-                    
-                    if (!response.ok || !result.success) {
-                        throw new Error(result.message || result.error || 'Upload failed');
-                    }
-                    
-                    const sizeInfo = ` (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
-                    addMessage(`✅ ${file.name}${sizeInfo} - File uploaded.`, true);
-                    
-                    return; // Done for agent_ai_act
-                } else {
-                    const fileMessage = `📎 File: ${file.name}`;
-                    addMessage(fileMessage, true);
-                }
+                const fileMessage = `📎 File: ${file.name}`;
+                addMessage(fileMessage, true);
             } catch (error) {
                 console.error('Upload error:', error);
                 removeLoadingMessage();
@@ -842,16 +909,16 @@
                         messageElement.remove();
                     } else {
                         console.error('Failed to delete message:', result.error || 'Unknown error');
-                        alert('Failed to delete message: ' + (result.error || 'Unknown error'));
+                        showNotification('Failed to delete message: ' + (result.error || 'Unknown error'), 'error');
                     }
                 } else {
                     const errorText = await response.text();
                     console.error('Failed to delete message:', response.status, response.statusText, errorText);
-                    alert('Failed to delete message. Please try again.');
+                    showNotification('Failed to delete message. Please try again.', 'error');
                 }
             } catch (error) {
                 console.error('Error deleting message:', error);
-                alert('Error deleting message: ' + error.message);
+                showNotification('Error deleting message: ' + error.message, 'error');
             }
         }
 
@@ -890,6 +957,7 @@
                 const result = await response.json();
                 
                 if (response.ok && result.success) {
+                    showNotification('Chat history cleared successfully', 'success');
                     // Clear the UI
                     if (chatContainer) chatContainer.innerHTML = '';
                     if (aiChat) aiChat.classList.remove('hidden');
@@ -905,7 +973,7 @@
                 
             } catch (error) {
                 console.error('Error clearing chat history:', error);
-                alert('Error clearing chat history: ' + error.message);
+                showNotification('Error clearing chat history: ' + error.message, 'error');
             }
         }
 
@@ -940,13 +1008,17 @@
                 toast.textContent = 'Copied to clipboard!';
                 document.body.appendChild(toast);
                 
+                if (toast) {
+                    toast.style.opacity = '0';
+                    setTimeout(() => toast.remove(), 300);
+                }
                 setTimeout(() => {
                     toast.style.opacity = '0';
                     setTimeout(() => toast.remove(), 300);
                 }, 2000);
             }).catch(err => {
                 console.error('Failed to copy:', err);
-                alert('Failed to copy message to clipboard');
+                showNotification('Failed to copy message to clipboard', 'error');
             });
         }
 
@@ -1165,7 +1237,7 @@
                     chatHistoryId: b.getAttribute('data-chat-history-id'),
                     allAttributes: Array.from(b.attributes).map(a => `${a.name}="${a.value}"`).join(', ')
                 })));
-                alert('Error: Could not find message ID. Please try again.');
+                showNotification('Error: Could not find message ID. Please try again.', 'error');
                 return;
             }
             

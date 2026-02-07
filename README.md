@@ -81,7 +81,9 @@ governance/
 ├── urls.py                      # Root URL configuration
 ├── requirements.txt             # Python dependencies
 ├── README.md                    # This file
-├── ARCHITECTURE.md              # Clean Architecture documentation
+├── docs/                        # Documentation
+│   ├── ARCHITECTURE.md          # Clean Architecture + system diagrams
+│   └── PROJECT.md               # Hackathon submission + project description
 ├── governance/                  # Main app
 │   ├── __init__.py
 │   ├── views.py                 # Legacy views (backward compatibility)
@@ -128,7 +130,7 @@ governance/
 3. **Infrastructure Layer** (`governance/infrastructure/`): Data access implementations
 4. **Presentation Layer** (`governance/presentation/`): Views and HTTP handling
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed documentation.
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed documentation.
 
 ### Design Patterns
 

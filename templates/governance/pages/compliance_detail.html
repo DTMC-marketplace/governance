@@ -750,15 +750,18 @@
         .then(data => {
             if (data.success) {
                 closeAssigneeModal();
+                showNotification('Assignee updated successfully!', 'success');
                 // Reload page to reflect changes properly (simplest way to update various UI parts)
-                window.location.reload();
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
             } else {
-                alert('Failed to update assignee: ' + data.error);
+                showNotification('Failed to update assignee: ' + data.error, 'error');
             }
         })
         .catch(err => {
             console.error(err);
-            alert('Error updating assignee');
+            showNotification('Error updating assignee', 'error');
         });
     };
     
@@ -770,7 +773,7 @@
         const email = emailInput.value.trim();
         
         if (!name || !email) {
-            alert('Please fill in all required fields');
+            showNotification('Please fill in all required fields', 'warning');
             return;
         }
         
@@ -795,6 +798,7 @@
         .then(res => res.json())
         .then(data => {
             if (data.success) {
+                showNotification('Assignee added successfully!', 'success');
                 // New assignee added successfully
                 // Switch back to main view and reload list
                 switchToMainAssigneeView();
@@ -804,12 +808,12 @@
                 nameInput.value = '';
                 emailInput.value = '';
             } else {
-                alert('Failed to add assignee: ' + data.error);
+                showNotification('Failed to add assignee: ' + data.error, 'error');
             }
         })
         .catch(err => {
             console.error(err);
-            alert('Error adding assignee');
+            showNotification('Error adding assignee', 'error');
         })
         .finally(() => {
             saveBtn.innerText = originalText;
@@ -923,15 +927,16 @@
         .then(res => res.json())
         .then(data => {
             if (data.success) {
+                showNotification('Note saved successfully!', 'success');
                 noteInput.value = '';
                 fetchNotes(currentTaskIdForNotes); // Reload list
             } else {
-                alert('Failed to save note: ' + data.error);
+                showNotification('Failed to save note: ' + data.error, 'error');
             }
         })
         .catch(err => {
             console.error(err);
-            alert('Error saving note');
+            showNotification('Error saving note', 'error');
         })
         .finally(() => {
             if (saveBtn) {
@@ -1469,14 +1474,16 @@
                 if (textSpan) textSpan.textContent = originalText;
                 btn.className = '';
                 originalClasses.forEach(cls => btn.classList.add(cls));
-                alert('Failed to update status: ' + data.error);
+                showNotification('Failed to update status: ' + data.error, 'error');
+            } else {
+                showNotification('Status updated successfully!', 'success');
             }
         })
         .catch(error => {
             if (textSpan) textSpan.textContent = originalText;
             btn.className = '';
             originalClasses.forEach(cls => btn.classList.add(cls));
-            alert('Error updating status. Please try again.');
+            showNotification('Error updating status. Please try again.', 'error');
         });
     };
 

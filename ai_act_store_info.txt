@@ -1,0 +1,2 @@
+store_name=fileSearchStores/euaiactgdprknowledgebase-rs8r2z1ihrpq
+display_name=EU-AI-Act-GDPR-Knowledge-Base

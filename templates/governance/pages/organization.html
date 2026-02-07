@@ -30,7 +30,25 @@
 .styled-select-wrapper svg {
     pointer-events: none;
 }
+/* Loading overlay animation */
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
 </style>
+<!-- Global Loading Overlay -->
+<div id="autofill-loading-overlay" class="hidden fixed inset-0 z-[10000] bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center">
+    <div class="bg-white p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-4 max-w-sm w-full mx-4">
+        <div class="w-16 h-16 border-4 border-[#F13D30] border-t-transparent rounded-full animate-spin"></div>
+        <div class="text-center">
+            <h3 class="text-xl font-bold text-[#22262A] mb-2">AI is reading your files</h3>
+            <p class="text-sm text-[#6B7280]">Extracting information and auto-filling form fields. This may take a few moments...</p>
+        </div>
+    </div>
+</div>
 <div class="flex flex-col gap-6 mx-auto">
     <!-- Header -->
     <div class="flex items-center justify-between">
@@ -820,7 +838,7 @@ async function addFiles(files) {
         
     } catch (error) {
         console.error('Upload error:', error);
-        alert(`Error uploading files: ${error.message}`);
+        showNotification(`Error uploading files: ${error.message}`, 'error');
     }
 }
 
@@ -923,7 +941,7 @@ async function deleteSelectedFiles() {
     });
     
     if (filesToDelete.length === 0) {
-        alert('No file information found to delete');
+        showNotification('No file information found to delete', 'warning');
         return;
     }
     
@@ -955,12 +973,12 @@ async function deleteSelectedFiles() {
             
             console.log(`Successfully deleted ${filesToDelete.length} file(s)`);
         } else {
-            alert(`Error deleting files: ${result.error || 'Unknown error'}`);
+            showNotification(`Error deleting files: ${result.error || 'Unknown error'}`, 'error');
             console.error('Delete error:', result);
         }
     } catch (error) {
         console.error('Error deleting files:', error);
-        alert(`Error deleting files: ${error.message}`);
+        showNotification(`Error deleting files: ${error.message}`, 'error');
     }
 }
 
@@ -1071,7 +1089,7 @@ async function saveGovernanceLink(questionId) {
     
     const link = linkInput.value.trim();
     if (!link) {
-        alert('Please enter a link');
+        showNotification('Please enter a link', 'warning');
         return;
     }
     
@@ -1150,11 +1168,11 @@ async function saveGovernanceLink(questionId) {
             console.log(`Governance link ${questionId} saved successfully`);
         } else {
             console.error('Error saving governance link:', result.error);
-            alert('Error saving link: ' + (result.error || 'Unknown error'));
+            showNotification('Error saving link: ' + (result.error || 'Unknown error'), 'error');
         }
     } catch (error) {
         console.error('Error saving governance link:', error);
-        alert('Error saving link: ' + error.message);
+        showNotification('Error saving link: ' + error.message, 'error');
     }
 }
 
@@ -1191,7 +1209,7 @@ function saveQ5EvidenceLink() {
     
     const link = linkInput.value.trim();
     if (!link) {
-        alert('Please enter a link');
+        showNotification('Please enter a link', 'warning');
         return;
     }
     
@@ -1274,16 +1292,22 @@ async function triggerAutofill(option, formType) {
     if (filePaths.length === 0) {
         // Only alert if it's "Selected files" but none selected
         if (option === 'selected') {
-            alert('Please select at least one document to use for auto-fill.');
+            showNotification('Please select at least one document to use for auto-fill.', 'warning');
         }
         return;
     }
 
-    // 2. Show loading state (could be improved with a proper UI spinner)
+    // 2. Show loading state
     const activeBtn = document.querySelector(`.ai-read-toggle[data-option="${option}"]`);
     const originalText = activeBtn.innerHTML;
+    const loadingOverlay = document.getElementById('autofill-loading-overlay');
+    
     activeBtn.disabled = true;
     activeBtn.innerHTML = `<span>⏳ Reading...</span>`;
+    
+    // Show overlay and block forms
+    if (loadingOverlay) loadingOverlay.classList.remove('hidden');
+    setFormsBlocking(true);
 
     try {
         // 3. Call API
@@ -1333,22 +1357,46 @@ async function triggerAutofill(option, formType) {
             console.log(`Successfully autofilled ${filledCount} fields.`);
         } else {
             console.error('Autofill failed:', result.error);
-            alert('AI was unable to extract information: ' + (result.error || 'Unknown error'));
+            showNotification('AI was unable to extract information: ' + (result.error || 'Unknown error'), 'error');
         }
     } catch (error) {
         console.error('Error during autofill:', error);
-        alert('An error occurred during AI reading.');
+        showNotification('An error occurred during AI reading.', 'error');
     } finally {
         activeBtn.disabled = false;
         activeBtn.innerHTML = originalText;
+        
+        // Hide overlay and unblock forms
+        if (loadingOverlay) loadingOverlay.classList.add('hidden');
+        setFormsBlocking(false);
     }
+}
+
+// Helper to block/unblock all forms on the page
+function setFormsBlocking(blocked) {
+    const formIds = ['org-profile-form', 'scope-form', 'governance-form', 'ai-literacy-form'];
+    formIds.forEach(id => {
+        const form = document.getElementById(id);
+        if (form) {
+            const elements = form.querySelectorAll('input, select, textarea, button');
+            elements.forEach(el => {
+                if (blocked) {
+                    el.setAttribute('disabled', 'true');
+                    el.classList.add('opacity-50', 'cursor-not-allowed');
+                } else {
+                    el.removeAttribute('disabled');
+                    el.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+            });
+        }
+    });
 }
 
 // Save link function
 function saveLink(questionId) {
     const input = document.querySelector(`input[name="${questionId}_link"]`);
     if (input && input.value) {
-        alert('Link saved: ' + input.value);
+        showNotification('Link saved: ' + input.value, 'success');
         // Here you would send to backend
     }
 }
@@ -1402,7 +1450,7 @@ document.getElementById('share-link-copy-btn')?.addEventListener('click', functi
         // Change text to "Copied"
         textEl.textContent = 'Copied';
     }).catch(() => {
-        alert('Unable to copy link');
+        showNotification('Unable to copy link', 'error');
     });
 });
 
@@ -1431,13 +1479,13 @@ async function saveOrgProfile() {
         
         const result = await response.json();
         if (result.success) {
-            alert('Organization profile saved successfully!');
+            showNotification('Organization profile saved successfully!', 'success');
         } else {
-            alert('Error saving: ' + (result.error || 'Unknown error'));
+            showNotification('Error saving: ' + (result.error || 'Unknown error'), 'error');
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('Error saving: ' + error.message);
+        showNotification('Error saving: ' + error.message, 'error');
     }
 }
 
@@ -1487,13 +1535,13 @@ async function saveScope() {
         
         const result = await response.json();
         if (result.success) {
-            alert('Scope screening saved successfully!');
+            showNotification('Scope screening saved successfully!', 'success');
         } else {
-            alert('Error saving: ' + (result.error || 'Unknown error'));
+            showNotification('Error saving: ' + (result.error || 'Unknown error'), 'error');
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('Error saving: ' + error.message);
+        showNotification('Error saving: ' + error.message, 'error');
     }
 }
 
@@ -1549,13 +1597,13 @@ async function saveGovernance() {
         
         const result = await response.json();
         if (result.success) {
-            alert('Governance setup saved successfully!');
+            showNotification('Governance setup saved successfully!', 'success');
         } else {
-            alert('Error saving: ' + (result.error || 'Unknown error'));
+            showNotification('Error saving: ' + (result.error || 'Unknown error'), 'error');
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('Error saving: ' + error.message);
+        showNotification('Error saving: ' + error.message, 'error');
     }
 }
 
@@ -1619,13 +1667,13 @@ async function saveAILiteracy() {
         
         const result = await response.json();
         if (result.success) {
-            alert('AI Literacy information saved successfully!');
+            showNotification('AI Literacy information saved successfully!', 'success');
         } else {
-            alert('Error saving: ' + (result.error || 'Unknown error'));
+            showNotification('Error saving: ' + (result.error || 'Unknown error'), 'error');
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('Error saving: ' + error.message);
+        showNotification('Error saving: ' + error.message, 'error');
     }
 }
 
@@ -1791,13 +1839,13 @@ async function saveWholePage() {
         const data = await response.json();
         
         if (data.success) {
-            alert('All data saved successfully!');
+            showNotification('All data saved successfully!', 'success');
         } else {
-            alert('Error saving data: ' + (data.error || 'Unknown error'));
+            showNotification('Error saving data: ' + (data.error || 'Unknown error'), 'error');
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('Error saving data: ' + error.message);
+        showNotification('Error saving data: ' + error.message, 'error');
     }
 }
 
@@ -2265,7 +2313,7 @@ async function loadOrganizationData() {
     } catch (error) {
         console.error('Error loading organization data:', error);
         console.error('Error details:', error.message, error.stack);
-        alert('Error loading organization data: ' + error.message);
+        showNotification('Error loading organization data: ' + error.message, 'error');
     }
 }
 </script>

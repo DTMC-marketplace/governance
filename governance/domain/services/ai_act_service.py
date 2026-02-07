@@ -47,11 +47,3 @@ class AIActService:
         """
         raise NotImplementedError("Subclasses must implement query method")
     
-    def get_store_name(self) -> Optional[str]:
-        """
-        Get the name of the AI Act knowledge base store.
-        
-        Returns:
-            Store name if available, None otherwise
-        """
-        raise NotImplementedError("Subclasses must implement get_store_name method")

@@ -141,7 +141,7 @@
             
             // Create notification element
             const toast = document.createElement('div');
-            toast.className = `fixed bottom-6 right-6 z-[9999] px-6 py-3 rounded-lg shadow-2xl transform transition-all duration-300 translate-y-20 opacity-0 flex items-center gap-3 min-w-[320px]`;
+            toast.className = `fixed top-6 right-6 z-[9999] px-6 py-3 rounded-lg shadow-2xl transform transition-all duration-300 -translate-y-20 opacity-0 flex items-center gap-3 min-w-[320px]`;
             
             // Type-based styles
             const colors = {
@@ -170,14 +170,14 @@
             
             // Animate in
             requestAnimationFrame(() => {
-                toast.classList.remove('translate-y-20', 'opacity-0');
+                toast.classList.remove('-translate-y-20', 'opacity-0');
                 toast.classList.add('translate-y-0', 'opacity-100');
             });
             
             // Animate out and remove
             setTimeout(() => {
                 toast.classList.remove('translate-y-0', 'opacity-100');
-                toast.classList.add('translate-y-20', 'opacity-0');
+                toast.classList.add('-translate-y-20', 'opacity-0');
                 setTimeout(() => toast.remove(), 300);
             }, 4000);
         }
