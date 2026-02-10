@@ -28,6 +28,11 @@ urlpatterns = [
     path("api/ai-inventory/<int:agent_id>/block2-state/", views.api_update_block2_state, name="api_update_block2_state"),
     path("api/ai-inventory/<int:agent_id>/block3-state/", views.api_update_block3_state, name="api_update_block3_state"),
     path("api/ai-inventory/<int:agent_id>/block4-state/", views.api_update_block4_state, name="api_update_block4_state"),
+    path("api/ai-inventory/<int:agent_id>/risk-evaluation/profile/", views.api_risk_evaluation_profile, name="api_risk_evaluation_profile"),
+    path("api/ai-inventory/<int:agent_id>/risk-evaluation/ai-scan/", views.api_risk_evaluation_ai_scan, name="api_risk_evaluation_ai_scan"),
+    path("api/ai-inventory/<int:agent_id>/risk-evaluation/assess/", views.api_assess_risk_evaluation, name="api_assess_risk_evaluation"),  # Deprecated - use ai-scan instead
+    path("api/ai-inventory/<int:agent_id>/risk-evaluation/upload/", views.api_upload_risk_evaluation_files, name="api_upload_risk_evaluation_files"),
+    path("api/ai-inventory/<int:agent_id>/risk-evaluation/delete/", views.api_delete_risk_evaluation_files, name="api_delete_risk_evaluation_files"),
     
     # Compliance Projects
     path("compliance/", views.compliance_hub, name="compliance"),

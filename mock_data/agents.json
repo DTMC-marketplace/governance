@@ -1,227 +1,253 @@
 [
-    {
-        "id": 1,
-        "name": "Customer Service Chatbot",
-        "business_unit": "Product Team",
-        "compliance_status": "compliant",
-        "ai_act_role": "Deployer",
-        "roles": [
-            "Deployer"
-        ],
-        "vendor": "External",
-        "provider_type": "External",
-        "risk_classification": "Limited transparency",
-        "investment_type": "internal",
-        "status": "In production",
-        "deployment_context": "General",
-        "eu_eea_relevance": "Yes",
-        "profile": {
-            "system_identity": {
-                "ai_system_name": "Customer Service Chatbot",
-                "description": "AI-powered chatbot for automated customer service and support",
-                "purpose": "Provide 24/7 customer support and reduce response times",
-                "system_owner": "Product Team",
-                "technical_contact": "tech-support@company.com",
-                "deployment_date": "2024-06-01"
-            },
-            "file_uploads": [],
-            "capabilities": {
-                "capabilities": []
-            },
-            "deployment_context": {
-                "deployment_context": "Internal"
-            },
-            "technical_profile": {
-                "ai_kind": "Machine Learning"
-            }
-        },
-        "assessment": {
-            "block1": {
-                "status": "PASS"
-            },
-            "block2": {
-                "status": "Limited transparency"
-            }
-        }
+  {
+    "id": 1,
+    "name": "Customer Service Chatbot",
+    "business_unit": "Product Team",
+    "compliance_status": "compliant",
+    "ai_act_role": "Deployer",
+    "roles": [
+      "Deployer"
+    ],
+    "vendor": "External",
+    "provider_type": "External",
+    "risk_classification": "Limited transparency",
+    "investment_type": "internal",
+    "status": "In production",
+    "deployment_context": "General",
+    "eu_eea_relevance": "Yes",
+    "profile": {
+      "system_identity": {
+        "ai_system_name": "Customer Service Chatbot",
+        "description": "AI-powered chatbot for automated customer service and support",
+        "purpose": "Provide 24/7 customer support and reduce response times",
+        "system_owner": "Product Team",
+        "technical_contact": "tech-support@company.com",
+        "deployment_date": "2024-06-01"
+      },
+      "file_uploads": [],
+      "capabilities": {
+        "capabilities": []
+      },
+      "deployment_context": {
+        "deployment_context": "Internal"
+      },
+      "technical_profile": {
+        "ai_kind": "Machine Learning"
+      }
     },
-    {
-        "id": 2,
-        "name": "Resume Screening AI",
-        "business_unit": "HR Department",
-        "compliance_status": "in_progress",
-        "ai_act_role": "Provider",
-        "roles": [
-            "Provider"
-        ],
-        "vendor": "In-house",
-        "provider_type": "In-house",
-        "risk_classification": "High-risk",
-        "investment_type": "internal",
-        "status": "Testing",
-        "deployment_context": "General",
-        "eu_eea_relevance": "Yes",
-        "profile": {
-            "system_identity": {
-                "ai_system_name": "Resume Screening AI",
-                "description": "AI system for automated resume screening and candidate ranking",
-                "purpose": "Streamline hiring process and identify qualified candidates",
-                "system_owner": "HR Department",
-                "technical_contact": "hr-tech@company.com",
-                "deployment_date": "2025-03-01"
-            },
-            "file_uploads": [],
-            "capabilities": {
-                "capabilities": []
-            },
-            "deployment_context": {
-                "deployment_context": "Internal"
-            },
-            "technical_profile": {
-                "ai_kind": "Machine Learning"
-            }
-        },
-        "assessment": {
-            "block1": {
-                "status": "PASS"
-            },
-            "block2": {
-                "status": "High-risk"
-            }
-        }
-    },
-    {
-        "id": 3,
-        "name": "Predictive Maintenance System",
-        "business_unit": "Operations Team",
-        "compliance_status": "compliant",
-        "ai_act_role": "Deployer",
-        "roles": [
-            "Deployer"
-        ],
-        "vendor": "Mixed",
-        "provider_type": "Mixed",
-        "risk_classification": "Minimal",
-        "investment_type": "internal",
-        "status": "In production",
-        "deployment_context": "General",
-        "eu_eea_relevance": "Yes",
-        "profile": {
-            "system_identity": {
-                "ai_system_name": "Predictive Maintenance System",
-                "description": "AI system for predicting equipment maintenance needs",
-                "purpose": "Reduce downtime and optimize maintenance schedules",
-                "system_owner": "Operations Team",
-                "technical_contact": "ops-tech@company.com",
-                "deployment_date": "2024-01-15"
-            },
-            "file_uploads": [],
-            "capabilities": {
-                "capabilities": []
-            },
-            "deployment_context": {
-                "deployment_context": "Internal"
-            },
-            "technical_profile": {
-                "ai_kind": "Machine Learning"
-            }
-        },
-        "assessment": {
-            "block1": {
-                "status": "PASS"
-            },
-            "block2": {
-                "status": "Minimal"
-            }
-        }
-    },
-    {
-        "id": 4,
-        "name": "Credit Scoring Model",
-        "business_unit": "Risk Analytics",
-        "compliance_status": "not_started",
-        "ai_act_role": "Provider",
-        "roles": [
-            "Provider"
-        ],
-        "vendor": "In-house",
-        "provider_type": "In-house",
-        "risk_classification": "High-risk",
-        "investment_type": "internal",
-        "status": "Planned",
-        "deployment_context": "General",
-        "eu_eea_relevance": "Yes",
-        "profile": {
-            "system_identity": {
-                "ai_system_name": "Credit Scoring Model",
-                "description": "AI system for credit risk assessment and scoring",
-                "purpose": "Evaluate creditworthiness of loan applicants",
-                "system_owner": "Risk Analytics",
-                "technical_contact": "risk-tech@company.com",
-                "deployment_date": "2025-06-01"
-            },
-            "file_uploads": [],
-            "capabilities": {
-                "capabilities": []
-            },
-            "deployment_context": {
-                "deployment_context": "Internal"
-            },
-            "technical_profile": {
-                "ai_kind": "Machine Learning"
-            }
-        },
-        "assessment": {
-            "block1": {
-                "status": "PASS"
-            },
-            "block2": {
-                "status": "High-risk"
-            }
-        }
-    },
-    {
-        "id": 5,
-        "name": "Fraud Detection System",
-        "business_unit": "Security Team",
-        "compliance_status": "compliant",
-        "ai_act_role": "Provider",
-        "roles": [
-            "Provider"
-        ],
-        "vendor": "In-house",
-        "provider_type": "In-house",
-        "risk_classification": "Minimal",
-        "investment_type": "internal",
-        "status": "In production",
-        "deployment_context": "General",
-        "eu_eea_relevance": "Yes",
-        "profile": {
-            "system_identity": {
-                "ai_system_name": "Fraud Detection System",
-                "description": "Real-time fraud detection and prevention system",
-                "purpose": "Detect and prevent fraudulent transactions",
-                "system_owner": "Security Team",
-                "technical_contact": "security@company.com",
-                "deployment_date": "2023-09-15"
-            },
-            "file_uploads": [],
-            "capabilities": {
-                "capabilities": []
-            },
-            "deployment_context": {
-                "deployment_context": "Internal"
-            },
-            "technical_profile": {
-                "ai_kind": "Machine Learning"
-            }
-        },
-        "assessment": {
-            "block1": {
-                "status": "PASS"
-            },
-            "block2": {
-                "status": "Minimal"
-            }
-        }
+    "assessment": {
+      "block1": {
+        "status": "PASS"
+      },
+      "block2": {
+        "status": "Limited transparency"
+      }
     }
+  },
+  {
+    "id": 2,
+    "name": "Resume Screening AI",
+    "business_unit": "HR Department",
+    "compliance_status": "in_progress",
+    "ai_act_role": "Provider",
+    "roles": [
+      "Provider"
+    ],
+    "vendor": "In-house",
+    "provider_type": "In-house",
+    "risk_classification": "High-risk",
+    "investment_type": "internal",
+    "status": "Testing",
+    "deployment_context": "General",
+    "eu_eea_relevance": "Yes",
+    "profile": {
+      "system_identity": {
+        "ai_system_name": "Resume Screening AI",
+        "description": "AI system for automated resume screening and candidate ranking",
+        "purpose": "Streamline hiring process and identify qualified candidates",
+        "system_owner": "HR Department",
+        "technical_contact": "hr-tech@company.com",
+        "deployment_date": "2025-03-01"
+      },
+      "file_uploads": [],
+      "capabilities": {
+        "capabilities": []
+      },
+      "deployment_context": {
+        "deployment_context": "Internal"
+      },
+      "technical_profile": {
+        "ai_kind": "Machine Learning"
+      }
+    },
+    "assessment": {
+      "block1": {
+        "status": "PASS"
+      },
+      "block2": {
+        "status": "High-risk"
+      }
+    }
+  },
+  {
+    "id": 3,
+    "name": "Predictive Maintenance System",
+    "business_unit": "Operations Team",
+    "compliance_status": "compliant",
+    "ai_act_role": "Deployer",
+    "roles": [
+      "Deployer"
+    ],
+    "vendor": "Mixed",
+    "provider_type": "Mixed",
+    "risk_classification": "Minimal",
+    "investment_type": "internal",
+    "status": "In production",
+    "deployment_context": "General",
+    "eu_eea_relevance": "Yes",
+    "profile": {
+      "system_identity": {
+        "ai_system_name": "Predictive Maintenance System",
+        "description": "AI system for predicting equipment maintenance needs",
+        "purpose": "Reduce downtime and optimize maintenance schedules",
+        "system_owner": "Operations Team",
+        "technical_contact": "ops-tech@company.com",
+        "deployment_date": "2024-01-15"
+      },
+      "file_uploads": [],
+      "capabilities": {
+        "capabilities": []
+      },
+      "deployment_context": {
+        "deployment_context": "Internal"
+      },
+      "technical_profile": {
+        "ai_kind": "Machine Learning"
+      }
+    },
+    "assessment": {
+      "block1": {
+        "status": "PASS"
+      },
+      "block2": {
+        "status": "Minimal"
+      }
+    }
+  },
+  {
+    "id": 4,
+    "name": "Credit Scoring Model",
+    "business_unit": "Risk Analytics",
+    "compliance_status": "not_started",
+    "ai_act_role": "Provider",
+    "roles": [
+      "Provider"
+    ],
+    "vendor": "In-house",
+    "provider_type": "In-house",
+    "risk_classification": "High-risk",
+    "investment_type": "internal",
+    "status": "Planned",
+    "deployment_context": "General",
+    "eu_eea_relevance": "Yes",
+    "profile": {
+      "system_identity": {
+        "ai_system_name": "Credit Scoring Model",
+        "description": "AI system for credit risk assessment and scoring",
+        "purpose": "Evaluate creditworthiness of loan applicants",
+        "system_owner": "Risk Analytics",
+        "technical_contact": "risk-tech@company.com",
+        "deployment_date": "2025-06-01"
+      },
+      "file_uploads": [],
+      "capabilities": {
+        "capabilities": []
+      },
+      "deployment_context": {
+        "deployment_context": "Internal"
+      },
+      "technical_profile": {
+        "ai_kind": "Machine Learning"
+      }
+    },
+    "assessment": {
+      "block1": {
+        "status": "PASS"
+      },
+      "block2": {
+        "status": "High-risk"
+      }
+    }
+  },
+  {
+    "id": 5,
+    "name": "Fraud Detection System",
+    "business_unit": "Security Team",
+    "compliance_status": "compliant",
+    "ai_act_role": "Provider",
+    "roles": [
+      "Provider"
+    ],
+    "vendor": "In-house",
+    "provider_type": "In-house",
+    "risk_classification": "Minimal",
+    "investment_type": "internal",
+    "status": "In production",
+    "deployment_context": "General",
+    "eu_eea_relevance": "Yes",
+    "profile": {
+      "system_identity": {
+        "ai_system_name": "Fraud Detection System",
+        "description": "Real-time fraud detection and prevention system",
+        "purpose": "Detect and prevent fraudulent transactions",
+        "system_owner": "Security Team",
+        "technical_contact": "security@company.com",
+        "deployment_date": "2023-09-15"
+      },
+      "file_uploads": [],
+      "capabilities": {
+        "capabilities": []
+      },
+      "deployment_context": {
+        "deployment_context": "Internal"
+      },
+      "technical_profile": {
+        "ai_kind": "Machine Learning"
+      }
+    },
+    "assessment": {
+      "block1": {
+        "status": "PASS"
+      },
+      "block2": {
+        "status": "Minimal"
+      }
+    }
+  },
+  {
+    "id": 6,
+    "name": "Fraud Detection System",
+    "business_unit": "test",
+    "compliance_status": "in_progress",
+    "ai_act_role": "provider",
+    "roles": [
+      "Provider",
+      "Deployer",
+      "Distributor"
+    ],
+    "vendor": "External",
+    "provider_type": "External",
+    "risk_classification": "high_risks",
+    "investment_type": "internal",
+    "status": "Planned",
+    "deployment_context": "Educational institution",
+    "risk_evaluation": {
+      "code_files": [
+        "uploads/risk_evaluation/code/e049f46cc37d46108afd0ba2c6568e39_ai_act_cli.py"
+      ],
+      "dataset_files": [
+        "ai_act_articles/EU_AI_Act_Full_Text2.txt"
+      ]
+    }
+  }
 ]

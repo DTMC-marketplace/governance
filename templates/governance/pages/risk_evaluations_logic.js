@@ -459,33 +459,651 @@ let riskState = {
     discoveredSkills: []
 };
 
+// Risk Evaluation State (for assessment data and loading state)
+let riskEvaluationState = {
+    loading: false,
+    assessment: null,
+    codeFiles: [],
+    datasetFiles: []
+};
+
 // Initialize Risk Evaluations Tab
-function updateRiskEvaluations() {
+async function updateRiskEvaluations() {
+    try {
+        riskEvaluationState.loading = true;
+        
+        // Get agent ID from URL or page
+        const agentId = getAgentId();
+        if (agentId) {
+            // Load uploaded files from server
+            await loadUploadedFiles(agentId);
+            
+            // Load assessment data from API (Logic 1: No upload - uses profile data)
+            await loadRiskEvaluationAssessment(agentId);
+        }
+        
     updateRiskStatusBlocks();
     renderRiskEvaluationsTools();
+    
+    console.log('[Risk Evaluations] About to call initUploadHandlers()...');
+    initUploadHandlers(); // Initialize file upload handlers
+    console.log('[Risk Evaluations] initUploadHandlers() completed');
+    } catch (error) {
+        console.error('Error in updateRiskEvaluations:', error);
+    } finally {
+        riskEvaluationState.loading = false;
+    }
 }
 
+// Load uploaded files from server (from agent data)
+async function loadUploadedFiles(agentId) {
+    try {
+        // Get agent detail to load uploaded file paths
+        const response = await fetch(`/api/ai-inventory/${agentId}/detail/`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        });
+        
+        if (!response.ok) {
+            console.warn('Could not load agent detail for uploaded files');
+            return;
+        }
+        
+        const data = await response.json();
+        if (data.success && data.data) {
+            const agent = data.data;
+            const riskEvaluation = agent.risk_evaluation || {};
+            
+            // Update state with file paths from server
+            riskEvaluationState.codeFiles = riskEvaluation.code_files || [];
+            riskEvaluationState.datasetFiles = riskEvaluation.dataset_files || [];
+            
+            // Update UI with file paths
+            if (riskEvaluationState.codeFiles.length > 0) {
+                displayCodeFiles(riskEvaluationState.codeFiles);
+            }
+            if (riskEvaluationState.datasetFiles.length > 0) {
+                displayDatasetFiles(riskEvaluationState.datasetFiles);
+            }
+            
+            console.log('[Upload] Loaded uploaded files:', {
+                codeFiles: riskEvaluationState.codeFiles,
+                datasetFiles: riskEvaluationState.datasetFiles
+            });
+        }
+    } catch (error) {
+        console.error('[Upload] Error loading uploaded files:', error);
+    }
+}
+
+// Initialize upload handlers for code and dataset files
+function initUploadHandlers() {
+    console.log('[Upload] ========================================');
+    console.log('[Upload] Initializing upload handlers...');
+    console.log('[Upload] ========================================');
+    
+    // Code file upload
+    const codeUploadBtn = document.getElementById('code-upload-btn');
+    const codeFileInput = document.getElementById('code-file-input');
+    
+    if (codeUploadBtn && codeFileInput) {
+        // Remove existing listeners to prevent duplicates
+        const newCodeBtn = codeUploadBtn.cloneNode(true);
+        codeUploadBtn.parentNode.replaceChild(newCodeBtn, codeUploadBtn);
+        
+        const newCodeInput = codeFileInput.cloneNode(true);
+        codeFileInput.parentNode.replaceChild(newCodeInput, codeFileInput);
+        
+        // Add click handler to button
+        newCodeBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('[Upload] Code upload button clicked');
+            newCodeInput.click();
+        });
+        
+        // Add change handler to file input
+        newCodeInput.addEventListener('change', function(e) {
+            const files = Array.from(e.target.files);
+            console.log('[Upload] Code files selected:', files.map(f => f.name));
+            if (files.length > 0) {
+                handleCodeFileUpload(files);
+            }
+        });
+        
+        console.log('[Upload] Code upload handler initialized');
+    } else {
+        console.warn('[Upload] Code upload elements not found');
+    }
+    
+    // Dataset file upload
+    const datasetUploadBtn = document.getElementById('dataset-upload-btn');
+    const datasetFileInput = document.getElementById('dataset-file-input');
+    
+    console.log('[Upload] Looking for dataset upload elements...');
+    console.log('[Upload] dataset-upload-btn found:', !!datasetUploadBtn);
+    console.log('[Upload] dataset-file-input found:', !!datasetFileInput);
+    
+    if (datasetUploadBtn && datasetFileInput) {
+        console.log('[Upload] Dataset upload elements found, setting up handlers...');
+        
+        // Remove existing listeners to prevent duplicates
+        const newDatasetBtn = datasetUploadBtn.cloneNode(true);
+        datasetUploadBtn.parentNode.replaceChild(newDatasetBtn, datasetUploadBtn);
+        
+        const newDatasetInput = datasetFileInput.cloneNode(true);
+        datasetFileInput.parentNode.replaceChild(newDatasetInput, datasetFileInput);
+        
+        // Add click handler to button
+        newDatasetBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('[Upload] ========================================');
+            console.log('[Upload] Dataset upload button CLICKED!');
+            console.log('[Upload] ========================================');
+            console.log('[Upload] Triggering file input click...');
+            newDatasetInput.click();
+        });
+        
+        // Add change handler to file input
+        newDatasetInput.addEventListener('change', function(e) {
+            console.log('[Upload] ========================================');
+            console.log('[Upload] File input CHANGE event triggered!');
+            console.log('[Upload] ========================================');
+            const files = Array.from(e.target.files);
+            console.log('[Upload] Dataset files selected:', files.map(f => f.name));
+            console.log('[Upload] Number of files:', files.length);
+            if (files.length > 0) {
+                console.log('[Upload] Calling handleDatasetFileUpload...');
+                handleDatasetFileUpload(files);
+            } else {
+                console.warn('[Upload] No files selected');
+            }
+        });
+        
+        // Also try direct click on button to test
+        console.log('[Upload] Testing: Can we click the button programmatically?');
+        console.log('[Upload] Button element:', newDatasetBtn);
+        console.log('[Upload] Input element:', newDatasetInput);
+        
+        console.log('[Upload] Dataset upload handler initialized successfully');
+    } else {
+        console.error('[Upload] Dataset upload elements not found!');
+        console.error('[Upload] dataset-upload-btn:', datasetUploadBtn);
+        console.error('[Upload] dataset-file-input:', datasetFileInput);
+    }
+}
+
+// Handle code file upload
+async function handleCodeFileUpload(files) {
+    console.log('[Upload] Handling code file upload:', files);
+    try {
+        const agentId = getAgentId();
+        if (!agentId) {
+            showNotification('Agent ID not found', 'error');
+            return;
+        }
+        
+        // Upload files to server
+        const formData = new FormData();
+        files.forEach((file, index) => {
+            formData.append(`code_files`, file);
+        });
+        
+        const response = await fetch(`/api/ai-inventory/${agentId}/risk-evaluation/upload/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: formData
+        });
+        
+        const data = await response.json();
+        console.log('[Upload] Upload response:', data);
+        
+        if (data.success) {
+            // Update state with file paths from server
+            riskEvaluationState.codeFiles = data.code_files || [];
+            
+            // Update UI with file paths from server
+            displayCodeFiles(riskEvaluationState.codeFiles);
+            showNotification(`Successfully uploaded ${files.length} code file(s)`, 'success');
+            
+            // Re-assess with uploaded files
+            await reassessWithUploadedFiles(agentId);
+        } else {
+            showNotification('Upload failed: ' + (data.error || 'Unknown error'), 'error');
+        }
+    } catch (error) {
+        console.error('[Upload] Error uploading code files:', error);
+        showNotification('Error uploading files: ' + error.message, 'error');
+    }
+}
+
+// Handle dataset file upload
+async function handleDatasetFileUpload(files) {
+    console.log('[Upload] ========================================');
+    console.log('[Upload] Handling dataset file upload:', files);
+    console.log('[Upload] Number of files:', files.length);
+    files.forEach((file, index) => {
+        console.log(`[Upload] File ${index + 1}: ${file.name} (${file.size} bytes, type: ${file.type})`);
+    });
+    
+    try {
+        const agentId = getAgentId();
+        console.log('[Upload] Agent ID:', agentId);
+        if (!agentId) {
+            console.error('[Upload] Agent ID not found!');
+            showNotification('Agent ID not found', 'error');
+            return;
+        }
+        
+        // Upload files to server
+        const formData = new FormData();
+        files.forEach((file, index) => {
+            formData.append(`dataset_files`, file);
+            console.log(`[Upload] Added file to FormData: ${file.name}`);
+        });
+        
+        console.log('[Upload] ========================================');
+        console.log('[Upload] ABOUT TO CALL API');
+        console.log('[Upload] ========================================');
+        console.log('[Upload] Agent ID:', agentId);
+        console.log('[Upload] FormData entries:');
+        for (let pair of formData.entries()) {
+            console.log(`  ${pair[0]}:`, pair[1]);
+        }
+        
+        const apiUrl = `/api/ai-inventory/${agentId}/risk-evaluation/upload/`;
+        console.log('[Upload] API URL:', apiUrl);
+        
+        const csrfToken = getCookie('csrftoken');
+        console.log('[Upload] CSRF Token found:', !!csrfToken);
+        console.log('[Upload] CSRF Token length:', csrfToken ? csrfToken.length : 0);
+        
+        console.log('[Upload] Making fetch request...');
+        console.log('[Upload] Method: POST');
+        console.log('[Upload] Headers:', {
+            'X-CSRFToken': csrfToken ? `${csrfToken.substring(0, 10)}...` : 'NOT FOUND'
+        });
+        console.log('[Upload] Body type: FormData');
+        
+        let response;
+        try {
+            response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken
+                },
+                body: formData
+            });
+            console.log('[Upload] ✓ Fetch completed');
+        } catch (fetchError) {
+            console.error('[Upload] ✗ Fetch ERROR:', fetchError);
+            console.error('[Upload] Error details:', {
+                message: fetchError.message,
+                stack: fetchError.stack
+            });
+            throw fetchError;
+        }
+        
+        console.log('[Upload] Response received');
+        console.log('[Upload] Response status:', response.status);
+        console.log('[Upload] Response ok:', response.ok);
+        console.log('[Upload] Response statusText:', response.statusText);
+        console.log('[Upload] Response headers:', Object.fromEntries(response.headers.entries()));
+        
+        let data;
+        try {
+            const responseText = await response.text();
+            console.log('[Upload] Response text length:', responseText.length);
+            console.log('[Upload] Response text preview:', responseText.substring(0, 200));
+            data = JSON.parse(responseText);
+            console.log('[Upload] ✓ Response parsed as JSON');
+        } catch (parseError) {
+            console.error('[Upload] ✗ Error parsing response:', parseError);
+            console.error('[Upload] Response might not be JSON');
+            throw parseError;
+        }
+        
+        console.log('[Upload] Upload response data:', data);
+        
+        if (data.success) {
+            // Update state with file paths from server
+            riskEvaluationState.datasetFiles = data.dataset_files || [];
+            
+            // Update UI with file paths from server
+            displayDatasetFiles(riskEvaluationState.datasetFiles);
+            showNotification(`Successfully uploaded ${files.length} dataset file(s)`, 'success');
+            
+            // Re-assess with uploaded files
+            await reassessWithUploadedFiles(agentId);
+        } else {
+            showNotification('Upload failed: ' + (data.error || 'Unknown error'), 'error');
+        }
+    } catch (error) {
+        console.error('[Upload] ========================================');
+        console.error('[Upload] ERROR in handleDatasetFileUpload');
+        console.error('[Upload] ========================================');
+        console.error('[Upload] Error type:', error.constructor.name);
+        console.error('[Upload] Error message:', error.message);
+        console.error('[Upload] Error stack:', error.stack);
+        console.error('[Upload] Full error object:', error);
+        showNotification('Error uploading files: ' + error.message, 'error');
+    }
+}
+
+// Display code files from file paths (from server)
+function displayCodeFiles(filePaths) {
+    const container = document.getElementById('code-files-list');
+    if (!container) return;
+    
+    if (!filePaths || filePaths.length === 0) {
+        container.innerHTML = '';
+        return;
+    }
+    
+    container.innerHTML = filePaths.map((filePath, index) => {
+        // Extract filename from path
+        const fileName = filePath.split('/').pop() || filePath;
+        return `
+        <div class="flex items-center justify-between p-2 bg-[#F9FAFB] rounded border border-[#E5E7EB] mb-2" data-file-path="${filePath}">
+            <span class="text-sm text-[#464E58]">${fileName}</span>
+            <button onclick="deleteCodeFile('${filePath}')" class="text-red-600 hover:text-red-800 text-xs font-medium px-2 py-1 rounded hover:bg-red-50 transition-colors">
+                Delete
+            </button>
+        </div>
+    `;
+    }).join('');
+}
+
+// Display dataset files from file paths (from server)
+function displayDatasetFiles(filePaths) {
+    const container = document.getElementById('dataset-files-list');
+    if (!container) return;
+    
+    if (!filePaths || filePaths.length === 0) {
+        container.innerHTML = '';
+        return;
+    }
+    
+    container.innerHTML = filePaths.map((filePath, index) => {
+        // Extract filename from path
+        const fileName = filePath.split('/').pop() || filePath;
+        return `
+        <div class="flex items-center justify-between p-2 bg-[#F9FAFB] rounded border border-[#E5E7EB] mb-2" data-file-path="${filePath}">
+            <span class="text-sm text-[#464E58]">${fileName}</span>
+            <button onclick="deleteDatasetFile('${filePath}')" class="text-red-600 hover:text-red-800 text-xs font-medium px-2 py-1 rounded hover:bg-red-50 transition-colors">
+                Delete
+            </button>
+        </div>
+    `;
+    }).join('');
+}
+
+// Update code files list in UI (for FileList object - deprecated, use displayCodeFiles instead)
+function updateCodeFilesList(files) {
+    const container = document.getElementById('code-files-list');
+    if (!container) return;
+    
+    if (files.length === 0) {
+        container.innerHTML = '';
+        return;
+    }
+    
+    container.innerHTML = files.map((file, index) => `
+        <div class="flex items-center justify-between p-2 bg-[#F9FAFB] rounded border border-[#E5E7EB] mb-2">
+            <span class="text-sm text-[#464E58]">${file.name}</span>
+            <span class="text-xs text-[#6B7280]">${(file.size / 1024).toFixed(1)} KB</span>
+        </div>
+    `).join('');
+}
+
+// Update dataset files list in UI (for FileList object - deprecated, use displayDatasetFiles instead)
+function updateDatasetFilesList(files) {
+    const container = document.getElementById('dataset-files-list');
+    if (!container) return;
+    
+    if (files.length === 0) {
+        container.innerHTML = '';
+        return;
+    }
+    
+    container.innerHTML = files.map((file, index) => `
+        <div class="flex items-center justify-between p-2 bg-[#F9FAFB] rounded border border-[#E5E7EB] mb-2">
+            <span class="text-sm text-[#464E58]">${file.name}</span>
+            <span class="text-xs text-[#6B7280]">${(file.size / 1024).toFixed(1)} KB</span>
+        </div>
+    `).join('');
+}
+
+// Helper function to get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Helper function to show notifications
+function showNotification(message, type = 'info') {
+    // Simple notification - can be enhanced with a toast library
+    console.log(`[Notification ${type.toUpperCase()}]:`, message);
+    // You can add a toast notification UI here
+}
+
+// Get agent ID from URL or page element
+function getAgentId() {
+    // Try to get from URL path: /ai-inventory/<id>/
+    const pathParts = window.location.pathname.split('/').filter(p => p);
+    const inventoryIndex = pathParts.indexOf('ai-inventory');
+    if (inventoryIndex >= 0 && inventoryIndex + 1 < pathParts.length) {
+        const id = parseInt(pathParts[inventoryIndex + 1]);
+        if (!isNaN(id)) {
+            return id;
+        }
+    }
+    
+    // Try to get from data attribute
+    const mainContainer = document.querySelector('[data-agent-id]');
+    if (mainContainer) {
+        const id = parseInt(mainContainer.getAttribute('data-agent-id'));
+        if (!isNaN(id)) {
+            return id;
+        }
+    }
+    
+    return null;
+}
+
+// Re-assess with uploaded files
+async function reassessWithUploadedFiles(agentId) {
+    console.log('[Upload] Re-assessing with uploaded files...');
+    try {
+        // Update state with uploaded files
+        await loadRiskEvaluationAssessment(agentId);
+        
+        // Update UI
+        updateRiskStatusBlocks();
+        renderRiskEvaluationsTools();
+        
+        showNotification('Assessment updated with uploaded files', 'success');
+    } catch (error) {
+        console.error('[Upload] Error re-assessing:', error);
+        showNotification('Error updating assessment: ' + error.message, 'error');
+    }
+}
+
+// Delete code file
+async function deleteCodeFile(filePath) {
+    console.log('[Delete] Deleting code file:', filePath);
+    if (!confirm(`Are you sure you want to delete this code file?\n${filePath.split('/').pop()}`)) {
+        return;
+    }
+    
+    try {
+        const agentId = getAgentId();
+        if (!agentId) {
+            showNotification('Agent ID not found', 'error');
+            return;
+        }
+        
+        const response = await fetch(`/api/ai-inventory/${agentId}/risk-evaluation/delete/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                code_files: [filePath],
+                dataset_files: []
+            })
+        });
+        
+        const data = await response.json();
+        console.log('[Delete] Delete response:', data);
+        
+        if (data.success) {
+            // Remove from state
+            riskEvaluationState.codeFiles = riskEvaluationState.codeFiles.filter(f => f !== filePath);
+            
+            // Update UI
+            displayCodeFiles(riskEvaluationState.codeFiles);
+            showNotification('Code file deleted successfully', 'success');
+            
+            // Re-assess without deleted file
+            await reassessWithUploadedFiles(agentId);
+        } else {
+            showNotification('Delete failed: ' + (data.error || 'Unknown error'), 'error');
+        }
+    } catch (error) {
+        console.error('[Delete] Error deleting code file:', error);
+        showNotification('Error deleting file: ' + error.message, 'error');
+    }
+}
+
+// Delete dataset file
+async function deleteDatasetFile(filePath) {
+    console.log('[Delete] Deleting dataset file:', filePath);
+    if (!confirm(`Are you sure you want to delete this dataset file?\n${filePath.split('/').pop()}`)) {
+        return;
+    }
+    
+    try {
+        const agentId = getAgentId();
+        if (!agentId) {
+            showNotification('Agent ID not found', 'error');
+            return;
+        }
+        
+        const response = await fetch(`/api/ai-inventory/${agentId}/risk-evaluation/delete/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                code_files: [],
+                dataset_files: [filePath]
+            })
+        });
+        
+        const data = await response.json();
+        console.log('[Delete] Delete response:', data);
+        
+        if (data.success) {
+            // Remove from state
+            riskEvaluationState.datasetFiles = riskEvaluationState.datasetFiles.filter(f => f !== filePath);
+            
+            // Update UI
+            displayDatasetFiles(riskEvaluationState.datasetFiles);
+            showNotification('Dataset file deleted successfully', 'success');
+            
+            // Re-assess without deleted file
+            await reassessWithUploadedFiles(agentId);
+        } else {
+            showNotification('Delete failed: ' + (data.error || 'Unknown error'), 'error');
+        }
+    } catch (error) {
+        console.error('[Delete] Error deleting dataset file:', error);
+        showNotification('Error deleting file: ' + error.message, 'error');
+    }
+}
+
+// Load risk evaluation assessment from API
+async function loadRiskEvaluationAssessment(agentId) {
+    try {
+        // Load basic risk profile (no AI Agent execution)
+        const response = await fetch(`/api/ai-inventory/${agentId}/risk-evaluation/profile/`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        if (data.success && data.profile) {
+            // Map profile data to assessment format for UI compatibility
+            riskEvaluationState.assessment = {
+                prohibited_practices: data.profile.prohibited_practices || 'Not assessed',
+                high_risk_classification: data.profile.high_risk_classification || 'Not assessed',
+                gpai_applicability: data.profile.gpai_applicability || 'Not assessed',
+                gpai_risk_level: data.profile.gpai_risk_level || 'N/A',
+                risk_classification: {
+                    category: data.profile.risk_classification || 'not_assessed',
+                    confidence: 'N/A',
+                    reasoning: 'Basic profile calculation'
+                }
+            };
+            console.log('Risk evaluation profile loaded:', data.profile);
+        } else {
+            console.warn('No profile data in response:', data);
+            riskEvaluationState.assessment = null;
+        }
+    } catch (error) {
+        console.error('Error loading risk evaluation profile:', error);
+        riskEvaluationState.assessment = null;
+    }
+}
+
+// Update risk status blocks
 function updateRiskStatusBlocks() {
-    // Logic to sync status blocks - SAME AS BEFORE
+    const assessment = riskEvaluationState.assessment;
+    
+    // Block 1: Prohibited Practices
     const block1El = document.getElementById('risk-profile-block1');
     if (block1El) {
-        let status = 'Not assessed';
-        if (typeof block1State !== 'undefined' && block1State.status) status = block1State.status;
-        
-        if (status === 'Prohibited') {
-            block1El.className = "inline-flex px-3 py-1.5 rounded-full font-semibold text-sm bg-[#FFEBEE] text-[#C62828]";
-        } else if (status === 'Not assessed') {
-            block1El.className = "inline-flex px-3 py-1.5 rounded-full font-semibold text-sm bg-[#F0F1F2] text-[#B5BCC4]";
+        let status = assessment?.prohibited_practices || 'Not assessed';
+        if (status === 'Prohibited' || status === 'Not prohibited') {
+            block1El.className = status === 'Prohibited' 
+                ? "inline-flex px-3 py-1.5 rounded-full font-semibold text-sm bg-[#FFF3E0] text-[#E65100]"
+                : "inline-flex px-3 py-1.5 rounded-full font-semibold text-sm bg-[#E8F5E9] text-[#2E7D32]";
         } else {
-            block1El.className = "inline-flex px-3 py-1.5 rounded-full font-semibold text-sm bg-[#E8F5E9] text-[#2E7D32]";
+            block1El.className = "inline-flex px-3 py-1.5 rounded-full font-semibold text-sm bg-[#F0F1F2] text-[#B5BCC4]";
         }
         block1El.innerText = status;
     }
     
-    // Block 2
+    // Block 2: High-Risk Classification
     const block2El = document.getElementById('risk-profile-block2');
     if (block2El) {
-        let status = typeof getHighRiskStatus === 'function' ? getHighRiskStatus() : 'Not assessed';
+        let status = assessment?.high_risk_classification || 'Not assessed';
         if (status.includes('High-Risk') && !status.includes('Not')) {
              block2El.className = "inline-flex px-3 py-1.5 rounded-full font-semibold text-sm bg-[#FFF3E0] text-[#E65100]";
         } else if (status === 'Not High-Risk' || status === 'Not Applicable') {
@@ -496,20 +1114,24 @@ function updateRiskStatusBlocks() {
         block2El.innerText = status;
     }
 
-    // Block 4
+    // Block 4: GPAI Applicability
     const block4El = document.getElementById('risk-profile-block4');
     const gpaiLevelEl = document.getElementById('risk-profile-gpai-level');
     if (block4El) {
-        let status = typeof getGPAIStatus === 'function' ? getGPAIStatus() : 'Not assessed';
+        let status = assessment?.gpai_applicability || 'Not assessed';
         if (status === 'Applies' || status === 'Triggered') {
              block4El.className = "inline-flex px-3 py-1.5 rounded-full font-semibold text-sm bg-[#FFF3E0] text-[#E65100]";
-             if(gpaiLevelEl) { gpaiLevelEl.innerText = 'Systemic Risk'; gpaiLevelEl.className = "inline-flex px-3 py-1.5 rounded-full font-semibold text-sm bg-[#FFF3E0] text-[#E65100]"; }
-        } else if (status === 'Not Applicable') {
-             block4El.className = "inline-flex px-3 py-1.5 rounded-full font-semibold text-sm bg-[#E8F5E9] text-[#2E7D32]";
-             if(gpaiLevelEl) { gpaiLevelEl.innerText = 'N/A'; gpaiLevelEl.className = "inline-flex px-3 py-1.5 rounded-full font-semibold text-sm bg-[#F0F1F2] text-[#B5BCC4]"; }
+            if (gpaiLevelEl) {
+                const gpaiLevel = assessment?.gpai_risk_level || 'N/A';
+                gpaiLevelEl.innerText = gpaiLevel !== 'N/A' ? gpaiLevel : 'Systemic Risk';
+                gpaiLevelEl.className = "inline-flex px-3 py-1.5 rounded-full font-semibold text-sm bg-[#FFF3E0] text-[#E65100]";
+            }
         } else {
              block4El.className = "inline-flex px-3 py-1.5 rounded-full font-semibold text-sm bg-[#F0F1F2] text-[#B5BCC4]";
-             if(gpaiLevelEl) { gpaiLevelEl.innerText = 'N/A'; gpaiLevelEl.className = "inline-flex px-3 py-1.5 rounded-full font-semibold text-sm bg-[#F0F1F2] text-[#B5BCC4]"; }
+            if (gpaiLevelEl) {
+                gpaiLevelEl.innerText = 'N/A';
+                gpaiLevelEl.className = "inline-flex px-3 py-1.5 rounded-full font-semibold text-sm bg-[#F0F1F2] text-[#B5BCC4]";
+            }
         }
         block4El.innerText = status;
     }
@@ -518,10 +1140,9 @@ function updateRiskStatusBlocks() {
 function renderRiskEvaluationsTools() {
     const container = document.getElementById('risk-eval-tools-list');
     if (!container) return;
-    container.innerHTML = '';
     
     // Define the specific sections as per design requirements
-    const sections = [
+    let sections = [
         {
             title: 'Cybersecurity',
             description: 'Standard cybersecurity best practices recommended to protect system integrity and user data.',
@@ -871,8 +1492,56 @@ function setRiskMode(mode) {
 }
 
 // Helper function to start the actual scan
-function startActualAIScan() {
-    setRiskMode('ai-scan');
+async function startActualAIScan() {
+    const agentId = getAgentId();
+    if (!agentId) {
+        console.error('Cannot start AI scan: agent ID not found');
+        return;
+    }
+    
+    try {
+        console.log('[AI Scan] Starting AI Agent Scan for agent:', agentId);
+        
+        // Get uploaded files
+        const codeFiles = riskEvaluationState.codeFiles || [];
+        const datasetFiles = riskEvaluationState.datasetFiles || [];
+        
+        // Call AI Scan endpoint (runs Logic 1 or Logic 2)
+        const response = await fetch(`/api/ai-inventory/${agentId}/risk-evaluation/ai-scan/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                code_files: codeFiles,
+                dataset_files: datasetFiles
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        if (data.success && data.assessment) {
+            // Update assessment state with full results
+            riskEvaluationState.assessment = data.assessment;
+            console.log('[AI Scan] AI Agent Scan completed:', data.assessment);
+            
+            // Update UI with results
+            updateRiskStatusBlocks();
+            renderRiskEvaluationsTools();
+            
+            // Show notification
+            showNotification('AI Agent Scan completed successfully!', 'success');
+        } else {
+            throw new Error(data.error || 'AI Scan failed');
+        }
+    } catch (error) {
+        console.error('[AI Scan] Error during AI Agent Scan:', error);
+        showNotification('AI Agent Scan failed: ' + error.message, 'error');
+    }
 }
 
 // RENDER: AI Scan Ready Mode (Pre-scan)
@@ -909,7 +1578,7 @@ function renderAIScanReadyMode() {
                 ` : ''}
                 
                 <div class="mb-10 w-full">
-                    <button onclick="startActualAIScan()" class="bg-[#F13D30] hover:bg-[#D92D20] text-white px-8 py-3 rounded-lg font-bold shadow-lg shadow-red-200 transition-all flex items-center gap-3 mx-auto">
+                    <button onclick="setRiskMode('ai-scan')" class="bg-[#F13D30] hover:bg-[#D92D20] text-white px-8 py-3 rounded-lg font-bold shadow-lg shadow-red-200 transition-all flex items-center gap-3 mx-auto">
                         <img src="/static/governance/img/aiassistant.svg" alt="" class="w-5 h-5 brightness-0 invert">
                         Start AI Scan
                     </button>
@@ -935,27 +1604,144 @@ async function startAIScan() {
     }, 400);
 
     try {
-        const response = await fetch('/api/compliance/ai-scan/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken')
-            },
-            body: JSON.stringify({
-                project_id: riskState.projectId,
-                tool_id: riskState.selectedToolId
-            })
-        });
+        const path = window.location.pathname || '';
+        const isAiInventory = path.includes('/ai-inventory/');
+        const isCompliance = path.includes('/compliance/');
 
-        const data = await response.json();
-        
-        if (data.success) {
-            riskState.scanReport = data.report;
-            riskState.scanProgress = 100;
-            riskState.scanComplete = true;
+        if (isAiInventory) {
+            // -------- AI Inventory context: use risk-evaluation AI scan endpoint --------
+            const agentId = getAgentId();
+            if (!agentId) {
+                console.error('Cannot start AI scan: agent ID not found (ai-inventory)');
+                showNotification('Cannot start AI scan: agent ID not found', 'error');
+                if (riskState.scanInterval) clearInterval(riskState.scanInterval);
+                return;
+            }
+
+            // Use uploaded files if available (from Risk Evaluations tab state)
+            const codeFiles = (typeof riskEvaluationState !== 'undefined' && riskEvaluationState.codeFiles) ? riskEvaluationState.codeFiles : [];
+            const datasetFiles = (typeof riskEvaluationState !== 'undefined' && riskEvaluationState.datasetFiles) ? riskEvaluationState.datasetFiles : [];
+
+            // Get tool_id if available (from Risk Evaluations tab or compliance context)
+            const toolId = (typeof riskState !== 'undefined' && riskState.selectedToolId) 
+                ? riskState.selectedToolId 
+                : null;
+
+            const response = await fetch(`/api/ai-inventory/${agentId}/risk-evaluation/ai-scan/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    code_files: codeFiles,
+                    dataset_files: datasetFiles,
+                    tool_id: toolId  // Pass tool_id to focus assessment on specific skill
+                })
+            });
+
+            const data = await response.json();
+            
+            if (data.success && data.assessment) {
+                const a = data.assessment;
+                const md = a.markdown_output || '';
+
+                // Map assessment to scanReport structure expected by renderAIScanMode
+                const riskCategory = (a.risk_classification && typeof a.risk_classification === 'object')
+                    ? (a.risk_classification.category || 'Not assessed')
+                    : (a.risk_classification || 'Not assessed');
+
+                let score = 75;
+                if (typeof riskCategory === 'string') {
+                    const rc = riskCategory.toLowerCase();
+                    if (rc.includes('unacceptable')) score = 20;
+                    else if (rc.includes('high')) score = 40;
+                    else if (rc.includes('limited')) score = 70;
+                    else if (rc.includes('minimal')) score = 90;
+                }
+
+                riskState.scanReport = {
+                    score,
+                    compliance_status: 'Completed',
+                    risk_classification: a.risk_classification || riskCategory,
+                    summary: a.initial_assessment || 'Assessment completed. See full markdown report for details.',
+                    detailed_output: [],
+                    recommended_skills: a.recommended_skills || [],
+                    next_steps: [],
+                    report_md: md,
+                    report_file: a.markdown_output_file || ''
+                };
+
+                riskState.scanProgress = 100;
+                riskState.scanComplete = true;
+            } else {
+                const err = data.error || 'AI Scan failed';
+                showNotification('AI Scan failed: ' + err, 'error');
+                setRiskMode('choice');
+            }
+        } else if (isCompliance) {
+            // -------- Compliance context: use /api/compliance/ai-scan/ --------
+            const projectId = (typeof riskState !== 'undefined' && riskState.projectId)
+                ? riskState.projectId
+                : (path.split('/').filter(p => p)[1] || null);
+
+            if (!projectId) {
+                console.error('Cannot start AI scan: project ID not found (compliance)');
+                showNotification('Cannot start AI scan: project ID not found', 'error');
+                if (riskState.scanInterval) clearInterval(riskState.scanInterval);
+                return;
+            }
+
+            const payload = {
+                project_id: projectId,
+                tool_id: (typeof riskState !== 'undefined' && riskState.selectedToolId) ? riskState.selectedToolId : 'ai-governance'
+            };
+
+            if (typeof riskState !== 'undefined' && riskState.agentId) {
+                payload.agent_id = riskState.agentId;
+            }
+
+            const response = await fetch('/api/compliance/ai-scan/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+            if (data.success && data.report) {
+                const r = data.report;
+                const md = r.report_md || '';
+
+                const riskClassification = r.risk_classification || null;
+                let category = riskClassification;
+                if (riskClassification && typeof riskClassification === 'object') {
+                    category = riskClassification.category || JSON.stringify(riskClassification);
+                }
+
+                riskState.scanReport = {
+                    score: r.score || 0,
+                    compliance_status: r.compliance_status || 'Completed',
+                    risk_classification: riskClassification || category,
+                    summary: r.summary || 'Scan completed. See full markdown report for details.',
+                    detailed_output: r.detailed_output || [],
+                    recommended_skills: r.recommended_skills || [],
+                    next_steps: r.next_steps || [],
+                    report_md: md,
+                    report_file: r.report_file || ''
+                };
+
+                riskState.scanProgress = 100;
+                riskState.scanComplete = true;
+            } else {
+                const err = (data && data.error) ? data.error : 'AI Scan failed';
+                showNotification('AI Scan failed: ' + err, 'error');
+                setRiskMode('choice');
+            }
         } else {
-            showNotification('Scan failed: ' + data.error, 'error');
-            setRiskMode('choice');
+            console.warn('startAIScan called outside ai-inventory or compliance context');
         }
     } catch (error) {
         console.error('Scan Error:', error);
@@ -1446,4 +2232,3 @@ function convertMarkdownToHtml(md) {
 
     return html;
 }
-

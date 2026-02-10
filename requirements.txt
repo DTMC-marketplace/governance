@@ -5,6 +5,7 @@ Django>=4.2,<5.0
 google-genai>=0.2.0
 python-dotenv>=1.0.0
 PyYAML>=6.0
+rich>=13.0.0  # For ai_act_cli.py console output formatting
 
 # Production (Azure Web App, etc.)
 gunicorn>=21.0

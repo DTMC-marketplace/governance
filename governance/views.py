@@ -2122,7 +2122,8 @@ def api_ai_system_detail_data(request, agent_id):
                 'profile': agent.get('profile', {}),
                 'assessment': agent.get('assessment', {}),
                 'result': agent.get('result', {}),
-                'documents': agent.get('documents', [])
+                'documents': agent.get('documents', []),
+                'risk_evaluation': agent.get('risk_evaluation', {})  # Include risk_evaluation with code_files and dataset_files
             }
             
             # If single document exists, convert to array
@@ -4018,33 +4019,201 @@ def api_compliance_skills(request):
 def api_ai_scan(request):
     """
     Perform an AI Agent Scan for a compliance project.
-    Expects JSON: { "project_id": "...", "tool_id": "..." }
+    Supports Logic 1 (no upload) and Logic 2 (with code/dataset upload).
+    
+    Expected JSON:
+    {
+        "project_id": "...",
+        "tool_id": "...",
+        "code_files": ["path/to/file1.py", ...],  # Optional - Logic 2
+        "dataset_files": ["path/to/file1.csv", ...]  # Optional - Logic 2
+    }
     """
+    import logging
+    from pathlib import Path
+    import json
+    
+    logger = logging.getLogger(__name__)
+    
     try:
         body = json.loads(request.body)
         project_id = body.get('project_id')
         tool_id = body.get('tool_id', 'ai-governance')
+        # Optional: specific AI System / agent to use for this scan
+        requested_agent_id = body.get('agent_id')
+        code_files = body.get('code_files', [])
+        dataset_files = body.get('dataset_files', [])
         
         if not project_id:
             return JsonResponse({'success': False, 'error': 'project_id is required'}, status=400)
             
         # Get project detail
-        from .mock_data import get_compliance_detail
+        from .mock_data import get_compliance_detail, get_mock_agents
         project = get_compliance_detail(project_id)
         if not project:
             return JsonResponse({'success': False, 'error': f'Project {project_id} not found'}, status=404)
+        
+        # Check if files are uploaded (Logic 2)
+        if code_files or dataset_files:
+            logger.info(f"[COMPLIANCE AI SCAN] Logic 2: Processing uploaded files for project {project_id}")
+            logger.info(f"  Code files: {len(code_files)}")
+            logger.info(f"  Dataset files: {len(dataset_files)}")
             
-        # Initialize scanner service
-        from .infrastructure.services.gemini_scanner_service import GeminiScannerService
-        scanner = GeminiScannerService()
-        
-        # Run scan using the discovered skills and checklist
-        report = scanner.run_scan(project, tool_id)
-        
-        return JsonResponse({
-            'success': True,
-            'report': report
-        })
+            # Determine agent_id: prefer explicit agent_id from request, fallback to first AI system in project
+            agent_id = requested_agent_id
+            if not agent_id:
+                ai_systems = project.get('ai_systems', [])
+                if not ai_systems:
+                    return JsonResponse({'success': False, 'error': 'Project has no AI systems'}, status=400)
+                
+                first_system = ai_systems[0] if isinstance(ai_systems[0], dict) else {'id': ai_systems[0]}
+                agent_id = first_system.get('id') if isinstance(first_system, dict) else first_system
+            
+            # Create a temporary request-like object to call api_assess_risk_evaluation
+            # We'll manually call the logic instead
+            from django.http import HttpRequest
+            from io import BytesIO
+            
+            temp_request = HttpRequest()
+            temp_request.method = 'POST'
+            # Set body using _body (private attribute) since body is read-only
+            body_data = json.dumps({
+                'code_files': code_files,
+                'dataset_files': dataset_files,
+                'tool_id': tool_id  # Pass tool_id to focus assessment on specific skill
+            }).encode('utf-8')
+            temp_request._body = body_data
+            temp_request._stream = BytesIO(body_data)
+            temp_request.META = request.META.copy()
+            
+            # Call the risk evaluation AI scan logic (Logic 2)
+            result = api_risk_evaluation_ai_scan(temp_request, agent_id)
+            
+            # Convert response to compliance scan report format
+            if hasattr(result, 'content'):
+                result_data = json.loads(result.content)
+                if result_data.get('success') and result_data.get('assessment'):
+                    assessment = result_data['assessment']
+                    
+                    # Map to compliance report format
+                    report = {
+                        'score': 75,  # Default score
+                        'compliance_status': 'Completed',
+                        'risk_classification': assessment.get('risk_classification', {}),
+                        'summary': assessment.get('initial_assessment', 'Assessment completed from uploaded code execution.'),
+                        'detailed_output': [],
+                        'recommended_skills': assessment.get('recommended_skills', []),
+                        'next_steps': [],
+                        'report_md': assessment.get('markdown_output', ''),
+                        'report_file': assessment.get('markdown_output_file', '')
+                    }
+                    
+                    return JsonResponse({
+                        'success': True,
+                        'report': report
+                    })
+            
+            return result  # Return original response if mapping fails
+            
+        else:
+            # Logic 1: No upload - Use Governance AI Agent full flow
+            logger.info(f"[COMPLIANCE AI SCAN] Logic 1: Running Governance AI Agent for project {project_id}")
+            
+            # Determine agent_id: prefer explicit agent_id from request, fallback to first AI system in project
+            agent_id = requested_agent_id
+            if not agent_id:
+                ai_systems = project.get('ai_systems', [])
+                if not ai_systems:
+                    return JsonResponse({'success': False, 'error': 'Project has no AI systems'}, status=400)
+                
+                first_system = ai_systems[0] if isinstance(ai_systems[0], dict) else {'id': ai_systems[0]}
+                agent_id = first_system.get('id') if isinstance(first_system, dict) else first_system
+            
+            # Get agent data to build system description
+            agents_data = get_mock_agents()
+            agent = next((a for a in agents_data if str(a.get('id')) == str(agent_id)), None)
+            
+            if not agent:
+                # Fallback: Use project name and description
+                system_description = f"Compliance project: {project.get('name', 'Unknown Project')}. {project.get('description', '')}"
+            else:
+                # Build system_description from agent profile (same as risk evaluation)
+                profile = agent.get('profile', {})
+                agent_name = agent.get('name', '') or agent.get('system_name', '')
+                
+                system_description_parts = []
+                if agent_name:
+                    system_description_parts.append(f"AI System Name: {agent_name}")
+                if profile.get('purpose'):
+                    system_description_parts.append(f"Purpose: {profile.get('purpose')}")
+                if profile.get('deployment_context'):
+                    system_description_parts.append(f"Deployment context: {profile.get('deployment_context')}")
+                if agent.get('risk_classification'):
+                    system_description_parts.append(f"Risk Classification: {agent.get('risk_classification')}")
+                
+                system_description = ". ".join(system_description_parts) if system_description_parts else f"AI System: {agent_name}"
+            
+            # Create temporary request to call api_assess_risk_evaluation (Logic 1)
+            from django.http import HttpRequest
+            from io import BytesIO
+            
+            temp_request = HttpRequest()
+            temp_request.method = 'POST'
+            # Set body using _body (private attribute) since body is read-only
+            body_data = json.dumps({
+                'tool_id': tool_id  # Pass tool_id to focus assessment on specific skill
+            }).encode('utf-8')  # No files = Logic 1
+            temp_request._body = body_data
+            temp_request._stream = BytesIO(body_data)
+            temp_request.META = request.META.copy()
+            
+            # Call the risk evaluation AI scan logic (Logic 1)
+            result = api_risk_evaluation_ai_scan(temp_request, agent_id)
+            
+            # Convert response to compliance scan report format
+            if hasattr(result, 'content'):
+                result_data = json.loads(result.content)
+                if result_data.get('success') and result_data.get('assessment'):
+                    assessment = result_data['assessment']
+                    
+                    # Calculate score from risk classification
+                    risk_category = assessment.get('risk_classification', {})
+                    if isinstance(risk_category, dict):
+                        category = risk_category.get('category', 'Not assessed')
+                    else:
+                        category = str(risk_category)
+                    
+                    score = 75  # Default
+                    if isinstance(category, str):
+                        cat_lower = category.lower()
+                        if 'unacceptable' in cat_lower or 'prohibited' in cat_lower:
+                            score = 20
+                        elif 'high' in cat_lower:
+                            score = 40
+                        elif 'limited' in cat_lower:
+                            score = 70
+                        elif 'minimal' in cat_lower:
+                            score = 90
+                    
+                    # Map to compliance report format
+                    report = {
+                        'score': score,
+                        'compliance_status': 'Completed',
+                        'risk_classification': assessment.get('risk_classification', {}),
+                        'summary': assessment.get('initial_assessment', 'Assessment completed using Governance AI Agent.'),
+                        'detailed_output': [],
+                        'recommended_skills': assessment.get('recommended_skills', []),
+                        'next_steps': [],
+                        'report_md': assessment.get('markdown_output', ''),
+                        'report_file': assessment.get('markdown_output_file', '')
+                    }
+                    
+                    return JsonResponse({
+                        'success': True,
+                        'report': report
+                    })
+            
+            return result  # Return original response if mapping fails
         
     except json.JSONDecodeError:
         return JsonResponse({'success': False, 'error': 'Invalid JSON'}, status=400)
@@ -4107,6 +4276,17 @@ def compliance_detail(request, project_id):
     if not project:
         from django.http import Http404
         raise Http404("Compliance project not found")
+    
+    # Ensure project has an explicit agent_id for the linked AI System
+    try:
+        if 'agent_id' not in project:
+            ai_systems = project.get('ai_systems', [])
+            if ai_systems:
+                first_system = ai_systems[0] if isinstance(ai_systems[0], dict) else {'id': ai_systems[0]}
+                project['agent_id'] = first_system.get('id') if isinstance(first_system, dict) else first_system
+    except Exception:
+        # Fail silently; template will just not have data-agent-id
+        pass
     
     breadcrumbs = [
         {"name": "Compliance", "url": "/compliance/"},
@@ -4810,4 +4990,1758 @@ def governance_autofill_api(request):
         import logging
         logger = logging.getLogger(__name__)
         logger.error(f"Error in governance_autofill_api: {str(e)}", exc_info=True)
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@require_http_methods(["GET"])
+@csrf_exempt
+def api_risk_evaluation_profile(request, agent_id):
+    """
+    Get basic risk profile for Risk Evaluations tab (no AI Agent execution).
+    This endpoint only calculates and returns basic risk profile information.
+    """
+    import logging
+    from pathlib import Path
+    import json
+    
+    logger = logging.getLogger(__name__)
+    
+    try:
+        # Get agent data from mock_data
+        agents_data = get_mock_agents()
+        agent = next((a for a in agents_data if str(a.get('id')) == str(agent_id)), None)
+        
+        if not agent:
+            return JsonResponse({
+                'success': False,
+                'error': 'AI System not found'
+            }, status=404)
+        
+        # Get basic profile info
+        profile = agent.get('profile', {})
+        agent_name = agent.get('name', '') or agent.get('system_name', '')
+        risk_classification = agent.get('risk_classification', 'not_assessed')
+        
+        # Calculate basic risk profile fields (no AI Agent execution)
+        # These are simple calculations based on profile data
+        
+        # Prohibited Practices - check if system has prohibited practices
+        prohibited_practices = "Not Prohibited"
+        capability_practices = profile.get('capability_practices', [])
+        if isinstance(capability_practices, list):
+            prohibited_keywords = ['social_scoring', 'real_time_biometric', 'emotion_recognition', 'manipulation']
+            if any(keyword in str(capability_practices).lower() for keyword in prohibited_keywords):
+                prohibited_practices = "Potential Prohibited Practice"
+        
+        # High-Risk Classification - based on risk_classification field
+        high_risk_classification = "Not High-Risk"
+        if risk_classification == 'high_risks':
+            high_risk_classification = "High-Risk"
+        elif risk_classification in ['limited_risks', 'minimal_risks']:
+            high_risk_classification = "Limited/Minimal Risk"
+        
+        # GPAI Applicability - check if system uses GPAI
+        gpai_applicability = "Not Applicable"
+        gpai_integration = profile.get('gpai_integration', '')
+        if gpai_integration in ['yes', 'Yes', 'YES', True]:
+            gpai_applicability = "GPAI Applicable"
+        
+        # GPAI Risk Level
+        gpai_risk_level = "N/A"
+        if gpai_applicability == "GPAI Applicable":
+            gpai_provider = profile.get('gpai_provider', '')
+            if gpai_provider:
+                gpai_risk_level = "Systemic Risk"  # Default for GPAI systems
+        
+        return JsonResponse({
+            'success': True,
+            'profile': {
+                'prohibited_practices': prohibited_practices,
+                'high_risk_classification': high_risk_classification,
+                'gpai_applicability': gpai_applicability,
+                'gpai_risk_level': gpai_risk_level,
+                'risk_classification': risk_classification,
+                'agent_name': agent_name
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in api_risk_evaluation_profile: {str(e)}", exc_info=True)
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@require_http_methods(["POST"])
+@csrf_exempt
+def api_risk_evaluation_ai_scan(request, agent_id):
+    """
+    Run AI Agent Scan (Logic 1 or Logic 2) for risk evaluation.
+    This endpoint runs the full Governance AI Agent flow.
+    
+    Expected JSON body (optional):
+    {
+        "code_files": ["path/to/file1.py", ...],
+        "dataset_files": ["path/to/file1.csv", ...],
+        "tool_id": "..."  # Optional: specific skill/tool to focus assessment on
+    }
+    """
+    # This function contains the full Logic 1 and Logic 2 moved from api_assess_risk_evaluation
+    # Logic 1: No upload - runs Governance AI Agent
+    # Logic 2: With upload - executes uploaded code
+    
+    # Import the full logic from api_assess_risk_evaluation
+    # For now, we'll call the existing function but this will be refactored
+    # TODO: Move all Logic 1 and Logic 2 code here
+    return api_assess_risk_evaluation(request, agent_id)
+
+
+@require_http_methods(["POST"])
+@csrf_exempt
+def api_assess_risk_evaluation(request, agent_id):
+    """
+    Assess risk evaluation using Governance AI Agent (Logic 1).
+    
+    When no files uploaded:
+    - Uses system description from profile to assess
+    - Does NOT use assessment from mock_data
+    - Always generates fresh assessment from Governance AI Agent
+    
+    Expected JSON body (optional):
+    {
+        "code_files": ["path/to/file1.py", ...],
+        "dataset_files": ["path/to/file1.csv", ...],
+        "tool_id": "..."  # Optional: specific skill/tool to focus assessment on
+    }
+    """
+    import logging
+    from pathlib import Path
+    import json
+    
+    logger = logging.getLogger(__name__)
+    
+    logger.info("=" * 80)
+    logger.info("RISK EVALUATION: Governance AI Agent Started")
+    logger.info("=" * 80)
+    logger.info(f"Agent ID: {agent_id}")
+    
+    try:
+        # Parse request body to get tool_id if provided
+        tool_id = None
+        try:
+            body_data = json.loads(request.body) if request.body else {}
+            tool_id = body_data.get('tool_id')
+            if tool_id:
+                logger.info(f"Tool ID provided: {tool_id}")
+        except (json.JSONDecodeError, AttributeError):
+            pass  # tool_id is optional
+        # ==========================================
+        # STEP 0: Get Input Data (Profile from mock_data ONLY - NO assessment data)
+        # ==========================================
+        logger.info("\n[STEP 0] Getting Input Data (Profile from mock_data)...")
+        logger.info("-" * 80)
+        
+        # Get agent data from mock_data (ONLY for profile information)
+        # NOTE: We do NOT use assessment from mock_data - we always generate fresh assessment from Governance AI Agent
+        agents_data = get_mock_agents()
+        agent = next((a for a in agents_data if str(a.get('id')) == str(agent_id)), None)
+        
+        if not agent:
+            logger.error(f"Agent ID {agent_id} not found in mock_data")
+            return JsonResponse({
+                'success': False,
+                'error': 'AI System not found'
+            }, status=404)
+        
+        # Get system profile from agent data (Profile tab)
+        # This profile data will be used to build system_description for Governance AI Agent
+        profile = agent.get('profile', {})
+        agent_name = agent.get('name', '') or agent.get('system_name', '')
+        
+        logger.info(f"✓ Retrieved agent profile for ID {agent_id}")
+        logger.info(f"  Agent name: {agent_name}")
+        logger.info(f"  Profile fields available: {list(profile.keys())}")
+        logger.info(f"  Agent fields available: {list(agent.keys())}")
+        
+        # Log profile data (only non-empty values)
+        logger.info(f"  Profile data (non-empty fields):")
+        for key, value in profile.items():
+            if value:  # Only log non-empty values
+                if isinstance(value, str) and len(value) > 100:
+                    logger.info(f"    - {key}: {value[:100]}...")
+                else:
+                    logger.info(f"    - {key}: {value}")
+        
+        # Log agent-level fields (fallback when profile is empty)
+        logger.info(f"  Agent-level fields (fallback data):")
+        if not profile:
+            logger.info(f"    - deployment_context: {agent.get('deployment_context', 'N/A')}")
+            logger.info(f"    - risk_classification: {agent.get('risk_classification', 'N/A')}")
+            logger.info(f"    - roles: {agent.get('roles', [])}")
+            logger.info(f"    - provider_type: {agent.get('provider_type', 'N/A')}")
+        
+        # Build system_profile dictionary for Governance AI Agent (as per generate_governance_plan requirements)
+        # Use profile data if available, otherwise fallback to agent-level fields
+        logger.info("\n[STEP 0.1] Building system_profile dictionary...")
+        system_profile = {
+            "name": agent_name,  # IMPORTANT: Always include system name
+            "purpose": profile.get('purpose', '') or profile.get('intended_purpose', ''),
+            "type": profile.get('ai_system_type', '') or profile.get('system_type', '') or profile.get('ai_kind', ''),
+            "users": profile.get('system_users', '') or (', '.join(profile.get('system_users', [])) if isinstance(profile.get('system_users'), list) else ''),
+            "data": profile.get('data_types', '') or profile.get('data', '') or (', '.join(profile.get('data_types', [])) if isinstance(profile.get('data_types'), list) else ''),
+            "geography": profile.get('deployment_geography', '') or profile.get('geography', ''),
+            "deployment_context": profile.get('deployment_context', '') or agent.get('deployment_context', ''),
+            "sector": profile.get('sector', '') or (', '.join(profile.get('sector_domain', [])) if isinstance(profile.get('sector_domain'), list) else ''),
+            "affected_outputs": profile.get('affected_outputs', '') or (', '.join(profile.get('affected_outputs', [])) if isinstance(profile.get('affected_outputs'), list) else ''),
+            "role": profile.get('role', '') or (', '.join(agent.get('roles', [])) if agent.get('roles') else agent.get('ai_act_role', '')),
+            "provider_type": profile.get('provider_type', '') or agent.get('provider_type', ''),
+            "risk_classification": agent.get('risk_classification', '')  # IMPORTANT: Include risk classification
+        }
+        
+        non_empty_fields = [k for k, v in system_profile.items() if v]
+        logger.info(f"✓ system_profile built with {len(non_empty_fields)} non-empty fields")
+        logger.info(f"  Non-empty fields: {non_empty_fields}")
+        logger.info(f"  Full system_profile: {json.dumps(system_profile, indent=2)}")
+        
+        # Build system_description string for assess_ai_system (backward compatibility)
+        # This is the input for Governance AI Agent's assess_ai_system() method
+        logger.info("\n[STEP 0.2] Building system_description string (Input for assess_ai_system)...")
+        system_description_parts = []
+        
+        # Always include system name (IMPORTANT - required field)
+        if agent_name:
+            system_description_parts.append(f"AI System Name: {agent_name}")
+        else:
+            # Fallback if name is missing
+            agent_name = f"AI System ID {agent_id}"
+            system_description_parts.append(f"AI System Name: {agent_name}")
+        if system_profile.get('purpose'):
+            system_description_parts.append(f"Purpose: {system_profile.get('purpose')}")
+        if system_profile.get('type'):
+            system_description_parts.append(f"System type: {system_profile.get('type')}")
+        if system_profile.get('sector'):
+            system_description_parts.append(f"Sector: {system_profile.get('sector')}")
+        if system_profile.get('users'):
+            system_description_parts.append(f"System users: {system_profile.get('users')}")
+        if system_profile.get('data'):
+            system_description_parts.append(f"Data types: {system_profile.get('data')}")
+        if system_profile.get('deployment_context'):
+            system_description_parts.append(f"Deployment context: {system_profile.get('deployment_context')}")
+        if system_profile.get('geography'):
+            system_description_parts.append(f"Deployment geography: {system_profile.get('geography')}")
+        if system_profile.get('affected_outputs'):
+            system_description_parts.append(f"Affected outputs: {system_profile.get('affected_outputs')}")
+        if system_profile.get('role'):
+            system_description_parts.append(f"Role: {system_profile.get('role')}")
+        if system_profile.get('provider_type'):
+            system_description_parts.append(f"Provider type: {system_profile.get('provider_type')}")
+        
+        # Always add risk classification if available (IMPORTANT field)
+        risk_class = agent.get('risk_classification', '')
+        if risk_class:
+            risk_display = {
+                'high_risks': 'High-Risk',
+                'limited_risks': 'Limited Risk',
+                'minimal_risks': 'Minimal Risk',
+                'not_assessed': 'Not Assessed',
+                'prohibited': 'Prohibited',
+                'not_in_scope': 'Not in Scope'
+            }.get(risk_class, risk_class.replace('_', ' ').title())
+            system_description_parts.append(f"Risk Classification: {risk_display}")
+        
+        # Add fallback information from agent-level fields if system_description is still minimal
+        if len(system_description_parts) <= 2:  # Only has name + risk classification
+            # Add status
+            status = agent.get('status', '')
+            if status:
+                system_description_parts.append(f"Status: {status}")
+            
+            # Add business unit/owner
+            business_unit = agent.get('business_unit', '')
+            if business_unit:
+                system_description_parts.append(f"Owner: {business_unit}")
+        
+        system_description = ". ".join(system_description_parts) if system_description_parts else ""
+        
+        # If still empty, use a default description with available info
+        if not system_description:
+            fallback_parts = [f"AI system: {agent_name or 'Unnamed AI System'}"]
+            if agent.get('deployment_context'):
+                fallback_parts.append(f"deployed in {agent.get('deployment_context')}")
+            if agent.get('risk_classification'):
+                fallback_parts.append(f"classified as {agent.get('risk_classification')}")
+            system_description = " ".join(fallback_parts) + " for automated risk assessment"
+        
+        # Add tool/skill information to system_description if tool_id is provided
+        if tool_id:
+            logger.info(f"\n[STEP 0.3] Adding tool/skill context to system_description...")
+            logger.info(f"  Tool ID: {tool_id}")
+            
+            # Get tool information from compliance skills API or use a mapping
+            tool_info = None
+            try:
+                from .infrastructure.services.governance_agent_service import GovernanceAgentService
+                service = GovernanceAgentService()
+                skills = service.get_skills()
+                # Find skill by ID or name
+                for skill in skills:
+                    skill_id = skill.get('id', '').lower().replace('_', '-').replace(' ', '-')
+                    skill_name = skill.get('name', '').lower().replace('_', '-').replace(' ', '-')
+                    tool_id_lower = tool_id.lower().replace('_', '-').replace(' ', '-')
+                    if tool_id_lower in skill_id or tool_id_lower in skill_name or skill_id in tool_id_lower or skill_name in tool_id_lower:
+                        tool_info = {
+                            'name': skill.get('name', tool_id),
+                            'description': skill.get('description', ''),
+                            'category': skill.get('category', '')
+                        }
+                        break
+            except Exception as e:
+                logger.warning(f"Could not fetch tool info from service: {e}")
+            
+            # If not found, use a simple mapping based on common tool IDs
+            if not tool_info:
+                tool_mapping = {
+                    'ai-governance': {'name': 'AI Governance Assessment', 'description': 'Establishes governance structures and processes for responsible AI development and deployment.'},
+                    'risk-assessment': {'name': 'Risk Assessment and Management', 'description': 'Systematic identification, analysis, and management of risks in AI systems.'},
+                    'fria-assessment': {'name': 'Fundamental Rights Impact Assessment (FRIA)', 'description': 'Comprehensive assessment of AI system impact on fundamental rights including privacy, non-discrimination, and human dignity.'},
+                    'data-classification': {'name': 'Data Classification Assessment', 'description': 'Automatically classifies and labels sensitive data including personal data, special categories of data, and confidential information.'},
+                    'gdpr-compliance': {'name': 'GDPR Compliance', 'description': 'Toolkit for ensuring GDPR compliance in AI systems.'},
+                    'qms-tracker': {'name': 'Quality Management System Tracker Assessment', 'description': 'Tracks quality management system implementation and maintenance for AI systems.'},
+                    'ai-logging-system': {'name': 'AI Logging System Assessment', 'description': 'Automated logging system for AI operations capturing decisions, inputs, outputs, and system events.'},
+                }
+                tool_info = tool_mapping.get(tool_id.lower(), {'name': tool_id.replace('-', ' ').title(), 'description': f'Assessment focused on {tool_id.replace("-", " ")} compliance requirements.'})
+            
+            # Add tool context to system_description
+            tool_context_parts = []
+            tool_context_parts.append(f"Assessment Focus: This assessment is specifically focused on {tool_info['name']}")
+            if tool_info.get('description'):
+                tool_context_parts.append(f"Tool Description: {tool_info['description']}")
+            if tool_info.get('category'):
+                tool_context_parts.append(f"Tool Category: {tool_info['category']}")
+            
+            tool_context = ". ".join(tool_context_parts)
+            system_description = f"{system_description}. {tool_context}"
+            
+            logger.info(f"✓ Tool context added to system_description")
+            logger.info(f"  Tool name: {tool_info['name']}")
+            logger.info(f"  Tool description: {tool_info.get('description', 'N/A')[:100]}...")
+        
+        logger.info(f"✓ system_description built ({len(system_description)} characters)")
+        logger.info(f"  system_description_parts count: {len(system_description_parts)}")
+        logger.info(f"  Full system_description:")
+        logger.info(f"  {system_description}")
+        
+        # Check for uploaded files (Logic 2 - not implemented in this function, handled separately)
+        # For Logic 1, we only use profile data
+        logger.info("\n[STEP 0.3] Checking for uploaded files...")
+        code_files = []
+        dataset_files = []
+        
+        try:
+            request_data = json.loads(request.body) if request.body else {}
+            code_files = request_data.get('code_files', [])
+            dataset_files = request_data.get('dataset_files', [])
+        except:
+            pass
+        
+        # Check if files are uploaded in agent data
+        risk_evaluation = agent.get('risk_evaluation', {})
+        if not code_files and risk_evaluation.get('code_files'):
+            code_files = risk_evaluation.get('code_files', [])
+        if not dataset_files and risk_evaluation.get('dataset_files'):
+            dataset_files = risk_evaluation.get('dataset_files', [])
+        
+        # ==========================================
+        # LOGIC 2: Handle Code + Dataset Upload (Execute uploaded code)
+        # ==========================================
+        code_execution_output = ""
+        markdown_output_content = ""
+        markdown_output_file = None  # Path to saved markdown file (relative to BASE_DIR)
+        
+        if code_files or dataset_files:
+            logger.info("\n" + "=" * 80)
+            logger.info("[LOGIC 2] Processing Uploaded Files (Code + Dataset)")
+            logger.info("=" * 80)
+            logger.info(f"  Code files: {len(code_files)}")
+            logger.info(f"  Dataset files: {len(dataset_files)}")
+            
+            # Get ai_act_articles directory (where datasets are saved)
+            ai_act_articles_dir = Path(settings.BASE_DIR) / 'ai_act_articles'
+            ai_act_articles_dir.mkdir(exist_ok=True)
+            logger.info(f"  AI Act articles directory: {ai_act_articles_dir}")
+            
+            # Step 1: Save dataset files to ai_act_articles/
+            uploaded_dataset_file = None
+            if dataset_files:
+                logger.info("\n[LOGIC 2.1] Saving dataset files to ai_act_articles/...")
+                for dataset_path_str in dataset_files:
+                    try:
+                        dataset_path = Path(settings.BASE_DIR) / dataset_path_str
+                        if dataset_path.exists() and dataset_path.is_file():
+                            # Check if file is already in ai_act_articles/ (don't copy to itself)
+                            if dataset_path.parent == ai_act_articles_dir:
+                                # File is already in ai_act_articles/, use it directly
+                                uploaded_dataset_file = dataset_path
+                                logger.info(f"  ✓ Dataset file already in ai_act_articles/: {dataset_path.name}")
+                            else:
+                                # Copy to ai_act_articles/
+                                dest_path = ai_act_articles_dir / dataset_path.name
+                                # Check if destination is same as source
+                                if dataset_path.resolve() == dest_path.resolve():
+                                    uploaded_dataset_file = dataset_path
+                                    logger.info(f"  ✓ Dataset file already at destination: {dataset_path.name}")
+                                else:
+                                    import shutil
+                                    shutil.copy2(dataset_path, dest_path)
+                                    logger.info(f"  ✓ Saved: {dataset_path.name} -> {dest_path}")
+                                    if not uploaded_dataset_file:
+                                        uploaded_dataset_file = dest_path
+                            if not uploaded_dataset_file:
+                                uploaded_dataset_file = dataset_path
+                        else:
+                            logger.warning(f"  ⚠ Dataset file not found: {dataset_path}")
+                    except Exception as e:
+                        logger.error(f"  ✗ Error saving dataset {dataset_path_str}: {e}")
+            
+            # Step 2: Execute code files (modify to use uploaded dataset, then run)
+            if code_files:
+                logger.info("\n[LOGIC 2.2] Executing code files...")
+                code_file_names = []
+                execution_outputs = []
+                
+                for file_path_str in code_files:
+                    try:
+                        file_path = Path(settings.BASE_DIR) / file_path_str
+                        if file_path.exists() and file_path.is_file():
+                            code_file_names.append(file_path.name)
+                            
+                            # Check if it's a Python file
+                            if file_path.suffix.lower() == '.py':
+                                logger.info(f"  Processing Python file: {file_path.name}")
+                                
+                                try:
+                                    # Read original code file
+                                    with open(file_path, 'r', encoding='utf-8') as f:
+                                        original_code = f.read()
+                                    
+                                    # Create temporary modified copy
+                                    import tempfile
+                                    temp_code_file = None
+                                    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False, encoding='utf-8') as temp_file:
+                                        temp_code_file = Path(temp_file.name)
+                                        
+                                        # Modify code: Update paths to use uploaded dataset
+                                        modified_code = original_code
+                                        
+                                        # Update ARTICLES_DIR to point to ai_act_articles/
+                                        if 'ARTICLES_DIR' in modified_code:
+                                            # Replace ARTICLES_DIR definition with absolute path
+                                            import re
+                                            # Use absolute path to ai_act_articles_dir
+                                            articles_dir_absolute = str(ai_act_articles_dir.resolve())
+                                            modified_code = re.sub(
+                                                r'ARTICLES_DIR\s*=\s*[^\n]+',
+                                                f'ARTICLES_DIR = Path(r"{articles_dir_absolute}")',
+                                                modified_code
+                                            )
+                                            logger.info(f"    ✓ Updated ARTICLES_DIR to absolute path: {articles_dir_absolute}")
+                                        
+                                        # Note: No longer updating AI_ACT_TEXT_PATH in code files
+                                        # Code files should handle their own dataset file selection
+                                        
+                                        # Ensure GEMINI_API_KEY is read from environment
+                                        # Only replace assignment statements, not string literals
+                                        if 'GEMINI_API_KEY' in modified_code:
+                                            # Match: GEMINI_API_KEY = ... (assignment, not in string)
+                                            # Use a more precise pattern that avoids string literals
+                                            lines = modified_code.split('\n')
+                                            modified_lines = []
+                                            for line in lines:
+                                                # Check if this line contains GEMINI_API_KEY assignment (not in string)
+                                                if re.match(r'^\s*GEMINI_API_KEY\s*=', line) and 'os.environ.get' not in line:
+                                                    # Replace assignment with os.environ.get
+                                                    line = re.sub(
+                                                        r'GEMINI_API_KEY\s*=\s*[^\n]+',
+                                                        'GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")',
+                                                        line
+                                                    )
+                                                    logger.info(f"    ✓ Updated GEMINI_API_KEY assignment to use environment")
+                                                modified_lines.append(line)
+                                            modified_code = '\n'.join(modified_lines)
+                                        
+                                        temp_file.write(modified_code)
+                                    
+                                    # Set environment variables
+                                    env = os.environ.copy()
+                                    env['GEMINI_API_KEY'] = settings.GEMINI_API_KEY or os.environ.get('GEMINI_API_KEY', '')
+                                    env['ARTICLES_DIR'] = str(ai_act_articles_dir)
+                                    
+                                    # Set PYTHONPATH to include governance directory (for setup_ai_act_store module)
+                                    governance_dir = Path(settings.BASE_DIR)
+                                    pythonpath = env.get('PYTHONPATH', '')
+                                    if pythonpath:
+                                        env['PYTHONPATH'] = f"{governance_dir}:{pythonpath}"
+                                    else:
+                                        env['PYTHONPATH'] = str(governance_dir)
+                                    
+                                    # Also add scripts directory to PYTHONPATH if it exists
+                                    scripts_dir = governance_dir / 'scripts'
+                                    if scripts_dir.exists():
+                                        env['PYTHONPATH'] = f"{scripts_dir}:{env['PYTHONPATH']}"
+                                    
+                                    logger.info(f"    PYTHONPATH: {env['PYTHONPATH']}")
+                                    
+                                    # Prepare question = Map info from profile to question for ai_act_cli.py
+                                    # Question should include all relevant info from profile
+                                    question_parts = []
+                                    if agent_name:
+                                        question_parts.append(f"AI System Name: {agent_name}")
+                                    if system_profile.get('purpose'):
+                                        question_parts.append(f"Purpose: {system_profile.get('purpose')}")
+                                    if system_profile.get('type'):
+                                        question_parts.append(f"Type: {system_profile.get('type')}")
+                                    if system_profile.get('deployment_context'):
+                                        question_parts.append(f"Deployment Context: {system_profile.get('deployment_context')}")
+                                    if system_profile.get('sector'):
+                                        question_parts.append(f"Sector: {system_profile.get('sector')}")
+                                    if system_profile.get('users'):
+                                        question_parts.append(f"Users: {system_profile.get('users')}")
+                                    if system_profile.get('data'):
+                                        question_parts.append(f"Data: {system_profile.get('data')}")
+                                    if system_profile.get('geography'):
+                                        question_parts.append(f"Geography: {system_profile.get('geography')}")
+                                    if system_profile.get('risk_classification'):
+                                        question_parts.append(f"Risk Classification: {system_profile.get('risk_classification')}")
+                                    
+                                    # Build question string from profile info
+                                    question = ". ".join(question_parts) if question_parts else (agent_name or f"AI System ID {agent_id}")
+                                    logger.info(f"    Question (mapped from profile): {question[:200]}...")
+                                    logger.info(f"    Executing: python {file_path.name} \"{question}\"")
+                                    
+                                    # Execute the modified Python file with question as argument
+                                    # Run from governance directory so setup_ai_act_store can be found
+                                    import subprocess
+                                    import sys
+                                    
+                                    print(f"  [VIEWS] Executing code file: {temp_code_file}")
+                                    print(f"  [VIEWS] Command: {sys.executable} {temp_code_file.name} \"{question[:100]}...\"")
+                                    print(f"  [VIEWS] Working directory: {governance_dir}")
+                                    print(f"  [VIEWS] Environment GEMINI_API_KEY: {'SET' if env.get('GEMINI_API_KEY') else 'NOT SET'}")
+                                    print(f"  [VIEWS] Python executable: {sys.executable}")
+                                    
+                                    result = subprocess.run(
+                                        [sys.executable, str(temp_code_file), question],
+                                        capture_output=True,
+                                        text=True,
+                                        timeout=120,  # 120 second timeout
+                                        env=env,
+                                        cwd=str(governance_dir)  # Run from governance directory, not temp directory
+                                    )
+                                    
+                                    print(f"  [VIEWS] Execution completed")
+                                    print(f"  [VIEWS] Exit code: {result.returncode}")
+                                    print(f"  [VIEWS] STDOUT length: {len(result.stdout)} chars")
+                                    print(f"  [VIEWS] STDERR length: {len(result.stderr)} chars")
+                                    
+                                    print(f"\n  [VIEWS] ========== STDOUT CONTENT ==========")
+                                    if result.stdout:
+                                        print(result.stdout)
+                                    else:
+                                        print("  (empty)")
+                                    print(f"  [VIEWS] ======================================\n")
+                                    
+                                    print(f"\n  [VIEWS] ========== STDERR CONTENT ==========")
+                                    if result.stderr:
+                                        print(result.stderr)
+                                    else:
+                                        print("  (empty)")
+                                    print(f"  [VIEWS] ======================================\n")
+                                    
+                                    # Check for missing modules
+                                    if result.returncode != 0:
+                                        print(f"  [VIEWS] ⚠ Non-zero exit code: {result.returncode}")
+                                        if 'ModuleNotFoundError' in result.stderr or 'ModuleNotFoundError' in result.stdout:
+                                            import re
+                                            error_text = result.stderr + result.stdout
+                                            match = re.search(r"No module named '([^']+)'", error_text)
+                                            if match:
+                                                missing_module = match.group(1)
+                                                print(f"  [VIEWS] ⚠ Missing module: {missing_module}")
+                                                print(f"  [VIEWS] 💡 Install with: pip install {missing_module}")
+                                                logger.warning(f"    ⚠ Missing module {missing_module}. Install with: pip install {missing_module}")
+                                        else:
+                                            print(f"  [VIEWS] ⚠ Error details:")
+                                            if result.stderr:
+                                                print(f"    STDERR: {result.stderr[:500]}")
+                                            if result.stdout:
+                                                print(f"    STDOUT: {result.stdout[:500]}")
+                                    
+                                    # Capture stdout as markdown output (ai_act_cli.py outputs markdown to stdout)
+                                    if result.stdout:
+                                        # Try to extract markdown from stdout
+                                        stdout_text = result.stdout
+                                        # Look for markdown patterns (headers, lists, etc.)
+                                        if any(marker in stdout_text for marker in ['# ', '## ', '* ', '- ', '```']):
+                                            markdown_output_content = stdout_text
+                                            logger.info(f"    ✓ Captured markdown output from stdout ({len(markdown_output_content)} chars)")
+                                    
+                                    # Also check for markdown files in output directory
+                                    output_md_files = list(temp_code_file.parent.glob("*.md"))
+                                    if not output_md_files:
+                                        # Also check in original code file directory
+                                        output_md_files = list(file_path.parent.glob("*.md"))
+                                    if not output_md_files:
+                                        # Check in ai_act_articles directory
+                                        output_md_files = list(ai_act_articles_dir.glob("*.md"))
+                                    
+                                    # Read markdown output if found
+                                    if output_md_files:
+                                        try:
+                                            markdown_content = output_md_files[0].read_text(encoding='utf-8', errors='ignore')
+                                            if markdown_content:
+                                                markdown_output_content = markdown_content
+                                                logger.info(f"    ✓ Read markdown file: {output_md_files[0].name} ({len(markdown_output_content)} chars)")
+                                        except Exception as e:
+                                            logger.debug(f"    Could not read markdown output: {e}")
+                                    
+                                    execution_output = f"""
+=== CODE EXECUTION: {file_path.name} ===
+Exit Code: {result.returncode}
+Question: {question}
+STDOUT:
+{result.stdout}
+STDERR:
+{result.stderr}
+"""
+                                    if markdown_output_content:
+                                        execution_output += f"Markdown Output Length: {len(markdown_output_content)} characters\n"
+                                    
+                                    execution_output += "=== END OF EXECUTION ===\n"
+                                    execution_outputs.append(execution_output)
+                                    
+                                    logger.info(f"    ✓ Execution completed (exit code: {result.returncode})")
+                                    if result.returncode != 0:
+                                        logger.warning(f"    ⚠ Non-zero exit code: {result.stderr[:200]}")
+                                    
+                                    # Clean up temp file
+                                    try:
+                                        if temp_code_file and temp_code_file.exists():
+                                            temp_code_file.unlink()
+                                    except:
+                                        pass
+                                    
+                                except subprocess.TimeoutExpired:
+                                    logger.error(f"    ✗ Timeout after 120 seconds")
+                                    execution_outputs.append(f"\n=== CODE EXECUTION: {file_path.name} ===\nTimeout after 120 seconds\n=== END OF EXECUTION ===\n")
+                                except Exception as e:
+                                    logger.error(f"    ✗ Error executing code file {file_path}: {e}", exc_info=True)
+                                    execution_outputs.append(f"\n=== CODE EXECUTION: {file_path.name} ===\nError: {str(e)}\n=== END OF EXECUTION ===\n")
+                            else:
+                                # For non-Python files, read content
+                                try:
+                                    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                                        content = f.read()
+                                        execution_outputs.append(f"\n=== CODE FILE: {file_path.name} (non-executable) ===\n{content}\n=== END OF FILE ===\n")
+                                except Exception as e:
+                                    logger.debug(f"Could not read file {file_path}: {e}")
+                                    execution_outputs.append(f"\n=== CODE FILE: {file_path.name} ===\nError reading file: {str(e)}\n=== END OF FILE ===\n")
+                    except Exception as e:
+                        logger.error(f"Error processing code file {file_path_str}: {e}", exc_info=True)
+                
+                if code_file_names:
+                    code_execution_output = f"\n\n=== EXECUTED CODE FILES ({len(code_file_names)} files) ===\n"
+                    code_execution_output += f"Files: {', '.join(code_file_names)}\n"
+                    if uploaded_dataset_file:
+                        code_execution_output += f"Dataset used: {uploaded_dataset_file.name}\n"
+                    if execution_outputs:
+                        code_execution_output += "\n".join(execution_outputs)
+                    code_execution_output += "\n=== END OF CODE EXECUTION ===\n"
+            
+            # Logic 2: Only run uploaded code, do NOT call Governance AI Agent
+            # The markdown output from code execution is the final result
+            logger.info("\n[LOGIC 2] Code execution completed. Using markdown output as final result.")
+            logger.info("  Note: Logic 2 does NOT call Governance AI Agent - only executes uploaded code.")
+            
+            # Step 3: Save markdown output to file (if available)
+            if markdown_output_content:
+                logger.info(f"  ✓ Markdown output captured: {len(markdown_output_content)} characters")
+                
+                # Create Output directory
+                output_dir = Path(settings.BASE_DIR) / 'Output'
+                output_dir.mkdir(exist_ok=True)
+                logger.info(f"  Output directory: {output_dir}")
+                
+                # Generate output filename
+                from datetime import datetime
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                safe_agent_name = (agent_name or f"AI_System_{agent_id}").replace(' ', '_').replace('/', '_')
+                output_filename = f"AI_GOVERNANCE_ASSESSMENT_{safe_agent_name}_{timestamp}.md"
+                output_file_path = output_dir / output_filename
+                
+                # Save markdown content to file
+                try:
+                    with open(output_file_path, 'w', encoding='utf-8') as f:
+                        # Add header with metadata
+                        f.write(f"# AI Governance Framework Assessment\n")
+                        f.write(f"## {agent_name or f'AI System ID {agent_id}'}\n\n")
+                        f.write(f"**Assessment Date:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                        f.write(f"**System:** {agent_name or 'Unnamed AI System'}\n")
+                        f.write(f"**Framework:** EU AI Act + NIST AI RMF + ISO/IEC 42001\n")
+                        f.write(f"**Assessment Type:** Code Execution (Logic 2)\n\n")
+                        f.write("---\n\n")
+                        f.write(markdown_output_content)
+                    
+                    logger.info(f"  ✓ Saved markdown output to: {output_file_path}")
+                    logger.info(f"    File size: {output_file_path.stat().st_size} bytes")
+                    
+                    # Store output file path in response (relative to BASE_DIR)
+                    output_file_relative = str(output_file_path.relative_to(settings.BASE_DIR))
+                    markdown_output_file = output_file_relative
+                except Exception as e:
+                    logger.error(f"  ✗ Error saving markdown output file: {e}", exc_info=True)
+                    markdown_output_file = None
+            else:
+                markdown_output_file = None
+            
+            # ==========================================
+            # LOGIC 2: Return markdown output directly (no Governance AI Agent)
+            # ==========================================
+            logger.info("\n" + "=" * 80)
+            logger.info("[LOGIC 2] Returning markdown output from code execution")
+            logger.info("=" * 80)
+            
+            # Parse markdown output to extract assessment data for UI
+            # For Logic 2, we return the markdown output directly
+            return JsonResponse({
+                'success': True,
+                'assessment': {
+                    'prohibited_practices': 'Not assessed',
+                    'high_risk_classification': 'Not assessed',
+                    'gpai_applicability': 'Not assessed',
+                    'gpai_risk_level': 'N/A',
+                    'risk_classification': {
+                        'category': 'Not assessed',
+                        'confidence': 'N/A',
+                        'reasoning': 'Assessment from code execution'
+                    },
+                    'applicable_regulations': [],
+                    'recommended_skills': [],
+                    'initial_assessment': 'Assessment generated from uploaded code execution.',
+                    'detailed_risk_assessment': [],
+                    'governance_plan': None,
+                    'markdown_output': markdown_output_content,  # Output from code execution
+                    'markdown_output_file': markdown_output_file  # Path to saved markdown file
+                }
+            })
+        else:
+            # ==========================================
+            # LOGIC 1: No uploaded files -> run full Governance AI Agent flow
+            # ==========================================
+            logger.info("\n" + "=" * 80)
+            logger.info("[LOGIC 1] No uploaded files detected – proceeding with full Governance AI Agent flow")
+            logger.info("=" * 80)
+            # Do NOT return here; continue to Governance AI Agent initialization below
+        
+        # ==========================================
+        # NOTE: The code below should NOT be reached
+        # Logic 1 returns early, Logic 2 returns early
+        # This section is kept for backward compatibility but should not execute
+        # ==========================================
+        logger.warning("WARNING: Reached code that should not execute. Logic 1 and Logic 2 should return early.")
+        
+        # ==========================================
+        # INIT: Initialize Governance AI Agent (DEPRECATED - should not run)
+        # ==========================================
+        logger.info("\n" + "=" * 80)
+        logger.info("[INIT] Initializing Governance AI Agent (Core Engine)...")
+        logger.info("-" * 80)
+        
+        try:
+            from governance_agent.governance_agent import GovernanceAIAgent, AgentConfig
+            agent_config = AgentConfig()
+            governance_agent = GovernanceAIAgent(agent_config)
+            logger.info(f"✓ Governance AI Agent initialized successfully")
+            logger.info(f"  Available skills: {len(governance_agent.skills)}")
+            skills_preview = [s.get('name', s.get('skill', 'Unknown'))[:50] for s in list(governance_agent.skills.values())[:5]]
+            logger.info(f"  Skills preview: {skills_preview}...")
+        except Exception as e:
+            logger.error(f"✗ Failed to initialize Governance AI Agent: {e}", exc_info=True)
+            return JsonResponse({
+                'success': False,
+                'error': f'Governance AI Agent initialization failed: {str(e)}',
+                'assessment': {
+                    'risk_classification': {
+                        'category': 'Not assessed',
+                        'confidence': 'low',
+                        'reasoning': f'Governance AI Agent not available: {str(e)}'
+                    },
+                    'prohibited_practices': 'Not assessed',
+                    'high_risk_classification': 'Not assessed',
+                    'gpai_applicability': 'Not assessed',
+                    'gpai_risk_level': 'N/A',
+                    'recommended_skills': [],
+                    'detailed_risk_assessment': []
+                }
+            })
+        
+        # ==========================================
+        # STEP 1: Assess AI System (Initial Assessment - Advisory Layer)
+        # ==========================================
+        logger.info("\n" + "=" * 80)
+        logger.info("[STEP 1] Assess AI System (Initial Assessment - Advisory Layer)")
+        logger.info("=" * 80)
+        logger.info("This step provides:")
+        logger.info("  - Risk Classification (4 levels: Unacceptable, High, Limited, Minimal)")
+        logger.info("  - Regulation Identification (EU AI Act, GDPR, NIST AI RMF)")
+        logger.info("  - Skill Discovery & Recommendation (50+ skills)")
+        logger.info("  - Initial Assessment")
+        logger.info("-" * 80)
+        logger.info(f"INPUT for assess_ai_system():")
+        logger.info(f"  system_description length: {len(system_description)} characters")
+        logger.info(f"  system_description preview: {system_description[:200]}...")
+        
+        try:
+            logger.info("\n[STEP 1.1] Calling governance_agent.assess_ai_system(system_description)...")
+            assessment = governance_agent.assess_ai_system(system_description)
+            logger.info("✓ assess_ai_system() completed successfully")
+            
+            # Log output from assess_ai_system
+            logger.info("\n[STEP 1.2] OUTPUT from assess_ai_system():")
+            logger.info("-" * 80)
+            risk_classification = assessment.get('risk_classification', {})
+            risk_category = risk_classification.get('category', 'Not assessed')
+            risk_confidence = risk_classification.get('confidence', 'N/A')
+            risk_reasoning = risk_classification.get('reasoning', 'N/A')
+            
+            logger.info(f"  Risk Classification:")
+            logger.info(f"    - Category: {risk_category}")
+            logger.info(f"    - Confidence: {risk_confidence}")
+            if isinstance(risk_reasoning, str):
+                logger.info(f"    - Reasoning: {risk_reasoning[:200]}...")
+            else:
+                logger.info(f"    - Reasoning: {risk_reasoning}")
+            
+            applicable_regulations = assessment.get('applicable_regulations', [])
+            logger.info(f"  Applicable Regulations: {len(applicable_regulations)}")
+            for reg in applicable_regulations[:5]:  # Show first 5
+                logger.info(f"    - {reg}")
+            
+            recommended_skills = assessment.get('recommended_skills', [])
+            logger.info(f"  Recommended Skills: {len(recommended_skills)}")
+            for skill in recommended_skills[:10]:  # Show first 10
+                skill_name = skill.get('skill', skill.get('name', 'Unknown'))
+                logger.info(f"    - {skill_name}")
+            
+            initial_assessment = assessment.get('initial_assessment', '')
+            logger.info(f"  Initial Assessment length: {len(initial_assessment)} characters")
+            logger.info(f"  Initial Assessment preview: {initial_assessment[:300]}...")
+            
+        except Exception as e:
+            logger.error(f"✗ Error in assess_ai_system: {e}", exc_info=True)
+            raise
+        
+        # Extract results from assess_ai_system
+        risk_classification = assessment.get('risk_classification', {})
+        risk_category = risk_classification.get('category', 'Not assessed')
+        applicable_regulations = assessment.get('applicable_regulations', [])
+        recommended_skills = assessment.get('recommended_skills', [])
+        initial_assessment = assessment.get('initial_assessment', '')
+        
+        # ==========================================
+        # STEP 2: Generate Governance Plan (Comprehensive Planning - Advisory Layer)
+        # ==========================================
+        logger.info("\n" + "=" * 80)
+        logger.info("[STEP 2] Generate Governance Plan (Comprehensive Planning - Advisory Layer)")
+        logger.info("=" * 80)
+        logger.info("This step provides:")
+        logger.info("  - Executive Summary")
+        logger.info("  - Architecture Recommendations")
+        logger.info("  - Safety Implementation")
+        logger.info("  - Testing Strategy")
+        logger.info("  - Operational Procedures")
+        logger.info("  - Next Steps")
+        logger.info("  - NIST AI RMF structure (Govern, Map, Measure, Manage)")
+        logger.info("-" * 80)
+        logger.info(f"INPUT for generate_governance_plan():")
+        logger.info(f"  system_profile: {json.dumps(system_profile, indent=2)}")
+        
+        governance_plan = None
+        try:
+            # Generate governance plan if we have sufficient profile data OR agent-level data
+            # Check if we have at least name + deployment_context or other key fields
+            has_profile_data = (
+                system_profile.get('purpose') or 
+                system_profile.get('type') or 
+                system_profile.get('deployment_context') or
+                system_profile.get('sector') or
+                agent_name  # At least we have a name
+            )
+            
+            if has_profile_data:
+                logger.info("\n[STEP 2.1] Calling governance_agent.generate_governance_plan(system_profile)...")
+                logger.info(f"  Using system_profile with {len([v for v in system_profile.values() if v])} non-empty fields")
+                governance_plan = governance_agent.generate_governance_plan(system_profile)
+                logger.info("✓ generate_governance_plan() completed successfully")
+                
+                # Log output from generate_governance_plan
+                logger.info("\n[STEP 2.2] OUTPUT from generate_governance_plan():")
+                logger.info("-" * 80)
+                if governance_plan:
+                    logger.info(f"  Governance Plan structure:")
+                    for key in governance_plan.keys():
+                        value = governance_plan[key]
+                        if isinstance(value, str):
+                            logger.info(f"    - {key}: {len(value)} characters")
+                            logger.info(f"      Preview: {value[:200]}...")
+                        elif isinstance(value, list):
+                            logger.info(f"    - {key}: {len(value)} items")
+                        elif isinstance(value, dict):
+                            logger.info(f"    - {key}: {len(value)} keys")
+                        else:
+                            logger.info(f"    - {key}: {type(value).__name__}")
+                else:
+                    logger.warning("  Governance plan is None")
+            else:
+                logger.warning("  Skipping governance plan generation (insufficient profile data)")
+        except Exception as e:
+            logger.warning(f"✗ Could not generate governance plan: {e}", exc_info=True)
+            # Continue with assessment results even if governance plan fails
+        
+        # Determine prohibited practices, high-risk, GPAI applicability
+        prohibited_practices = 'Not assessed'
+        high_risk_classification = 'Not assessed'
+        gpai_applicability = 'Not assessed'
+        gpai_risk_level = 'N/A'
+        
+        # Check for prohibited practices (simplified logic)
+        description_lower = system_description.lower()
+        if any(word in description_lower for word in ['social scoring', 'real-time biometric', 'subliminal manipulation']):
+            prohibited_practices = 'Prohibited'
+        else:
+            prohibited_practices = 'Not prohibited'
+        
+        # Check high-risk classification
+        if risk_category == 'High-Risk':
+            high_risk_classification = 'High-Risk'
+        else:
+            high_risk_classification = 'Not High-Risk'
+        
+        # Check GPAI applicability (simplified - if it's a general-purpose AI)
+        if any(word in description_lower for word in ['general purpose', 'foundation model', 'gpt', 'llm', 'language model']):
+            gpai_applicability = 'Applicable'
+            if risk_category == 'High-Risk':
+                gpai_risk_level = 'Systemic Risk'
+            else:
+                gpai_risk_level = 'Limited Risk'
+        else:
+            gpai_applicability = 'Not Applicable'
+        
+        # Build detailed risk assessment with recommended tools
+        detailed_risk_assessment = []
+        
+        # Cybersecurity section
+        cybersecurity_tools = []
+        if any(skill.get('skill', '') in ['security-frameworks', 'sbom-management'] for skill in recommended_skills):
+            cybersecurity_tools = [
+                'Prompt Injection Detection Assessment',
+                'Security Frameworks',
+                'Grype Vulnerability Scanner',
+                'Safety (PyUp)',
+                'Snyk',
+                'OSS Scorecard'
+            ]
+        
+        if cybersecurity_tools or 'security' in description_lower:
+            detailed_risk_assessment.append({
+                'category': 'Cybersecurity',
+                'description': 'Standard cybersecurity best practices recommended to protect system integrity and user data.',
+                'recommended_tools': cybersecurity_tools or [
+                    'Prompt Injection Detection Assessment',
+                    'Security Frameworks',
+                    'Grype Vulnerability Scanner',
+                    'Safety (PyUp)',
+                    'Snyk',
+                    'OSS Scorecard'
+                ],
+                'color': 'red'
+            })
+        
+        # Privacy section
+        privacy_tools = []
+        if any(skill.get('skill', '') in ['gdpr-compliance', 'hipaa-compliance', 'pci-dss-compliance'] for skill in recommended_skills):
+            privacy_tools = [
+                'Data Classification',
+                'GDPR Compliance',
+                'HIPAA Compliance',
+                'PCI DSS Compliance'
+            ]
+        
+        if privacy_tools or any(word in description_lower for word in ['privacy', 'personal data', 'gdpr']):
+            detailed_risk_assessment.append({
+                'category': 'Privacy',
+                'description': 'Standard privacy requirements. Ensure GDPR compliance and appropriate data protection measures.',
+                'recommended_tools': privacy_tools or [
+                    'Data Classification',
+                    'GDPR Compliance',
+                    'HIPAA Compliance',
+                    'PCI DSS Compliance'
+                ],
+                'color': 'purple'
+            })
+        
+        # FRIA section
+        fria_tools = []
+        if any(skill.get('skill', '') in ['bias-assessment', 'ai-ethics', 'validating-ai-ethics-and-fairness'] for skill in recommended_skills):
+            fria_tools = [
+                'FRIA Assessment',
+                'Bias Assessment',
+                'AI Fairness 360',
+                'HITL Design'
+            ]
+        
+        if fria_tools or risk_category == 'High-Risk' or any(word in description_lower for word in ['bias', 'fairness', 'ethics']):
+            detailed_risk_assessment.append({
+                'category': 'Fundamental Rights Impact Assessment (FRIA)',
+                'description': 'FRIA recommended for systems with potential fundamental rights impact. Evaluate effects on privacy, equality, and human dignity to ensure compliance with EU Charter of Fundamental Rights.',
+                'recommended_tools': fria_tools or [
+                    'FRIA Assessment',
+                    'Bias Assessment',
+                    'AI Fairness 360',
+                    'HITL Design'
+                ],
+                'color': 'blue'
+            })
+        
+        # ==========================================
+        # OUTPUT: Final Assessment Response
+        # ==========================================
+        logger.info("\n" + "=" * 80)
+        logger.info("[OUTPUT] Final Assessment Response")
+        logger.info("=" * 80)
+        logger.info("Response structure:")
+        logger.info(f"  - prohibited_practices: {prohibited_practices}")
+        logger.info(f"  - high_risk_classification: {high_risk_classification}")
+        logger.info(f"  - gpai_applicability: {gpai_applicability}")
+        logger.info(f"  - gpai_risk_level: {gpai_risk_level}")
+        logger.info(f"  - risk_classification: {risk_category}")
+        logger.info(f"  - applicable_regulations: {len(applicable_regulations)} regulations")
+        logger.info(f"  - recommended_skills: {len(recommended_skills)} skills")
+        logger.info(f"  - initial_assessment: {len(initial_assessment)} characters")
+        logger.info(f"  - detailed_risk_assessment: {len(detailed_risk_assessment)} items")
+        logger.info(f"  - governance_plan: {'Present' if governance_plan else 'None'}")
+        logger.info(f"  - markdown_output: {len(markdown_output_content) if markdown_output_content else 0} characters")
+        logger.info("=" * 80)
+        
+        # ==========================================
+        # Generate Markdown Output File (for both Logic 1 and Logic 2)
+        # ==========================================
+        # If Logic 1: Generate markdown from assessment + governance_plan
+        # If Logic 2: Use markdown from code execution (already captured)
+        # Always generate markdown for Logic 1 (even if Logic 2 already has markdown)
+        if (not code_files and not dataset_files) or (not markdown_output_content and (assessment or governance_plan)):
+            logger.info("\n[OUTPUT] Generating markdown file from assessment results (Logic 1)...")
+            try:
+                # Prefer exporting governance_plan if available (as per examples)
+                # Otherwise export assessment data
+                if governance_plan:
+                    # Export governance plan (matches example_governance_plan.py pattern)
+                    markdown_output_content = governance_agent.export_assessment(governance_plan, format='markdown')
+                    logger.info(f"  ✓ Generated markdown from governance_plan ({len(markdown_output_content)} chars)")
+                    
+                    # Append Detailed Risk Assessment section if not already included
+                    if detailed_risk_assessment and '## Detailed Risk Assessment' not in markdown_output_content and '## 📋 Detailed Risk Assessment' not in markdown_output_content:
+                        detailed_section = "\n\n---\n\n## 📋 Detailed Risk Assessment\n\n"
+                        for item in detailed_risk_assessment:
+                            category = item.get('category', 'Unknown')
+                            description = item.get('description', '')
+                            tools = item.get('recommended_tools', [])
+                            
+                            detailed_section += f"### {category}\n\n"
+                            detailed_section += f"{description}\n\n"
+                            if tools:
+                                detailed_section += "**Recommended Tools:**\n\n"
+                                for tool in tools:
+                                    detailed_section += f"- {tool}\n"
+                                detailed_section += "\n"
+                        
+                        markdown_output_content += detailed_section
+                        logger.info(f"  ✓ Added Detailed Risk Assessment section to governance plan markdown")
+                elif assessment:
+                    # Export assessment data (matches example_basic.py pattern but with export)
+                    # Create assessment dict matching assess_ai_system output structure
+                    assessment_data = {
+                        'system_description': system_description,
+                        'risk_classification': risk_classification,
+                        'applicable_regulations': applicable_regulations,
+                        'recommended_skills': recommended_skills,
+                        'initial_assessment': initial_assessment,
+                        'detailed_risk_assessment': detailed_risk_assessment  # Add detailed risk assessment
+                    }
+                    markdown_output_content = governance_agent.export_assessment(assessment_data, format='markdown')
+                    logger.info(f"  ✓ Generated markdown from assessment ({len(markdown_output_content)} chars)")
+                    
+                    # Append Detailed Risk Assessment section if not already included
+                    if detailed_risk_assessment and '## Detailed Risk Assessment' not in markdown_output_content:
+                        detailed_section = "\n\n---\n\n## 📋 Detailed Risk Assessment\n\n"
+                        for item in detailed_risk_assessment:
+                            category = item.get('category', 'Unknown')
+                            description = item.get('description', '')
+                            tools = item.get('recommended_tools', [])
+                            
+                            detailed_section += f"### {category}\n\n"
+                            detailed_section += f"{description}\n\n"
+                            if tools:
+                                detailed_section += "**Recommended Tools:**\n\n"
+                                for tool in tools:
+                                    detailed_section += f"- {tool}\n"
+                                detailed_section += "\n"
+                        
+                        markdown_output_content += detailed_section
+                        logger.info(f"  ✓ Added Detailed Risk Assessment section to markdown")
+                else:
+                    raise ValueError("No assessment or governance_plan available for export")
+            except Exception as e:
+                logger.warning(f"  ⚠ Could not generate markdown from assessment: {e}")
+                # Fallback: Create simple markdown
+                detailed_risk_section = ""
+                if detailed_risk_assessment:
+                    detailed_risk_section = "\n## Detailed Risk Assessment\n\n"
+                    for item in detailed_risk_assessment:
+                        detailed_risk_section += f"### {item.get('category', 'Unknown')}\n\n"
+                        detailed_risk_section += f"{item.get('description', '')}\n\n"
+                        if item.get('recommended_tools'):
+                            detailed_risk_section += "**Recommended Tools:**\n"
+                            for tool in item.get('recommended_tools', []):
+                                detailed_risk_section += f"- {tool}\n"
+                            detailed_risk_section += "\n"
+                
+                markdown_output_content = f"""# AI Governance Assessment
+
+## System Information
+**Name:** {agent_name or f'AI System ID {agent_id}'}
+**Assessment Date:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+## Risk Classification
+**Category:** {risk_category}
+**Confidence:** {risk_classification.get('confidence', 'N/A')}
+**Reasoning:** {risk_classification.get('reasoning', 'N/A')}
+
+## Applicable Regulations
+{chr(10).join(f'- {reg}' if isinstance(reg, str) else f'- {reg.get("name", reg)}' for reg in applicable_regulations[:10])}
+
+## Recommended Skills
+{chr(10).join(f'- {skill.get("skill", skill.get("name", "Unknown"))}' for skill in recommended_skills[:20])}
+
+## Initial Assessment
+{initial_assessment}
+{detailed_risk_section}
+## Governance Plan
+{governance_plan.get('executive_summary', 'N/A') if governance_plan else 'N/A'}
+"""
+                logger.info(f"  ✓ Created fallback markdown ({len(markdown_output_content)} chars)")
+        
+        # Save markdown to file (for both Logic 1 and Logic 2)
+        if markdown_output_content:
+            logger.info("\n[OUTPUT] Saving markdown output to file...")
+            try:
+                # Create Output directory
+                output_dir = Path(settings.BASE_DIR) / 'Output'
+                output_dir.mkdir(exist_ok=True)
+                logger.info(f"  Output directory: {output_dir}")
+                
+                # Generate output filename
+                from datetime import datetime
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                safe_agent_name = (agent_name or f"AI_System_{agent_id}").replace(' ', '_').replace('/', '_')
+                output_filename = f"AI_GOVERNANCE_ASSESSMENT_{safe_agent_name}_{timestamp}.md"
+                output_file_path = output_dir / output_filename
+                
+                # Save markdown content to file
+                with open(output_file_path, 'w', encoding='utf-8') as f:
+                    # Add header with metadata
+                    f.write(f"# AI Governance Framework Assessment\n")
+                    f.write(f"## {agent_name or f'AI System ID {agent_id}'}\n\n")
+                    f.write(f"**Assessment Date:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                    f.write(f"**System:** {agent_name or 'Unnamed AI System'}\n")
+                    f.write(f"**Framework:** EU AI Act + NIST AI RMF + ISO/IEC 42001\n")
+                    f.write(f"**Assessment Type:** {'Code Execution + Governance AI Agent' if code_files or dataset_files else 'Governance AI Agent (Advisory Layer)'}\n\n")
+                    f.write("---\n\n")
+                    f.write(markdown_output_content)
+                
+                logger.info(f"  ✓ Saved markdown output to: {output_file_path}")
+                logger.info(f"    File size: {output_file_path.stat().st_size} bytes")
+                
+                # Store output file path in response (relative to BASE_DIR)
+                output_file_relative = str(output_file_path.relative_to(settings.BASE_DIR))
+                markdown_output_file = output_file_relative
+            except Exception as e:
+                logger.error(f"  ✗ Error saving markdown output file: {e}", exc_info=True)
+                markdown_output_file = None
+        
+        if code_files or dataset_files:
+            logger.info("LOGIC 2: Governance AI Agent + Code Execution - Completed Successfully")
+        else:
+            logger.info("LOGIC 1: Governance AI Agent - Full Flow Completed Successfully")
+        logger.info("=" * 80 + "\n")
+        
+        return JsonResponse({
+            'success': True,
+            'assessment': {
+                'prohibited_practices': prohibited_practices,
+                'high_risk_classification': high_risk_classification,
+                'gpai_applicability': gpai_applicability,
+                'gpai_risk_level': gpai_risk_level,
+                'risk_classification': risk_classification,
+                'applicable_regulations': applicable_regulations,
+                'recommended_skills': recommended_skills,
+                'initial_assessment': initial_assessment,
+                'detailed_risk_assessment': detailed_risk_assessment,
+                'governance_plan': governance_plan,
+                'markdown_output': markdown_output_content,  # Output from code execution (Logic 2)
+                'markdown_output_file': markdown_output_file  # Path to saved markdown file (e.g., "Output/AI_GOVERNANCE_ASSESSMENT_...md")
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in api_assess_risk_evaluation: {str(e)}", exc_info=True)
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@require_http_methods(["POST"])
+@csrf_exempt
+def api_upload_risk_evaluation_files(request, agent_id):
+    """
+    Upload code and dataset files for risk evaluation.
+    
+    Expected form data:
+    - code_files: File(s) to upload (can be multiple)
+    - dataset_files: File(s) to upload (can be multiple)
+    
+    Returns JSON response with success status and file paths.
+    """
+    import logging
+    from pathlib import Path
+    from django.conf import settings
+    import json
+    import uuid
+
+
+
+    import re
+    
+    logger = logging.getLogger(__name__)
+    
+    logger.info("=" * 80)
+    logger.info("FILE UPLOAD: Risk Evaluation Files")
+    logger.info("=" * 80)
+    logger.info(f"Agent ID: {agent_id}")
+    
+    try:
+        # Get agent data
+        agents_data = get_mock_agents()
+        agent = next((a for a in agents_data if str(a.get('id')) == str(agent_id)), None)
+        
+        if not agent:
+            return JsonResponse({
+                'success': False,
+                'error': 'AI System not found'
+            }, status=404)
+        
+        # Get files from request
+        print(f"\n{'='*80}")
+        print(f"FILE UPLOAD DEBUG - REQUEST INFO:")
+        print(f"  Request method: {request.method}")
+        print(f"  Request content type: {request.content_type}")
+        print(f"  Request FILES keys: {list(request.FILES.keys())}")
+        print(f"  Request FILES count: {len(request.FILES)}")
+        print(f"{'='*80}\n")
+        
+        code_files_uploaded = request.FILES.getlist('code_files')
+        dataset_files_uploaded = request.FILES.getlist('dataset_files')
+        
+        print(f"\n{'='*80}")
+        print(f"FILE UPLOAD DEBUG - FILES EXTRACTED:")
+        print(f"  Code files count: {len(code_files_uploaded)}")
+        print(f"  Dataset files count: {len(dataset_files_uploaded)}")
+        for i, f in enumerate(dataset_files_uploaded):
+            print(f"    Dataset file {i+1}: {f.name} ({f.size} bytes)")
+        print(f"{'='*80}\n")
+        
+        logger.info(f"  Code files: {len(code_files_uploaded)}")
+        logger.info(f"  Dataset files: {len(dataset_files_uploaded)}")
+        logger.info(f"  Request FILES keys: {list(request.FILES.keys())}")
+        
+        if len(dataset_files_uploaded) == 0:
+            print(f"  ⚠ WARNING: No dataset files found in request!")
+            print(f"  This might mean:")
+            print(f"    1. Frontend is not sending files correctly")
+            print(f"    2. Field name mismatch (expected 'dataset_files')")
+            print(f"    3. Request is not multipart/form-data")
+            logger.warning(f"  ⚠ No dataset files found in request!")
+        
+        # Create upload directories
+        BASE_DIR = Path(settings.BASE_DIR)
+        uploads_dir = BASE_DIR / 'uploads' / 'risk_evaluation'
+        code_dir = uploads_dir / 'code'
+        dataset_dir = BASE_DIR / 'ai_act_articles'  # Datasets go to ai_act_articles/
+        
+        logger.info(f"  BASE_DIR: {BASE_DIR}")
+        logger.info(f"  Dataset directory: {dataset_dir}")
+        logger.info(f"  Dataset directory exists: {dataset_dir.exists()}")
+        
+        code_dir.mkdir(parents=True, exist_ok=True)
+        dataset_dir.mkdir(parents=True, exist_ok=True)
+        
+        logger.info(f"  ✓ Created/verified directories")
+        
+        uploaded_code_files = []
+        uploaded_dataset_files = []
+        
+        # Save code files
+        print(f"\n{'='*80}")
+        print(f"SAVING CODE FILES:")
+        print(f"  Code files count: {len(code_files_uploaded)}")
+        print(f"{'='*80}\n")
+        logger.info(f"Processing {len(code_files_uploaded)} code file(s)...")
+        
+        for file in code_files_uploaded:
+            try:
+                print(f"\n  Processing code file: {file.name} ({file.size} bytes)")
+                logger.info(f"  Processing code file: {file.name}")
+                
+                # Generate unique filename
+                file_ext = Path(file.name).suffix
+                unique_filename = f"{uuid.uuid4().hex}_{file.name}"
+                file_path = code_dir / unique_filename
+                
+                # Save file first
+                print(f"    Saving to: {file_path}")
+                with open(file_path, 'wb+') as destination:
+                    for chunk in file.chunks():
+                        destination.write(chunk)
+                
+                # Update GEMINI_API_KEY in uploaded code file if it's a Python file
+                if file_ext.lower() == '.py':
+                    print(f"    Updating GEMINI_API_KEY in Python file...")
+                    logger.info(f"    Updating GEMINI_API_KEY in code file: {file.name}")
+                    
+                    try:
+                        # Read the saved file
+                        with open(file_path, 'r', encoding='utf-8') as f:
+                            code_content = f.read()
+                        
+                        original_content = code_content
+                        modified = False
+                        
+                        # Ensure 'import os' is present if GEMINI_API_KEY is used
+                        if 'GEMINI_API_KEY' in code_content and 'import os' not in code_content:
+                            # Add import os at the top (after other imports if any)
+                            lines = code_content.split('\n')
+                            import_inserted = False
+                            for i, line in enumerate(lines):
+                                if line.strip().startswith('import ') or line.strip().startswith('from '):
+                                    continue
+                                elif line.strip() == '':
+                                    continue
+                                else:
+                                    # Insert import os before first non-import line
+                                    lines.insert(i, 'import os')
+                                    import_inserted = True
+                                    break
+                            
+                            if not import_inserted:
+                                # If no imports found, add at the beginning
+                                lines.insert(0, 'import os')
+                            
+                            code_content = '\n'.join(lines)
+                            modified = True
+                            print(f"      ✓ Added 'import os'")
+                            logger.info(f"      ✓ Added 'import os'")
+                        
+                        # Update GEMINI_API_KEY to use os.environ.get
+                        if 'GEMINI_API_KEY' in code_content:
+                            lines = code_content.split('\n')
+                            modified_lines = []
+                            for line in lines:
+                                # Check if this line contains GEMINI_API_KEY assignment
+                                if re.match(r'^\s*GEMINI_API_KEY\s*=', line):
+                                    # Check if it's already using os.environ.get
+                                    if 'os.environ.get' not in line:
+                                        # Replace with os.environ.get
+                                        line = re.sub(
+                                            r'GEMINI_API_KEY\s*=\s*[^\n]+',
+                                            'GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")',
+                                            line
+                                        )
+                                        modified = True
+                                        print(f"      ✓ Updated GEMINI_API_KEY to use os.environ.get()")
+                                        logger.info(f"      ✓ Updated GEMINI_API_KEY to use os.environ.get()")
+                                    else:
+                                        print(f"      ℹ GEMINI_API_KEY already uses os.environ.get()")
+                                        logger.info(f"      ℹ GEMINI_API_KEY already uses os.environ.get()")
+                                modified_lines.append(line)
+                            
+                            if modified:
+                                code_content = '\n'.join(modified_lines)
+                        
+                        # Write updated content back to file
+                        if modified:
+                            with open(file_path, 'w', encoding='utf-8') as f:
+                                f.write(code_content)
+                            print(f"      ✓ Saved updated code file")
+                            logger.info(f"      ✓ Saved updated code file with GEMINI_API_KEY fix")
+                    except Exception as update_error:
+                        print(f"      ⚠ Could not update GEMINI_API_KEY: {update_error}")
+                        logger.warning(f"      ⚠ Could not update GEMINI_API_KEY in code file: {update_error}")
+                        # Continue anyway - file is saved, just not updated
+                
+                # Store relative path
+                relative_path = str(file_path.relative_to(BASE_DIR))
+                uploaded_code_files.append(relative_path)
+                
+                print(f"  ✓ Saved code file: {file.name} -> {relative_path}")
+                logger.info(f"  ✓ Saved code file: {file.name} -> {relative_path}")
+            except Exception as e:
+                print(f"  ✗ Error saving code file {file.name}: {e}")
+                import traceback
+                traceback.print_exc()
+                logger.error(f"  ✗ Error saving code file {file.name}: {e}", exc_info=True)
+        
+        # Save dataset files
+        print(f"\n{'='*80}")
+        print(f"SAVING DATASET FILES:")
+        print(f"  Dataset files count: {len(dataset_files_uploaded)}")
+        print(f"  Dataset directory: {dataset_dir}")
+        print(f"  Dataset directory exists: {dataset_dir.exists()}")
+        print(f"{'='*80}\n")
+        logger.info(f"Processing {len(dataset_files_uploaded)} dataset file(s)...")
+        
+        if len(dataset_files_uploaded) == 0:
+            print(f"  ⚠ WARNING: No dataset files to save!")
+            print(f"  Check if frontend is sending files correctly.")
+            logger.warning(f"  ⚠ No dataset files to save")
+        else:
+            for file in dataset_files_uploaded:
+                try:
+                    print(f"\n  Processing dataset file: {file.name} ({file.size} bytes)")
+                    logger.info(f"  Processing dataset file: {file.name}")
+                    
+                    # Use original filename for datasets (they need to be referenced by name)
+                    file_path = dataset_dir / file.name
+                    
+                    print(f"    Destination: {file_path}")
+                    logger.info(f"  Saving dataset file: {file.name}")
+                    logger.info(f"    Destination: {file_path}")
+                    logger.info(f"    Dataset dir exists: {dataset_dir.exists()}")
+                    logger.info(f"    File size: {file.size} bytes")
+                    
+                    # Save file
+                    with open(file_path, 'wb+') as destination:
+                        for chunk in file.chunks():
+                            destination.write(chunk)
+                    
+                    # Verify file was saved
+                    if file_path.exists():
+                        saved_size = file_path.stat().st_size
+                        print(f"    ✓ File saved successfully: {saved_size} bytes")
+                        logger.info(f"    ✓ File saved successfully: {saved_size} bytes")
+                    else:
+                        print(f"    ✗ File was not saved: {file_path}")
+                        logger.error(f"    ✗ File was not saved: {file_path}")
+                        continue
+                    
+                    # Store relative path
+                    relative_path = str(file_path.relative_to(BASE_DIR))
+                    uploaded_dataset_files.append(relative_path)
+                    
+                    print(f"  ✓ Saved dataset file: {file.name} -> {relative_path}")
+                    logger.info(f"  ✓ Saved dataset file: {file.name} -> {relative_path}")
+                    
+                    # Run setup_ai_act_store for this uploaded file only (not the entire ai_act_articles directory)
+                    print(f"\n{'='*80}")
+                    print(f"SETUP_AI_ACT_STORE: Starting for file: {file.name}")
+                    print(f"{'='*80}")
+                    print(f"  [VIEWS] About to run setup_ai_act_store for: {file.name}")
+                    print(f"  [VIEWS] File path: {file_path}")
+                    print(f"  [VIEWS] File exists: {file_path.exists()}")
+                    logger.info(f"  Running setup_ai_act_store for uploaded file only: {file.name}")
+                    
+                    # Check GEMINI_API_KEY
+                    import os
+                    gemini_key = os.environ.get("GEMINI_API_KEY") or getattr(settings, 'GEMINI_API_KEY', None)
+                    print(f"  [VIEWS] Checking GEMINI_API_KEY...")
+                    if not gemini_key:
+                        print(f"  ⚠ WARNING: GEMINI_API_KEY not found in environment or settings!")
+                        logger.warning(f"    ⚠ GEMINI_API_KEY not found, upload may fail")
+                    else:
+                        print(f"  ✓ GEMINI_API_KEY found (length: {len(gemini_key)})")
+                        logger.info(f"    ✓ GEMINI_API_KEY found")
+                    
+                    print(f"  [VIEWS] Starting try block to import setup_ai_act_store...")
+                    try:
+                        import sys
+                        import importlib.util
+                        
+                        print(f"  [VIEWS] sys and importlib.util imported")
+                        
+                        # Import setup_ai_act_store module
+                        setup_script_path = BASE_DIR / 'setup_ai_act_store.py'
+                        print(f"  [VIEWS] Checking for setup_ai_act_store.py at: {setup_script_path}")
+                        print(f"  [VIEWS] Path exists: {setup_script_path.exists()}")
+                        logger.info(f"    Looking for setup_ai_act_store.py at: {setup_script_path}")
+                            
+                        if not setup_script_path.exists():
+                            # Try scripts directory
+                            setup_script_path = BASE_DIR / 'scripts' / 'setup_ai_act_store.py'
+                            print(f"  [VIEWS] Not found, trying: {setup_script_path}")
+                            print(f"  [VIEWS] Alternative path exists: {setup_script_path.exists()}")
+                            logger.info(f"    Not found, trying: {setup_script_path}")
+                        
+                        if setup_script_path.exists():
+                            print(f"  [VIEWS] ✓ Found setup_ai_act_store.py")
+                            print(f"  [VIEWS] About to load module...")
+                            logger.info(f"    ✓ Found setup_ai_act_store.py at: {setup_script_path}")
+                            
+                            print(f"  [VIEWS] Creating spec...")
+                            spec = importlib.util.spec_from_file_location("setup_ai_act_store", setup_script_path)
+                            print(f"  [VIEWS] Creating module from spec...")
+                            setup_module = importlib.util.module_from_spec(spec)
+                            print(f"  [VIEWS] Adding to sys.modules...")
+                            sys.modules["setup_ai_act_store"] = setup_module
+                            print(f"  [VIEWS] Executing module (this should trigger module-level prints)...")
+                            spec.loader.exec_module(setup_module)
+                            print(f"  [VIEWS] ✓ Module loaded successfully")
+                            logger.info(f"    ✓ Module loaded successfully")
+                                
+                            # Create client and store
+                            print(f"  [VIEWS] Initializing Gemini API client...")
+                            logger.info(f"    Initializing Gemini API client...")
+                            print(f"  [VIEWS] Calling setup_module.create_client()...")
+                            client = setup_module.create_client()
+                            print(f"  [VIEWS] ✓ Client initialized")
+                            logger.info(f"    ✓ Client initialized")
+                            
+                            print(f"  [VIEWS] Creating/getting File Search Store...")
+                            logger.info(f"    Creating/getting File Search Store...")
+                            print(f"  [VIEWS] Calling setup_module.create_file_search_store()...")
+                            store = setup_module.create_file_search_store(client, quiet=False)
+                            print(f"  [VIEWS] ✓ Store ready: {store.display_name}")
+                            logger.info(f"    ✓ Store ready: {store.display_name}")
+                            
+                            # Upload only this uploaded file (not all files in ai_act_articles directory)
+                            display_name = file.name
+                            print(f"  [VIEWS] Uploading file to store:")
+                            print(f"    File name: {file.name}")
+                            print(f"    File path: {file_path}")
+                            print(f"    Display name: {display_name}")
+                            logger.info(f"    Running setup_ai_act_store for file: {file.name}")
+                            logger.info(f"    File path: {file_path}")
+                            logger.info(f"    Display name: {display_name}")
+                            
+                            print(f"  [VIEWS] Calling setup_module.upload_single_file()...")
+                            success = setup_module.upload_single_file(client, store, file_path, display_name=display_name, quiet=False)
+                            print(f"  [VIEWS] upload_single_file returned: {success}")
+                            
+                            if success:
+                                print(f"  ✓ Successfully uploaded {file.name} to File Search Store")
+                                logger.info(f"    ✓ Successfully uploaded {file.name} to File Search Store")
+                            else:
+                                print(f"  ℹ File {file.name} already exists in store, skipped")
+                                logger.info(f"    ℹ File {file.name} already exists in store, skipped")
+                            
+                            print(f"{'='*80}\n")
+                        else:
+                            print(f"  ✗ setup_ai_act_store.py not found at: {setup_script_path}")
+                            logger.warning(f"    ⚠ setup_ai_act_store.py not found, skipping store upload")
+                    except Exception as e:
+                        import traceback
+                        error_msg = f"Error uploading to File Search Store: {e}"
+                        print(f"  ✗ {error_msg}")
+                        print(f"  Traceback:")
+                        traceback.print_exc()
+                        logger.error(f"    ✗ Could not upload to File Search Store: {e}", exc_info=True)
+                        # Don't fail the upload if store upload fails
+                        
+                except Exception as e:
+                    print(f"  ✗ Error saving dataset file {file.name}: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    logger.error(f"  ✗ Error saving dataset file {file.name}: {e}", exc_info=True)
+                    logger.error(f"  Traceback: {traceback.format_exc()}")
+        
+        # Note: No longer updating AI_ACT_TEXT_PATH in code files
+        # Code files should handle their own dataset file selection
+        
+        # Update agent data with uploaded files
+        if 'risk_evaluation' not in agent:
+            agent['risk_evaluation'] = {}
+        
+        # Merge with existing files
+        existing_code_files = agent['risk_evaluation'].get('code_files', [])
+        existing_dataset_files = agent['risk_evaluation'].get('dataset_files', [])
+        
+        agent['risk_evaluation']['code_files'] = list(set(existing_code_files + uploaded_code_files))
+        agent['risk_evaluation']['dataset_files'] = list(set(existing_dataset_files + uploaded_dataset_files))
+        
+        # Save to agents.json
+        try:
+            mock_data_dir = Path(__file__).parent.parent / 'mock_data'
+            agents_file = mock_data_dir / 'agents.json'
+            
+            # Update agent in list
+            for i, a in enumerate(agents_data):
+                if str(a.get('id')) == str(agent_id):
+                    agents_data[i] = agent
+                    break
+            
+            with open(agents_file, 'w', encoding='utf-8') as f:
+                json.dump(agents_data, f, indent=2, ensure_ascii=False)
+            
+            logger.info(f"  ✓ Updated agents.json with uploaded files")
+        except Exception as e:
+            logger.warning(f"  ⚠ Could not save to agents.json: {e}")
+        
+        logger.info("=" * 80)
+        logger.info("FILE UPLOAD: Completed Successfully")
+        logger.info("=" * 80)
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Successfully uploaded {len(uploaded_code_files)} code file(s) and {len(uploaded_dataset_files)} dataset file(s)',
+            'code_files': agent['risk_evaluation']['code_files'],
+            'dataset_files': agent['risk_evaluation']['dataset_files']
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in api_upload_risk_evaluation_files: {str(e)}", exc_info=True)
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["DELETE", "POST"])
+def api_delete_risk_evaluation_files(request, agent_id):
+    """
+    Delete code and dataset files for risk evaluation.
+    
+    Expected JSON body:
+    {
+        "code_files": ["path/to/file1.py", ...],  # Optional: list of code file paths to delete
+        "dataset_files": ["path/to/file1.csv", ...]  # Optional: list of dataset file paths to delete
+    }
+    
+    If empty lists or not provided, no files will be deleted.
+    
+    Returns JSON response with success status.
+    """
+    import logging
+    from pathlib import Path
+    from django.conf import settings
+    import json
+    
+    logger = logging.getLogger(__name__)
+    
+    logger.info("=" * 80)
+    logger.info("FILE DELETE: Risk Evaluation Files")
+    logger.info("=" * 80)
+    logger.info(f"Agent ID: {agent_id}")
+    
+    try:
+        # Get agent data
+        agents_data = get_mock_agents()
+        agent = next((a for a in agents_data if str(a.get('id')) == str(agent_id)), None)
+        
+        if not agent:
+            return JsonResponse({
+                'success': False,
+                'error': 'AI System not found'
+            }, status=404)
+        
+        # Get file paths from request body
+        request_data = json.loads(request.body) if request.body else {}
+        code_files_to_delete = request_data.get('code_files', [])
+        dataset_files_to_delete = request_data.get('dataset_files', [])
+        
+        logger.info(f"  Code files to delete: {len(code_files_to_delete)}")
+        logger.info(f"  Dataset files to delete: {len(dataset_files_to_delete)}")
+        
+        BASE_DIR = Path(settings.BASE_DIR)
+        deleted_code_files = []
+        deleted_dataset_files = []
+        errors = []
+        
+        # Delete code files
+        for file_path_str in code_files_to_delete:
+            try:
+                file_path = BASE_DIR / file_path_str
+                if file_path.exists() and file_path.is_file():
+                    file_path.unlink()
+                    deleted_code_files.append(file_path_str)
+                    logger.info(f"  ✓ Deleted code file: {file_path_str}")
+                else:
+                    logger.warning(f"  ⚠ Code file not found: {file_path_str}")
+            except Exception as e:
+                error_msg = f"Error deleting code file {file_path_str}: {e}"
+                logger.error(f"  ✗ {error_msg}", exc_info=True)
+                errors.append(error_msg)
+        
+        # Delete dataset files
+        for file_path_str in dataset_files_to_delete:
+            try:
+                file_path = BASE_DIR / file_path_str
+                if file_path.exists() and file_path.is_file():
+                    file_path.unlink()
+                    deleted_dataset_files.append(file_path_str)
+                    logger.info(f"  ✓ Deleted dataset file: {file_path_str}")
+                else:
+                    logger.warning(f"  ⚠ Dataset file not found: {file_path_str}")
+            except Exception as e:
+                error_msg = f"Error deleting dataset file {file_path_str}: {e}"
+                logger.error(f"  ✗ {error_msg}", exc_info=True)
+                errors.append(error_msg)
+        
+        # Update agent data to remove deleted files
+        if 'risk_evaluation' not in agent:
+            agent['risk_evaluation'] = {}
+        
+        # Remove deleted files from agent data
+        existing_code_files = agent['risk_evaluation'].get('code_files', [])
+        existing_dataset_files = agent['risk_evaluation'].get('dataset_files', [])
+        
+        agent['risk_evaluation']['code_files'] = [
+            f for f in existing_code_files if f not in deleted_code_files
+        ]
+        agent['risk_evaluation']['dataset_files'] = [
+            f for f in existing_dataset_files if f not in deleted_dataset_files
+        ]
+        
+        # Save to agents.json
+        try:
+            mock_data_dir = Path(__file__).parent.parent / 'mock_data'
+            agents_file = mock_data_dir / 'agents.json'
+            
+            # Update agent in list
+            for i, a in enumerate(agents_data):
+                if str(a.get('id')) == str(agent_id):
+                    agents_data[i] = agent
+                    break
+            
+            with open(agents_file, 'w', encoding='utf-8') as f:
+                json.dump(agents_data, f, indent=2, ensure_ascii=False)
+            
+            logger.info(f"  ✓ Updated agents.json")
+        except Exception as e:
+            logger.warning(f"  ⚠ Could not save to agents.json: {e}")
+        
+        logger.info("=" * 80)
+        logger.info("FILE DELETE: Completed")
+        logger.info("=" * 80)
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Successfully deleted {len(deleted_code_files)} code file(s) and {len(deleted_dataset_files)} dataset file(s)',
+            'deleted_code_files': deleted_code_files,
+            'deleted_dataset_files': deleted_dataset_files,
+            'errors': errors if errors else None
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in api_delete_risk_evaluation_files: {str(e)}", exc_info=True)
         return JsonResponse({'success': False, 'error': str(e)}, status=500)

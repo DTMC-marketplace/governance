@@ -5,7 +5,7 @@
 
 {% block dashboard_content %}
 <div class="flex flex-col gap-6 dashboard-content-wrapper">
-    <div id="project-main-header">
+    <div id="project-main-header" data-agent-id="{{ project.agent_id|default:'' }}">
         <!-- Breadcrumb & Navigation -->
         <div class="flex items-center gap-3">
             <button class="w-6 h-6 bg-transparent border-none cursor-pointer p-0 flex items-center justify-center" onclick="history.back()">
@@ -1390,6 +1390,12 @@
         if (typeof riskState !== 'undefined') {
             riskState.selectedToolId = skillId;
             riskState.projectId = window.location.pathname.split('/').filter(p => p).pop();
+            // Read linked AI System (agent) id from header
+            const headerEl = document.getElementById('project-main-header');
+            if (headerEl && headerEl.dataset.agentId) {
+                const aid = parseInt(headerEl.dataset.agentId);
+                riskState.agentId = !isNaN(aid) ? aid : null;
+            }
             riskState.mode = 'choice';
             riskState.currentSectionIndex = 0;
             if (riskState.scanInterval) clearInterval(riskState.scanInterval);

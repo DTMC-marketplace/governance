@@ -2,7 +2,8 @@
     "1": {
         "id": 1,
         "name": "Credit_Scorer_v2.0",
-        "ai_system": "Credit Scoring AI",
+        "ai_system": "Fraud Detection SystemI",
+        "ai_systems": [6],
         "role": "Provider, Deployer, Product manufacturer, Distributor, Importer",
         "regulatory_profile": [
             "EU AI Act - High-Risk System",
@@ -428,6 +429,7 @@
         "id": 2,
         "name": "Resume_Screener_Compliance",
         "ai_system": "Resume Screening AI",
+        "ai_systems": [2],
         "role": "Deployer",
         "regulatory_profile": [
             "EU AI Act - High-Risk System",
@@ -545,6 +547,7 @@
         "id": 3,
         "name": "ChatBot_Transparency_Check",
         "ai_system": "Customer Service Chatbot",
+        "ai_systems": [1],
         "role": "Deployer",
         "regulatory_profile": [
             "EU AI Act - Transparency Obligations",
@@ -661,6 +664,7 @@
         "id": 4,
         "name": "Predictive_Maintenance_Review",
         "ai_system": "Predictive Maintenance System",
+        "ai_systems": [3],
         "role": "Provider",
         "regulatory_profile": [
             "EU AI Act - Minimal Risk"
@@ -970,6 +974,7 @@
         "id": 5,
         "name": "Fraud_Detection_Review",
         "ai_system": "Fraud Detection System",
+        "ai_systems": [5],
         "role": "Provider",
         "regulatory_profile": [
             "EU AI Act - Limited Risk"
