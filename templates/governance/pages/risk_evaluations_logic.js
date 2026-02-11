@@ -692,12 +692,52 @@ async function handleDatasetFileUpload(files) {
         console.log(`[Upload] File ${index + 1}: ${file.name} (${file.size} bytes, type: ${file.type})`);
     });
     
+    // Get button and container elements for loading state
+    const uploadBtn = document.getElementById('dataset-upload-btn');
+    const filesListContainer = document.getElementById('dataset-files-list');
+    const originalBtnContent = uploadBtn ? uploadBtn.innerHTML : '';
+    
+    // Show loading state
+    if (uploadBtn) {
+        uploadBtn.disabled = true;
+        uploadBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        uploadBtn.innerHTML = `
+            <svg class="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
+                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" stroke-linecap="round"></path>
+            </svg>
+            Uploading & Processing...
+        `;
+    }
+    
+    // Show loading message in files list
+    if (filesListContainer) {
+        filesListContainer.innerHTML = `
+            <div class="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded text-sm text-blue-700">
+                <svg class="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
+                    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" stroke-linecap="round"></path>
+                </svg>
+                <span>Uploading ${files.length} file(s) and processing with Gemini File Search Store... This may take a minute.</span>
+            </div>
+        `;
+    }
+    
     try {
         const agentId = getAgentId();
         console.log('[Upload] Agent ID:', agentId);
         if (!agentId) {
             console.error('[Upload] Agent ID not found!');
             showNotification('Agent ID not found', 'error');
+            // Reset button
+            if (uploadBtn) {
+                uploadBtn.disabled = false;
+                uploadBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                uploadBtn.innerHTML = originalBtnContent;
+            }
+            if (filesListContainer) {
+                filesListContainer.innerHTML = '';
+            }
             return;
         }
         
@@ -747,6 +787,15 @@ async function handleDatasetFileUpload(files) {
                 message: fetchError.message,
                 stack: fetchError.stack
             });
+            // Reset button on error
+            if (uploadBtn) {
+                uploadBtn.disabled = false;
+                uploadBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                uploadBtn.innerHTML = originalBtnContent;
+            }
+            if (filesListContainer) {
+                filesListContainer.innerHTML = '';
+            }
             throw fetchError;
         }
         
@@ -766,10 +815,26 @@ async function handleDatasetFileUpload(files) {
         } catch (parseError) {
             console.error('[Upload] ✗ Error parsing response:', parseError);
             console.error('[Upload] Response might not be JSON');
+            // Reset button on error
+            if (uploadBtn) {
+                uploadBtn.disabled = false;
+                uploadBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                uploadBtn.innerHTML = originalBtnContent;
+            }
+            if (filesListContainer) {
+                filesListContainer.innerHTML = '';
+            }
             throw parseError;
         }
         
         console.log('[Upload] Upload response data:', data);
+        
+        // Reset button state
+        if (uploadBtn) {
+            uploadBtn.disabled = false;
+            uploadBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            uploadBtn.innerHTML = originalBtnContent;
+        }
         
         if (data.success) {
             // Update state with file paths from server
@@ -783,6 +848,9 @@ async function handleDatasetFileUpload(files) {
             await reassessWithUploadedFiles(agentId);
         } else {
             showNotification('Upload failed: ' + (data.error || 'Unknown error'), 'error');
+            if (filesListContainer) {
+                filesListContainer.innerHTML = '';
+            }
         }
     } catch (error) {
         console.error('[Upload] ========================================');
@@ -793,6 +861,16 @@ async function handleDatasetFileUpload(files) {
         console.error('[Upload] Error stack:', error.stack);
         console.error('[Upload] Full error object:', error);
         showNotification('Error uploading files: ' + error.message, 'error');
+        
+        // Reset button on error
+        if (uploadBtn) {
+            uploadBtn.disabled = false;
+            uploadBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            uploadBtn.innerHTML = originalBtnContent;
+        }
+        if (filesListContainer) {
+            filesListContainer.innerHTML = '';
+        }
     }
 }
 
